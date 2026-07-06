@@ -102,7 +102,8 @@ export const dtfApiProvider: ApiProvider = {
 			response = await fetch(`${authUrl}/auth/email/login`, {
 				method: 'POST',
 				headers: {
-					'Accept': 'application/json'
+					'Accept': 'application/json',
+					'x-device-token': 'v1'
 				},
 				body: formData
 			});
