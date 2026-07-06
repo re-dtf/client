@@ -4,8 +4,8 @@ export interface Block {
 	data: any;
 }
 
-export interface FeedResult {
-	items: Post[];
+export interface PaginatedResult<T> {
+	items: T[];
 	lastId?: number;
 	lastSortingValue?: number;
 }
@@ -25,11 +25,7 @@ export interface User {
 	avatarUrl?: string;
 }
 
-export interface CommentResult {
-	items: Comment[];
-	lastId?: number;
-	lastSortingValue?: number;
-}
+
 
 export interface Comment {
 	id: number;
@@ -41,6 +37,10 @@ export interface Comment {
 	level?: number;
 	isIgnored?: boolean;
 	isRemoved?: boolean;
+	reactions?: {
+		counters: { id: number; count: number }[];
+		reactionId: number;
+	};
 }
 
 export interface CommentTreeItem extends Comment {
@@ -57,7 +57,8 @@ export interface Session {
 
 export interface ApiProvider {
 	name: string;
-	getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<FeedResult>;
+	getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<PaginatedResult<Post>>;
 	getPost(id: number): Promise<Post>;
-	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<CommentResult>;
+	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
+	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 }

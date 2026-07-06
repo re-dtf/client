@@ -1,7 +1,7 @@
-import { PersistedState } from './persisted.svelte';
+import { persistedState } from './persisted.svelte';
 import type { Session } from '$lib/api/types';
 
-const sessionState = new PersistedState<Session | null>('redtf:auth:session', null);
+const sessionState = persistedState<Session | null>('redtf:auth:session', null);
 
 export const authStorage = {
 	get session() { return sessionState.value; },

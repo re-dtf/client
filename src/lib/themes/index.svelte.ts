@@ -1,5 +1,5 @@
-import { PersistedState } from '$lib/storage/persisted.svelte';
+import { persistedState } from '$lib/storage/persisted.svelte';
 
 export type ThemeName = 'classic' | 'modern';
 
-export const themeState = new PersistedState<ThemeName>('redtf:theme', 'classic');
+export const themeState = persistedState<ThemeName>('redtf:theme', 'classic');
