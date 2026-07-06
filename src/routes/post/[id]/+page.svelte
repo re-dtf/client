@@ -3,6 +3,7 @@
 	import { api } from '$lib/api/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import Comments from '$lib/components/Comments/Comments.svelte';
+	import { resolve } from '$app/paths';
 	import type { Post } from '$lib/api/types';
 	import { onMount } from 'svelte';
 
@@ -35,7 +36,7 @@
 		<ThemeLoader componentName="Post" {post} preview={false} />
 		<Comments postId={id} />
 		<div class="actions">
-			<a href="/" class="back-link">← Вернуться в ленту</a>
+			<a href={resolve('/')} class="back-link">← Вернуться в ленту</a>
 		</div>
 	{:else}
 		<div class="message">Пост не найден</div>

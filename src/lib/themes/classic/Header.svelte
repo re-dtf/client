@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authStorage } from '$lib/storage/auth.svelte';
+	import { resolve } from '$app/paths';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
@@ -10,14 +11,14 @@
 
 <nav class="classic-navbar">
 	<div class="container nav-content">
-		<a href="/" class="logo">reDTF <span class="badge">classic</span></a>
+		<a href={resolve('/')} class="logo">reDTF <span class="badge">classic</span></a>
 		<div class="links">
-			<a href="/">Лента</a>
-			<a href="/settings">Настройки</a>
+			<a href={resolve('/')}>Лента</a>
+			<a href={resolve('/settings')}>Настройки</a>
 			{#if authStorage.isAuthenticated}
-				<a href="/" onclick={handleLogout}>Выйти</a>
+				<a href={resolve('/')} onclick={handleLogout}>Выйти</a>
 			{:else}
-				<a href="/login">Войти</a>
+				<a href={resolve('/login')}>Войти</a>
 			{/if}
 		</div>
 	</div>
