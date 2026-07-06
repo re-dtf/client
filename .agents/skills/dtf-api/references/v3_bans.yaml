@@ -1,0 +1,238 @@
+openapi: "3.0.1"
+info:
+  version: 3.0.0
+  title: "BlogPlatform API"
+  description: >-
+    Документация API Блог-платформы комитета.
+
+    ## Ограничения API ##
+
+    * Не чаще 3-х запросов к API в секунду
+security:
+  - BearerAuth: []
+tags:
+  - name: Bans
+    description: Бан на всей платформе
+
+paths:
+  /bans:
+    get:
+      tags:
+        - Bans
+      description: Возвращает историю банов пользователя
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: query
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            required: true
+      responses:
+        200:
+          description: Формат успешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: 2aabdea-3f1b-4cea-baac-62673065d05c
+                          description: Идентификатор бана
+                        adminId:
+                          type: integer
+                          description: Идентификатор администратора который забанил пользователя
+                        expirationDate:
+                          type: integer
+                          description: Дата истечения срока бана
+                        reason:
+                          type: string
+                          description: Причина бана
+
+        404:
+          description: Формат неуспешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+
+    post:
+      tags:
+        - Bans
+      description: Забанить пользователя на всей платформе
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                banningUserId:
+                  type: integer
+                  format: int64
+                  example: 1234
+                  description: Иденфикатор пользователя которого нужно забанить
+                reason:
+                  type: string
+                  example: Забанен из-за нарушений правил использования сайтом
+                  description: Причина бана
+                days:
+                  type: number
+                  example: 10
+                  description: Количество дней
+                withActivityRemoval:
+                  type: boolean
+                  description: Бан с удалением постов, комментариев и подписок пользователя
+      responses:
+        200:
+          description: Формат успешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Пользователь забанен
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 2aabdea-3f1b-4cea-baac-62673065d05c
+                        description: Идентификатор бана
+        400:
+          description: Формат неуспешного ответа (ошибка при валидации)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+                    example: Некорректный идентификатор пользователя
+  /bans/{id}:
+    get:
+      tags:
+        - Bans
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Идентификатор бана
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          description: Формат успешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 2aabdea-3f1b-4cea-baac-62673065d05c
+                        description: Идентификатор бана
+                      banningUserId:
+                        type: integer
+                        format: int64
+                        example: 1234
+                        description: Идентификатор пользователя который забанен
+                      reason:
+                        type: string
+                        example: Забанен из-за нарушений правил использования сайтом
+                        description: Причина бана
+                      days:
+                        type: number
+                        example: 10
+                        description: Количество дней
+                      withActivityRemoval:
+                        type: boolean
+                        description: Бан с удалением постов, комментариев и подписок пользователя
+        404:
+          description: Формат неуспешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+
+  /bans/revoke:
+    post:
+      tags:
+        - Bans
+      parameters:
+        - name: userId
+          in: query
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            required: true
+      responses:
+        200:
+          description: Формат успешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                  message:
+                    type: string
+        400:
+          description: Формат неуспешного ответа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 400
+                  message:
+                    type: string
+                    example: Некорректные входные данные
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: apiKey
+      name: JWTAuthorization
+      in: header

@@ -1,0 +1,679 @@
+openapi: "3.0.1"
+info:
+  version: 3.0.0
+  title: "BlogPlatform Authentication API"
+  description: |
+    Документация API сервиса аутентификации.
+
+    ## Ограничения API ##
+
+    * Не чаще 3-х запросов к API в секунду
+    
+    ## Описание ##
+
+    Сервис аутентификации и пользователей.
+    Предоставляет механизм token-based аутентификации и редактирования профилей юзеров.
+    Доступные методы аутентификации: пароль, google, vk, apple id
+    
+    API поддерживает версионирование,
+    поэтому все роуты будут содержать указание версии.
+    
+    При ошибках возвращается 4хх http код, тело ошибки содержит код ошибки приложения. 
+    
+    **Описание кодов ошибок предоставлено ниже:**
+    | Код | Описание                                     |
+    |-----|----------------------------------------------|
+    | 100 | Непредвиденная ошибка                        |
+    | 101 | Аккаунт заморожен                            |
+    | 102 | Access токен просрочен                       |
+    | 103 | Такой email уже существует                   |
+    | 104 | Неверный логин или пароль                    |
+    | 105 | Refresh токен не найден                      |
+    | 107 | Refresh токен просрочен                      |
+    | 108 | Первышен лимит попыток регистрации           |
+    | 109 | Аккаунт с такой соц. сетью уже существует    |
+    | 110 | Пользователь не найден                       |
+    | 111 | Неверный email                               |
+    | 112 | Просрочен ключ для смены пароля              |
+    | 113 | Просрочен ключ для подтверждения смены почты |
+    | 114 | Невалидное имя                               |
+
+
+security:
+  - BearerAuth: []
+tags:
+  - name: Authentication
+    description: Аутентификация
+  - name: Users
+    description: Пользователи
+
+paths:
+  /auth/email/login:
+    post:
+      description: Авторизация по почте
+      tags:
+        - Authentication
+      parameters:
+        - name: email
+          in: query
+          description: Почта пользователя
+          schema:
+            type: string
+            required: true
+        - name: password
+          in: query
+          description: Пароль пользователя
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        422:
+          description: Ошибка бизнес инварианта
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AccountIsFrozenError'
+                  - $ref: '#/components/schemas/Error'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/logout:
+    post:
+      description: Разлогин
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Рефреш токен пользователя
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        422:
+          $ref: '#/components/responses/DomainErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/email/register:
+    post:
+      description: Регистрация по почте. Отправляет письмо на почту для подтверждения регистрации. В письме содержится ссылка с токеном который ожидается в запросе /confirm
+      tags:
+        - Authentication
+      parameters:
+        - name: email
+          in: query
+          description: Почта пользователя
+          schema:
+            type: string
+            required: true
+        - name: password
+          in: query
+          description: Пароль пользователя
+          schema:
+            type: string
+            required: true
+        - name: name
+          in: query
+          description: Имя пользователя
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/email/confirm:
+    post:
+      description: Подтверждение регистрации по почте
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен из письма отправленного на почту при регистрации
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/password/reset:
+    post:
+      description: Сброс пароля. Отправляет письмо на почту с токеном для подтверждения изменения почты
+      tags:
+        - Authentication
+      parameters:
+        - name: email
+          in: query
+          description: Почта пользователя для сброса пароля
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/password/change:
+    post:
+      description: Смена пароля. Необходима авторизация. Отправляет пиьсмо на почту.
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/password/confirm:
+    post:
+      description: Подтверждение смены пароля. Ожидает токен из письма
+      tags:
+        - Authentication
+      parameters:
+        - name: key
+          in: query
+          description: Токен из письма
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/email/unfreeze:
+    post:
+      description: Разморозка аккаунта по почте.
+      tags:
+        - Authentication
+      parameters:
+        - name: email
+          in: query
+          description: Почта пользователя
+          schema:
+            type: string
+            required: true
+        - name: password
+          in: query
+          description: Пароль пользователя
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/email/change:
+    post:
+      description: Смена почты. Требуется авторизация. Отправляет письмо на почту с токеном для подтверждения
+      tags:
+        - Authentication
+      parameters:
+        - name: email
+          in: query
+          description: Почта пользователя
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/email/confirmChange:
+    post:
+      description: Смена почты. Требуется авторизация. Отправляет письмо на почту с токеном для подтверждения
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен из письма
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/login:
+    post:
+      description: Логин через соцсеть посредством токена доступа.
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен доступа для соцсетей
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+    get:
+      description: Логин через соцсеть по oauth2.
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/register:
+    post:
+      description: Регистрация через соцсеть посредством токена доступа.
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен доступа для соцсетей
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+    get:
+      description: Регистрация через соцсеть по oauth2.
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/link:
+    post:
+      description: Привязка соцсети к существующему аккаунту через токен доступа. Если авторизован то привязка будет к текущему аккаунту. Если без авторизации то по совспадению email
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен доступа для соцсетей
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+    get:
+      description: Привязка соцсети к существующему аккаунту через oauth2. Если авторизован то привязка будет к текущему аккаунту. Если без авторизации то по совспадению email
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/unfreeze:
+    post:
+      description: Разморозка аккаунта по токену доступа соцсети
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен доступа для соцсетей
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+    get:
+      description: Разморозка аккаунта через oauth2
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/unlink:
+    post:
+      description: Разморозка аккаунта по токену доступа соцсети
+      tags:
+        - Authentication
+      parameters:
+        - name: type
+          in: query
+          description: id соцсети
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /auth/{socialId}/inup:
+    post:
+      description: Метод сначала пытается авторизовать юзера в соцсети по токену доступа. Если аккаунт не найден то сразу регистрирует новый.
+      tags:
+        - Authentication
+      parameters:
+        - name: token
+          in: query
+          description: Токен доступа для соцсетей
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+    get:
+      description: Метод сначала пытается авторизовать юзера в соцсети по oauth2. Если аккаунт не найден то сразу регистрирует новый.
+      tags:
+        - Authentication
+      responses:
+        200:
+          $ref: '#/components/responses/Session'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /users/{id}/avatar:
+    post:
+      description: Обновления аватара пользователя
+      tags:
+        - Users
+      parameters:
+        - name: avatar
+          in: query
+          description: Новый аватар пользователя. Ождиается строка с json полученная от Leonardo
+          schema:
+            type: string
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /users/{id}/verification:
+    post:
+      description: Верификация пользователя. Нужна авторизация под админом.
+      tags:
+        - Users
+      parameters:
+        - name: verified
+          in: query
+          description: Верифицирован
+          schema:
+            type: boolean
+            required: true
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+  /users/{id}/profile:
+    post:
+      description: Обнолвение профиля пользователя
+      tags:
+        - Users
+      parameters:
+        - name: name
+          in: query
+          description: Имя пользователя
+          schema:
+            type: string
+            required: false
+        - name: is_online_status_visible
+          in: query
+          description: ПОказывать ли статус активности пользователя
+          schema:
+            type: boolean
+            required: false
+      responses:
+        200:
+          $ref: '#/components/responses/OKResponse'
+        400:
+          $ref: '#/components/responses/ValidationErrorEmptyData'
+        500:
+          $ref: '#/components/responses/InternalErrorEmptyData'
+
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: apiKey
+      name: JWTAuthorization
+      in: header
+
+  responses:
+    OKResponse:
+      description: Успешное выполнение запроса
+      content:
+        application/json:
+          schema:
+            title: Ответ без данных
+            type: object
+            properties:
+              message:
+                type: string
+                description: Понятное для человека сообщение о статусе запроса
+                example: OK
+              data:
+                type: object
+                example: null
+
+    Session:
+      description: Новая сессия пользователя
+      content:
+        application/json:
+          schema:
+            title: Ответ с новой сессией пользователя
+            type: object
+            properties:
+              message:
+                type: string
+                description: Понятное для человека сообщение о статусе запроса
+                example: OK
+              data:
+                $ref: '#/components/schemas/Session'
+
+    ValidationErrorEmptyData:
+      description: Ошибка валидации полей
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    DomainErrorEmptyData:
+      description: Ошибка бизнес инварианта
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalErrorEmptyData:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+
+
+  schemas:
+    Session:
+      title: Auth session object
+      type: object
+      properties:
+        type:
+          type: string
+          description: Access token type
+          example: Bearer
+        accessToken:
+          type: string
+          description: Access token
+          example: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI2MzkxZDM4NDdhYTk3MS4zMTUzODUwMiIsImlhdCI6MTY3MDUwMTI1Mi40OTg0NTEsImV4cCI6MTY3MDUwMTU1Mi40OTg0NTEsInVzZXJfaWQiOjEyMzU5NDMsInJvbGUiOjAsIm5hbWUiOiIiLCJlbWFpbCI6IiJ9.kFzk0NKHdW2xQX18tikw9dcE-qm7nH0E2y-gNzxZTA4
+        refreshToken:
+          type: string
+          description: Refresh token
+          example: 26893ca96800479688650472ae981dd92adf2c92b7a6f4b2887af57ea1aacbfe
+        accessExpTimestamp:
+          type: integer
+          description: Access token expiration unix timestamp
+          example: 1658409882
+        refreshExpTimestamp:
+          type: integer
+          description: Refresh token expiration unix timestamp
+          example: 1663593582
+
+    Error:
+      title: Error object
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human readable message of request status
+          example: Error message
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+        data:
+          type: object
+          example: null
+
+    AccountIsFrozenError:
+      title: Account is frozen error object
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human readable message of request status
+          example: Account is frozen
+        code:
+          type: integer
+          example: 101
+        data:
+          type: object
+          properties:
+            frozenUntil:
+              type: integer
+              example: 1663593582
+
+    ErrorCode:
+      title: Application error code
+      type: integer
+      example: 100
+      enum:
+        - 100
+        - 101
+        - 102
+        - 103
+        - 104
+        - 105
+        - 107
+        - 108
+        - 109
+        - 110
+        - 111
+        - 112
+        - 113
+        - 114
+      description: |
+        * 100: Непредвиденная ошибка
+        * 101: Аккаунт заморожен
+        * 102: Access токен просрочен
+        * 103: Такой email уже существует
+        * 104: Неверный логин или пароль
+        * 105: Refresh токен не найден
+        * 107: Refresh токен просрочен
+        * 108: Первышен лимит попыток регистрации
+        * 109: Аккаунт с такой соц. сетью уже существует
+        * 110: Пользователь не найден
+        * 111: Неверный email
+        * 112: Просрочен ключ для смены пароля
+        * 113: Просрочен ключ для подтверждения смены почты
+        * 114: Невалидное имя
