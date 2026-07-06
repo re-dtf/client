@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Post } from '$lib/api/types';
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
+	import { resolve } from '$app/paths';
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
@@ -11,7 +12,7 @@
 	<header>
 		<h2>
 			{#if preview}
-				<a href="/post/{post.id}">{post.title}</a>
+				<a href={resolve(`/post/${post.id}`)}>{post.title}</a>
 			{:else}
 				{post.title}
 			{/if}
@@ -25,7 +26,7 @@
 		<BlockRenderer blocks={displayBlocks} />
 		{#if preview && post.blocks.length > displayBlocks.length}
 			<div class="read-more">
-				<a href="/post/{post.id}">Читать далее...</a>
+				<a href={resolve(`/post/${post.id}`)}>Читать далее...</a>
 			</div>
 		{/if}
 	</div>
