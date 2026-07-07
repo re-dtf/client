@@ -27,6 +27,21 @@ export interface User {
 
 
 
+export interface CommentMedia {
+	type: 'image' | 'movie';
+	data: {
+		uuid: string;
+		width: number;
+		height: number;
+		size: number;
+		type: string; // 'jpg', 'png', 'mp4', etc.
+		color?: string;
+		base64preview?: string;
+		duration?: number;
+		has_audio?: boolean;
+	};
+}
+
 export interface Comment {
 	id: number;
 	postId: number;
@@ -37,6 +52,8 @@ export interface Comment {
 	level?: number;
 	isIgnored?: boolean;
 	isRemoved?: boolean;
+	media?: CommentMedia[];
+	donation?: number;
 	reactions?: {
 		counters: { id: number; count: number }[];
 		reactionId: number;

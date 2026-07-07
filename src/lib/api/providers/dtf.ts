@@ -243,6 +243,21 @@ export const dtfApiProvider: ApiProvider = {
 			level: item.level,
 			isIgnored: item.isIgnored,
 			isRemoved: item.isRemoved,
+			media: item.media?.length ? item.media.map((m: any) => ({
+				type: m.type === 'movie' ? 'movie' : 'image',
+				data: {
+					uuid: m.data?.uuid || '',
+					width: m.data?.width || 0,
+					height: m.data?.height || 0,
+					size: m.data?.size || 0,
+					type: m.data?.type || '',
+					color: m.data?.color,
+					base64preview: m.data?.base64preview,
+					duration: m.data?.duration,
+					has_audio: m.data?.has_audio
+				}
+			})) : undefined,
+			donation: item.donation || undefined,
 			reactions: item.reactions ? {
 				counters: item.reactions.counters || [],
 				reactionId: item.reactions.reactionId || 0

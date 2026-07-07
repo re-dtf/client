@@ -2,10 +2,13 @@
 	import { api } from '$lib/api/index.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import type { ThemeName } from '$lib/themes/index.svelte';
+	import { commentSettings } from '$lib/storage/commentSettings.svelte';
+	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
 
 	// Helper for two-way binding
 	let enableCustomApi = $derived(api.enableCustomApi);
 	let currentTheme = $derived(themeState.value);
+	let nestingMode = $derived(commentSettings.value.nestingMode);
 
 	function updateApi(e: Event) {
 		api.enableCustomApi = (e.target as HTMLInputElement).checked;
@@ -13,6 +16,10 @@
 
 	function updateTheme(e: Event) {
 		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
+	}
+
+	function updateNestingMode(mode: NestingMode) {
+		commentSettings.value = { ...commentSettings.value, nestingMode: mode };
 	}
 </script>
 
@@ -41,6 +48,27 @@
 				<option value="classic">Классический дизайн (Classic)</option>
 				<option value="modern">Современный дизайн (Modern)</option>
 			</select>
+		</div>
+	</div>
+
+	<div class="section">
+		<h3>Комментарии</h3>
+		<p class="description">Режим отображения глубоко вложенных комментариев.</p>
+		
+		<div class="control nesting-control">
+			<label>Режим вложенности:</label>
+			<div class="radio-group">
+				<label class="radio-label">
+					<input type="radio" name="nesting" checked={nestingMode === 'flatten'} onchange={() => updateNestingMode('flatten')} />
+					<span>Сглаживание (рекомендуется)</span>
+					<small>Глубокие ветки сглаживаются с навигацией к родителю</small>
+				</label>
+				<label class="radio-label">
+					<input type="radio" name="nesting" checked={nestingMode === 'autopan'} onchange={() => updateNestingMode('autopan')} />
+					<span>Авто-панорама</span>
+					<small>Без лимита вложенности, камера следит за глубиной</small>
+				</label>
+			</div>
 		</div>
 	</div>
 </div>
@@ -110,5 +138,46 @@
 		border-radius: 6px;
 		font-size: 1em;
 		background: #f9f9f9;
+	}
+
+	.radio-group {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		margin-top: 8px;
+	}
+
+	.radio-label {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		padding: 10px;
+		border: 1px solid #eee;
+		border-radius: 6px;
+		transition: border-color 0.2s, background 0.2s;
+	}
+
+	.radio-label:hover {
+		border-color: #ccc;
+		background: #fafafa;
+	}
+
+	.radio-label:has(input:checked) {
+		border-color: #1976d2;
+		background: rgba(25, 118, 210, 0.04);
+	}
+
+	.radio-label small {
+		width: 100%;
+		font-size: 0.8em;
+		color: #888;
+		font-weight: 400;
+		padding-left: 24px;
+	}
+
+	.nesting-control {
+		max-width: 400px;
 	}
 </style>

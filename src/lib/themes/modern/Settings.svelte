@@ -2,10 +2,13 @@
 	import { api } from '$lib/api/index.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import type { ThemeName } from '$lib/themes/index.svelte';
+	import { commentSettings } from '$lib/storage/commentSettings.svelte';
+	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
 
 	// Helper for two-way binding
 	let enableCustomApi = $derived(api.enableCustomApi);
 	let currentTheme = $derived(themeState.value);
+	let nestingMode = $derived(commentSettings.value.nestingMode);
 
 	function updateApi(e: Event) {
 		api.enableCustomApi = (e.target as HTMLInputElement).checked;
@@ -13,6 +16,10 @@
 
 	function updateTheme(e: Event) {
 		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
+	}
+
+	function updateNestingMode(mode: NestingMode) {
+		commentSettings.value = { ...commentSettings.value, nestingMode: mode };
 	}
 </script>
 
@@ -61,6 +68,35 @@
 					onclick={() => themeState.value = 'modern'}
 				>
 					Модерн
+				</button>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span class="card-icon">💬</span>
+				<h3>Комментарии</h3>
+			</div>
+			<p class="description">Режим отображения глубоко вложенных веток комментариев.</p>
+			
+			<div class="nesting-selector">
+				<button
+					class="nesting-btn"
+					class:active={nestingMode === 'flatten'}
+					onclick={() => updateNestingMode('flatten')}
+				>
+					<span class="nesting-icon">📐</span>
+					<span class="nesting-label">Сглаживание</span>
+					<span class="nesting-desc">Глубокие ветки сглаживаются</span>
+				</button>
+				<button
+					class="nesting-btn"
+					class:active={nestingMode === 'autopan'}
+					onclick={() => updateNestingMode('autopan')}
+				>
+					<span class="nesting-icon">🎥</span>
+					<span class="nesting-label">Авто-панорама</span>
+					<span class="nesting-desc">Камера следит за глубиной</span>
 				</button>
 			</div>
 		</div>
@@ -212,5 +248,50 @@
 		border-color: #ff416c;
 		color: #ff416c;
 		background: rgba(255, 65, 108, 0.05);
+	}
+
+	/* Nesting mode selector */
+	.nesting-selector {
+		display: flex;
+		gap: 12px;
+	}
+
+	.nesting-btn {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		padding: 16px 12px;
+		border: 2px solid #eee;
+		background: transparent;
+		border-radius: 12px;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.nesting-btn:hover {
+		border-color: #ccc;
+	}
+
+	.nesting-btn.active {
+		border-color: #6e8efb;
+		background: rgba(110, 142, 251, 0.05);
+	}
+
+	.nesting-icon {
+		font-size: 24px;
+	}
+
+	.nesting-label {
+		font-size: 0.95em;
+		font-weight: 600;
+		color: #333;
+	}
+
+	.nesting-desc {
+		font-size: 0.78em;
+		color: #888;
+		text-align: center;
 	}
 </style>
