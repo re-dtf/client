@@ -98,12 +98,20 @@ export const dtfApiProvider: ApiProvider = {
 		formData.append('password', password);
 
 		let response;
+		let proxyBase = authStorage.proxyUrl || import.meta.env.VITE_AUTH_PROXY_URL || '';
+		proxyBase = proxyBase.replace(/\/$/, '');
+		
+		if (!proxyBase) {
+			throw new Error('Укажите URL прокси сервера в настройках ниже (или задайте переменную VITE_AUTH_PROXY_URL), прямой запрос логина заблокирован CORS политикой DTF.');
+		}
+
+		const targetUrl = `${proxyBase}/v3.4/auth/email/login`;
+		
 		try {
-			response = await fetch(`${authUrl}/auth/email/login`, {
+			response = await fetch(targetUrl, {
 				method: 'POST',
 				headers: {
-					'Accept': 'application/json',
-					'x-device-token': 'v1'
+					'Accept': 'application/json'
 				},
 				body: formData
 			});
@@ -120,6 +128,30 @@ export const dtfApiProvider: ApiProvider = {
 		const sessionData = json.data || json; // fallback in case API returns unwrapped
 
 		return sessionData as Session;
+	},
+
+	async loginByToken(token: string): Promise<Session> {
+		// Мы используем фейковую сессию, так как у нас есть только accessToken.
+		// Refresh token нам недоступен при ручном вводе, но сессия будет работать пока токен жив.
+		const sessionData: Session = {
+			type: 'Bearer',
+			accessToken: token,
+			refreshToken: '',
+			accessExpTimestamp: Math.floor(Date.now() / 1000) + 86400 * 30, // 30 дней
+			refreshExpTimestamp: 0
+		};
+		
+		authStorage.session = sessionData;
+		
+		// Проверим токен запросом профиля
+		try {
+			await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
+		} catch (e) {
+			authStorage.logout();
+			throw new Error('Токен недействителен или устарел');
+		}
+
+		return sessionData;
 	},
 
 	async reactToComment(commentId: number, reactionId: number): Promise<void> {

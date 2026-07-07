@@ -57,6 +57,8 @@ export interface Session {
 
 export interface ApiProvider {
 	name: string;
+	login?(email: string, password: string): Promise<Session>;
+	loginByToken?(token: string): Promise<Session>;
 	getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<PaginatedResult<Post>>;
 	getPost(id: number): Promise<Post>;
 	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
