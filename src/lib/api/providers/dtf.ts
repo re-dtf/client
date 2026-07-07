@@ -9,10 +9,10 @@ async function refreshSession(): Promise<boolean> {
 	if (!session || !session.refreshToken) return false;
 
 	const formData = new FormData();
-	formData.append('refreshToken', session.refreshToken);
+	formData.append('token', session.refreshToken);
 
 	try {
-		const response = await fetch(`${baseUrl}/auth/refresh-token`, {
+		const response = await fetch(`${authUrl}/auth/refresh`, {
 			method: 'POST',
 			headers: { 'Accept': 'application/json' },
 			body: formData
@@ -21,8 +21,10 @@ async function refreshSession(): Promise<boolean> {
 		if (!response.ok) return false;
 		
 		const json = await response.json().catch(() => ({}));
-		const newAccessToken = json.data?.accessToken || json.accessToken || response.headers.get('x-auth-token') || response.headers.get('jwtauthorization');
-		const newRefreshToken = json.data?.refreshToken || json.refreshToken || response.headers.get('x-refresh-token') || session.refreshToken;
+		const sessionData = json.data || json;
+		
+		const newAccessToken = sessionData.accessToken || response.headers.get('x-auth-token') || response.headers.get('jwtauthorization');
+		const newRefreshToken = sessionData.refreshToken || response.headers.get('x-refresh-token') || session.refreshToken;
 
 		if (!newAccessToken) return false;
 
@@ -130,28 +132,54 @@ export const dtfApiProvider: ApiProvider = {
 		return sessionData as Session;
 	},
 
-	async loginByToken(token: string): Promise<Session> {
-		// Мы используем фейковую сессию, так как у нас есть только accessToken.
-		// Refresh token нам недоступен при ручном вводе, но сессия будет работать пока токен жив.
+	async loginByToken(tokenStr: string): Promise<Session> {
+		let token = tokenStr.trim();
+		let expTimestamp = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 дней по умолчанию
+		let isRefreshToken = false;
+
+		// Пытаемся распарсить JSON, если пользователь вставил auth-refresh-token или похожий объект
+		try {
+			const parsed = JSON.parse(token);
+			if (parsed.token) {
+				token = parsed.token;
+				// Если это из auth-refresh-token, считаем это refresh токеном
+				isRefreshToken = true; 
+			}
+			if (parsed.expTimestamp) {
+				expTimestamp = parsed.expTimestamp;
+			}
+		} catch (e) {
+			// Если не JSON, то считаем, что это просто строка токена (обычно osnova-aid, т.е. access token)
+		}
+
 		const sessionData: Session = {
 			type: 'Bearer',
-			accessToken: token,
-			refreshToken: '',
-			accessExpTimestamp: Math.floor(Date.now() / 1000) + 86400 * 30, // 30 дней
-			refreshExpTimestamp: 0
+			accessToken: isRefreshToken ? '' : token,
+			refreshToken: isRefreshToken ? token : '',
+			accessExpTimestamp: isRefreshToken ? 0 : expTimestamp,
+			refreshExpTimestamp: isRefreshToken ? expTimestamp : 0
 		};
 		
 		authStorage.session = sessionData;
-		
-		// Проверим токен запросом профиля
-		try {
-			await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
-		} catch (e) {
-			authStorage.logout();
-			throw new Error('Токен недействителен или устарел');
+
+		if (isRefreshToken) {
+			// Пытаемся обновить сессию, чтобы получить access_token
+			const success = await refreshSession();
+			if (!success) {
+				authStorage.logout();
+				throw new Error('Не удалось получить access token по refresh токену. Возможно, он устарел.');
+			}
+		} else {
+			// Проверим access токен запросом профиля
+			try {
+				await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
+			} catch (e) {
+				authStorage.logout();
+				throw new Error('Токен недействителен или устарел');
+			}
 		}
 
-		return sessionData;
+		return authStorage.session!;
 	},
 
 	async reactToComment(commentId: number, reactionId: number): Promise<void> {

@@ -14,7 +14,16 @@ export const api = {
 	},
 
 	async login(email: string, password: string) {
+		if (!dtfApiProvider.login) throw new Error("Вход по паролю в данный момент недоступен");
 		const session = await dtfApiProvider.login(email, password);
+		authStorage.session = session;
+		return session;
+	},
+
+	async loginByToken(token: string) {
+		if (!dtfApiProvider.loginByToken) throw new Error("Вход по токену в данный момент недоступен");
+		const session = await dtfApiProvider.loginByToken(token);
+		// session is already stored in authStorage within the provider, but we can do it here too just in case
 		authStorage.session = session;
 		return session;
 	},

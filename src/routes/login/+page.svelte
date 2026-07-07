@@ -27,7 +27,7 @@
 		error = '';
 
 		try {
-			if (!api.login) throw new Error('Метод логина не реализован в провайдере');
+			if (!api.login) throw new Error('Вход по паролю в данный момент недоступен');
 			await api.login(email, password);
 			goto('/');
 		} catch (err: any) {
@@ -47,7 +47,7 @@
 		error = '';
 
 		try {
-			if (!api.loginByToken) throw new Error('Метод логина по токену не реализован');
+			if (!api.loginByToken) throw new Error('Вход по токену в данный момент недоступен');
 			await api.loginByToken(token.trim());
 			goto('/');
 		} catch (err: any) {
@@ -112,13 +112,13 @@
 				Вход по токену работает напрямую с API DTF без использования серверов-прокси (100% безопасно).<br/><br/>
 				1. Зайдите на официальный сайт dtf.ru<br/>
 				2. Откройте DevTools (F12) -> Application -> Local Storage<br/>
-				3. Скопируйте значение ключа <b>osnova-aid</b> или достаньте токен из запросов.<br/>
-				<em>(Обычно это x-device-token)</em>
+				3. Скопируйте значение ключа <b>osnova-aid</b> или <b>auth-refresh-token</b> целиком.<br/>
+				<em>(Вы можете вставить как сырой токен, так и JSON из поля auth-refresh-token)</em>
 			</div>
 
 			<div class="form-group">
-				<label for="device_secret">Access Token (x-device-token)</label>
-				<input type="text" id="device_secret" name="auth-token-manual" autocomplete="new-password" bind:value={token} required disabled={isLoading} placeholder="Введите ваш токен..." />
+				<label for="device_secret">Токен (osnova-aid / auth-refresh-token)</label>
+				<input type="text" id="device_secret" name="auth-token-manual" autocomplete="new-password" bind:value={token} required disabled={isLoading} placeholder={'Например: {"token":"...","expTimestamp":...}'} />
 			</div>
 
 			{#if error}
