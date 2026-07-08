@@ -62,6 +62,8 @@ export interface Comment {
 
 export interface CommentTreeItem extends Comment {
 	children: CommentTreeItem[];
+	_totalReplies?: number;
+	_formattedDate?: string;
 }
 
 export interface Session {

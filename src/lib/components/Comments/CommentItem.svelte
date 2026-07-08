@@ -2,6 +2,7 @@
 	import type { CommentTreeItem } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { fade } from 'svelte/transition';
+	import { onMount } from 'svelte';
 	import CommentItem from './CommentItem.svelte';
 
 	let {
@@ -11,7 +12,8 @@
 		allComments,
 		nestingMode = 'flatten',
 		onShowPreview,
-		onHidePreview
+		onHidePreview,
+		panObserver
 	} = $props<{
 		comment: CommentTreeItem;
 		depth?: number;
@@ -20,6 +22,7 @@
 		nestingMode?: 'flatten' | 'autopan';
 		onShowPreview?: (comment: CommentTreeItem, x: number, y: number) => void;
 		onHidePreview?: () => void;
+		panObserver?: IntersectionObserver | undefined;
 	}>();
 
 	let visualDepth = $derived(
@@ -32,37 +35,40 @@
 		comment.replyTo ? allComments.get(comment.replyTo) ?? null : null
 	);
 
-	let collapsed = $state(false);
+	let collapsed = $state(depth >= 5 && comment.children?.length > 0);
+
+	let itemElement: HTMLElement;
+	
+	onMount(() => {
+		if (panObserver && itemElement) {
+			panObserver.observe(itemElement);
+		}
+		return () => {
+			if (panObserver && itemElement) {
+				panObserver.unobserve(itemElement);
+			}
+		};
+	});
 
 	function toggleCollapse() {
 		collapsed = !collapsed;
 	}
 
-	function countReplies(c: CommentTreeItem): number {
-		let count = c.children.length;
-		for (const child of c.children) count += countReplies(child);
-		return count;
-	}
-	let totalReplies = $derived(countReplies(comment));
-
-	function handleThreadEnter(e: MouseEvent) {
-		onShowPreview?.(comment, e.clientX, e.clientY);
-	}
-	function handleThreadMove(e: MouseEvent) {
-		onShowPreview?.(comment, e.clientX, e.clientY);
-	}
-	function handleThreadLeave() {
-		onHidePreview?.();
-	}
+	let totalReplies = $derived(comment._totalReplies ?? 0);
 
 	let touchTimer: ReturnType<typeof setTimeout> | undefined;
-	function handleTouchStart(e: TouchEvent) {
-		const t = e.touches[0];
-		touchTimer = setTimeout(() => {
-			onShowPreview?.(comment, t.clientX, t.clientY);
-		}, 300);
+	
+	function handlePointerDown(e: PointerEvent) {
+		if (e.pointerType === 'touch') {
+			touchTimer = setTimeout(() => onShowPreview?.(comment, e.clientX, e.clientY), 300);
+		}
 	}
-	function handleTouchEnd() {
+	
+	function handlePointerMove(e: PointerEvent) {
+		if (e.pointerType === 'mouse') onShowPreview?.(comment, e.clientX, e.clientY);
+	}
+	
+	function handlePointerLeave() {
 		clearTimeout(touchTimer);
 		onHidePreview?.();
 	}
@@ -124,29 +130,16 @@
 		}
 	}
 
-	function formatDate(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'только что';
-		if (mins < 60) return `${mins} мин. назад`;
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return `${hours} ч. назад`;
-		const days = Math.floor(hours / 24);
-		if (days < 7) return `${days} дн. назад`;
-		return new Date(iso).toLocaleDateString('ru-RU');
-	}
 
+
+	const pr = new Intl.PluralRules('ru-RU');
+	const replyForms: Record<string, string> = { one: 'ответ', few: 'ответа', many: 'ответов', other: 'ответов' };
 	function pluralReplies(n: number): string {
-		const mod10 = n % 10;
-		const mod100 = n % 100;
-		if (mod100 >= 11 && mod100 <= 19) return `${n} ответов`;
-		if (mod10 === 1) return `${n} ответ`;
-		if (mod10 >= 2 && mod10 <= 4) return `${n} ответа`;
-		return `${n} ответов`;
+		return `${n} ${replyForms[pr.select(n)]}`;
 	}
 </script>
 
-<div class="comment-item" id="comment-{comment.id}" data-depth={visualDepth}>
+<div class="comment-item" id="comment-{comment.id}" data-depth={visualDepth} bind:this={itemElement}>
 	<div class="comment-body-container">
 		{#if showBreadcrumb && parentComment}
 			<button class="breadcrumb" onclick={scrollToParent}>
@@ -173,7 +166,7 @@
 						💎 {comment.donation} ₽
 					</span>
 				{/if}
-				<span class="date">{formatDate(comment.createdAt)}</span>
+				<span class="date">{comment._formattedDate || 'только что'}</span>
 			</div>
 
 			<div class="comment-content">
@@ -239,12 +232,12 @@
 					<button
 						class="thread-line"
 						onclick={handleThreadClick}
-						onmouseenter={handleThreadEnter}
-						onmousemove={handleThreadMove}
-						onmouseleave={handleThreadLeave}
-						ontouchstart={handleTouchStart}
-						ontouchend={handleTouchEnd}
-						ontouchcancel={handleTouchEnd}
+						onpointerdown={handlePointerDown}
+						onpointermove={handlePointerMove}
+						onpointerleave={handlePointerLeave}
+						onpointerup={handlePointerLeave}
+						onpointercancel={handlePointerLeave}
+						oncontextmenu={(e) => e.preventDefault()}
 						aria-label="Свернуть ветку"
 					>
 						<div class="thread-line-inner"></div>
@@ -261,6 +254,7 @@
 							{nestingMode}
 							{onShowPreview}
 							{onHidePreview}
+							{panObserver}
 						/>
 					{/each}
 				</div>
@@ -309,6 +303,9 @@
 		display: flex;
 		justify-content: center;
 		-webkit-tap-highlight-color: transparent;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
 	}
 	
 	.thread-line-inner {

@@ -31,10 +31,8 @@
 		return { x: adjustedX, y: adjustedY };
 	});
 
-	function stripHtml(html: string, maxLen = 120): string {
-		const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-		if (text.length <= maxLen) return text;
-		return text.slice(0, maxLen) + '…';
+	function stripHtml(html: string): string {
+		return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 	}
 
 	function hasMedia(c: CommentTreeItem): 'image' | 'movie' | null {
@@ -138,6 +136,10 @@
 		margin: 0;
 		color: var(--comment-preview-text-color, #555);
 		word-break: break-word;
+		display: -webkit-box;
+		-webkit-line-clamp: 4;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
 	.media-indicator {

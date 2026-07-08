@@ -22,6 +22,9 @@
 	let observerElement: HTMLElement;
 	let viewportElement: HTMLElement | undefined = $state();
 
+	const panVisibleItems = new Set<HTMLElement>();
+	let panObserver: IntersectionObserver | undefined = $state();
+
 	// Preview state
 	let previewVisible = $state(false);
 	let previewComment = $state<CommentTreeItem | null>(null);
@@ -42,13 +45,30 @@
 	// Dynamic visual depth max depending on screen width
 	let maxVisualDepth = $state(6);
 
+	const rtf = new Intl.RelativeTimeFormat('ru-RU', { numeric: 'auto', style: 'short' });
+	function formatDate(iso: string): string {
+		const diff = Date.now() - new Date(iso).getTime();
+		const mins = Math.floor(diff / 60000);
+		if (mins < 1) return 'только что';
+		if (mins < 60) return rtf.format(-mins, 'minute');
+		const hours = Math.floor(mins / 60);
+		if (hours < 24) return rtf.format(-hours, 'hour');
+		const days = Math.floor(hours / 24);
+		if (days < 7) return rtf.format(-days, 'day');
+		return new Date(iso).toLocaleDateString('ru-RU');
+	}
+
 	// Tree builder
 	function buildTree(flat: Comment[]): CommentTreeItem[] {
 		const map = new Map<number, CommentTreeItem>();
 		const roots: CommentTreeItem[] = [];
 
 		for (const c of flat) {
-			map.set(c.id, { ...c, children: [] });
+			map.set(c.id, { 
+				...c, 
+				children: [],
+				_formattedDate: formatDate(c.createdAt)
+			});
 		}
 
 		for (const c of map.values()) {
@@ -57,6 +77,17 @@
 			} else {
 				roots.push(c);
 			}
+		}
+
+		function enrichCounts(node: CommentTreeItem): number {
+			let total = node.children.length;
+			for (const child of node.children) total += enrichCounts(child);
+			node._totalReplies = total;
+			return total;
+		}
+
+		for (const root of roots) {
+			enrichCounts(root);
 		}
 		
 		allCommentsMap = map;
@@ -77,7 +108,7 @@
 			}
 
 			const result = await api.getComments(postId, cursor, sorting);
-
+			
 			flatComments = [...flatComments, ...result.items];
 			comments = buildTree(flatComments);
 
@@ -106,7 +137,10 @@
 	let exactScrollLeft: number | undefined;
 	let isPanning = false;
 	let lastScrollY = -1;
-	let checkInterval: ReturnType<typeof setInterval>;
+
+	// Object pool for GC optimization
+	const visibleComments: Array<{ weight: number, minDepth: number, maxDepth: number }> = [];
+
 
 	function panLoop() {
 		if (!viewportElement || commentSettings.value.nestingMode !== 'autopan') {
@@ -122,16 +156,18 @@
 			lastScrollY = currentScrollY;
 			targetUpdated = true;
 			
-			const items = document.getElementsByClassName('comment-item');
 			const centerY = window.innerHeight * 0.4;
 			const radius = window.innerHeight * 0.4; // Weight falls off towards screen edges
 			
-			let sumWeight = 0;
-			let sumDepthWeight = 0;
+			let visibleCount = 0;
 			
 			// Continuously blend depths of all comments visible in the viewport
-			for (let i = 0; i < items.length; i++) {
-				const item = items[i] as HTMLElement;
+			for (const item of panVisibleItems) {
+				if (!item.isConnected) {
+					panVisibleItems.delete(item);
+					continue;
+				}
+
 				const body = item.firstElementChild as HTMLElement; // .comment-body-container
 				if (!body) continue;
 
@@ -150,14 +186,10 @@
 					
 					const depth = parseInt(item.getAttribute('data-depth') || '0', 10);
 					
-					// Calculate how much depth this comment actually needs to fit on screen
 					const viewportWidth = viewportElement.clientWidth;
 					const indentPx = 24;
 					const keepVisiblePx = 48;
 					const paddingRight = 32;
-					
-					// Calculate what the current intended depth is (stable anchor)
-					const anchorDepth = (targetScrollLeft + keepVisiblePx) / indentPx;
 					
 					let minDepth = depth + (rect.width + keepVisiblePx + paddingRight - viewportWidth) / indentPx;
 					const maxDepth = depth;
@@ -165,44 +197,58 @@
 					// Sanity clamp minDepth so it doesn't exceed maxDepth
 					minDepth = Math.min(minDepth, maxDepth);
 					
-					// The comment votes for the current depth, but clamps it to its own visibility bounds
-					let effectiveDepth = Math.max(minDepth, Math.min(maxDepth, anchorDepth));
-					
-					// We never pan LESS than 0 overall
-					effectiveDepth = Math.max(0, effectiveDepth);
-
-					sumWeight += weight;
-					sumDepthWeight += effectiveDepth * weight;
+					if (!visibleComments[visibleCount]) {
+						visibleComments[visibleCount] = { weight, minDepth, maxDepth };
+					} else {
+						visibleComments[visibleCount].weight = weight;
+						visibleComments[visibleCount].minDepth = minDepth;
+						visibleComments[visibleCount].maxDepth = maxDepth;
+					}
+					visibleCount++;
 				}
 			}
 
-			if (sumWeight > 0) {
-				const targetDepth = sumDepthWeight / sumWeight;
+			if (visibleCount > 0) {
 				const indentPx = 24; 
 				const keepVisiblePx = 48; 
-				targetScrollLeft = Math.max(0, targetDepth * indentPx - keepVisiblePx);
+				
+				// Use a single pass weighted average. The rAF loop acts as the iterative solver over time.
+				let currentT = (targetScrollLeft + keepVisiblePx) / indentPx;
+				let sumW = 0;
+				let sumD = 0;
+				
+				for (let i = 0; i < visibleCount; i++) {
+					const c = visibleComments[i];
+					let vote = Math.max(c.minDepth, Math.min(c.maxDepth, currentT));
+					vote = Math.max(0, vote); // Never pan less than 0
+					sumW += c.weight;
+					sumD += vote * c.weight;
+				}
+				
+				if (sumW > 0) {
+					currentT = sumD / sumW;
+				}
+				
+				// Round to whole pixels to prevent subpixel text blurriness when settling
+				targetScrollLeft = Math.round(Math.max(0, currentT * indentPx - keepVisiblePx));
 			}
 		}
 
-		let currentScrollX = viewportElement.scrollLeft;
-		
-		// Resync exact scroll if user manually scrolled horizontally
-		if (exactScrollLeft !== undefined && Math.abs(currentScrollX - exactScrollLeft) > 1.5) {
-			exactScrollLeft = currentScrollX;
-		}
 		if (exactScrollLeft === undefined) {
-			exactScrollLeft = currentScrollX;
+			exactScrollLeft = targetScrollLeft;
 		}
 
 		const diff = targetScrollLeft - exactScrollLeft;
+		const listEl = viewportElement.querySelector('.comments-list') as HTMLElement | null;
 		
 		if (Math.abs(diff) > 0.5) {
-			exactScrollLeft += diff * 0.15;
-			viewportElement.scrollLeft = exactScrollLeft;
+			exactScrollLeft += diff * 0.18;
+			// transform supports sub-pixel rendering (no integer rounding like scrollLeft)
+			if (listEl) listEl.style.transform = `translateX(${-exactScrollLeft}px)`;
 			panAnimationFrame = requestAnimationFrame(panLoop);
 		} else {
-			viewportElement.scrollLeft = targetScrollLeft;
 			exactScrollLeft = targetScrollLeft;
+			if (listEl) listEl.style.transform = `translateX(${-exactScrollLeft}px)`;
 			if (!targetUpdated) {
 				isPanning = false; // Sleep to save CPU
 			} else {
@@ -227,19 +273,33 @@
 			maxVisualDepth = e.matches ? 3 : 6;
 		});
 
-		// A slow heartbeat to force recalculations on layout shifts (resizes, expanding comments)
-		checkInterval = setInterval(() => {
+		panObserver = new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) panVisibleItems.add(entry.target as HTMLElement);
+				else panVisibleItems.delete(entry.target as HTMLElement);
+			}
+		}, { rootMargin: '200px 0px' });
+
+		// Use ResizeObserver instead of setInterval for layout shifts
+		const resizeObserver = new ResizeObserver((entries) => {
 			if (!viewportElement) return;
-			
-			const mainWidth = Math.max(200, viewportElement.clientWidth - 64);
+			const width = entries[0].contentRect.width;
+			const mainWidth = Math.max(200, width - 64);
 			viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
 
 			if (commentSettings.value.nestingMode === 'autopan' && !isPanning) {
+				const prevTarget = targetScrollLeft;
 				lastScrollY = -1; // Force recalculation
 				isPanning = true;
 				panLoop();
+				// If target didn't meaningfully change, don't animate — just snap
+				if (Math.abs(targetScrollLeft - prevTarget) < 0.5) {
+					isPanning = false;
+					cancelAnimationFrame(panAnimationFrame);
+				}
 			}
-		}, 300);
+		});
+		if (viewportElement) resizeObserver.observe(viewportElement);
 
 		window.addEventListener('scroll', handleScroll, { passive: true });
 
@@ -256,7 +316,8 @@
 
 		return () => {
 			observer.disconnect();
-			clearInterval(checkInterval);
+			if (panObserver) panObserver.disconnect();
+			resizeObserver.disconnect();
 			cancelAnimationFrame(panAnimationFrame);
 			window.removeEventListener('scroll', handleScroll);
 		};
@@ -308,6 +369,7 @@
 					nestingMode={commentSettings.value.nestingMode}
 					onShowPreview={showPreview}
 					onHidePreview={hidePreview}
+					{panObserver}
 				/>
 			{/each}
 		</div>
@@ -383,8 +445,7 @@
 	}
 
 	.comments-section.autopan .comments-viewport {
-		overflow-x: hidden;
-		scroll-behavior: auto; /* Handled by JS lerp */
+		overflow: hidden;
 		mask-image: linear-gradient(to right, black 95%, transparent 100%);
 		-webkit-mask-image: linear-gradient(to right, black 95%, transparent 100%);
 	}
@@ -392,6 +453,7 @@
 	.comments-section.autopan .comments-list {
 		width: max-content;
 		padding-right: 32px;
+		will-change: transform;
 	}
 
 	.empty {
