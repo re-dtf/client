@@ -6,6 +6,7 @@
 	import CommentPreview from './CommentPreview.svelte';
 	import Spinner from '../Spinner.svelte';
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
+	import { PanoramaEngine } from './panoramaEngine.svelte';
 
 	let { postId, commentsCount = 0 } = $props<{ postId: number; commentsCount?: number }>();
 
@@ -22,8 +23,7 @@
 	let observerElement: HTMLElement;
 	let viewportElement: HTMLElement | undefined = $state();
 
-	const panVisibleItems = new Set<HTMLElement>();
-	let panObserver: IntersectionObserver | undefined = $state();
+	const engine = new PanoramaEngine();
 
 	// Preview state
 	let previewVisible = $state(false);
@@ -130,139 +130,7 @@
 		loadComments(true);
 	}
 
-	// Auto-pan logic
-	let panAnimationFrame: number;
-	
-	let targetScrollLeft = 0;
-	let exactScrollLeft: number | undefined;
-	let isPanning = false;
-	let lastScrollY = -1;
-
-	// Object pool for GC optimization
-	const visibleComments: Array<{ weight: number, minDepth: number, maxDepth: number }> = [];
-
-
-	function panLoop() {
-		if (!viewportElement || commentSettings.value.nestingMode !== 'autopan') {
-			isPanning = false;
-			return;
-		}
-
-		const currentScrollY = window.scrollY;
-		let targetUpdated = false;
-
-		// Only recalculate the complex DOM bounds if the user actually scrolled vertically
-		if (currentScrollY !== lastScrollY) {
-			lastScrollY = currentScrollY;
-			targetUpdated = true;
-			
-			const centerY = window.innerHeight * 0.4;
-			const radius = window.innerHeight * 0.4; // Weight falls off towards screen edges
-			
-			let visibleCount = 0;
-			
-			// Continuously blend depths of all comments visible in the viewport
-			for (const item of panVisibleItems) {
-				if (!item.isConnected) {
-					panVisibleItems.delete(item);
-					continue;
-				}
-
-				const body = item.firstElementChild as HTMLElement; // .comment-body-container
-				if (!body) continue;
-
-				const rect = body.getBoundingClientRect();
-				
-				// Fast culling
-				if (rect.bottom < centerY - radius || rect.top > centerY + radius) continue;
-
-				const bodyCenterY = rect.top + rect.height / 2;
-				const distance = Math.abs(bodyCenterY - centerY);
-				
-				if (distance < radius) {
-					// Smoothstep weight curve for buttery continuous transitions
-					const x = 1 - distance / radius;
-					const weight = x * x * (3 - 2 * x);
-					
-					const depth = parseInt(item.getAttribute('data-depth') || '0', 10);
-					
-					const viewportWidth = viewportElement.clientWidth;
-					const indentPx = 24;
-					const keepVisiblePx = 48;
-					const paddingRight = 32;
-					
-					let minDepth = depth + (rect.width + keepVisiblePx + paddingRight - viewportWidth) / indentPx;
-					const maxDepth = depth;
-					
-					// Sanity clamp minDepth so it doesn't exceed maxDepth
-					minDepth = Math.min(minDepth, maxDepth);
-					
-					if (!visibleComments[visibleCount]) {
-						visibleComments[visibleCount] = { weight, minDepth, maxDepth };
-					} else {
-						visibleComments[visibleCount].weight = weight;
-						visibleComments[visibleCount].minDepth = minDepth;
-						visibleComments[visibleCount].maxDepth = maxDepth;
-					}
-					visibleCount++;
-				}
-			}
-
-			if (visibleCount > 0) {
-				const indentPx = 24; 
-				const keepVisiblePx = 48; 
-				
-				// Use a single pass weighted average. The rAF loop acts as the iterative solver over time.
-				let currentT = (targetScrollLeft + keepVisiblePx) / indentPx;
-				let sumW = 0;
-				let sumD = 0;
-				
-				for (let i = 0; i < visibleCount; i++) {
-					const c = visibleComments[i];
-					let vote = Math.max(c.minDepth, Math.min(c.maxDepth, currentT));
-					vote = Math.max(0, vote); // Never pan less than 0
-					sumW += c.weight;
-					sumD += vote * c.weight;
-				}
-				
-				if (sumW > 0) {
-					currentT = sumD / sumW;
-				}
-				
-				// Round to whole pixels to prevent subpixel text blurriness when settling
-				targetScrollLeft = Math.round(Math.max(0, currentT * indentPx - keepVisiblePx));
-			}
-		}
-
-		if (exactScrollLeft === undefined) {
-			exactScrollLeft = targetScrollLeft;
-		}
-
-		const diff = targetScrollLeft - exactScrollLeft;
-		const listEl = viewportElement.querySelector('.comments-list') as HTMLElement | null;
-		
-		if (Math.abs(diff) > 0.5) {
-			exactScrollLeft += diff * 0.18;
-			// transform supports sub-pixel rendering (no integer rounding like scrollLeft)
-			if (listEl) listEl.style.transform = `translateX(${-exactScrollLeft}px)`;
-			panAnimationFrame = requestAnimationFrame(panLoop);
-		} else {
-			exactScrollLeft = targetScrollLeft;
-			if (listEl) listEl.style.transform = `translateX(${-exactScrollLeft}px)`;
-			if (!targetUpdated) {
-				isPanning = false; // Sleep to save CPU
-			} else {
-				panAnimationFrame = requestAnimationFrame(panLoop); // Keep watching scroll
-			}
-		}
-	}
-
-	function handleScroll() {
-		if (commentSettings.value.nestingMode === 'autopan' && !isPanning) {
-			isPanning = true;
-			panLoop();
-		}
-	}
+	// Auto-pan engine initialized above
 
 	onMount(() => {
 		loadComments(true);
@@ -273,35 +141,7 @@
 			maxVisualDepth = e.matches ? 3 : 6;
 		});
 
-		panObserver = new IntersectionObserver((entries) => {
-			for (const entry of entries) {
-				if (entry.isIntersecting) panVisibleItems.add(entry.target as HTMLElement);
-				else panVisibleItems.delete(entry.target as HTMLElement);
-			}
-		}, { rootMargin: '200px 0px' });
-
-		// Use ResizeObserver instead of setInterval for layout shifts
-		const resizeObserver = new ResizeObserver((entries) => {
-			if (!viewportElement) return;
-			const width = entries[0].contentRect.width;
-			const mainWidth = Math.max(200, width - 64);
-			viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
-
-			if (commentSettings.value.nestingMode === 'autopan' && !isPanning) {
-				const prevTarget = targetScrollLeft;
-				lastScrollY = -1; // Force recalculation
-				isPanning = true;
-				panLoop();
-				// If target didn't meaningfully change, don't animate — just snap
-				if (Math.abs(targetScrollLeft - prevTarget) < 0.5) {
-					isPanning = false;
-					cancelAnimationFrame(panAnimationFrame);
-				}
-			}
-		});
-		if (viewportElement) resizeObserver.observe(viewportElement);
-
-		window.addEventListener('scroll', handleScroll, { passive: true });
+		if (viewportElement) engine.mount(viewportElement);
 
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -316,10 +156,7 @@
 
 		return () => {
 			observer.disconnect();
-			if (panObserver) panObserver.disconnect();
-			resizeObserver.disconnect();
-			cancelAnimationFrame(panAnimationFrame);
-			window.removeEventListener('scroll', handleScroll);
+			engine.destroy();
 		};
 	});
 </script>
@@ -369,7 +206,7 @@
 					nestingMode={commentSettings.value.nestingMode}
 					onShowPreview={showPreview}
 					onHidePreview={hidePreview}
-					{panObserver}
+					panObserver={engine.panObserver}
 				/>
 			{/each}
 		</div>
@@ -440,9 +277,6 @@
 		width: 100%;
 	}
 
-	.comments-section.autopan {
-		/* width is dynamically applied in JS directly to the viewport */
-	}
 
 	.comments-section.autopan .comments-viewport {
 		overflow: hidden;
