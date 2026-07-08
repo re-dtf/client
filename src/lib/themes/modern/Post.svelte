@@ -62,7 +62,6 @@
 		transition: transform 0.2s, box-shadow 0.2s;
 	}
 	.card:hover {
-		transform: translateY(-2px);
 		box-shadow: 0 8px 30px rgba(0,0,0,0.08);
 	}
 	.author-avatar {
