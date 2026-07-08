@@ -1,9 +1,12 @@
 <script lang="ts">
 	import type { CommentTreeItem } from '$lib/api/types';
-	import { api } from '$lib/api/index.svelte';
-	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import CommentItem from './CommentItem.svelte';
+	import CommentReactions from './CommentReactions.svelte';
+	import CommentMedia from './CommentMedia.svelte';
+	import CommentHeader from './CommentHeader.svelte';
+	import CommentThreadLine from './CommentThreadLine.svelte';
+	import CommentBreadcrumb from './CommentBreadcrumb.svelte';
 
 	let {
 		comment,
@@ -56,80 +59,6 @@
 
 	let totalReplies = $derived(comment._totalReplies ?? 0);
 
-	let touchTimer: ReturnType<typeof setTimeout> | undefined;
-	
-	function handlePointerDown(e: PointerEvent) {
-		if (e.pointerType === 'touch') {
-			touchTimer = setTimeout(() => onShowPreview?.(comment, e.clientX, e.clientY), 300);
-		}
-	}
-	
-	function handlePointerMove(e: PointerEvent) {
-		if (e.pointerType === 'mouse') onShowPreview?.(comment, e.clientX, e.clientY);
-	}
-	
-	function handlePointerLeave() {
-		clearTimeout(touchTimer);
-		onHidePreview?.();
-	}
-
-	function handleThreadClick() {
-		onHidePreview?.();
-		toggleCollapse();
-	}
-
-	function scrollToParent() {
-		if (!comment.replyTo) return;
-		const el = document.getElementById(`comment-${comment.replyTo}`);
-		if (el) {
-			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			el.classList.add('highlighted');
-			setTimeout(() => el.classList.remove('highlighted'), 2000);
-		}
-	}
-
-	const REACTION_EMOJIS: Record<number, string> = {
-		1: '❤️', 2: '🔥', 3: '😢', 4: '😂', 6: '😮', 9: '🍿',
-		22: '😎', 23: '😐', 24: '👀', 25: '🤡',
-		36: '👏', 40: '🤦‍♂️', 44: '😽', 45: '🐈'
-	};
-
-	let reactionError = $state<string | null>(null);
-
-	async function react(reactionId: number) {
-		if (!comment.reactions) return;
-		const prevReactionId = comment.reactions.reactionId;
-		const prevCounters = comment.reactions.counters.map((c) => ({ ...c }));
-		try {
-			const existing = comment.reactions.counters.find((c) => c.id === reactionId);
-			let targetReactionId = reactionId;
-			if (comment.reactions.reactionId === reactionId) {
-				comment.reactions.reactionId = 0;
-				if (existing) existing.count--;
-				targetReactionId = 0;
-			} else {
-				if (comment.reactions.reactionId) {
-					const old = comment.reactions.counters.find((c) => c.id === comment.reactions.reactionId);
-					if (old) old.count--;
-				}
-				comment.reactions.reactionId = reactionId;
-				if (existing) existing.count++;
-				else comment.reactions.counters.push({ id: reactionId, count: 1 });
-			}
-			await api.reactToComment(comment.id, targetReactionId);
-		} catch (e: any) {
-			comment.reactions.reactionId = prevReactionId;
-			comment.reactions.counters = prevCounters;
-			const msg = e.message || '';
-			if (msg.includes('403') || msg.toLowerCase().includes('недостаточно прав')) {
-				reactionError = 'Для этой реакции нужен DTF Plus';
-			} else {
-				reactionError = 'Ошибка: ' + msg;
-			}
-			setTimeout(() => { reactionError = null; }, 3000);
-		}
-	}
-
 
 
 	const pr = new Intl.PluralRules('ru-RU');
@@ -142,86 +71,21 @@
 <div class="comment-item" id="comment-{comment.id}" data-depth={visualDepth} bind:this={itemElement}>
 	<div class="comment-body-container">
 		{#if showBreadcrumb && parentComment}
-			<button class="breadcrumb" onclick={scrollToParent}>
-				↩
-				{#if parentComment.author.avatarUrl}
-					<img class="breadcrumb-avatar" src={parentComment.author.avatarUrl} alt="" />
-				{/if}
-				{parentComment.author.name}
-			</button>
+			<CommentBreadcrumb {parentComment} replyToId={comment.replyTo!} />
 		{/if}
 
 		{#if comment.isRemoved}
 			<div class="removed-msg">Комментарий удален</div>
 		{:else}
-			<div class="comment-header">
-				{#if comment.author.avatarUrl}
-					<img src={comment.author.avatarUrl} alt={comment.author.name} class="avatar" />
-				{:else}
-					<div class="avatar-fallback">{comment.author.name.charAt(0).toUpperCase()}</div>
-				{/if}
-				<span class="author">{comment.author.name}</span>
-				{#if comment.donation}
-					<span class="donation-badge" title="Донат {comment.donation} ₽">
-						💎 {comment.donation} ₽
-					</span>
-				{/if}
-				<span class="date">{comment._formattedDate || 'только что'}</span>
-			</div>
+			<CommentHeader {comment} />
 
 			<div class="comment-content">
 				{@html comment.content}
 			</div>
 
-			{#if comment.media?.length}
-				<div class="comment-media">
-					{#each comment.media as m}
-						{#if m.type === 'image'}
-							<img
-								src="https://leonardo.osnova.io/{m.data.uuid}/-/preview/400/-/format/webp/"
-								alt=""
-								loading="lazy"
-								style="aspect-ratio: {m.data.width}/{m.data.height}; background-color: #{m.data.color || 'eee'};"
-								class="comment-img"
-							/>
-						{:else if m.type === 'movie'}
-							<video
-								src="https://leonardo.osnova.io/{m.data.uuid}/-/format/mp4/"
-								autoplay
-								loop
-								muted
-								playsinline
-								class="comment-video"
-								style="aspect-ratio: {m.data.width}/{m.data.height};"
-							></video>
-						{/if}
-					{/each}
-				</div>
-			{/if}
+			<CommentMedia media={comment.media} />
 
-			<div class="comment-actions">
-				{#if comment.reactions && comment.reactions.counters.length > 0}
-					{#each comment.reactions.counters.filter((c) => c.count > 0) as reaction (reaction.id)}
-						<button
-							class="reaction-chip"
-							class:active={comment.reactions.reactionId === reaction.id}
-							onclick={() => react(reaction.id)}
-						>
-							<span class="emoji">{REACTION_EMOJIS[reaction.id] || `#${reaction.id}`}</span>
-							<span class="count">{reaction.count}</span>
-						</button>
-					{/each}
-				{/if}
-				{#if !comment.reactions || comment.reactions.counters.every((c) => c.count === 0)}
-					<button class="reaction-chip" onclick={() => react(1)}>
-						<span class="emoji">❤️</span>
-					</button>
-				{/if}
-
-				{#if reactionError}
-					<span class="reaction-error" transition:fade={{ duration: 200 }}>{reactionError}</span>
-				{/if}
-			</div>
+			<CommentReactions {comment} />
 		{/if}
 	</div>
 
@@ -229,19 +93,12 @@
 		{#if !collapsed}
 			<div class="replies-container" class:flat={visualDepth >= maxVisualDepth && nestingMode === 'flatten'}>
 				{#if !(visualDepth >= maxVisualDepth && nestingMode === 'flatten')}
-					<button
-						class="thread-line"
-						onclick={handleThreadClick}
-						onpointerdown={handlePointerDown}
-						onpointermove={handlePointerMove}
-						onpointerleave={handlePointerLeave}
-						onpointerup={handlePointerLeave}
-						onpointercancel={handlePointerLeave}
-						oncontextmenu={(e) => e.preventDefault()}
-						aria-label="Свернуть ветку"
-					>
-						<div class="thread-line-inner"></div>
-					</button>
+					<CommentThreadLine 
+						{comment}
+						{onShowPreview}
+						{onHidePreview}
+						onToggleCollapse={toggleCollapse}
+					/>
 				{/if}
 				
 				<div class="replies">
@@ -292,93 +149,14 @@
 		display: block;
 	}
 
-	.thread-line {
-		width: 24px;
-		flex-shrink: 0;
-		padding: 0;
-		margin: 0;
-		background: none;
-		border: none;
-		cursor: pointer;
-		display: flex;
-		justify-content: center;
-		-webkit-tap-highlight-color: transparent;
-		user-select: none;
-		-webkit-user-select: none;
-		-webkit-touch-callout: none;
-	}
-	
-	.thread-line-inner {
-		width: 2px;
-		min-height: 100%;
-		background: var(--comment-thread-color, #e0e0e0);
-		border-radius: 1px;
-		transition: background-color 0.15s, width 0.15s;
-	}
-	
-	.thread-line:hover .thread-line-inner {
-		width: 3px;
-		background: var(--comment-thread-hover, #6e8efb);
-	}
+
 
 	.replies {
 		flex: 1;
 		min-width: 0;
 	}
 
-	.avatar {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		object-fit: cover;
-		flex-shrink: 0;
-	}
-	
-	.avatar-fallback {
-		width: 28px;
-		height: 28px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #6e8efb, #a777e3);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: white;
-		font-size: 12px;
-		font-weight: 600;
-		flex-shrink: 0;
-	}
 
-	.comment-header {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin-bottom: 4px;
-		flex-wrap: wrap;
-	}
-	
-	.author {
-		font-weight: 600;
-		font-size: 0.9em;
-		color: var(--comment-author-color, inherit);
-	}
-	
-	.date {
-		font-size: 0.78em;
-		color: var(--comment-date-color, #999);
-	}
-
-	.donation-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 3px;
-		padding: 1px 8px;
-		border-radius: 10px;
-		font-size: 0.75em;
-		font-weight: 600;
-		background: var(--comment-donation-bg, linear-gradient(135deg, #fff8e1, #ffecb3));
-		color: var(--comment-donation-color, #f57f17);
-		border: 1px solid var(--comment-donation-border, rgba(245, 127, 23, 0.2));
-	}
 
 	.comment-content {
 		line-height: 1.55;
@@ -395,102 +173,11 @@
 		margin-bottom: 0;
 	}
 
-	.comment-media {
-		margin-top: 8px;
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-	
-	.comment-img,
-	.comment-video {
-		max-width: min(100%, 400px);
-		height: auto;
-		border-radius: var(--comment-media-radius, 8px);
-		display: block;
-	}
 
-	.breadcrumb {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 2px 8px;
-		margin-bottom: 6px;
-		border-radius: 6px;
-		background: var(--comment-breadcrumb-bg, rgba(128, 128, 128, 0.08));
-		border: none;
-		color: var(--comment-breadcrumb-color, #666);
-		font-size: 0.8em;
-		cursor: pointer;
-		transition: background 0.15s;
-	}
-	
-	.breadcrumb:hover {
-		background: var(--comment-breadcrumb-bg-hover, rgba(128, 128, 128, 0.15));
-	}
-	
-	.breadcrumb-avatar {
-		width: 16px;
-		height: 16px;
-		border-radius: 50%;
-		object-fit: cover;
-	}
 
-	.comment-actions {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		margin-top: 6px;
-		font-size: 0.88em;
-		flex-wrap: wrap;
-	}
-	
-	.reaction-chip {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		padding: 2px 8px;
-		background: var(--comment-reaction-bg, #f0f2f5);
-		border: 1px solid transparent;
-		border-radius: 12px;
-		font-size: 0.85em;
-		cursor: pointer;
-		color: inherit;
-		transition:
-			background 0.15s,
-			border-color 0.15s,
-			transform 0.1s;
-	}
-	
-	.reaction-chip:hover {
-		background: var(--comment-reaction-hover, #e4e6eb);
-		transform: scale(1.05);
-	}
-	
-	.reaction-chip:active {
-		transform: scale(0.95);
-	}
-	
-	.reaction-chip.active {
-		border-color: var(--comment-reaction-active-border, #6e8efb);
-		background: var(--comment-reaction-active, rgba(110, 142, 251, 0.1));
-	}
-	
-	.reaction-chip .emoji {
-		line-height: 1;
-	}
-	
-	.reaction-chip .count {
-		font-weight: 500;
-	}
-	
-	.reaction-error {
-		color: #e53935;
-		font-size: 0.82em;
-		background: rgba(229, 57, 53, 0.08);
-		padding: 2px 8px;
-		border-radius: 6px;
-	}
+
+
+
 
 	.collapsed-actions {
 		padding-left: 24px;
