@@ -5,8 +5,10 @@
 	import CommentItem from './CommentItem.svelte';
 	import CommentPreview from './CommentPreview.svelte';
 	import Spinner from '../Spinner.svelte';
+	import CommentsHeader from './CommentsHeader.svelte';
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
 	import { PanoramaEngine } from './panoramaEngine.svelte';
+	import { buildTree } from './commentUtils';
 
 	let { postId, commentsCount = 0 } = $props<{ postId: number; commentsCount?: number }>();
 
@@ -45,54 +47,6 @@
 	// Dynamic visual depth max depending on screen width
 	let maxVisualDepth = $state(6);
 
-	const rtf = new Intl.RelativeTimeFormat('ru-RU', { numeric: 'auto', style: 'short' });
-	function formatDate(iso: string): string {
-		const diff = Date.now() - new Date(iso).getTime();
-		const mins = Math.floor(diff / 60000);
-		if (mins < 1) return 'только что';
-		if (mins < 60) return rtf.format(-mins, 'minute');
-		const hours = Math.floor(mins / 60);
-		if (hours < 24) return rtf.format(-hours, 'hour');
-		const days = Math.floor(hours / 24);
-		if (days < 7) return rtf.format(-days, 'day');
-		return new Date(iso).toLocaleDateString('ru-RU');
-	}
-
-	// Tree builder
-	function buildTree(flat: Comment[]): CommentTreeItem[] {
-		const map = new Map<number, CommentTreeItem>();
-		const roots: CommentTreeItem[] = [];
-
-		for (const c of flat) {
-			map.set(c.id, { 
-				...c, 
-				children: [],
-				_formattedDate: formatDate(c.createdAt)
-			});
-		}
-
-		for (const c of map.values()) {
-			if (c.replyTo && map.has(c.replyTo)) {
-				map.get(c.replyTo)!.children.push(c);
-			} else {
-				roots.push(c);
-			}
-		}
-
-		function enrichCounts(node: CommentTreeItem): number {
-			let total = node.children.length;
-			for (const child of node.children) total += enrichCounts(child);
-			node._totalReplies = total;
-			return total;
-		}
-
-		for (const root of roots) {
-			enrichCounts(root);
-		}
-		
-		allCommentsMap = map;
-		return roots;
-	}
 
 	async function loadComments(reset = false) {
 		if (loading || (!hasMore && !reset)) return;
@@ -110,7 +64,9 @@
 			const result = await api.getComments(postId, cursor, sorting);
 			
 			flatComments = [...flatComments, ...result.items];
-			comments = buildTree(flatComments);
+			const tree = buildTree(flatComments);
+			comments = tree.roots;
+			allCommentsMap = tree.map;
 
 			if (result.lastId && result.lastSortingValue) {
 				cursor = { lastId: result.lastId, lastSortingValue: result.lastSortingValue };
@@ -169,19 +125,7 @@
 />
 
 <div class="comments-section" class:autopan={commentSettings.value.nestingMode === 'autopan'}>
-	<div class="header">
-		<h3>
-			<span class="header-icon">💬</span>
-			Комментарии
-			{#if commentsCount > 0}
-				<span class="count">{commentsCount}</span>
-			{/if}
-		</h3>
-		<select value={sorting} onchange={onSortingChange}>
-			<option value="date">Свежие</option>
-			<option value="hotness">Популярные</option>
-		</select>
-	</div>
+	<CommentsHeader {commentsCount} {sorting} {onSortingChange} />
 
 	{#if comments.length === 0 && loading}
 		<div class="initial-loading">
@@ -232,45 +176,7 @@
 		border-radius: var(--comment-radius, 0px);
 	}
 
-	.header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 24px;
-	}
 
-	.header h3 {
-		margin: 0;
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 1.4em;
-		color: var(--comment-header-color, inherit);
-	}
-
-	.header-icon {
-		font-size: 1.1em;
-	}
-
-	.count {
-		font-size: 0.75em;
-		color: var(--comment-count-color, #888);
-		background: var(--comment-breadcrumb-bg, rgba(0,0,0,0.05));
-		padding: 2px 8px;
-		border-radius: 12px;
-		font-weight: 500;
-	}
-
-	select {
-		padding: 6px 12px;
-		border-radius: 8px;
-		border: 1px solid var(--comment-select-border, #ccc);
-		background: var(--comment-select-bg, transparent);
-		color: var(--comment-select-color, inherit);
-		font-weight: 500;
-		cursor: pointer;
-		outline: none;
-	}
 
 	.comments-viewport {
 		position: relative;
