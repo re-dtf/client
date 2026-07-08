@@ -283,7 +283,7 @@
 	
 	.comment-body-container {
 		padding: 10px 12px 2px 0;
-		width: var(--comment-main-width, auto);
+		width: fit-content;
 		max-width: var(--comment-main-width, 100%);
 		box-sizing: border-box;
 		word-break: break-word;

@@ -103,6 +103,7 @@
 	let panAnimationFrame: number;
 	
 	let targetScrollLeft = 0;
+	let exactScrollLeft: number | undefined;
 	let isPanning = false;
 	let lastScrollY = -1;
 	let checkInterval: ReturnType<typeof setInterval>;
@@ -148,8 +149,30 @@
 					const weight = x * x * (3 - 2 * x);
 					
 					const depth = parseInt(item.getAttribute('data-depth') || '0', 10);
+					
+					// Calculate how much depth this comment actually needs to fit on screen
+					const viewportWidth = viewportElement.clientWidth;
+					const indentPx = 24;
+					const keepVisiblePx = 48;
+					const paddingRight = 32;
+					
+					// Calculate what the current intended depth is (stable anchor)
+					const anchorDepth = (targetScrollLeft + keepVisiblePx) / indentPx;
+					
+					let minDepth = depth + (rect.width + keepVisiblePx + paddingRight - viewportWidth) / indentPx;
+					const maxDepth = depth;
+					
+					// Sanity clamp minDepth so it doesn't exceed maxDepth
+					minDepth = Math.min(minDepth, maxDepth);
+					
+					// The comment votes for the current depth, but clamps it to its own visibility bounds
+					let effectiveDepth = Math.max(minDepth, Math.min(maxDepth, anchorDepth));
+					
+					// We never pan LESS than 0 overall
+					effectiveDepth = Math.max(0, effectiveDepth);
+
 					sumWeight += weight;
-					sumDepthWeight += depth * weight;
+					sumDepthWeight += effectiveDepth * weight;
 				}
 			}
 
@@ -161,16 +184,25 @@
 			}
 		}
 
-		const currentScrollX = viewportElement.scrollLeft;
-		const diff = targetScrollLeft - currentScrollX;
+		let currentScrollX = viewportElement.scrollLeft;
+		
+		// Resync exact scroll if user manually scrolled horizontally
+		if (exactScrollLeft !== undefined && Math.abs(currentScrollX - exactScrollLeft) > 1.5) {
+			exactScrollLeft = currentScrollX;
+		}
+		if (exactScrollLeft === undefined) {
+			exactScrollLeft = currentScrollX;
+		}
+
+		const diff = targetScrollLeft - exactScrollLeft;
 		
 		if (Math.abs(diff) > 0.5) {
-			const move = diff * 0.15;
-			const actualMove = Math.abs(move) < 0.5 ? Math.sign(move) * 0.5 : move;
-			viewportElement.scrollLeft = currentScrollX + actualMove;
+			exactScrollLeft += diff * 0.15;
+			viewportElement.scrollLeft = exactScrollLeft;
 			panAnimationFrame = requestAnimationFrame(panLoop);
 		} else {
 			viewportElement.scrollLeft = targetScrollLeft;
+			exactScrollLeft = targetScrollLeft;
 			if (!targetUpdated) {
 				isPanning = false; // Sleep to save CPU
 			} else {
