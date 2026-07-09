@@ -62,8 +62,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 			setAuth(untrack(() => authStorage.dtfToken));
 			response = await doFetch();
 		} else if (authHeader === 'JWTAuthorization') {
-			authStorage.logout();
-			if (typeof window !== 'undefined') window.location.reload();
+			if (typeof window !== 'undefined') {
+				const sessionStr = JSON.stringify(untrack(() => authStorage.session), null, 2);
+				window.alert(`[DTF API Error] 401 Unauthorized (JWTAuthorization)\n\nНе удалось обновить токен. Автовыход отключен.\nСессия: ${sessionStr}`);
+			}
 		} else {
 			headers.delete(authHeader);
 			response = await doFetch();
@@ -169,7 +171,9 @@ export const dtfApiProvider: ApiProvider = {
 			// Пытаемся обновить сессию, чтобы получить access_token
 			const success = await refreshSession();
 			if (!success) {
-				authStorage.logout();
+				if (typeof window !== 'undefined') {
+					window.alert(`[DTF API Error] Не удалось обновить токен.\n\nRefresh Token: ${token}\nАвтовыход отключен.`);
+				}
 				throw new Error('Не удалось получить access token по refresh токену. Возможно, он устарел.');
 			}
 		} else {
@@ -177,7 +181,9 @@ export const dtfApiProvider: ApiProvider = {
 			try {
 				await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
 			} catch (e) {
-				authStorage.logout();
+				if (typeof window !== 'undefined') {
+					window.alert(`[DTF API Error] Ошибка проверки токена профиля.\n\nAccess Token: ${token}\nОшибка: ${e}\nАвтовыход отключен.`);
+				}
 				throw new Error('Токен недействителен или устарел');
 			}
 		}
