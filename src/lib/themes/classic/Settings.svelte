@@ -56,7 +56,7 @@
 		<p class="description">Режим отображения глубоко вложенных комментариев.</p>
 		
 		<div class="control nesting-control">
-			<label>Режим вложенности:</label>
+			<span style="font-weight: 500;">Режим вложенности:</span>
 			<div class="radio-group">
 				<label class="radio-label">
 					<input type="radio" name="nesting" checked={nestingMode === 'flatten'} onchange={() => updateNestingMode('flatten')} />

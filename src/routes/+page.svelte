@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import type { FeedResult } from '$lib/api/types';
+	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	let feedResult = $state<FeedResult | null>(null);
+	let feedResult = $state<PaginatedResult<Post> | null>(null);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);

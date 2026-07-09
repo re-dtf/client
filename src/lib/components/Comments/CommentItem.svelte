@@ -38,7 +38,8 @@
 		comment.replyTo ? allComments.get(comment.replyTo) ?? null : null
 	);
 
-	let collapsed = $state(depth >= 5 && comment.children?.length > 0);
+	// svelte-ignore state_referenced_locally
+	let collapsed = $state(depth >= 5 && (comment.children?.length ?? 0) > 0);
 
 	let itemElement: HTMLElement;
 	

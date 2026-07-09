@@ -13,7 +13,7 @@ export default defineConfig({
 				fallback: 'index.html'
 			}),
 			paths: {
-				base: process.env.BASE_PATH || ''
+				base: (process.env.BASE_PATH as `/${string}`) || ''
 			},
 			prerender: {
 				handleUnseenRoutes: 'ignore'

@@ -16,9 +16,9 @@
 	async function react(reactionId: number) {
 		if (!comment.reactions) return;
 		const prevReactionId = comment.reactions.reactionId;
-		const prevCounters = comment.reactions.counters.map((c) => ({ ...c }));
+		const prevCounters = comment.reactions.counters.map((c: any) => ({ ...c }));
 		try {
-			const existing = comment.reactions.counters.find((c) => c.id === reactionId);
+			const existing = comment.reactions.counters.find((c: any) => c.id === reactionId);
 			let targetReactionId = reactionId;
 			if (comment.reactions.reactionId === reactionId) {
 				comment.reactions.reactionId = 0;
@@ -26,7 +26,7 @@
 				targetReactionId = 0;
 			} else {
 				if (comment.reactions.reactionId) {
-					const old = comment.reactions.counters.find((c) => c.id === comment.reactions.reactionId);
+					const old = comment.reactions.counters.find((c: any) => c.id === comment.reactions.reactionId);
 					if (old) old.count--;
 				}
 				comment.reactions.reactionId = reactionId;
@@ -50,7 +50,7 @@
 
 <div class="comment-actions">
 	{#if comment.reactions && comment.reactions.counters.length > 0}
-		{#each comment.reactions.counters.filter((c) => c.count > 0) as reaction (reaction.id)}
+		{#each comment.reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
 			<button
 				class="reaction-chip"
 				class:active={comment.reactions.reactionId === reaction.id}
@@ -61,7 +61,7 @@
 			</button>
 		{/each}
 	{/if}
-	{#if !comment.reactions || comment.reactions.counters.every((c) => c.count === 0)}
+	{#if !comment.reactions || comment.reactions.counters.every((c: any) => c.count === 0)}
 		<button class="reaction-chip" onclick={() => react(1)}>
 			<span class="emoji">❤️</span>
 		</button>

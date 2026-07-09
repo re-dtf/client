@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { MediaItem } from '$lib/api/types';
+	import type { CommentMedia } from '$lib/api/types';
 
-	let { media } = $props<{ media: MediaItem[] }>();
+	let { media } = $props<{ media: CommentMedia[] }>();
 </script>
 
 {#if media?.length}

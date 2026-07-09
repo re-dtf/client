@@ -5,7 +5,8 @@
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
-	let displayBlocks = $derived(preview ? post.blocks.filter(b => b.cover) : post.blocks);
+	let displayBlocks = $derived(preview ? post.blocks.filter((b: any) => b.cover) : post.blocks);
+
 </script>
 
 <div class="modern-post">
