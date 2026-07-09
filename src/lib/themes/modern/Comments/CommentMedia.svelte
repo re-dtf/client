@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CommentMedia } from '$lib/api/types';
+	import { lazyVideo } from '$lib/actions/lazyVideo';
 
 	let { media } = $props<{ media: CommentMedia[] }>();
 </script>
@@ -17,8 +18,8 @@
 				/>
 			{:else if m.type === 'movie'}
 				<video
+					use:lazyVideo
 					src="https://leonardo.osnova.io/{m.data.uuid}/-/format/mp4/"
-					autoplay
 					loop
 					muted
 					playsinline

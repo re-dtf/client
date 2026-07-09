@@ -11,6 +11,7 @@ export class PanoramaEngine {
 	private exactScrollLeft: number | undefined;
 	private isPanning = false;
 	private lastScrollY = -1;
+	private lastObservedWidth = -1;
 	private resizeObserver: ResizeObserver | undefined;
 	
 	// Object pool for GC optimization
@@ -34,6 +35,11 @@ export class PanoramaEngine {
 		this.resizeObserver = new ResizeObserver((entries) => {
 			if (!this.viewportElement) return;
 			const width = entries[0].contentRect.width;
+			
+			// Prevent infinite ResizeObserver loop caused by scrollbar toggling
+			if (Math.abs(width - this.lastObservedWidth) < 2) return;
+			this.lastObservedWidth = width;
+
 			const mainWidth = Math.max(200, width - 64);
 			this.viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
 
@@ -171,6 +177,7 @@ export class PanoramaEngine {
 			this.exactScrollLeft += diff * 0.18;
 			// transform supports sub-pixel rendering (no integer rounding like scrollLeft)
 			if (listEl) listEl.style.transform = `translateX(${-this.exactScrollLeft}px)`;
+			cancelAnimationFrame(this.panAnimationFrame);
 			this.panAnimationFrame = requestAnimationFrame(this.panLoop);
 		} else {
 			this.exactScrollLeft = this.targetScrollLeft;
@@ -178,6 +185,7 @@ export class PanoramaEngine {
 			if (!targetUpdated) {
 				this.isPanning = false; // Sleep to save CPU
 			} else {
+				cancelAnimationFrame(this.panAnimationFrame);
 				this.panAnimationFrame = requestAnimationFrame(this.panLoop); // Keep watching scroll
 			}
 		}

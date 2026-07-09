@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Block } from '$lib/api/types';
+	import { lazyVideo } from '$lib/actions/lazyVideo';
 
 	let { blocks } = $props<{ blocks: Block[] }>();
 </script>
@@ -15,7 +16,7 @@
 			{#each block.data.items as item}
 				{#if item.image}
 					{#if item.image.data.type === 'mp4' || item.image.data.type === 'gif' || item.image.data.isVideo}
-						<video src="https://leonardo.osnova.io/{item.image.data.uuid}/-/format/mp4/" controls loop muted autoplay playsinline></video>
+						<video use:lazyVideo src="https://leonardo.osnova.io/{item.image.data.uuid}/-/format/mp4/" controls loop muted playsinline></video>
 					{:else}
 						<img src="https://leonardo.osnova.io/{item.image.data.uuid}/-/preview/800/-/format/webp/" alt={item.title || 'media'} loading="lazy" />
 					{/if}
