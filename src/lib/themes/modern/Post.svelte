@@ -2,11 +2,16 @@
 	import type { Post } from '$lib/api/types';
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
 	import { resolve } from '$app/paths';
+	import { navigation } from '$lib/navigation.svelte';
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
 	let displayBlocks = $derived(preview ? post.blocks.filter((b: any) => b.cover) : post.blocks);
 
+	function openPost(e: MouseEvent) {
+		e.preventDefault();
+		navigation.openPost(post.id);
+	}
 </script>
 
 <div class="modern-post">
@@ -25,7 +30,7 @@
 			</div>
 			<h3 class="title">
 				{#if preview}
-					<a href={resolve(`/post/${post.id}`)}>{post.title}</a>
+					<a href={resolve(`/post/${post.id}`)} onclick={openPost}>{post.title}</a>
 				{:else}
 					{post.title}
 				{/if}
@@ -34,7 +39,7 @@
 				<BlockRenderer blocks={displayBlocks} />
 				{#if preview && post.blocks.length > displayBlocks.length}
 					<div class="read-more">
-						<a href={resolve(`/post/${post.id}`)}>Читать далее...</a>
+						<a href={resolve(`/post/${post.id}`)} onclick={openPost}>Читать далее...</a>
 					</div>
 				{/if}
 			</div>

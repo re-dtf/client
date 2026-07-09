@@ -1,3 +1,4 @@
+import { untrack } from 'svelte';
 import type { ApiProvider, Post, Comment, Session, PaginatedResult } from '../types';
 import { authStorage } from '$lib/storage/auth.svelte';
 
@@ -5,7 +6,7 @@ const baseUrl = 'https://api.dtf.ru/v2.31';
 const authUrl = 'https://api.dtf.ru/v3.4';
 
 async function refreshSession(): Promise<boolean> {
-	const session = authStorage.session;
+	const session = untrack(() => authStorage.session);
 	if (!session || !session.refreshToken) return false;
 
 	const formData = new FormData();
@@ -46,7 +47,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 		headers.set(authHeader, authHeader === 'JWTAuthorization' ? `Bearer ${token}` : token);
 	};
 
-	if (authStorage.dtfToken) setAuth(authStorage.dtfToken);
+	const currentToken = untrack(() => authStorage.dtfToken);
+	if (currentToken) setAuth(currentToken);
 
 	const doFetch = () => fetch(url, { ...options, headers }).catch(e => {
 		throw new Error(`Сетевая ошибка: ${e.message}`);
@@ -54,9 +56,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 
 	let response = await doFetch();
 
-	if (response.status === 401 && authStorage.dtfToken) {
-		if (await refreshSession() && authStorage.dtfToken) {
-			setAuth(authStorage.dtfToken);
+	const checkToken = untrack(() => authStorage.dtfToken);
+	if (response.status === 401 && checkToken) {
+		if (await refreshSession() && untrack(() => authStorage.dtfToken)) {
+			setAuth(untrack(() => authStorage.dtfToken));
 			response = await doFetch();
 		} else if (authHeader === 'JWTAuthorization') {
 			authStorage.logout();
