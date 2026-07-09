@@ -3,7 +3,6 @@
 	import { navigation } from '$lib/navigation.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import Comments from '$lib/components/Comments/Comments.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 
 	let themeClass = $derived(`theme-${themeState.value}`);
@@ -20,7 +19,7 @@
 			<Spinner />
 		{:then post}
 			<ThemeLoader componentName="Post" {post} preview={false} />
-			<Comments postId={post.id} commentsCount={post.commentsCount} />
+			<ThemeLoader componentName="Comments" postId={post.id} commentsCount={post.commentsCount} />
 			<div class="actions">
 				<button class="back-link" onclick={goBack}>← Вернуться в ленту</button>
 			</div>

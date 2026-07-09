@@ -2,14 +2,9 @@
 	import type { CommentTreeItem } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { fade } from 'svelte/transition';
+	import { REACTIONS } from '$lib/config/reactions';
 
 	let { comment } = $props<{ comment: CommentTreeItem }>();
-
-	const REACTION_EMOJIS: Record<number, string> = {
-		1: '❤️', 2: '🔥', 3: '😢', 4: '😂', 6: '😮', 9: '🍿',
-		22: '😎', 23: '😐', 24: '👀', 25: '🤡',
-		36: '👏', 40: '🤦‍♂️', 44: '😽', 45: '🐈'
-	};
 
 	let reactionError = $state<string | null>(null);
 
@@ -51,19 +46,25 @@
 <div class="comment-actions">
 	{#if comment.reactions && comment.reactions.counters.length > 0}
 		{#each comment.reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
+			{@const rc = REACTIONS[reaction.id]}
 			<button
 				class="reaction-chip"
 				class:active={comment.reactions.reactionId === reaction.id}
 				onclick={() => react(reaction.id)}
 			>
-				<span class="emoji">{REACTION_EMOJIS[reaction.id] || `#${reaction.id}`}</span>
+				<span class="emoji">
+					<img src={rc ? rc.url : `/reactions/${reaction.id}.png`} alt="" class="reaction-img" />
+				</span>
 				<span class="count">{reaction.count}</span>
 			</button>
 		{/each}
 	{/if}
 	{#if !comment.reactions || comment.reactions.counters.every((c: any) => c.count === 0)}
+		{@const rc = REACTIONS[1]}
 		<button class="reaction-chip" onclick={() => react(1)}>
-			<span class="emoji">❤️</span>
+			<span class="emoji">
+				<img src={rc ? rc.url : '/reactions/1.png'} alt="" class="reaction-img" />
+			</span>
 		</button>
 	{/if}
 
@@ -115,6 +116,15 @@
 	
 	.reaction-chip .emoji {
 		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.reaction-img {
+		width: 18px;
+		height: 18px;
+		object-fit: contain;
 	}
 	
 	.reaction-chip .count {

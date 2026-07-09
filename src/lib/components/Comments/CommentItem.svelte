@@ -2,11 +2,7 @@
 	import type { CommentTreeItem } from '$lib/api/types';
 	import { onMount } from 'svelte';
 	import CommentItem from './CommentItem.svelte';
-	import CommentReactions from './CommentReactions.svelte';
-	import CommentMedia from './CommentMedia.svelte';
-	import CommentHeader from './CommentHeader.svelte';
 	import CommentThreadLine from './CommentThreadLine.svelte';
-	import CommentBreadcrumb from './CommentBreadcrumb.svelte';
 
 	let {
 		comment,
@@ -16,7 +12,8 @@
 		nestingMode = 'flatten',
 		onShowPreview,
 		onHidePreview,
-		panObserver
+		panObserver,
+		cardComponent: CardComponent
 	} = $props<{
 		comment: CommentTreeItem;
 		depth?: number;
@@ -26,6 +23,7 @@
 		onShowPreview?: (comment: CommentTreeItem, x: number, y: number) => void;
 		onHidePreview?: () => void;
 		panObserver?: IntersectionObserver | undefined;
+		cardComponent: import('svelte').Component<any>;
 	}>();
 
 	let visualDepth = $derived(
@@ -71,23 +69,7 @@
 
 <div class="comment-item" id="comment-{comment.id}" data-depth={visualDepth} bind:this={itemElement}>
 	<div class="comment-body-container">
-		{#if showBreadcrumb && parentComment}
-			<CommentBreadcrumb {parentComment} replyToId={comment.replyTo!} />
-		{/if}
-
-		{#if comment.isRemoved}
-			<div class="removed-msg">Комментарий удален</div>
-		{:else}
-			<CommentHeader {comment} />
-
-			<div class="comment-content">
-				{@html comment.content}
-			</div>
-
-			<CommentMedia media={comment.media} />
-
-			<CommentReactions {comment} />
-		{/if}
+		<CardComponent {comment} {showBreadcrumb} {parentComment} />
 	</div>
 
 	{#if comment.children?.length > 0}
@@ -113,6 +95,7 @@
 							{onShowPreview}
 							{onHidePreview}
 							{panObserver}
+							cardComponent={CardComponent}
 						/>
 					{/each}
 				</div>
@@ -159,27 +142,6 @@
 
 
 
-	.comment-content {
-		line-height: 1.55;
-		word-break: break-word;
-		color: var(--comment-text-color, inherit);
-		font-size: 0.93em;
-	}
-	
-	.comment-content :global(p) {
-		margin: 0 0 6px 0;
-	}
-	
-	.comment-content :global(p:last-child) {
-		margin-bottom: 0;
-	}
-
-
-
-
-
-
-
 	.collapsed-actions {
 		padding-left: 24px;
 		padding-top: 4px;
@@ -202,13 +164,6 @@
 	
 	.expand-btn:hover {
 		background: var(--comment-expand-bg-hover, rgba(110, 142, 251, 0.15));
-	}
-
-	.removed-msg {
-		opacity: 0.5;
-		font-style: italic;
-		font-size: 0.88em;
-		padding: 4px 0;
 	}
 
 	.comment-item :global(.highlighted) {

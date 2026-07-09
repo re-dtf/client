@@ -2,7 +2,6 @@
 	import { page } from '$app/state';
 	import { api } from '$lib/api/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import Comments from '$lib/components/Comments/Comments.svelte';
 	import { resolve } from '$app/paths';
 	import { themeState } from '$lib/themes/index.svelte';
 
@@ -29,7 +28,7 @@
 		<div class="message">Загрузка поста...</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
-		<Comments postId={id} commentsCount={post.commentsCount} />
+		<ThemeLoader componentName="Comments" postId={id} commentsCount={post.commentsCount} />
 		<div class="actions">
 			<a href={resolve('/')} class="back-link">← Вернуться в ленту</a>
 		</div>
