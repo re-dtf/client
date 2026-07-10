@@ -19,7 +19,13 @@ async function refreshSession(): Promise<boolean> {
 			body: formData
 		});
 		
-		if (!response.ok) return false;
+		if (!response.ok) {
+			const errorText = await response.text().catch(() => 'unknown error');
+			if (typeof window !== 'undefined') {
+				window.alert(`[DTF Refresh Error] Status: ${response.status}\nResponse: ${errorText.substring(0, 200)}`);
+			}
+			return false;
+		}
 		
 		const json = await response.json().catch(() => ({}));
 		const sessionData = json.data || json;
@@ -36,6 +42,9 @@ async function refreshSession(): Promise<boolean> {
 		};
 		return true;
 	} catch (e) {
+		if (typeof window !== 'undefined') {
+			window.alert(`[DTF Refresh Exception] Network or other error: ${(e as Error).message}\nStack: ${(e as Error).stack?.substring(0, 200)}`);
+		}
 		return false;
 	}
 }
