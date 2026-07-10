@@ -2,7 +2,7 @@
 	import type { Post } from '$lib/api/types';
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
 	import { resolve } from '$app/paths';
-	import { navigation } from '$lib/navigation.svelte';
+	import { pushState } from '$app/navigation';
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
@@ -10,7 +10,7 @@
 
 	function openPost(e: MouseEvent) {
 		e.preventDefault();
-		navigation.openPost(post.id);
+		pushState(resolve(`/post/${post.id}`), { selectedPostId: post.id });
 	}
 </script>
 

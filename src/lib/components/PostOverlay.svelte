@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import { navigation } from '$lib/navigation.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import { page } from '$app/stores';
 
 	let themeClass = $derived(`theme-${themeState.value}`);
-	let postId = $derived(navigation.activePostId);
+	let postId = $derived($page.state.selectedPostId ?? null);
 
 	function goBack() {
-		navigation.closePost();
+		history.back();
 	}
 </script>
 

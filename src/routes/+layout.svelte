@@ -1,16 +1,13 @@
 <script lang="ts">
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
-	import { navigation } from '$lib/navigation.svelte';
+	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	
 	let { children } = $props();
 	let mounted = $state(false);
-	let postActive = $derived(navigation.activePostId !== null);
-
-	function onPopState(e: PopStateEvent) {
-		navigation._handlePopState(e.state);
-	}
+	let postActive = $derived($page.state.selectedPostId !== undefined);
+	
 	
 	onMount(() => {
 		// Minimum duration for the splash screen
@@ -18,7 +15,7 @@
 	});
 </script>
 
-<svelte:window onpopstate={onPopState} />
+
 
 <div class="splash" class:hidden={mounted}>
 	<span>:re</span>
