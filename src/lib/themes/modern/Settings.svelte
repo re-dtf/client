@@ -4,11 +4,18 @@
 	import type { ThemeName } from '$lib/themes/index.svelte';
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
 	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
+	import { authStorage } from '$lib/storage/auth.svelte';
 
 	// Helper for two-way binding
 	let enableCustomApi = $derived(api.enableCustomApi);
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
+
+	let proxyUrl = $state(authStorage.proxyUrl || '');
+
+	$effect(() => {
+		authStorage.proxyUrl = proxyUrl;
+	});
 
 	function updateApi(e: Event) {
 		api.enableCustomApi = (e.target as HTMLInputElement).checked;
@@ -98,6 +105,32 @@
 					<span class="nesting-label">Авто-панорама</span>
 					<span class="nesting-desc">Камера следит за глубиной</span>
 				</button>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<span class="card-icon">🌍</span>
+				<h3>Сеть и Авторизация</h3>
+			</div>
+			<p class="description">Настройки CORS-прокси для обхода блокировок при входе и обновлении токена (Cloudflare Pages и др.)</p>
+			
+			<div class="proxy-input">
+				<label for="proxy-url" class="label-text">URL Прокси</label>
+				<input 
+					type="url" 
+					id="proxy-url" 
+					bind:value={proxyUrl} 
+					placeholder="https://auth-proxy.example.workers.dev" 
+				/>
+				<span class="proxy-desc">
+					Вы можете использовать <a href="#" onclick={(e) => {
+						e.preventDefault();
+						if (confirm('Использовать прокси от автора проекта?')) {
+							proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+						}
+					}}>прокси от автора проекта</a>
+				</span>
 			</div>
 		</div>
 	</div>
@@ -293,5 +326,32 @@
 		font-size: 0.78em;
 		color: #888;
 		text-align: center;
+	}
+
+	/* Proxy Input */
+	.proxy-input {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.proxy-input input {
+		padding: 14px;
+		border: 2px solid #eee;
+		border-radius: 12px;
+		font-size: 1em;
+		transition: border-color 0.2s;
+		background: #f9f9f9;
+	}
+
+	.proxy-input input:focus {
+		outline: none;
+		border-color: #6e8efb;
+		background: white;
+	}
+
+	.proxy-desc {
+		font-size: 0.85em;
+		color: #888;
 	}
 </style>

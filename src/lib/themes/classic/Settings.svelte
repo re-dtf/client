@@ -4,11 +4,18 @@
 	import type { ThemeName } from '$lib/themes/index.svelte';
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
 	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
+	import { authStorage } from '$lib/storage/auth.svelte';
 
 	// Helper for two-way binding
 	let enableCustomApi = $derived(api.enableCustomApi);
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
+	
+	let proxyUrl = $state(authStorage.proxyUrl || '');
+
+	$effect(() => {
+		authStorage.proxyUrl = proxyUrl;
+	});
 
 	function updateApi(e: Event) {
 		api.enableCustomApi = (e.target as HTMLInputElement).checked;
@@ -69,6 +76,30 @@
 					<small>Без лимита вложенности, камера следит за глубиной</small>
 				</label>
 			</div>
+		</div>
+	</div>
+
+	<div class="section">
+		<h3>Сеть и Авторизация</h3>
+		<p class="description">Настройки CORS-прокси для обхода блокировок при входе и обновлении токена (Cloudflare Pages и др.)</p>
+		
+		<div class="control" style="max-width: 100%;">
+			<label for="proxy-url">URL Прокси:</label>
+			<input 
+				type="url" 
+				id="proxy-url" 
+				bind:value={proxyUrl} 
+				placeholder="https://auth-proxy.example.workers.dev" 
+				style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"
+			/>
+			<small style="color: #666; margin-top: 4px;">
+				Вы можете использовать <a href="#" onclick={(e) => {
+					e.preventDefault();
+					if (confirm('Использовать прокси от автора проекта?')) {
+						proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+					}
+				}}>прокси от автора проекта</a>
+			</small>
 		</div>
 	</div>
 </div>

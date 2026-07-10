@@ -12,20 +12,18 @@ async function refreshSession(): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('token', session.refreshToken);
 
+	let proxyBase = untrack(() => authStorage.proxyUrl) || '';
+	proxyBase = proxyBase.replace(/\/$/, '');
+	const targetUrl = proxyBase ? `${proxyBase}/v3.4/auth/refresh` : `${authUrl}/auth/refresh`;
+
 	try {
-		const response = await fetch(`${authUrl}/auth/refresh`, {
+		const response = await fetch(targetUrl, {
 			method: 'POST',
 			headers: { 'Accept': 'application/json' },
 			body: formData
 		});
 		
-		if (!response.ok) {
-			const errorText = await response.text().catch(() => 'unknown error');
-			if (typeof window !== 'undefined') {
-				window.alert(`[DTF Refresh Error] Status: ${response.status}\nResponse: ${errorText.substring(0, 200)}`);
-			}
-			return false;
-		}
+		if (!response.ok) return false;
 		
 		const json = await response.json().catch(() => ({}));
 		const sessionData = json.data || json;
@@ -42,9 +40,6 @@ async function refreshSession(): Promise<boolean> {
 		};
 		return true;
 	} catch (e) {
-		if (typeof window !== 'undefined') {
-			window.alert(`[DTF Refresh Exception] Network or other error: ${(e as Error).message}\nStack: ${(e as Error).stack?.substring(0, 200)}`);
-		}
 		return false;
 	}
 }
@@ -114,11 +109,11 @@ export const dtfApiProvider: ApiProvider = {
 		formData.append('password', password);
 
 		let response;
-		let proxyBase = authStorage.proxyUrl || import.meta.env.VITE_AUTH_PROXY_URL || '';
+		let proxyBase = authStorage.proxyUrl || '';
 		proxyBase = proxyBase.replace(/\/$/, '');
 		
 		if (!proxyBase) {
-			throw new Error('Укажите URL прокси сервера в настройках ниже (или задайте переменную VITE_AUTH_PROXY_URL), прямой запрос логина заблокирован CORS политикой DTF.');
+			throw new Error('Укажите URL прокси сервера в настройках ниже, прямой запрос логина заблокирован CORS политикой DTF.');
 		}
 
 		const targetUrl = `${proxyBase}/v3.4/auth/email/login`;

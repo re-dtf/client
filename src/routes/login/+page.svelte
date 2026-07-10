@@ -91,8 +91,16 @@
 					<div class="advanced-content">
 						<p class="help-text">В связи с CORS-блокировкой запросов входа от DTF, логин по паролю возможен только через прокси. Вы можете воспользоваться официальным прокси, или развернуть свой: https://github.com/re-dtf/proxy.</p>
 						<div class="form-group">
-							<label for="proxy">URL Прокси (оставьте пустым для использования прокси от автора проекта)</label>
-							<input type="url" id="proxy" bind:value={proxyUrl} placeholder="https://auth-proxy.example.workers.dev" disabled={isLoading} />
+							<label for="proxy">URL Прокси</label>
+							<input type="url" id="proxy" bind:value={proxyUrl} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
+							<div class="help-text" style="margin-top: 5px;">
+								Вы можете использовать <a href="#" onclick={(e) => {
+									e.preventDefault();
+									if (confirm('Использовать прокси от автора проекта?')) {
+										proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+									}
+								}}>прокси от автора проекта</a>
+							</div>
 						</div>
 					</div>
 				{/if}
