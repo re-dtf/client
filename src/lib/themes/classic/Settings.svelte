@@ -93,12 +93,11 @@
 				style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"
 			/>
 			<small style="color: #666; margin-top: 4px;">
-				Вы можете использовать <a href="#" onclick={(e) => {
-					e.preventDefault();
+				Вы можете использовать <button type="button" class="link-button" onclick={() => {
 					if (confirm('Использовать прокси от автора проекта?')) {
 						proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
 					}
-				}}>прокси от автора проекта</a>
+				}}>прокси от автора проекта</button>
 			</small>
 		</div>
 	</div>
@@ -210,5 +209,20 @@
 
 	.nesting-control {
 		max-width: 400px;
+	}
+
+	.link-button {
+		background: none;
+		border: none;
+		padding: 0;
+		color: #1976d2;
+		text-decoration: underline;
+		cursor: pointer;
+		font: inherit;
+		display: inline;
+	}
+
+	.link-button:hover {
+		color: #1565c0;
 	}
 </style>

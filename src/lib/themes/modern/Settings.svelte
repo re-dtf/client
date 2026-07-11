@@ -124,12 +124,11 @@
 					placeholder="https://auth-proxy.example.workers.dev" 
 				/>
 				<span class="proxy-desc">
-					Вы можете использовать <a href="#" onclick={(e) => {
-						e.preventDefault();
+					Вы можете использовать <button type="button" class="link-button" onclick={() => {
 						if (confirm('Использовать прокси от автора проекта?')) {
 							proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
 						}
-					}}>прокси от автора проекта</a>
+					}}>прокси от автора проекта</button>
 				</span>
 			</div>
 		</div>
@@ -353,5 +352,20 @@
 	.proxy-desc {
 		font-size: 0.85em;
 		color: #888;
+	}
+
+	.link-button {
+		background: none;
+		border: none;
+		padding: 0;
+		color: #6e8efb;
+		text-decoration: underline;
+		cursor: pointer;
+		font: inherit;
+		display: inline;
+	}
+
+	.link-button:hover {
+		color: #a777e3;
 	}
 </style>

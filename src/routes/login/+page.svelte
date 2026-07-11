@@ -94,12 +94,11 @@
 							<label for="proxy">URL Прокси</label>
 							<input type="url" id="proxy" bind:value={proxyUrl} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
 							<div class="help-text" style="margin-top: 5px;">
-								Вы можете использовать <a href="#" onclick={(e) => {
-									e.preventDefault();
+								Вы можете использовать <button type="button" class="link-button" onclick={() => {
 									if (confirm('Использовать прокси от автора проекта?')) {
 										proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
 									}
-								}}>прокси от автора проекта</a>
+								}}>прокси от автора проекта</button>
 							</div>
 						</div>
 					</div>
@@ -285,5 +284,20 @@
 		padding: 12px;
 		border-radius: 4px;
 		border-left: 3px solid #0066cc;
+	}
+
+	.link-button {
+		background: none;
+		border: none;
+		padding: 0;
+		color: #1976d2;
+		text-decoration: underline;
+		cursor: pointer;
+		font: inherit;
+		display: inline;
+	}
+
+	.link-button:hover {
+		color: #1565c0;
 	}
 </style>
