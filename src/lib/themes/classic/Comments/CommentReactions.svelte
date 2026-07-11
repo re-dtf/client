@@ -53,7 +53,11 @@
 				onclick={() => react(reaction.id)}
 			>
 				<span class="emoji">
-					<img src={rc ? rc.url : `/reactions/${reaction.id}.png`} alt="" class="reaction-img" />
+					{#if rc}
+						<img src={rc.url} alt="" class="reaction-img" />
+					{:else}
+						<span class="reaction-fallback">#{reaction.id}</span>
+					{/if}
 				</span>
 				<span class="count">{reaction.count}</span>
 			</button>
@@ -63,7 +67,7 @@
 		{@const rc = REACTIONS[1]}
 		<button class="reaction-chip" onclick={() => react(1)}>
 			<span class="emoji">
-				<img src={rc ? rc.url : '/reactions/1.png'} alt="" class="reaction-img" />
+				<img src={rc.url} alt="" class="reaction-img" />
 			</span>
 		</button>
 	{/if}
