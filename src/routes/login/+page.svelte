@@ -30,8 +30,8 @@
 			if (!api.login) throw new Error('Вход по паролю в данный момент недоступен');
 			await api.login(email, password);
 			goto('/');
-		} catch (err: any) {
-			error = err.message || 'Произошла ошибка при авторизации';
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Произошла ошибка при авторизации';
 			if (error.includes('Failed to fetch') || error.includes('CORS')) {
 				error = 'Пожалуйста, укажите рабочий URL прокси сервера в настройках ниже, либо войдите по токену.';
 				showAdvanced = true;
@@ -50,8 +50,8 @@
 			if (!api.loginByToken) throw new Error('Вход по токену в данный момент недоступен');
 			await api.loginByToken(token.trim());
 			goto('/');
-		} catch (err: any) {
-			error = err.message || 'Произошла ошибка проверки токена';
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Произошла ошибка проверки токена';
 		} finally {
 			isLoading = false;
 		}

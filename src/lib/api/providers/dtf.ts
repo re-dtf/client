@@ -54,8 +54,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 	const currentToken = untrack(() => authStorage.dtfToken);
 	if (currentToken) setAuth(currentToken);
 
-	const doFetch = () => fetch(url, { ...options, headers }).catch(e => {
-		throw new Error(`Сетевая ошибка: ${e.message}`);
+	const doFetch = () => fetch(url, { ...options, headers }).catch((e: unknown) => {
+		throw new Error(`Сетевая ошибка: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}`);
 	});
 
 	let response = await doFetch();
@@ -67,8 +67,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 			response = await doFetch();
 		} else if (authHeader === 'JWTAuthorization') {
 			if (typeof window !== 'undefined') {
-				const sessionStr = JSON.stringify(untrack(() => authStorage.session), null, 2);
-				window.alert(`[DTF API Error] 401 Unauthorized (JWTAuthorization)\n\nНе удалось обновить токен. Автовыход отключен.\nСессия: ${sessionStr}`);
+				window.alert(`[DTF API Error] 401 Unauthorized (JWTAuthorization)\n\nНе удалось обновить токен. Автовыход отключен. Сессия может быть повреждена или устарела.`);
 			}
 		} else {
 			headers.delete(authHeader);
@@ -126,8 +125,8 @@ export const dtfApiProvider: ApiProvider = {
 				},
 				body: formData
 			});
-		} catch (e) {
-			throw new Error(`Сетевая ошибка при попытке авторизации: ${(e as Error).message}`);
+		} catch (e: unknown) {
+			throw new Error(`Сетевая ошибка при попытке авторизации: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}`);
 		}
 
 		const json = await response.json();
@@ -157,7 +156,7 @@ export const dtfApiProvider: ApiProvider = {
 			if (parsed.expTimestamp) {
 				expTimestamp = parsed.expTimestamp;
 			}
-		} catch (e) {
+		} catch (e: unknown) {
 			// Если не JSON, то считаем, что это просто строка токена (обычно osnova-aid, т.е. access token)
 		}
 
@@ -176,7 +175,7 @@ export const dtfApiProvider: ApiProvider = {
 			const success = await refreshSession();
 			if (!success) {
 				if (typeof window !== 'undefined') {
-					window.alert(`[DTF API Error] Не удалось обновить токен.\n\nRefresh Token: ${token}\nАвтовыход отключен.`);
+					window.alert(`[DTF API Error] Не удалось обновить токен. Введенный токен устарел или недействителен.\nАвтовыход отключен.`);
 				}
 				throw new Error('Не удалось получить access token по refresh токену. Возможно, он устарел.');
 			}
@@ -184,9 +183,9 @@ export const dtfApiProvider: ApiProvider = {
 			// Проверим access токен запросом профиля
 			try {
 				await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
-			} catch (e) {
+			} catch (e: unknown) {
 				if (typeof window !== 'undefined') {
-					window.alert(`[DTF API Error] Ошибка проверки токена профиля.\n\nAccess Token: ${token}\nОшибка: ${e}\nАвтовыход отключен.`);
+					window.alert(`[DTF API Error] Ошибка проверки токена профиля. Введенный токен недействителен или устарел.\nОшибка: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}\nАвтовыход отключен.`);
 				}
 				throw new Error('Токен недействителен или устарел');
 			}
