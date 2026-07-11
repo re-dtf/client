@@ -14,14 +14,17 @@
 
 <style>
 	.back-link {
-		background: none;
+		background: #f4f5f7;
 		border: none;
-		color: #1976d2;
+		border-radius: 6px;
+		color: #333;
 		cursor: pointer;
-		font-size: inherit;
-		padding: 0;
+		font-size: 14px;
+		padding: 8px 16px;
+		font-weight: 500;
+		transition: background 0.2s;
 	}
 	.back-link:hover {
-		text-decoration: underline;
+		background: #e4e5e7;
 	}
 </style>

@@ -149,12 +149,15 @@
 
 <style>
 	.login-container {
+		width: 100%;
 		max-width: 450px;
-		margin: 40px auto;
 		background: white;
 		padding: 30px;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+		border-radius: 12px;
+		box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+		max-height: 90vh;
+		overflow-y: auto;
+		box-sizing: border-box;
 	}
 
 	.back-action {

@@ -14,7 +14,7 @@
 		e.preventDefault();
 		const overlays = page.state.overlays || [];
 		pushState(resolve('/settings'), { 
-			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings' }] 
+			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings', presentation: 'modal' }] 
 		});
 	}
 
@@ -22,7 +22,7 @@
 		e.preventDefault();
 		const overlays = page.state.overlays || [];
 		pushState(resolve('/login'), { 
-			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login' }] 
+			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login', presentation: 'modal' }] 
 		});
 	}
 

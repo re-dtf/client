@@ -8,6 +8,7 @@ declare global {
 		interface OverlayState {
 			id: string;
 			type: 'post' | 'settings' | 'login';
+			presentation?: 'page' | 'modal';
 			data?: any;
 		}
 

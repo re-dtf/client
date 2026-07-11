@@ -11,7 +11,7 @@
 	}>();
 
 	let themeClass = $derived(`theme-${themeState.value}`);
-	let postPromise = $derived(api.getPost(postId));
+	let postPromise = api.getPost(postId);
 
 	$effect(() => {
 		postPromise

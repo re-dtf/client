@@ -11,25 +11,39 @@
 	let mounted = $state(false);
 	
 	let overlays = $derived($page.state.overlays || []);
-	let anyOverlayActive = $derived(overlays.length > 0);
+	
+	// Determine the topmost 'page' overlay. Layers beneath it should be hidden.
+	let topmostPageOverlayIndex = $derived.by(() => {
+		for (let i = overlays.length - 1; i >= 0; i--) {
+			if (overlays[i].presentation !== 'modal') return i;
+		}
+		return -1;
+	});
+	
+	let hasModalActive = $derived(overlays.some(o => o.presentation === 'modal'));
 	
 	// Scroll Restoration Stack
 	let scrollPositions = new Map<string, number>();
-	let currentActiveId = $derived(overlays.length > 0 ? overlays[overlays.length - 1].id : '__feed__');
-	let previousActiveId = '__feed__';
+	let activeScrollId = $derived.by(() => {
+		for (let i = overlays.length - 1; i >= 0; i--) {
+			if (overlays[i].presentation !== 'modal') return overlays[i].id;
+		}
+		return '__feed__';
+	});
+	let previousScrollId = '__feed__';
 
 	$effect.pre(() => {
 		// Save scroll of the outgoing layer before DOM hides it
-		if (currentActiveId !== previousActiveId) {
-			scrollPositions.set(previousActiveId, window.scrollY);
+		if (activeScrollId !== previousScrollId) {
+			scrollPositions.set(previousScrollId, window.scrollY);
 		}
 	});
 
 	$effect(() => {
 		// Restore scroll of the incoming layer after DOM shows it
-		if (currentActiveId !== previousActiveId) {
-			const savedScroll = scrollPositions.get(currentActiveId) || 0;
-			previousActiveId = currentActiveId;
+		if (activeScrollId !== previousScrollId) {
+			const savedScroll = scrollPositions.get(activeScrollId) || 0;
+			previousScrollId = activeScrollId;
 			tick().then(() => {
 				window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
 			});
@@ -42,6 +56,8 @@
 	});
 </script>
 
+<svelte:body style:overflow={hasModalActive ? 'hidden' : 'auto'} />
+
 <div class="splash" class:hidden={mounted}>
 	<span>:re</span>
 </div>
@@ -50,12 +66,27 @@
 	<ThemeLoader componentName="Header" />
 
 	<main class="container">
-		<div style:display={anyOverlayActive ? 'none' : undefined}>
+		<div style:display={topmostPageOverlayIndex >= 0 ? 'none' : undefined}>
 			{@render children()}
 		</div>
 		
 		{#each overlays as overlay, index (overlay.id)}
-			<div style:display={index === overlays.length - 1 ? 'block' : 'none'}>
+			{@const isModal = overlay.presentation === 'modal'}
+			{@const isHidden = !isModal && index < topmostPageOverlayIndex}
+			
+			<!-- svelte-ignore a11y_click_events_have_key_events -->
+			<!-- svelte-ignore a11y_no_static_element_interactions -->
+			<div 
+				class="overlay-wrapper"
+				class:is-modal={isModal}
+				style:display={isHidden ? 'none' : undefined}
+				style:z-index={100 + index}
+				onclick={(e) => {
+					if (isModal && e.target === e.currentTarget) {
+						history.back();
+					}
+				}}
+			>
 				{#if overlay.type === 'post'}
 					<PostOverlay postId={overlay.data.postId} />
 				{:else if overlay.type === 'settings'}
@@ -111,6 +142,19 @@
 		font-size: 3rem;
 		font-weight: bold;
 		letter-spacing: -2px;
+	}
+
+	.overlay-wrapper.is-modal {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		padding: 20px;
+		box-sizing: border-box;
 	}
 
 	.app {
