@@ -31,7 +31,7 @@
 </script>
 
 <div class="settings classic-settings">
-	<h2>Настройки клиента <span class="badge">Classic</span></h2>
+	<h2>Настройки клиента <span class="badge">DTF 2022</span></h2>
 
 	<div class="section">
 		<h3>Источники данных (API)</h3>

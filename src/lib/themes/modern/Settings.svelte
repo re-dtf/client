@@ -76,6 +76,13 @@
 				>
 					Модерн
 				</button>
+				<button 
+					class="theme-btn"
+					class:active={currentTheme === 'dtf2022'}
+					onclick={() => themeState.value = 'dtf2022'}
+				>
+					DTF 2022
+				</button>
 			</div>
 		</div>
 
