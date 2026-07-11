@@ -25,16 +25,31 @@
 			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login' }] 
 		});
 	}
+
+	function openFeed(e: MouseEvent) {
+		if (page.state.overlays && page.state.overlays.length > 0) {
+			e.preventDefault();
+			pushState(resolve('/'), { overlays: [] });
+			return;
+		}
+
+		if (page.url.pathname === resolve('/')) {
+			e.preventDefault();
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			window.dispatchEvent(new CustomEvent('refreshFeed'));
+			return;
+		}
+	}
 </script>
 
 <nav class="modern-navbar">
 	<div class="container nav-content">
-		<a href={resolve('/')} class="logo">
+		<a href={resolve('/')} class="logo" onclick={openFeed}>
 			<div class="logo-icon"></div>
 			reDTF
 		</a>
 		<div class="links">
-			<a href={resolve('/')} class="nav-link">
+			<a href={resolve('/')} class="nav-link" onclick={openFeed}>
 				<span class="icon">🏠</span> Лента
 			</a>
 			<a href={resolve('/settings')} class="nav-link" onclick={openSettings}>

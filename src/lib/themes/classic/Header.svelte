@@ -25,13 +25,32 @@
 			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login' }] 
 		});
 	}
+
+	function openFeed(e: MouseEvent) {
+		if (page.state.overlays && page.state.overlays.length > 0) {
+			// Находимся в оверлее (лента жива на фоне) - закрываем все оверлеи
+			e.preventDefault();
+			pushState(resolve('/'), { overlays: [] });
+			return;
+		}
+
+		if (page.url.pathname === resolve('/')) {
+			// Уже на ленте - просто скроллим наверх
+			e.preventDefault();
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			window.dispatchEvent(new CustomEvent('refreshFeed'));
+			return;
+		}
+		
+		// Иначе (например, прямая ссылка на /post/1) - происходит обычный переход
+	}
 </script>
 
 <nav class="classic-navbar">
 	<div class="container nav-content">
-		<a href={resolve('/')} class="logo">reDTF <span class="badge">classic</span></a>
+		<a href={resolve('/')} class="logo" onclick={openFeed}>reDTF <span class="badge">classic</span></a>
 		<div class="links">
-			<a href={resolve('/')}>Лента</a>
+			<a href={resolve('/')} onclick={openFeed}>Лента</a>
 			<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
 			{#if authStorage.isAuthenticated}
 				<a href={resolve('/')} onclick={handleLogout}>Выйти</a>

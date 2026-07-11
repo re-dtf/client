@@ -11,9 +11,9 @@
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
 
-	async function loadInitial() {
+	async function loadInitial(isRefresh = false) {
 		try {
-			loading = true;
+			if (!isRefresh) loading = true;
 			feedResult = await api.getPosts();
 		} catch (e: any) {
 			error = e.message;
@@ -21,6 +21,10 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	function handleRefresh() {
+		loadInitial(true);
 	}
 
 	async function loadMore() {
@@ -68,6 +72,8 @@
 <svelte:head>
 	<title>reDTF - Лента</title>
 </svelte:head>
+
+<svelte:window onrefreshFeed={handleRefresh} />
 
 <div class="feed">
 	{#if error}
