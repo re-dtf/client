@@ -3,6 +3,7 @@
 	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import EditorialNews from '$lib/components/EditorialNews.svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
@@ -90,6 +91,8 @@
 </svelte:head>
 
 <svelte:window onrefreshFeed={handleRefresh} />
+
+<EditorialNews />
 
 <div class="feed-tabs">
 	<button class:active={currentFeed === 'popular'} onclick={() => switchFeed('popular')}>Популярное</button>

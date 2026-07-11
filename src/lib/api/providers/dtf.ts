@@ -85,6 +85,12 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 }
 
 function mapEntryToPost(entry: any): Post {
+	const commentsCount = entry.counters?.comments || 0;
+	let unreadCommentsCount = 0;
+	if (entry.commentsSeenCount && entry.commentsSeenCount.count !== undefined) {
+		unreadCommentsCount = Math.max(0, commentsCount - entry.commentsSeenCount.count);
+	}
+
 	return {
 		id: entry.id,
 		title: entry.title || 'Без заголовка',
@@ -94,7 +100,8 @@ function mapEntryToPost(entry: any): Post {
 			name: entry.author?.name || 'Аноним',
 			avatarUrl: entry.author?.avatar_url
 		},
-		commentsCount: entry.counters?.comments || 0,
+		commentsCount,
+		unreadCommentsCount: unreadCommentsCount > 0 ? unreadCommentsCount : undefined,
 		createdAt: new Date((entry.date || Date.now() / 1000) * 1000).toISOString()
 	};
 }
@@ -214,7 +221,7 @@ export const dtfApiProvider: ApiProvider = {
 			url += `&lastId=${options.cursor.lastId}&lastSortingValue=${options.cursor.lastSortingValue}`;
 		}
 
-		const authHeader = pageName === 'my' ? 'JWTAuthorization' : 'x-device-token';
+		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
 		const response = await fetchWithAuth(url, {}, authHeader);
 		const json = await response.json();
 		
@@ -230,7 +237,8 @@ export const dtfApiProvider: ApiProvider = {
 	},
 
 	async getPost(id: number): Promise<Post> {
-		const response = await fetchWithAuth(`${baseUrl}/content?id=${id}`, {}, 'x-device-token');
+		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
+		const response = await fetchWithAuth(`${baseUrl}/content?id=${id}`, {}, authHeader);
 		const json = await response.json();
 		return mapEntryToPost(json.result);
 	},
@@ -284,5 +292,17 @@ export const dtfApiProvider: ApiProvider = {
 			lastId: json.result.lastId,
 			lastSortingValue: json.result.lastSortingValue
 		};
+	},
+
+	async getEditorialNews(): Promise<Post[]> {
+		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
+		const response = await fetchWithAuth(`${baseUrl}/news/min`, {}, authHeader);
+		const json = await response.json();
+		
+		const entries = Array.isArray(json.result) ? json.result : [];
+		
+		return entries
+			.filter((entry: any) => entry.id !== undefined)
+			.map((entry: any) => mapEntryToPost(entry));
 	}
 };

@@ -16,6 +16,7 @@ export interface Post {
 	blocks: Block[];
 	author: User;
 	commentsCount: number;
+	unreadCommentsCount?: number;
 	createdAt: string;
 }
 
@@ -88,4 +89,5 @@ export interface ApiProvider {
 	getPost(id: number): Promise<Post>;
 	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
+	getEditorialNews?(): Promise<Post[]>;
 }

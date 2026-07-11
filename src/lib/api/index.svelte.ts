@@ -88,5 +88,12 @@ export const api = {
 		if (dtfApiProvider.reactToComment) {
 			return dtfApiProvider.reactToComment(commentId, reactionId);
 		}
+	},
+
+	async getEditorialNews() {
+		if (dtfApiProvider.getEditorialNews) {
+			return dtfApiProvider.getEditorialNews();
+		}
+		return [];
 	}
 };
