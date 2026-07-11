@@ -1,11 +1,29 @@
 <script lang="ts">
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { resolve } from '$app/paths';
+	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
 		authStorage.logout();
 		window.location.reload();
+	}
+
+	function openSettings(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/settings'), { 
+			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings' }] 
+		});
+	}
+
+	function openLogin(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/login'), { 
+			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login' }] 
+		});
 	}
 </script>
 
@@ -14,11 +32,11 @@
 		<a href={resolve('/')} class="logo">reDTF <span class="badge">classic</span></a>
 		<div class="links">
 			<a href={resolve('/')}>Лента</a>
-			<a href={resolve('/settings')}>Настройки</a>
+			<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
 			{#if authStorage.isAuthenticated}
 				<a href={resolve('/')} onclick={handleLogout}>Выйти</a>
 			{:else}
-				<a href={resolve('/login')}>Войти</a>
+				<a href={resolve('/login')} onclick={openLogin}>Войти</a>
 			{/if}
 		</div>
 	</div>

@@ -7,6 +7,7 @@ These are the strict project-scoped rules for AI agents working on the **reDTF**
 - **Multiple APIs (Facade Pattern):** All data fetching must go through `src/lib/api/index.svelte.ts` (API Facade). **NEVER** import or call a specific API provider directly in a UI component. Use `api.getPosts()` etc.
 - **Multi-Theme & Lazy Loading:** The app supports entirely different UI structures via Themes (`classic`, `modern`, etc.). **NEVER** put heavy theme-specific logic or HTML structures directly in base routes. Always use `ThemeLoader.svelte` and place theme-specific components in `src/lib/themes/<theme_name>/`.
 - **Shared Components:** If a component's logic is identical across themes (e.g. block rendering), place it in `src/lib/components/` and style it via CSS Custom Properties. Only duplicate into `src/lib/themes/` if the HTML structure significantly diverges.
+- **Overlay Stack Navigation:** The app uses a "History-backed DOM Stack" for inner navigations (opening posts, settings, profiles) to preserve the main feed's scroll state. **NEVER** use standard `href` links that destroy the feed. Always use SvelteKit's `pushState` to append a new `OverlayState` to `$page.state.overlays`. The root `+layout.svelte` manages rendering and scroll restoration for these layers.
 
 ## 2. Technology Stack & Best Practices
 - **Framework:** Svelte 5. Always use Runes (`$state`, `$derived`, `$props`, `$effect`). Do not use Svelte 4 syntax (e.g., `let foo; export { foo };` or `$:`).

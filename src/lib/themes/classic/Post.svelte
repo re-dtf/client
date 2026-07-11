@@ -3,6 +3,7 @@
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
 	import { resolve } from '$app/paths';
 	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
@@ -10,7 +11,10 @@
 
 	function openPost(e: MouseEvent) {
 		e.preventDefault();
-		pushState(resolve(`/post/${post.id}`), { selectedPostId: post.id });
+		const overlays = page.state.overlays || [];
+		pushState(resolve(`/post/${post.id}`), { 
+			overlays: [...overlays, { id: `post-${post.id}`, type: 'post', data: { postId: post.id } }] 
+		});
 	}
 </script>
 

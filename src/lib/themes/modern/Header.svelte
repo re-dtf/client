@@ -1,11 +1,29 @@
 <script lang="ts">
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { resolve } from '$app/paths';
+	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
 		authStorage.logout();
 		window.location.reload();
+	}
+
+	function openSettings(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/settings'), { 
+			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings' }] 
+		});
+	}
+
+	function openLogin(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/login'), { 
+			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login' }] 
+		});
 	}
 </script>
 
@@ -19,14 +37,14 @@
 			<a href={resolve('/')} class="nav-link">
 				<span class="icon">🏠</span> Лента
 			</a>
-			<a href={resolve('/settings')} class="nav-link">
+			<a href={resolve('/settings')} class="nav-link" onclick={openSettings}>
 				<span class="icon">⚙️</span> Настройки
 			</a>
 			<div class="divider"></div>
 			{#if authStorage.isAuthenticated}
 				<a href={resolve('/')} onclick={handleLogout} class="nav-link logout-btn">Выйти</a>
 			{:else}
-				<a href={resolve('/login')} class="nav-link login-btn">Войти</a>
+				<a href={resolve('/login')} class="nav-link login-btn" onclick={openLogin}>Войти</a>
 			{/if}
 		</div>
 	</div>

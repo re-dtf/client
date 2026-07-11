@@ -5,8 +5,14 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
+		interface OverlayState {
+			id: string;
+			type: 'post' | 'settings' | 'login';
+			data?: any;
+		}
+
 		interface PageState {
-			selectedPostId?: number;
+			overlays?: OverlayState[];
 		}
 		// interface Platform {}
 	}
