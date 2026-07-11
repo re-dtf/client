@@ -3,7 +3,6 @@
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
-	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
 	import { page } from '$app/stores';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/environment';
@@ -80,8 +79,7 @@
 		{/each}
 	</div>
 {/if}
-
-<ReloadPrompt />
+<ThemeLoader componentName="ReloadPrompt" />
 
 <style>
 	:global(body) {
