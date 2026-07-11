@@ -74,11 +74,17 @@ export interface Session {
 	refreshExpTimestamp: number;
 }
 
+export interface GetPostsOptions {
+	pageName?: 'popular' | 'new' | 'my';
+	sorting?: string;
+	cursor?: { lastId: number; lastSortingValue: number };
+}
+
 export interface ApiProvider {
 	name: string;
 	login?(email: string, password: string): Promise<Session>;
 	loginByToken?(token: string): Promise<Session>;
-	getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<PaginatedResult<Post>>;
+	getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>>;
 	getPost(id: number): Promise<Post>;
 	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;

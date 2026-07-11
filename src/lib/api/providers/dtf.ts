@@ -1,5 +1,5 @@
 import { untrack } from 'svelte';
-import type { ApiProvider, Post, Comment, Session, PaginatedResult } from '../types';
+import type { ApiProvider, Post, Comment, PaginatedResult, Session, GetPostsOptions } from '../types';
 import { authStorage } from '$lib/storage/auth.svelte';
 
 const baseUrl = 'https://api.dtf.ru/v2.31';
@@ -206,13 +206,16 @@ export const dtfApiProvider: ApiProvider = {
 		}, 'JWTAuthorization');
 	},
 
-	async getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<PaginatedResult<Post>> {
-		let url = `${baseUrl}/feed?pageName=popular&sorting=hotness`;
-		if (cursor) {
-			url += `&lastId=${cursor.lastId}&lastSortingValue=${cursor.lastSortingValue}`;
+	async getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>> {
+		const pageName = options?.pageName || 'popular';
+		const sorting = options?.sorting || 'hotness';
+		let url = `${baseUrl}/feed?pageName=${pageName}&sorting=${sorting}`;
+		if (options?.cursor) {
+			url += `&lastId=${options.cursor.lastId}&lastSortingValue=${options.cursor.lastSortingValue}`;
 		}
 
-		const response = await fetchWithAuth(url, {}, 'x-device-token');
+		const authHeader = pageName === 'my' ? 'JWTAuthorization' : 'x-device-token';
+		const response = await fetchWithAuth(url, {}, authHeader);
 		const json = await response.json();
 		
 		const entries = json.result.items

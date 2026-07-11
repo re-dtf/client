@@ -2,6 +2,7 @@ import { dtfApiProvider } from './providers/dtf';
 import { customApiProvider } from './providers/custom';
 import { persistedState } from '$lib/storage/persisted.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
+import type { GetPostsOptions } from './types';
 
 const enableCustomApiState = persistedState<boolean>('redtf:api:custom_enabled', false);
 
@@ -28,11 +29,11 @@ export const api = {
 		return session;
 	},
 
-	async getPosts(cursor?: { lastId: number; lastSortingValue: number }) {
-		const dtfPostsPromise = dtfApiProvider.getPosts(cursor);
+	async getPosts(options?: GetPostsOptions) {
+		const dtfPostsPromise = dtfApiProvider.getPosts(options);
 		
 		if (this.enableCustomApi) {
-			const customPostsPromise = customApiProvider.getPosts(cursor);
+			const customPostsPromise = customApiProvider.getPosts(options);
 			
 			const [dtfResult, customResult] = await Promise.all([
 				dtfPostsPromise, 

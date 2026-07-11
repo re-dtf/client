@@ -1,5 +1,5 @@
 import { untrack } from 'svelte';
-import type { ApiProvider, Post, Comment, PaginatedResult } from '../types';
+import type { ApiProvider, Post, Comment, PaginatedResult, GetPostsOptions } from '../types';
 import { authStorage } from '$lib/storage/auth.svelte';
 
 const baseUrl = 'https://my-custom-redtf-server.com/api';
@@ -7,7 +7,8 @@ const baseUrl = 'https://my-custom-redtf-server.com/api';
 export const customApiProvider: ApiProvider = {
 	name: 'Custom Server API',
 
-	async getPosts(cursor?: { lastId: number; lastSortingValue: number }): Promise<PaginatedResult<Post>> {
+	async getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>> {
+		const cursor = options?.cursor;
 		const token = untrack(() => authStorage.dtfToken); // Using DTF token as requested
 		const authLog = token ? `[Auth DTF Token: ${token.substring(0, 5)}...]` : '[Guest]';
 		console.log(`[Custom Provider] ${authLog} Fetching posts (cursor: ${JSON.stringify(cursor)})...`);
