@@ -2,6 +2,7 @@
 	import type { Block } from '$lib/api/types';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import DOMPurify from 'dompurify';
+	import LazyImage from './LazyImage.svelte';
 
 	let { blocks } = $props<{ blocks: Block[] }>();
 </script>
@@ -19,7 +20,14 @@
 					{#if item.image.data.type === 'mp4' || item.image.data.type === 'gif' || item.image.data.isVideo}
 						<video use:lazyVideo src="https://leonardo.osnova.io/{item.image.data.uuid}/-/format/mp4/" controls loop muted playsinline></video>
 					{:else}
-						<img src="https://leonardo.osnova.io/{item.image.data.uuid}/-/preview/800/-/format/webp/" alt={item.title || 'media'} loading="lazy" />
+						<LazyImage
+							src="https://leonardo.osnova.io/{item.image.data.uuid}/-/preview/800/-/format/webp/"
+							alt={item.title || 'media'}
+							width={item.image.data.width}
+							height={item.image.data.height}
+							base64preview={item.image.data.base64preview}
+							color={item.image.data.color}
+						/>
 					{/if}
 				{/if}
 			{/each}
@@ -51,7 +59,7 @@
 	.text-block :global(p) {
 		margin: 0.5em 0;
 	}
-	.media-block img, .media-block video {
+	.media-block img, .media-block video, .media-block :global(.lazy-image-wrapper) {
 		max-width: 100%;
 		height: auto;
 		border-radius: var(--block-radius, 4px);

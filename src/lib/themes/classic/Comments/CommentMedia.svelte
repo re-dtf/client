@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CommentMedia } from '$lib/api/types';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import LazyImage from '$lib/components/LazyImage.svelte';
 
 	let { media } = $props<{ media: CommentMedia[] }>();
 </script>
@@ -9,12 +10,13 @@
 	<div class="comment-media">
 		{#each media as m}
 			{#if m.type === 'image'}
-				<img
+				<LazyImage
 					src="https://leonardo.osnova.io/{m.data.uuid}/-/preview/400/-/format/webp/"
-					alt=""
-					loading="lazy"
-					style="aspect-ratio: {m.data.width}/{m.data.height}; background-color: #{m.data.color || 'eee'};"
-					class="comment-img"
+					width={m.data.width}
+					height={m.data.height}
+					base64preview={m.data.base64preview}
+					color={m.data.color}
+					wrapperClass="comment-img"
 				/>
 			{:else if m.type === 'movie'}
 				<video
