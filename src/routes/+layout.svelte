@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
+	import ReloadPrompt from '$lib/components/ReloadPrompt.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	
@@ -33,6 +34,8 @@
 		{/if}
 	</main>
 </div>
+
+<ReloadPrompt />
 
 <style>
 	:global(body) {
