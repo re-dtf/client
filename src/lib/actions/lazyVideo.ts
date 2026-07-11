@@ -1,13 +1,16 @@
+let observer: IntersectionObserver;
+
 export function lazyVideo(node: HTMLVideoElement) {
-	const observer = new IntersectionObserver((entries) => {
-		entries[0].isIntersecting ? node.play()?.catch(() => {}) : node.pause();
+	observer ??= new IntersectionObserver((entries) => {
+		for (const entry of entries) {
+			const target = entry.target as HTMLVideoElement;
+			entry.isIntersecting ? target.play()?.catch(() => {}) : target.pause();
+		}
 	}, { rootMargin: '200px' });
 
 	observer.observe(node);
 
 	return {
-		destroy() {
-			observer.disconnect();
-		}
+		destroy: () => observer.unobserve(node)
 	};
 }
