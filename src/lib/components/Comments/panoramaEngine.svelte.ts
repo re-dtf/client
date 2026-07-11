@@ -173,8 +173,8 @@ export class PanoramaEngine {
 		const diff = this.targetScrollLeft - this.exactScrollLeft;
 		const listEl = this.viewportElement.querySelector('.comments-list') as HTMLElement | null;
 		
-		if (Math.abs(diff) > 0.5) {
-			this.exactScrollLeft += diff * 0.18;
+		if (Math.abs(diff) > 0.1) {
+			this.exactScrollLeft += diff * 0.08;
 			// transform supports sub-pixel rendering (no integer rounding like scrollLeft)
 			if (listEl) listEl.style.transform = `translateX(${-this.exactScrollLeft}px)`;
 			cancelAnimationFrame(this.panAnimationFrame);
