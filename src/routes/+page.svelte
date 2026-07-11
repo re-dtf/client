@@ -2,7 +2,6 @@
 	import { api } from '$lib/api/index.svelte';
 	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
@@ -99,7 +98,7 @@
 	{#if error}
 		<div class="error">{error}</div>
 	{:else if loading}
-		<Spinner />
+		<ThemeLoader componentName="Spinner" />
 	{:else if feedResult?.items.length === 0}
 		<div class="empty">Нет постов</div>
 	{:else if feedResult}
@@ -111,7 +110,7 @@
 			{#if feedResult.lastId}
 				<div use:infiniteScroll class="infinite-loader">
 					{#if loadingMore}
-						<Spinner inline={true} />
+						<ThemeLoader componentName="Spinner" inline={true} />
 					{/if}
 				</div>
 			{/if}

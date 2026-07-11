@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import CommentItem from '$lib/components/Comments/CommentItem.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
+	import Spinner from './Spinner.svelte';
 	import CommentsHeader from './Comments/CommentsHeader.svelte';
 	import CommentPreview from './Comments/CommentPreview.svelte';
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';

@@ -3,7 +3,7 @@
 	import type { Post } from '$lib/api/types';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import Spinner from '../../components/Spinner.svelte';
+	import Spinner from './Spinner.svelte';
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';

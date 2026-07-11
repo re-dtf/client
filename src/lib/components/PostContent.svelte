@@ -2,7 +2,6 @@
 	import { api } from '$lib/api/index.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import Spinner from '$lib/components/Spinner.svelte';
 	import type { Snippet } from 'svelte';
 
 	let { postId, onLoaded, backButton } = $props<{
@@ -23,7 +22,7 @@
 
 <div class="post-page {themeClass}">
 	{#await postPromise}
-		<Spinner />
+		<ThemeLoader componentName="Spinner" />
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
 		<ThemeLoader componentName="Comments" postId={post.id} commentsCount={post.commentsCount} />
