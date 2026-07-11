@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Block } from '$lib/api/types';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import DOMPurify from 'dompurify';
 
 	let { blocks } = $props<{ blocks: Block[] }>();
 </script>
@@ -8,7 +9,7 @@
 {#each blocks as block}
 	{#if block.type === 'text' || block.type === 'header'}
 		<div class="block text-block">
-			{@html block.data.text}
+			{@html DOMPurify.sanitize(block.data.text)}
 		</div>
 	{:else if block.type === 'media'}
 		<div class="block media-block">
