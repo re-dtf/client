@@ -81,14 +81,16 @@
 	// Load posts purely on the client
 	onMount(() => {
 		loadInitial();
+		window.addEventListener('refreshFeed', handleRefresh);
+		return () => {
+			window.removeEventListener('refreshFeed', handleRefresh);
+		};
 	});
 </script>
 
 <svelte:head>
 	<title>reDTF - Лента</title>
 </svelte:head>
-
-<svelte:window onrefreshFeed={handleRefresh} />
 
 <ThemeLoader componentName="EditorialNews" />
 

@@ -41,7 +41,7 @@
 		gap: 6px;
 	}
 	
-	.comment-img,
+	:global(.comment-img),
 	.comment-video {
 		max-width: min(100%, 400px);
 		height: auto;

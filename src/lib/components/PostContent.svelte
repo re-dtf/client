@@ -11,6 +11,7 @@
 	}>();
 
 	let themeClass = $derived(`theme-${themeState.value}`);
+	// svelte-ignore state_referenced_locally
 	let postPromise = api.getPost(postId);
 
 	$effect(() => {

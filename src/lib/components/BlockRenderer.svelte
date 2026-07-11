@@ -59,7 +59,7 @@
 	.text-block :global(p) {
 		margin: 0.5em 0;
 	}
-	.media-block img, .media-block video, .media-block :global(.lazy-image-wrapper) {
+	.media-block :global(img), .media-block video, .media-block :global(.lazy-image-wrapper) {
 		max-width: 100%;
 		height: auto;
 		border-radius: var(--block-radius, 4px);
