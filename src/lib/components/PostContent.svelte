@@ -23,7 +23,9 @@
 
 <div class="post-page {themeClass}">
 	{#await postPromise}
-		<ThemeLoader componentName="Spinner" />
+		<div class="spinner-wrapper">
+			<ThemeLoader componentName="Spinner" />
+		</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
 		<ThemeLoader componentName="Comments" postId={post.id} commentsCount={post.commentsCount} />
