@@ -13,7 +13,8 @@
 		onShowPreview,
 		onHidePreview,
 		panObserver,
-		cardComponent: CardComponent
+		cardComponent: CardComponent,
+		forceExpand = false
 	} = $props<{
 		comment: CommentTreeItem;
 		depth?: number;
@@ -24,6 +25,7 @@
 		onHidePreview?: () => void;
 		panObserver?: IntersectionObserver | undefined;
 		cardComponent: import('svelte').Component<any>;
+		forceExpand?: boolean;
 	}>();
 
 	let visualDepth = $derived(
@@ -37,7 +39,9 @@
 	);
 
 	// svelte-ignore state_referenced_locally
-	let collapsed = $state(depth >= 5 && (comment.children?.length ?? 0) > 0);
+	let collapsed = $state(!forceExpand && depth >= 5 && (comment.children?.length ?? 0) > 0);
+	// svelte-ignore state_referenced_locally
+	let isManuallyExpanded = $state(forceExpand);
 
 	let itemElement: HTMLElement;
 	
@@ -54,9 +58,31 @@
 
 	function toggleCollapse() {
 		collapsed = !collapsed;
+		if (!collapsed) {
+			isManuallyExpanded = true;
+		} else {
+			isManuallyExpanded = false;
+		}
 	}
 
 	let totalReplies = $derived(comment._totalReplies ?? 0);
+
+	const INITIAL_VISIBLE = 3;
+	const EXPAND_STEP = 10;
+	
+	// svelte-ignore state_referenced_locally
+	let visibleCount = $state(
+		comment.children && comment.children.length > INITIAL_VISIBLE + 1
+			? INITIAL_VISIBLE 
+			: (comment.children?.length ?? 0)
+	);
+
+	let visibleChildren = $derived(comment.children?.slice(0, visibleCount) ?? []);
+	let hiddenCount = $derived((comment.children?.length ?? 0) - visibleCount);
+
+	function showMore() {
+		visibleCount = Math.min(visibleCount + EXPAND_STEP, comment.children?.length ?? 0);
+	}
 
 
 
@@ -85,7 +111,7 @@
 				{/if}
 				
 				<div class="replies">
-					{#each comment.children as child (child.id)}
+					{#each visibleChildren as child (child.id)}
 						<CommentItem
 							comment={child}
 							depth={depth + 1}
@@ -96,8 +122,16 @@
 							{onHidePreview}
 							{panObserver}
 							cardComponent={CardComponent}
+							forceExpand={isManuallyExpanded}
 						/>
 					{/each}
+					{#if hiddenCount > 0}
+						<div class="show-more-actions">
+							<button class="expand-btn show-more-btn" onclick={showMore}>
+								Показать ещё {Math.min(EXPAND_STEP, hiddenCount)} (осталось {hiddenCount})
+							</button>
+						</div>
+					{/if}
 				</div>
 			</div>
 		{:else}
@@ -142,9 +176,10 @@
 
 
 
-	.collapsed-actions {
+	.collapsed-actions, .show-more-actions {
 		padding-left: 24px;
 		padding-top: 4px;
+		padding-bottom: 8px;
 	}
 
 	.expand-btn {
