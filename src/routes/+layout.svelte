@@ -8,7 +8,7 @@
 	import { dev } from '$app/environment';
 	
 	let { children } = $props();
-	let mounted = $state(false);
+	let isFirstVisit = $state(false);
 	
 	let overlays = $derived($page.state.overlays || []);
 	
@@ -51,16 +51,33 @@
 	});
 	
 	onMount(() => {
+		// Check if the user has completed the first setup
+		const firstSetupCompleted = localStorage.getItem('redtf:setup:completed');
+		if (!firstSetupCompleted) {
+			isFirstVisit = true;
+		}
+
 		// Minimum duration for the splash screen
-		setTimeout(() => mounted = true, 1000);
+		setTimeout(() => {
+			// Fade out the native splash screens
+			const normalSplash = document.getElementById('native-splash-normal');
+			const firstSplash = document.getElementById('native-splash-first');
+			
+			if (normalSplash) normalSplash.classList.add('hidden');
+			if (firstSplash) firstSplash.classList.add('hidden');
+			
+			// Remove them from DOM after the 0.25s fade transition finishes
+			setTimeout(() => {
+				if (normalSplash) normalSplash.remove();
+				if (firstSplash) firstSplash.remove();
+			}, 300);
+		}, isFirstVisit ? 3000 : 1000);
 	});
 </script>
 
 <svelte:body style:overflow={hasModalActive ? 'hidden' : 'auto'} />
 
-<div class="splash" class:hidden={mounted}>
-	<span>:re</span>
-</div>
+
 
 <div class="app">
 	<ThemeLoader componentName="Header" />
@@ -120,29 +137,7 @@
 		background: #f4f5f7;
 		color: #1a1a1a;
 	}
-	
-	.splash {
-		position: fixed;
-		inset: 0;
-		background: #f4f5f7;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		z-index: 9999;
-		transition: opacity 0.25s ease, visibility 0.25s ease;
-	}
-	
-	.splash.hidden {
-		opacity: 0;
-		visibility: hidden;
-	}
-	
-	.splash span {
-		color: #007bff;
-		font-size: 3rem;
-		font-weight: bold;
-		letter-spacing: -2px;
-	}
+
 
 	.overlay-wrapper.is-modal {
 		position: fixed;

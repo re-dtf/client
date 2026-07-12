@@ -10,6 +10,76 @@
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
+		<style>
+			/* Pre-hydration splash screens */
+			#native-splash-normal,
+			#native-splash-first {
+				display: none;
+				position: fixed; inset: 0; z-index: 9998; /* Below Svelte's 9999 */
+				align-items: center; justify-content: center;
+				transition: opacity 0.25s ease, visibility 0.25s ease;
+			}
+			/* Show logic */
+			body.show-normal-splash #native-splash-normal { display: flex; }
+			body.show-first-splash #native-splash-first { display: flex; }
+
+			/* Fade out logic */
+			#native-splash-normal.hidden,
+			#native-splash-first.hidden {
+				opacity: 0;
+				visibility: hidden;
+			}
+			
+			/* Normal Splash styling */
+			#native-splash-normal { background: #f4f5f7; }
+			#native-splash-normal span {
+				color: #007bff; font-size: 3rem; font-weight: bold; letter-spacing: -2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			}
+			
+			/* First Visit Splash styling */
+			#native-splash-first { background: #ffffff; }
+			#native-splash-first .splash-content { display: flex; flex-direction: column; align-items: center; gap: 30px; transform: translateY(-5vh); }
+			#native-splash-first img { max-width: 90vw; height: auto; }
+			#native-splash-first .loader-container { width: 300px; height: 12px; position: relative; }
+			#native-splash-first .dot {
+				position: absolute; top: 50%; left: 0; margin-top: -3px; width: 6px; height: 6px;
+				border-radius: 50%; background-color: #000000; opacity: 0;
+				animation: win8-move 3.5s infinite cubic-bezier(0.25, 0.75, 0.75, 0.25), win8-fade 3.5s infinite linear;
+			}
+			#native-splash-first .dot:nth-child(1) { animation-delay: 0s; }
+			#native-splash-first .dot:nth-child(2) { animation-delay: 0.20s; }
+			#native-splash-first .dot:nth-child(3) { animation-delay: 0.40s; }
+			#native-splash-first .dot:nth-child(4) { animation-delay: 0.60s; }
+			#native-splash-first .dot:nth-child(5) { animation-delay: 0.80s; }
+			
+			@media (prefers-color-scheme: dark) {
+				#native-splash-normal { background: #000000; }
+				#native-splash-first { background: #000000; }
+				#native-splash-first img { filter: invert(1); }
+				#native-splash-first .dot { background-color: #ffffff; }
+			}
+			@keyframes win8-move { 0% { transform: translateX(-50px); } 100% { transform: translateX(350px); } }
+			@keyframes win8-fade { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+		</style>
+		<script>
+			try {
+				if (localStorage.getItem('redtf:setup:completed')) {
+					document.body.classList.add('show-normal-splash');
+				} else {
+					document.body.classList.add('show-first-splash');
+				}
+			} catch(e) {}
+		</script>
+		<div id="native-splash-normal"><span>:re</span></div>
+		<div id="native-splash-first">
+			<div class="splash-content">
+				<img src="/welcome-splash.svg" alt="Подготавливаем сайт, подождите немного">
+				<div class="loader-container">
+					<div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+				</div>
+			</div>
+		</div>
+
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>
