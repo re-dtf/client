@@ -1,5 +1,6 @@
 import { untrack } from 'svelte';
 import type { ApiProvider, Post, Comment, PaginatedResult, Session, GetPostsOptions } from '../types';
+import { getLeonardoUrl } from '../utils';
 import { authStorage } from '$lib/storage/auth.svelte';
 
 const baseUrl = 'https://api.dtf.ru/v2.31';
@@ -98,7 +99,7 @@ function mapEntryToPost(entry: any): Post {
 		author: {
 			id: entry.author?.id || 0,
 			name: entry.author?.name || 'Аноним',
-			avatarUrl: entry.author?.avatar_url
+			avatarUrl: entry.author?.avatar?.url || (entry.author?.avatar?.data?.uuid ? getLeonardoUrl(entry.author.avatar.data.uuid, { scale_crop: '64x64' }) : entry.author?.avatar_url)
 		},
 		commentsCount,
 		unreadCommentsCount: unreadCommentsCount > 0 ? unreadCommentsCount : undefined,
@@ -258,7 +259,7 @@ export const dtfApiProvider: ApiProvider = {
 			author: {
 				id: item.author?.id || 0,
 				name: item.author?.name || 'Аноним',
-				avatarUrl: item.author?.avatar?.url || (item.author?.avatar?.data?.uuid ? `https://leonardo.osnova.io/${item.author.avatar.data.uuid}/-/scale_crop/64x64/` : item.author?.avatar_url)
+				avatarUrl: item.author?.avatar?.url || (item.author?.avatar?.data?.uuid ? getLeonardoUrl(item.author.avatar.data.uuid, { scale_crop: '64x64' }) : item.author?.avatar_url)
 			},
 			content: item.text || '',
 			createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),

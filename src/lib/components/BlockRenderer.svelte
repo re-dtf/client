@@ -3,6 +3,7 @@
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import DOMPurify from 'dompurify';
 	import LazyImage from './LazyImage.svelte';
+	import { getLeonardoUrl } from '$lib/api/utils';
 
 	let { blocks } = $props<{ blocks: Block[] }>();
 </script>
@@ -18,10 +19,10 @@
 			{#each block.data.items as item}
 				{#if item.image}
 					{#if item.image.data.type === 'mp4' || item.image.data.type === 'gif' || item.image.data.isVideo}
-						<video use:lazyVideo src="https://leonardo.osnova.io/{item.image.data.uuid}/-/format/mp4/" controls loop muted playsinline></video>
+						<video use:lazyVideo src={getLeonardoUrl(item.image.data.uuid, { format: 'mp4' })} controls loop muted playsinline></video>
 					{:else}
 						<LazyImage
-							src="https://leonardo.osnova.io/{item.image.data.uuid}/-/preview/800/-/format/webp/"
+							src={getLeonardoUrl(item.image.data.uuid, { width: 800, format: 'webp' })}
 							alt={item.title || 'media'}
 							width={item.image.data.width}
 							height={item.image.data.height}

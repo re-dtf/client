@@ -2,6 +2,7 @@
 	import type { CommentMedia } from '$lib/api/types';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import LazyImage from '$lib/components/LazyImage.svelte';
+	import { getLeonardoUrl } from '$lib/api/utils';
 
 	let { media } = $props<{ media: CommentMedia[] }>();
 </script>
@@ -11,7 +12,7 @@
 		{#each media as m}
 			{#if m.type === 'image'}
 				<LazyImage
-					src="https://leonardo.osnova.io/{m.data.uuid}/-/preview/400/-/format/webp/"
+					src={getLeonardoUrl(m.data.uuid, { width: 400, format: 'webp' })}
 					width={m.data.width}
 					height={m.data.height}
 					base64preview={m.data.base64preview}
@@ -21,7 +22,7 @@
 			{:else if m.type === 'movie'}
 				<video
 					use:lazyVideo
-					src="https://leonardo.osnova.io/{m.data.uuid}/-/format/mp4/"
+					src={getLeonardoUrl(m.data.uuid, { format: 'mp4' })}
 					loop
 					muted
 					playsinline
