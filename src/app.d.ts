@@ -19,8 +19,8 @@ declare global {
 	}
 }
 
-declare namespace svelteHTML {
-	interface WindowAttributes {
+declare module 'svelte/elements' {
+	export interface WindowAttributes {
 		onrefreshFeed?: (event: CustomEvent | Event) => void;
 	}
 }

@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/state';
+	import { pushOverlay } from '$lib/overlays';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
@@ -12,26 +13,17 @@
 
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/settings'), { 
-			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings', presentation: 'modal' }] 
-		});
+		pushOverlay('settings', '/settings');
 	}
 
 	function openLogin(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/login'), { 
-			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login', presentation: 'modal' }] 
-		});
+		pushOverlay('login', '/login');
 	}
 
 	function openEditor(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/write'), { 
-			overlays: [...overlays, { id: `editor-${Date.now()}`, type: 'editor', presentation: 'modal' }] 
-		});
+		pushOverlay('editor', '/write');
 	}
 
 	function openFeed(e: MouseEvent) {

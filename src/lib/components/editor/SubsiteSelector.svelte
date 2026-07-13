@@ -40,15 +40,14 @@
 		{:else}
 			<span class="subsite-label">Выберите подсайт</span>
 		{/if}
-		<span class="arrow" class:open={isOpen}>▼</span>
+		<span class={['arrow', { open: isOpen }]}>▼</span>
 	</button>
 
 	{#if isOpen}
 		<div class="dropdown">
 			{#each subsites as subsite}
 				<button 
-					class="option" 
-					class:selected={subsite.value === selectedId}
+					class={['option', { selected: subsite.value === selectedId }]}
 					onclick={() => selectSubsite(subsite.value)}
 				>
 					{#if subsite.image}

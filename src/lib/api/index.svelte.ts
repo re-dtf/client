@@ -98,7 +98,7 @@ export const api = {
 	},
 
 	// --- Editor ---
-	async saveDraft(entry: any) {
+	async saveDraft(entry: import('./types').DtfEditorEntry) {
 		if (!dtfApiProvider.saveDraft) throw new Error("saveDraft is not implemented");
 		return dtfApiProvider.saveDraft(entry);
 	},

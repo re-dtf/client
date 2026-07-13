@@ -4,33 +4,31 @@
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/environment';
+	
+	import '../app.css';
+	// Статические импорты CSS тем оставлены намеренно: 
+	// при ленивой загрузке через JS происходило бы FOUC (Flash of Unstyled Content)
+	import '$lib/themes/classic/theme.css';
+	import '$lib/themes/modern/theme.css';
+	import '$lib/themes/dtf2022/theme.css';
+	import { themeState } from '$lib/themes/index.svelte.js';
 	
 	let { children } = $props();
 	let isFirstVisit = $state(false);
 	
-	let overlays = $derived($page.state.overlays || []);
+	let overlays = $derived(page.state.overlays || []);
 	
 	// Determine the topmost 'page' overlay. Layers beneath it should be hidden.
-	let topmostPageOverlayIndex = $derived.by(() => {
-		for (let i = overlays.length - 1; i >= 0; i--) {
-			if (overlays[i].presentation !== 'modal') return i;
-		}
-		return -1;
-	});
+	let topmostPageOverlayIndex = $derived(overlays.findLastIndex(o => o.presentation !== 'modal'));
 	
 	let hasModalActive = $derived(overlays.some(o => o.presentation === 'modal'));
 	
 	// Scroll Restoration Stack
 	let scrollPositions = new Map<string, number>();
-	let activeScrollId = $derived.by(() => {
-		for (let i = overlays.length - 1; i >= 0; i--) {
-			if (overlays[i].presentation !== 'modal') return overlays[i].id;
-		}
-		return '__feed__';
-	});
+	let activeScrollId = $derived(overlays.findLast(o => o.presentation !== 'modal')?.id ?? '__feed__');
 	let previousScrollId = '__feed__';
 
 	$effect.pre(() => {
@@ -49,6 +47,10 @@
 				window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
 			});
 		}
+	});
+
+	$effect(() => {
+		document.documentElement.setAttribute('data-theme', themeState.value);
 	});
 	
 	onMount(() => {
@@ -95,8 +97,7 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div 
-				class="overlay-wrapper"
-				class:is-modal={isModal}
+				class={['overlay-wrapper', { 'is-modal': isModal }]}
 				style:display={isHidden ? 'none' : undefined}
 				style:z-index={100 + index}
 				onclick={(e) => {
@@ -133,13 +134,7 @@
 <ThemeLoader componentName="ReloadPrompt" />
 
 <style>
-	:global(body) {
-		margin: 0;
-		padding: 0;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-		background: #f4f5f7;
-		color: #1a1a1a;
-	}
+
 
 
 	.overlay-wrapper.is-modal {

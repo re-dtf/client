@@ -21,11 +21,14 @@
 	$effect(() => {
 		if (!editorElement) return;
 
+		let isDestroyed = false;
 		let instance: any = null;
 
 		(async () => {
 			const EditorJS = (await import('@editorjs/editorjs')).default;
 			const config = await getEditorConfig();
+
+			if (isDestroyed) return;
 
 			instance = new EditorJS({
 				holder: editorElement,
@@ -42,8 +45,14 @@
 		})();
 
 		return () => {
+			isDestroyed = true;
 			if (instance && typeof instance.destroy === 'function') {
-				instance.destroy();
+				try {
+					instance.destroy();
+				} catch (e) {
+					// Catch potential errors if editor is still initializing when destroyed
+					console.error("Error destroying EditorJS instance", e);
+				}
 			}
 		};
 	});

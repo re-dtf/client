@@ -1,0 +1,50 @@
+/* Theme: dtf2022 */
+@font-face {
+    font-family: 'Roboto';
+    /* Закомментировано, так как файлы шрифтов пока не добавлены физически
+    src: url('./Roboto-VariableFont_wdth,wght.ttf') format('truetype-variations'),
+        url('./Roboto-VariableFont_wdth,wght.ttf') format('truetype'); */
+    font-weight: 100 1000;
+    font-stretch: 75% 125%;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root[data-theme="dtf2022"] {
+    /* Размеры */
+    --header-height: 60px;
+    --sidebar-left-width: 220px;
+    --sidebar-right-width: 300px;
+
+    /* Фоны */
+    --bg-main: #f4f5f7;
+    --bg-card: #ffffff;
+    --bg-header: #D9F5FF;
+
+    /* Модальные окна */
+    --bg-modal: #fff;
+    --bg-ac-modal: #d9f5ff;
+
+    /* Кнопки */
+    --bg-buttons: #fff;
+    --bg-submit-button: #4683d9;
+    --bg-submit-button--hover: #437cce;
+    --text-submit-button: #fff;
+
+    /* Тексты */
+    --text-primary: #000000;
+    --text-secondary: rgba(0, 0, 0, 0.75);
+    --text-hover: #1e88e5;
+
+    /* Границы */
+    --border-color: #eaeaea;
+
+    /* Шрифт */
+    --font-family: 'Roboto', Tahoma, sans-serif;
+}
+
+[data-theme="dtf2022"] body {
+    font-family: var(--font-family);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}

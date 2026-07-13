@@ -5,11 +5,13 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	let feedResult = $state<PaginatedResult<Post> | null>(null);
+	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
 	let currentFeed = $state<'popular' | 'new' | 'my'>('popular');
+
+	const FEED_SORTING: Record<string, string> = { new: 'all', popular: 'hotness', my: 'new' };
 
 	async function loadInitial(isRefresh = false) {
 		try {
@@ -17,7 +19,7 @@
 			if (!isRefresh) loading = true;
 			feedResult = await api.getPosts({ 
 				pageName: currentFeed, 
-				sorting: currentFeed === 'new' ? 'all' : (currentFeed === 'popular' ? 'hotness' : 'new') 
+				sorting: FEED_SORTING[currentFeed] 
 			});
 		} catch (e: any) {
 			error = e.message;
@@ -31,13 +33,18 @@
 		loadInitial(true);
 	}
 
+	$effect(() => {
+		window.addEventListener('refreshFeed', handleRefresh);
+		return () => window.removeEventListener('refreshFeed', handleRefresh);
+	});
+
 	async function loadMore() {
 		if (loading || loadingMore || !feedResult?.lastId || !feedResult?.lastSortingValue) return;
 		try {
 			loadingMore = true;
 			const next = await api.getPosts({ 
 				pageName: currentFeed,
-				sorting: currentFeed === 'new' ? 'all' : (currentFeed === 'popular' ? 'hotness' : 'new'),
+				sorting: FEED_SORTING[currentFeed],
 				cursor: {
 					lastId: feedResult.lastId, 
 					lastSortingValue: feedResult.lastSortingValue 
@@ -55,21 +62,22 @@
 		}
 	}
 
-	function infiniteScroll(node: HTMLElement) {
+	let loaderNode = $state<HTMLElement>();
+
+	$effect(() => {
+		if (!loaderNode) return;
 		const observer = new IntersectionObserver((entries) => {
 			if (entries[0].isIntersecting) {
 				loadMore();
 			}
 		}, { rootMargin: '1000px' });
 		
-		observer.observe(node);
+		observer.observe(loaderNode);
 		
-		return {
-			destroy() {
-				observer.disconnect();
-			}
+		return () => {
+			observer.disconnect();
 		};
-	}
+	});
 
 	function switchFeed(feed: 'popular' | 'new' | 'my') {
 		if (currentFeed === feed) return;
@@ -81,16 +89,13 @@
 	// Load posts purely on the client
 	onMount(() => {
 		loadInitial();
-		window.addEventListener('refreshFeed', handleRefresh);
-		return () => {
-			window.removeEventListener('refreshFeed', handleRefresh);
-		};
 	});
 </script>
 
 <svelte:head>
 	<title>reDTF - Лента</title>
 </svelte:head>
+
 
 <ThemeLoader componentName="EditorialNews" />
 
@@ -110,7 +115,7 @@
 			{/each}
 			
 			{#if feedResult.lastId}
-				<div use:infiniteScroll class="infinite-loader">
+				<div bind:this={loaderNode} class="infinite-loader">
 					{#if loadingMore}
 						<ThemeLoader componentName="Spinner" inline={true} />
 					{/if}

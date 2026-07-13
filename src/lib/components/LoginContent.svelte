@@ -11,7 +11,6 @@
 	// Email fields
 	let email = $state('');
 	let password = $state('');
-	let proxyUrl = $state(authStorage.proxyUrl || '');
 	let showAdvanced = $state(false);
 
 	// Token fields
@@ -19,10 +18,6 @@
 
 	let error = $state('');
 	let isLoading = $state(false);
-
-	$effect(() => {
-		authStorage.proxyUrl = proxyUrl;
-	});
 
 	async function handleEmailSubmit(event: Event) {
 		event.preventDefault();
@@ -70,11 +65,11 @@
 	<h1>Вход в аккаунт</h1>
 
 	<div class="tabs">
-		<button class="tab" class:active={loginMethod === 'email'} onclick={() => { loginMethod = 'email'; error = ''; }}>
-			По Email (Прокси)
+		<button class={['tab', { active: loginMethod === 'email' }]} onclick={() => { loginMethod = 'email'; error = ''; }}>
+			Почта / Пароль
 		</button>
-		<button class="tab" class:active={loginMethod === 'token'} onclick={() => { loginMethod = 'token'; error = ''; }}>
-			По Токену (Прямой)
+		<button class={['tab', { active: loginMethod === 'token' }]} onclick={() => { loginMethod = 'token'; error = ''; }}>
+			Токен
 		</button>
 	</div>
 	
@@ -100,11 +95,11 @@
 						<p class="help-text">В связи с CORS-блокировкой запросов входа от DTF, логин по паролю возможен только через прокси. Вы можете воспользоваться официальным прокси, или развернуть свой: https://github.com/re-dtf/proxy.</p>
 						<div class="form-group">
 							<label for="proxy">URL Прокси</label>
-							<input type="url" id="proxy" bind:value={proxyUrl} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
+							<input type="url" id="proxy" bind:value={authStorage.proxyUrl} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
 							<div class="help-text" style="margin-top: 5px;">
 								Вы можете использовать <button type="button" class="link-button" onclick={() => {
 									if (confirm('Использовать прокси от автора проекта?')) {
-										proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+										authStorage.proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
 									}
 								}}>прокси от автора проекта</button>
 							</div>

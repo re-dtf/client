@@ -22,16 +22,9 @@
 	let aspectRatio = $derived(width && height ? `${width} / ${height}` : 'auto');
 	let bgColor = $derived(color ? `#${color}` : 'transparent');
 	let bgImage = $derived(base64preview ? `url(data:image/png;base64,${base64preview})` : 'none');
-	let imgElement: HTMLImageElement;
-
-	$effect(() => {
-		if (imgElement && imgElement.complete) {
-			loaded = true;
-		}
-	});
 </script>
 
-<div class="lazy-image-wrapper {wrapperClass}" style="aspect-ratio: {aspectRatio}; background-color: {bgColor};" class:loaded>
+<div class={['lazy-image-wrapper', wrapperClass, { loaded }]} style="aspect-ratio: {aspectRatio}; background-color: {bgColor};">
 	{#if base64preview}
 		<div class="preview" style="background-image: {bgImage};"></div>
 	{/if}
@@ -39,7 +32,6 @@
 	<div class="shimmer"></div>
 
 	<img
-		bind:this={imgElement}
 		{src}
 		{alt}
 		loading="lazy"

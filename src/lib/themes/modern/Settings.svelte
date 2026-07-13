@@ -63,22 +63,19 @@
 			
 			<div class="theme-selector">
 				<button 
-					class="theme-btn"
-					class:active={currentTheme === 'classic'}
+					class={['theme-btn', { active: currentTheme === 'classic' }]}
 					onclick={() => themeState.value = 'classic'}
 				>
 					Классика
 				</button>
 				<button 
-					class="theme-btn"
-					class:active={currentTheme === 'modern'}
+					class={['theme-btn', { active: currentTheme === 'modern' }]}
 					onclick={() => themeState.value = 'modern'}
 				>
 					Модерн
 				</button>
 				<button 
-					class="theme-btn"
-					class:active={currentTheme === 'dtf2022'}
+					class={['theme-btn', { active: currentTheme === 'dtf2022' }]}
 					onclick={() => themeState.value = 'dtf2022'}
 				>
 					DTF 2022
@@ -95,8 +92,7 @@
 			
 			<div class="nesting-selector">
 				<button
-					class="nesting-btn"
-					class:active={nestingMode === 'flatten'}
+					class={['nesting-btn', { active: nestingMode === 'flatten' }]}
 					onclick={() => updateNestingMode('flatten')}
 				>
 					<span class="nesting-icon">📐</span>
@@ -104,8 +100,7 @@
 					<span class="nesting-desc">Глубокие ветки сглаживаются</span>
 				</button>
 				<button
-					class="nesting-btn"
-					class:active={nestingMode === 'autopan'}
+					class={['nesting-btn', { active: nestingMode === 'autopan' }]}
 					onclick={() => updateNestingMode('autopan')}
 				>
 					<span class="nesting-icon">🎥</span>

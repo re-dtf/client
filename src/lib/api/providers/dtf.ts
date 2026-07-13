@@ -67,9 +67,8 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 			setAuth(untrack(() => authStorage.dtfToken));
 			response = await doFetch();
 		} else if (authHeader === 'JWTAuthorization') {
-			if (typeof window !== 'undefined') {
-				window.alert(`[DTF API Error] 401 Unauthorized (JWTAuthorization)\n\nНе удалось обновить токен. Автовыход отключен. Сессия может быть повреждена или устарела.`);
-			}
+			// Автовыход отключен, сессия могла протухнуть
+			console.warn('[DTF API] 401 Unauthorized (JWTAuthorization) - не удалось обновить токен');
 		} else {
 			headers.delete(authHeader);
 			response = await doFetch();
@@ -87,10 +86,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 
 function mapEntryToPost(entry: any): Post {
 	const commentsCount = entry.counters?.comments || 0;
-	let unreadCommentsCount = 0;
-	if (entry.commentsSeenCount && entry.commentsSeenCount.count !== undefined) {
-		unreadCommentsCount = Math.max(0, commentsCount - entry.commentsSeenCount.count);
-	}
+	const unreadCommentsCount = Math.max(0, commentsCount - (entry.commentsSeenCount?.count ?? commentsCount));
 
 	return {
 		id: entry.id,
@@ -182,9 +178,6 @@ export const dtfApiProvider: ApiProvider = {
 			// Пытаемся обновить сессию, чтобы получить access_token
 			const success = await refreshSession();
 			if (!success) {
-				if (typeof window !== 'undefined') {
-					window.alert(`[DTF API Error] Не удалось обновить токен. Введенный токен устарел или недействителен.\nАвтовыход отключен.`);
-				}
 				throw new Error('Не удалось получить access token по refresh токену. Возможно, он устарел.');
 			}
 		} else {
@@ -192,10 +185,7 @@ export const dtfApiProvider: ApiProvider = {
 			try {
 				await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
 			} catch (e: unknown) {
-				if (typeof window !== 'undefined') {
-					window.alert(`[DTF API Error] Ошибка проверки токена профиля. Введенный токен недействителен или устарел.\nОшибка: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}\nАвтовыход отключен.`);
-				}
-				throw new Error('Токен недействителен или устарел');
+				throw new Error('Токен недействителен или устарел: ' + (e instanceof Error ? e.message : 'Неизвестная ошибка'));
 			}
 		}
 
@@ -309,7 +299,7 @@ export const dtfApiProvider: ApiProvider = {
 
 	// --- Editor API ---
 
-	async saveDraft(entry: any): Promise<any> {
+	async saveDraft(entry: import('../types').DtfEditorEntry): Promise<import('../types').DtfEditorEntry> {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
 
 		const formData = new FormData();
@@ -389,14 +379,14 @@ export const dtfApiProvider: ApiProvider = {
 		return json.result?.permission || 'everyone';
 	},
 
-	async getPostHistory(postId: number): Promise<any[]> {
+	async getPostHistory(postId: number): Promise<import('../types').PostHistoryVersion[]> {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
 		const response = await fetchWithAuth(`${baseUrl}/content/${postId}/history`, {}, 'JWTAuthorization');
 		const json = await response.json();
 		return json.result?.versions || [];
 	},
 
-	async getPostHistoryVersion(postId: number, versionId: number): Promise<any> {
+	async getPostHistoryVersion(postId: number, versionId: number): Promise<import('../types').DtfEditorEntry> {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
 		const response = await fetchWithAuth(`${baseUrl}/content/${postId}/history/${versionId}`, {}, 'JWTAuthorization');
 		const json = await response.json();

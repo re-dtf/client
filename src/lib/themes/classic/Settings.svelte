@@ -6,16 +6,8 @@
 	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 
-	// Helper for two-way binding
-	let enableCustomApi = $derived(api.enableCustomApi);
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
-	
-	let proxyUrl = $state(authStorage.proxyUrl || '');
-
-	$effect(() => {
-		authStorage.proxyUrl = proxyUrl;
-	});
 
 	function updateApi(e: Event) {
 		api.enableCustomApi = (e.target as HTMLInputElement).checked;
@@ -39,7 +31,7 @@
 		
 		<div class="control checkbox-control">
 			<label>
-				<input type="checkbox" checked={enableCustomApi} onchange={updateApi} />
+				<input type="checkbox" checked={api.enableCustomApi} onchange={updateApi} />
 				Подключить кастомный сервер (Мой API)
 			</label>
 		</div>
@@ -89,14 +81,14 @@
 			<input 
 				type="url" 
 				id="proxy-url" 
-				bind:value={proxyUrl} 
+				bind:value={authStorage.proxyUrl} 
 				placeholder="https://auth-proxy.example.workers.dev" 
 				style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"
 			/>
 			<small style="color: #666; margin-top: 4px;">
 				Вы можете использовать <button type="button" class="link-button" onclick={() => {
 					if (confirm('Использовать прокси от автора проекта?')) {
-						proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+						authStorage.proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
 					}
 				}}>прокси от автора проекта</button>
 			</small>

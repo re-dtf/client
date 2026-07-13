@@ -19,7 +19,7 @@
 	y={logic.previewY}
 />
 
-<div class="comments-section modern-theme-container" class:autopan={commentSettings.value.nestingMode === 'autopan'}>
+<div class={['comments-section modern-theme-container', { autopan: commentSettings.value.nestingMode === 'autopan' }]}>
 	<CommentsHeader {commentsCount} sorting={logic.sorting} onSortingChange={logic.onSortingChange} />
 
 	{#if logic.comments.length === 0 && logic.loading}

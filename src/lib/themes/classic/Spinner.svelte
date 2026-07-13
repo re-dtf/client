@@ -2,7 +2,7 @@
 	let { inline = false } = $props<{ inline?: boolean }>();
 </script>
 
-<div class="spinner-container" class:inline>
+<div class={['spinner-container', { inline }]}>
 	<div class="spinner"></div>
 </div>
 

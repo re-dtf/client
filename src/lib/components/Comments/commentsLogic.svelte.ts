@@ -8,8 +8,8 @@ export class CommentsLogic {
 	getPostId: () => number;
 	get postId() { return this.getPostId(); }
 	
-	comments = $state<CommentTreeItem[]>([]);
-	flatComments = $state<Comment[]>([]);
+	comments = $state.raw<CommentTreeItem[]>([]);
+	flatComments = $state.raw<Comment[]>([]);
 	allCommentsMap = $state(new Map<number, CommentTreeItem>());
 	loading = $state(false);
 	error = $state<string | null>(null);
@@ -44,9 +44,8 @@ export class CommentsLogic {
 
 		$effect(() => {
 			const mq = window.matchMedia('(max-width: 768px)');
-			untrack(() => {
-				this.maxVisualDepth = mq.matches ? 3 : 6;
-			});
+			this.maxVisualDepth = mq.matches ? 3 : 6;
+			
 			const mqListener = (e: MediaQueryListEvent) => {
 				this.maxVisualDepth = e.matches ? 3 : 6;
 			};

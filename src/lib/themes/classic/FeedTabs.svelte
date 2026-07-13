@@ -3,9 +3,9 @@
 </script>
 
 <div class="feed-tabs">
-	<button class:active={currentFeed === 'popular'} onclick={() => switchFeed('popular')}>Популярное</button>
-	<button class:active={currentFeed === 'new'} onclick={() => switchFeed('new')}>Свежее</button>
-	<button class:active={currentFeed === 'my'} onclick={() => switchFeed('my')}>Моя лента</button>
+	<button class={{ active: currentFeed === 'popular' }} onclick={() => switchFeed('popular')}>Популярное</button>
+	<button class={{ active: currentFeed === 'new' }} onclick={() => switchFeed('new')}>Свежее</button>
+	<button class={{ active: currentFeed === 'my' }} onclick={() => switchFeed('my')}>Моя лента</button>
 </div>
 
 <style>

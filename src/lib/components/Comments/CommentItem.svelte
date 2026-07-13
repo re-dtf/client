@@ -100,7 +100,7 @@
 
 	{#if comment.children?.length > 0}
 		{#if !collapsed}
-			<div class="replies-container" class:flat={visualDepth >= maxVisualDepth && nestingMode === 'flatten'}>
+			<div class={['replies-container', { flat: visualDepth >= maxVisualDepth && nestingMode === 'flatten' }]}>
 				{#if !(visualDepth >= maxVisualDepth && nestingMode === 'flatten')}
 					<CommentThreadLine 
 						{comment}

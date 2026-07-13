@@ -7,31 +7,36 @@
 	let { comment } = $props<{ comment: CommentTreeItem }>();
 
 	let reactionError = $state<string | null>(null);
+	let reactions = $state<any>(null);
+
+	$effect(() => {
+		reactions = comment.reactions ? structuredClone(comment.reactions) : null;
+	});
 
 	async function react(reactionId: number) {
-		if (!comment.reactions) return;
-		const prevReactionId = comment.reactions.reactionId;
-		const prevCounters = comment.reactions.counters.map((c: any) => ({ ...c }));
+		if (!reactions) return;
+		const prevReactionId = reactions.reactionId;
+		const prevCounters = reactions.counters.map((c: any) => ({ ...c }));
 		try {
-			const existing = comment.reactions.counters.find((c: any) => c.id === reactionId);
+			const existing = reactions.counters.find((c: any) => c.id === reactionId);
 			let targetReactionId = reactionId;
-			if (comment.reactions.reactionId === reactionId) {
-				comment.reactions.reactionId = 0;
+			if (reactions.reactionId === reactionId) {
+				reactions.reactionId = 0;
 				if (existing) existing.count--;
 				targetReactionId = 0;
 			} else {
-				if (comment.reactions.reactionId) {
-					const old = comment.reactions.counters.find((c: any) => c.id === comment.reactions.reactionId);
+				if (reactions.reactionId) {
+					const old = reactions.counters.find((c: any) => c.id === reactions.reactionId);
 					if (old) old.count--;
 				}
-				comment.reactions.reactionId = reactionId;
+				reactions.reactionId = reactionId;
 				if (existing) existing.count++;
-				else comment.reactions.counters.push({ id: reactionId, count: 1 });
+				else reactions.counters.push({ id: reactionId, count: 1 });
 			}
 			await api.reactToComment(comment.id, targetReactionId);
 		} catch (e: any) {
-			comment.reactions.reactionId = prevReactionId;
-			comment.reactions.counters = prevCounters;
+			reactions.reactionId = prevReactionId;
+			reactions.counters = prevCounters;
 			const msg = e.message || '';
 			if (msg.includes('403') || msg.toLowerCase().includes('недостаточно прав')) {
 				reactionError = 'Для этой реакции нужен DTF Plus';
@@ -44,12 +49,11 @@
 </script>
 
 <div class="comment-actions">
-	{#if comment.reactions && comment.reactions.counters.length > 0}
-		{#each comment.reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
+	{#if reactions && reactions.counters.length > 0}
+		{#each reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
 			{@const rc = REACTIONS[reaction.id]}
 			<button
-				class="reaction-chip"
-				class:active={comment.reactions.reactionId === reaction.id}
+				class={['reaction-chip', { active: reactions.reactionId === reaction.id }]}
 				onclick={() => react(reaction.id)}
 			>
 				<span class="emoji">
@@ -63,7 +67,7 @@
 			</button>
 		{/each}
 	{/if}
-	{#if !comment.reactions || comment.reactions.counters.every((c: any) => c.count === 0)}
+	{#if !reactions || reactions.counters.every((c: any) => c.count === 0)}
 		{@const rc = REACTIONS[1]}
 		<button class="reaction-chip" onclick={() => react(1)}>
 			<span class="emoji">
