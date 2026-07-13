@@ -1,7 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
+import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { readFileSync } from 'fs';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
@@ -26,10 +26,12 @@ export default defineConfig({
 				handleUnseenRoutes: 'ignore'
 			}
 		}),
-		VitePWA({
-			registerType: 'prompt',
+		SvelteKitPWA({
+			registerType: 'prompt', // Оставляем ручное подтверждение
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt}']
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt}'],
+				navigateFallback: '/index.html', // Критично для SPA-роутинга
+				cleanupOutdatedCaches: true
 			},
 			manifest: {
 				// base
@@ -58,7 +60,7 @@ export default defineConfig({
 						src: '/logo.svg',
 						sizes: 'any',
 						type: 'image/svg+xml',
-						purpose: 'any maskable' 
+						purpose: 'any maskable'
 					},
 					{
 						src: '/logo-mono.svg',
@@ -77,7 +79,7 @@ export default defineConfig({
 						src: '/logo-512.png',
 						sizes: '512x512',
 						type: 'image/png'
-					},
+					}
 				]
 			}
 		})
