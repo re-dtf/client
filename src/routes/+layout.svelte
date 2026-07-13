@@ -3,6 +3,7 @@
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
+	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import { page } from '$app/stores';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/environment';
@@ -110,6 +111,8 @@
 					<SettingsOverlay />
 				{:else if overlay.type === 'login'}
 					<LoginOverlay />
+				{:else if overlay.type === 'editor'}
+					<EditorOverlay postId={overlay.data?.postId} />
 				{/if}
 			</div>
 		{/each}

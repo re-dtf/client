@@ -1,0 +1,229 @@
+/* EditorJS Base Overrides */
+.codex-editor__redactor {
+	padding-bottom: 50px !important;
+}
+
+.ce-block__content {
+	max-width: 650px;
+	margin: 0 auto;
+}
+
+/* 
+ * Custom Tools Styling 
+ * We use CSS variables to allow easy theming in the future.
+ */
+
+:root {
+	--dtf-editor-bg: #fff;
+	--dtf-editor-bg-secondary: #f9f9f9;
+	--dtf-editor-bg-hover: #f0f0f0;
+	--dtf-editor-border: #e5e5e5;
+	--dtf-editor-border-hover: #d0d0d0;
+	--dtf-editor-text: #1a1a1a;
+	--dtf-editor-text-secondary: #777;
+	--dtf-editor-accent-bg: #e6f3ff;
+	--dtf-editor-accent-border: #b3d9ff;
+	--dtf-editor-accent-text: #0066cc;
+	--dtf-editor-danger: #ff4d4d;
+}
+
+/* Spoiler Tune */
+.editor-block-is-spoiler {
+	opacity: 0.5;
+	position: relative;
+}
+
+.editor-block-is-spoiler::after {
+	content: 'Спойлер';
+	position: absolute;
+	top: -10px;
+	right: -10px;
+	background: var(--dtf-editor-danger);
+	color: white;
+	padding: 2px 8px;
+	font-size: 10px;
+	border-radius: 4px;
+	font-weight: bold;
+	pointer-events: none;
+}
+
+.dtf-spoiler-tune-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 12px;
+	margin-top: 4px;
+	border-radius: 6px;
+	border: 1px solid var(--dtf-editor-border);
+	background: var(--dtf-editor-bg-secondary);
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--dtf-editor-text);
+	transition: all 0.2s ease;
+	box-sizing: border-box;
+}
+
+.dtf-spoiler-tune-btn:hover {
+	background: var(--dtf-editor-bg-hover);
+	border-color: var(--dtf-editor-border-hover);
+}
+
+.dtf-spoiler-tune-btn--active {
+	background: var(--dtf-editor-accent-bg);
+	border-color: var(--dtf-editor-accent-border);
+	color: var(--dtf-editor-accent-text);
+}
+
+/* Anchor Tune */
+.dtf-anchor-tune {
+	padding: 10px;
+	border-top: 1px solid var(--dtf-editor-border);
+}
+
+.dtf-anchor-tune-label {
+	display: block;
+	font-size: 12px;
+	color: var(--dtf-editor-text-secondary);
+	margin-bottom: 4px;
+}
+
+.dtf-anchor-tune-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 4px 8px;
+	border: 1px solid var(--dtf-editor-border);
+	border-radius: 4px;
+	background: var(--dtf-editor-bg);
+	color: var(--dtf-editor-text);
+}
+
+/* Quiz Tool */
+.dtf-quiz-tool {
+	padding: 16px;
+	border: 1px solid var(--dtf-editor-border);
+	border-radius: 8px;
+	background: var(--dtf-editor-bg-secondary);
+}
+
+.dtf-quiz-tool-header {
+	font-weight: bold;
+	margin-bottom: 12px;
+	color: var(--dtf-editor-text);
+}
+
+.dtf-quiz-tool-title {
+	width: 100%;
+	font-size: 18px;
+	font-weight: bold;
+	border: none;
+	border-bottom: 2px solid var(--dtf-editor-border);
+	background: transparent;
+	padding: 8px 0;
+	margin-bottom: 16px;
+	outline: none;
+	color: var(--dtf-editor-text);
+}
+
+.dtf-quiz-tool-options {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.dtf-quiz-tool-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.dtf-quiz-tool-option-input {
+	flex: 1;
+	padding: 8px;
+	border: 1px solid var(--dtf-editor-border);
+	border-radius: 4px;
+	background: var(--dtf-editor-bg);
+	color: var(--dtf-editor-text);
+}
+
+.dtf-quiz-tool-option-remove {
+	background: none;
+	border: none;
+	color: var(--dtf-editor-danger);
+	cursor: pointer;
+	font-size: 18px;
+	padding: 4px;
+}
+
+.dtf-quiz-tool-add-btn {
+	margin-top: 12px;
+	padding: 8px;
+	background: var(--dtf-editor-bg);
+	border: 1px dashed var(--dtf-editor-border);
+	border-radius: 4px;
+	cursor: pointer;
+	color: var(--dtf-editor-text-secondary);
+	transition: background 0.2s ease;
+}
+
+.dtf-quiz-tool-add-btn:hover {
+	background: var(--dtf-editor-bg-hover);
+}
+
+/* Person Tool */
+.dtf-person-tool {
+	display: flex;
+	gap: 16px;
+	padding: 16px;
+	background: var(--dtf-editor-bg-secondary);
+	border: 1px solid var(--dtf-editor-border);
+	border-radius: 8px;
+	align-items: center;
+}
+
+.dtf-person-tool-avatar-container {
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	background: #e0e0e0;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.dtf-person-tool-avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.dtf-person-tool-avatar-placeholder {
+	font-size: 12px;
+	color: #777;
+	position: absolute;
+}
+
+.dtf-person-tool-text-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.dtf-person-tool-input {
+	padding: 8px;
+	border: 1px solid var(--dtf-editor-border);
+	border-radius: 4px;
+	background: var(--dtf-editor-bg);
+	color: var(--dtf-editor-text);
+}
+
+.dtf-person-tool-input--title {
+	font-weight: bold;
+}

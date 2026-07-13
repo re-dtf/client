@@ -26,6 +26,14 @@
 		});
 	}
 
+	function openEditor(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/write'), { 
+			overlays: [...overlays, { id: `editor-${Date.now()}`, type: 'editor', presentation: 'modal' }] 
+		});
+	}
+
 	function openFeed(e: MouseEvent) {
 		if (page.state.overlays && page.state.overlays.length > 0) {
 			// Находимся в оверлее (лента жива на фоне) - закрываем все оверлеи
@@ -51,6 +59,7 @@
 		<a href={resolve('/')} class="logo" onclick={openFeed}>reDTF <span class="badge">classic</span></a>
 		<div class="links">
 			<a href={resolve('/')} onclick={openFeed}>Лента</a>
+			<a href={resolve('/write')} onclick={openEditor} class="write-btn">Написать</a>
 			<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
 			{#if authStorage.isAuthenticated}
 				<a href={resolve('/')} onclick={handleLogout}>Выйти</a>
@@ -113,5 +122,10 @@
 	.links a:hover {
 		color: #e52a42;
 		text-decoration: underline;
+	}
+
+	.write-btn {
+		font-weight: bold !important;
+		color: #e52a42 !important;
 	}
 </style>

@@ -7,7 +7,7 @@ declare global {
 		// interface PageData {}
 		interface OverlayState {
 			id: string;
-			type: 'post' | 'settings' | 'login';
+			type: 'post' | 'settings' | 'login' | 'editor';
 			presentation?: 'page' | 'modal';
 			data?: any;
 		}

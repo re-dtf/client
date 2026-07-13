@@ -26,6 +26,14 @@
 		});
 	}
 
+	function openEditor(e: MouseEvent) {
+		e.preventDefault();
+		const overlays = page.state.overlays || [];
+		pushState(resolve('/write'), { 
+			overlays: [...overlays, { id: `editor-${Date.now()}`, type: 'editor', presentation: 'modal' }] 
+		});
+	}
+
 	function openFeed(e: MouseEvent) {
 		if (page.state.overlays && page.state.overlays.length > 0) {
 			e.preventDefault();
@@ -52,6 +60,11 @@
 			<a href={resolve('/')} class="nav-link" onclick={openFeed}>
 				<span class="icon">🏠</span> Лента
 			</a>
+			{#if authStorage.isAuthenticated}
+				<a href={resolve('/write')} class="nav-link write-btn" onclick={openEditor}>
+					<span class="icon">✍️</span> Написать
+				</a>
+			{/if}
 			<a href={resolve('/settings')} class="nav-link" onclick={openSettings}>
 				<span class="icon">⚙️</span> Настройки
 			</a>
@@ -157,5 +170,14 @@
 	.logout-btn:hover {
 		background: rgba(255, 75, 43, 0.1);
 		color: #ff4b2b;
+	}
+
+	.write-btn {
+		color: #ff416c;
+	}
+	
+	.write-btn:hover {
+		background: rgba(255, 65, 108, 0.1);
+		color: #ff416c;
 	}
 </style>
