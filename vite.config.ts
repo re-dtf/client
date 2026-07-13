@@ -29,7 +29,7 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'prompt', // Оставляем ручное подтверждение
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt}'],
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt,json}'],
 				navigateFallback: '/index.html', // Критично для SPA-роутинга
 				cleanupOutdatedCaches: true
 			},
