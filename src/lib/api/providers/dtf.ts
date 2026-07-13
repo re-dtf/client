@@ -304,5 +304,102 @@ export const dtfApiProvider: ApiProvider = {
 		return entries
 			.filter((entry: any) => entry.id !== undefined)
 			.map((entry: any) => mapEntryToPost(entry));
+	},
+
+	// --- Editor API ---
+
+	async saveDraft(entry: any): Promise<any> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+
+		const formData = new FormData();
+		formData.append('entry', JSON.stringify(entry));
+
+		const response = await fetchWithAuth(`${baseUrl}/editor`, {
+			method: 'POST',
+			body: formData
+		}, 'JWTAuthorization');
+
+		const json = await response.json();
+		if (json.error) throw new Error(json.message?.text || 'Failed to save draft');
+		return json.result?.entry;
+	},
+
+	async uploadMedia(file: File): Promise<any> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+
+		const formData = new FormData();
+		formData.append('files', file);
+
+		const response = await fetchWithAuth(`https://upload.dtf.ru/v2.8/uploader/upload`, {
+			method: 'POST',
+			body: formData
+		}, 'JWTAuthorization');
+
+		const json = await response.json();
+		if (json.error) throw new Error(json.message?.text || 'Failed to upload media');
+		
+		const resultItem = json.result?.[0];
+		const uploadedFile = resultItem?.data;
+		if (!uploadedFile || !uploadedFile.uuid) throw new Error('Invalid upload response');
+		
+		return {
+			uuid: uploadedFile.uuid,
+			width: uploadedFile.width,
+			height: uploadedFile.height,
+			size: uploadedFile.size,
+			type: resultItem.type === 'movie' ? 'movie' : uploadedFile.type,
+			color: uploadedFile.color
+		};
+	},
+
+	async getSubsites(): Promise<any[]> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+
+		const response = await fetchWithAuth(`${baseUrl}/editor/subsites`, {}, 'JWTAuthorization');
+		const json = await response.json();
+		if (json.error) throw new Error(json.message?.text || 'Failed to fetch subsites');
+		
+		// The API returns [{items: [subsites]}]
+		return json.result?.[0]?.items || [];
+	},
+
+	async setCommentPermissions(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'): Promise<void> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+
+		if (permission === 'everyone') {
+			await fetchWithAuth(`${baseUrl}/posts/${postId}/comment-permission`, {
+				method: 'DELETE'
+			}, 'JWTAuthorization');
+		} else {
+			const formData = new FormData();
+			formData.append('commentingPermissions', permission);
+			
+			await fetchWithAuth(`${baseUrl}/posts/${postId}/comment-permission`, {
+				method: 'POST',
+				body: formData
+			}, 'JWTAuthorization');
+		}
+	},
+
+	async getCommentPermissions(postId: number): Promise<'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+		const response = await fetchWithAuth(`${baseUrl}/posts/${postId}/comment-permission`, {}, 'JWTAuthorization');
+		const json = await response.json();
+		return json.result?.permission || 'everyone';
+	},
+
+	async getPostHistory(postId: number): Promise<any[]> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+		const response = await fetchWithAuth(`${baseUrl}/content/${postId}/history`, {}, 'JWTAuthorization');
+		const json = await response.json();
+		return json.result?.versions || [];
+	},
+
+	async getPostHistoryVersion(postId: number, versionId: number): Promise<any> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+		const response = await fetchWithAuth(`${baseUrl}/content/${postId}/history/${versionId}`, {}, 'JWTAuthorization');
+		const json = await response.json();
+		if (json.error) throw new Error(json.message?.text || 'Failed to fetch history version');
+		return json.result?.entry;
 	}
 };

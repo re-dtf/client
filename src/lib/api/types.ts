@@ -4,6 +4,39 @@ export interface Block {
 	data: any;
 }
 
+export interface DtfEditorBlock {
+	type: string;
+	cover?: boolean;
+	hidden?: boolean;
+	anchor?: string;
+	data: any;
+}
+
+export interface DtfEditorEntry {
+	id: number;
+	user_id?: number;
+	type?: number;
+	subsite_id: number;
+	title: string;
+	entry: {
+		blocks: DtfEditorBlock[];
+	};
+	is_published?: boolean;
+	is_adult?: boolean;
+	[key: string]: any;
+}
+
+export interface SubsiteItem {
+	value: number;
+	label: string;
+	image?: string;
+	isNoTheme?: boolean;
+	additionalData?: {
+		url?: string;
+		isBlog?: boolean;
+	};
+}
+
 export interface PaginatedResult<T> {
 	items: T[];
 	lastId?: number;
@@ -75,6 +108,20 @@ export interface Session {
 	refreshExpTimestamp: number;
 }
 
+export interface UploadResult {
+	uuid: string;
+	width?: number;
+	height?: number;
+	size?: number;
+	type?: string;
+	color?: string;
+}
+
+export interface PostHistoryVersion {
+	id: number;
+	dateCreated: number;
+}
+
 export interface GetPostsOptions {
 	pageName?: 'popular' | 'new' | 'my';
 	sorting?: string;
@@ -90,4 +137,13 @@ export interface ApiProvider {
 	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 	getEditorialNews?(): Promise<Post[]>;
+	
+	// Editor
+	saveDraft?(entry: DtfEditorEntry): Promise<any>;
+	uploadMedia?(file: File): Promise<UploadResult>;
+	getSubsites?(): Promise<SubsiteItem[]>;
+	getCommentPermissions?(postId: number): Promise<'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'>;
+	setCommentPermissions?(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'): Promise<void>;
+	getPostHistory?(postId: number): Promise<PostHistoryVersion[]>;
+	getPostHistoryVersion?(postId: number, versionId: number): Promise<DtfEditorEntry>;
 }

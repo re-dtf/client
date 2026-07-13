@@ -95,5 +95,41 @@ export const api = {
 			return dtfApiProvider.getEditorialNews();
 		}
 		return [];
+	},
+
+	// --- Editor ---
+	async saveDraft(entry: any) {
+		if (!dtfApiProvider.saveDraft) throw new Error("saveDraft is not implemented");
+		return dtfApiProvider.saveDraft(entry);
+	},
+	
+	async uploadMedia(file: File) {
+		if (!dtfApiProvider.uploadMedia) throw new Error("uploadMedia is not implemented");
+		return dtfApiProvider.uploadMedia(file);
+	},
+
+	async getSubsites() {
+		if (!dtfApiProvider.getSubsites) throw new Error("getSubsites is not implemented");
+		return dtfApiProvider.getSubsites();
+	},
+
+	async setCommentPermissions(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers') {
+		if (!dtfApiProvider.setCommentPermissions) throw new Error("setCommentPermissions is not implemented");
+		return dtfApiProvider.setCommentPermissions(postId, permission);
+	},
+
+	async getCommentPermissions(postId: number) {
+		if (!dtfApiProvider.getCommentPermissions) throw new Error("getCommentPermissions is not implemented");
+		return dtfApiProvider.getCommentPermissions(postId);
+	},
+
+	async getPostHistory(postId: number) {
+		if (!dtfApiProvider.getPostHistory) throw new Error("getPostHistory is not implemented");
+		return dtfApiProvider.getPostHistory(postId);
+	},
+
+	async getPostHistoryVersion(postId: number, versionId: number) {
+		if (!dtfApiProvider.getPostHistoryVersion) throw new Error("getPostHistoryVersion is not implemented");
+		return dtfApiProvider.getPostHistoryVersion(postId, versionId);
 	}
 };
