@@ -38,8 +38,9 @@ export class CommentsLogic {
 		this.getSourceId = getSourceId;
 
 		$effect(() => {
-			// Отслеживаем только изменение postId
+			// Отслеживаем изменение postId и sourceId
 			const currentPostId = this.postId;
+			const currentSourceId = this.sourceId;
 			untrack(() => {
 				this.loadComments(true);
 			});
