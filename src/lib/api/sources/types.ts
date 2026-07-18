@@ -430,7 +430,7 @@ export function isSourceManifest(obj: unknown, isBuiltin = false): obj is Source
 	if (manifest.responseFormat !== 'redtf-native') {
 		return false;
 	}
-	if (manifest.responseMapping !== null) {
+	if (manifest.responseMapping !== null && manifest.responseMapping !== undefined) {
 		return false;
 	}
 
