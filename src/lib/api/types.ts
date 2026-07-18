@@ -94,6 +94,8 @@ export interface Comment {
 		counters: { id: number; count: number }[];
 		reactionId: number;
 	};
+	isReplaced?: boolean;
+	originalSourceId?: string;
 }
 
 export interface CommentTreeItem extends Comment {
