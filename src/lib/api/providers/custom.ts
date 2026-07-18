@@ -17,6 +17,7 @@ export const customApiProvider: ApiProvider = {
 			items: [
 				{
 					id: Date.now(), // Generate a unique ID so Svelte's each block doesn't complain about duplicate keys
+					sourceId: 'custom',
 					title: 'Пост с кастомного сервера',
 					blocks: [{ type: 'text', data: { text: '<p>Этот пост пришел с вашего личного сервера</p>' }, cover: true }],
 					author: { id: 99, name: 'Admin' },
@@ -33,6 +34,7 @@ export const customApiProvider: ApiProvider = {
 		console.log(`[Custom Provider] Fetching post ${id}...`);
 		return {
 			id,
+			sourceId: 'custom',
 			title: `Кастомный пост ${id}`,
 			blocks: [{ type: 'text', data: { text: '<p>Контент с кастомного сервера...</p>' }, cover: true }],
 			author: { id: 99, name: 'Admin' },
@@ -47,6 +49,7 @@ export const customApiProvider: ApiProvider = {
 			items: [
 				{
 					id: 501,
+					sourceId: 'custom',
 					postId,
 					author: { id: 99, name: 'Admin' },
 					content: 'Эксклюзивный коммент с кастомного сервера',

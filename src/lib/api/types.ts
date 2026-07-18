@@ -45,6 +45,7 @@ export interface PaginatedResult<T> {
 
 export interface Post {
 	id: number;
+	sourceId: string;
 	title: string;
 	blocks: Block[];
 	author: User;
@@ -78,6 +79,7 @@ export interface CommentMedia {
 
 export interface Comment {
 	id: number;
+	sourceId: string;
 	postId: number;
 	author: User;
 	content: string;

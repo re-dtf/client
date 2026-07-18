@@ -90,6 +90,7 @@ function mapEntryToPost(entry: any): Post {
 
 	return {
 		id: entry.id,
+		sourceId: 'dtf',
 		title: entry.title || 'Без заголовка',
 		blocks: entry.blocks || [],
 		author: {
@@ -245,6 +246,7 @@ export const dtfApiProvider: ApiProvider = {
 		
 		const items = json.result.items.map((item: any) => ({
 			id: item.id,
+			sourceId: 'dtf',
 			postId,
 			author: {
 				id: item.author?.id || 0,
