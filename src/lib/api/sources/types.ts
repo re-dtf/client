@@ -158,11 +158,12 @@ function isValidHeaderName(name: string): boolean {
  * Проверяет безопасность относительного пути (защита от URL hijacking и XSS).
  */
 function isSafeRelativePath(path: string): boolean {
-	if (path.startsWith('//')) {
+	const trimmedPath = path.trim();
+	if (trimmedPath.startsWith('//')) {
 		return false;
 	}
 	try {
-		const decoded = decodeURIComponent(path);
+		const decoded = decodeURIComponent(trimmedPath);
 		return !decoded.includes('\\') && 
 			!decoded.includes('..') && 
 			!/^[a-z]+:/i.test(decoded);
