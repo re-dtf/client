@@ -6,16 +6,18 @@ import { PanoramaEngine } from './panoramaEngine.svelte';
 
 export class CommentsLogic {
 	getPostId: () => number;
+	getSourceId: () => string;
 	get postId() { return this.getPostId(); }
+	get sourceId() { return this.getSourceId(); }
 	
-	comments = $state.raw<CommentTreeItem[]>([]);
-	flatComments = $state.raw<Comment[]>([]);
-	allCommentsMap = $state(new Map<number, CommentTreeItem>());
+	comments = $state<CommentTreeItem[]>([]);
+	flatComments = $state<Comment[]>([]);
+	allCommentsMap = $state(new Map<string, CommentTreeItem>());
 	loading = $state(false);
 	error = $state<string | null>(null);
 
 	sorting = $state('hotness');
-	cursor = $state<{ lastId: number; lastSortingValue: number } | undefined>();
+	cursor = $state<Record<string, { lastId: number; lastSortingValue: number }> | undefined>();
 	hasMore = $state(true);
 
 	observerElement = $state<HTMLElement | undefined>();
@@ -31,8 +33,9 @@ export class CommentsLogic {
 
 	maxVisualDepth = $state(6);
 
-	constructor(getPostId: () => number) {
+	constructor(getPostId: () => number, getSourceId: () => string = () => 'dtf') {
 		this.getPostId = getPostId;
+		this.getSourceId = getSourceId;
 
 		$effect(() => {
 			// Отслеживаем только изменение postId
@@ -99,10 +102,10 @@ export class CommentsLogic {
 				this.cursor = undefined;
 				this.flatComments = [];
 				this.comments = [];
-				this.allCommentsMap = new Map();
+				this.allCommentsMap = new Map<string, CommentTreeItem>();
 			}
 
-			const result = await api.getComments(this.postId, this.cursor, this.sorting);
+			const result = await api.getComments(this.postId, this.sourceId, this.cursor, this.sorting);
 			
 			this.flatComments = [...this.flatComments, ...result.items];
 			const tree = buildTree(this.flatComments);
@@ -110,7 +113,7 @@ export class CommentsLogic {
 			this.allCommentsMap = tree.map;
 
 			if (result.lastId && result.lastSortingValue) {
-				this.cursor = { lastId: result.lastId, lastSortingValue: result.lastSortingValue };
+				this.cursor = { ...this.cursor, [this.sourceId]: { lastId: result.lastId, lastSortingValue: result.lastSortingValue } };
 				this.hasMore = true;
 			} else {
 				this.hasMore = false;

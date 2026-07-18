@@ -19,7 +19,7 @@
 		comment: CommentTreeItem;
 		depth?: number;
 		maxVisualDepth?: number;
-		allComments: Map<number, CommentTreeItem>;
+		allComments: Map<string, CommentTreeItem>;
 		nestingMode?: 'flatten' | 'autopan';
 		onShowPreview?: (comment: CommentTreeItem, x: number, y: number) => void;
 		onHidePreview?: () => void;
@@ -35,7 +35,7 @@
 		nestingMode === 'flatten' && depth > maxVisualDepth && !!comment.replyTo
 	);
 	let parentComment = $derived(
-		comment.replyTo ? allComments.get(comment.replyTo) ?? null : null
+		comment.parentKey ? (allComments.get(comment.parentKey) ?? null) : null
 	);
 
 	// svelte-ignore state_referenced_locally
@@ -93,7 +93,7 @@
 	}
 </script>
 
-<div class="comment-item" id="comment-{comment.id}" data-depth={visualDepth} bind:this={itemElement}>
+<div class="comment-item" id="comment-{comment.sourceId}_{comment.id}" data-depth={visualDepth} bind:this={itemElement}>
 	<div class="comment-body-container">
 		<CardComponent {comment} {showBreadcrumb} {parentComment} />
 	</div>

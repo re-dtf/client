@@ -14,21 +14,40 @@ export function formatDate(iso: string): string {
 	return new Date(iso).toLocaleDateString('ru-RU');
 }
 
-export function buildTree(flat: Comment[]): { roots: CommentTreeItem[], map: Map<number, CommentTreeItem> } {
-	const map = new Map<number, CommentTreeItem>();
+export function buildTree(flat: Comment[], primarySourceId: string = 'dtf'): { roots: CommentTreeItem[], map: Map<string, CommentTreeItem> } {
+	const map = new Map<string, CommentTreeItem>();
 	const roots: CommentTreeItem[] = [];
+	const replacedMap = new Map<string, string>();
 
 	for (const c of flat) {
-		map.set(c.id, { 
+		const key = `${c.sourceId}_${c.id}`;
+		map.set(key, { 
 			...c, 
 			children: [],
 			_formattedDate: formatDate(c.createdAt)
 		});
+		if (c.isReplaced && c.originalSourceId) {
+			replacedMap.set(`${c.originalSourceId}_${c.id}`, key);
+		}
 	}
 
 	for (const c of map.values()) {
-		if (c.replyTo && map.has(c.replyTo)) {
-			map.get(c.replyTo)!.children.push(c);
+		if (c.replyTo) {
+			let parentKey = `${c.sourceId}_${c.replyTo}`;
+			if (!map.has(parentKey)) {
+				parentKey = `${primarySourceId}_${c.replyTo}`;
+			}
+			
+			if (!map.has(parentKey) && replacedMap.has(parentKey)) {
+				parentKey = replacedMap.get(parentKey)!;
+			}
+			
+			if (map.has(parentKey)) {
+				c.parentKey = parentKey;
+				map.get(parentKey)!.children.push(c);
+			} else {
+				roots.push(c);
+			}
 		} else {
 			roots.push(c);
 		}

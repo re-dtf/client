@@ -60,8 +60,9 @@ export const api = {
 		return dtfApiProvider.getPost(id);
 	},
 
-	async getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting: string = 'date') {
-		const dtfCommentsPromise = dtfApiProvider.getComments(postId, cursor, sorting);
+	async getComments(postId: number, sourceId: string, cursor?: Record<string, { lastId: number; lastSortingValue: number }>, sorting: string = 'date') {
+		const dtfCursor = cursor?.['dtf'];
+		const dtfCommentsPromise = dtfApiProvider.getComments(postId, dtfCursor, sorting);
 		
 		if (this.enableCustomApi) {
 			const customCommentsPromise = customApiProvider.getComments(postId);

@@ -100,6 +100,7 @@ export interface Comment {
 
 export interface CommentTreeItem extends Comment {
 	children: CommentTreeItem[];
+	parentKey?: string;
 	_totalReplies?: number;
 	_formattedDate?: string;
 }
