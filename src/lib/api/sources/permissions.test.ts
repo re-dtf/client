@@ -82,19 +82,19 @@ describe('permissions', () => {
 
 		it('should return true for a target-specific permission when matching target is provided', () => {
 			const manifest = createBaseManifest();
-			const source = createSourceState(manifest, true, ['mutate:comments:replace']);
+			const source = createSourceState(manifest, true, ['mutate:comments:replace:dtf']);
 			expect(hasPermission(source, 'mutate:comments:replace', 'dtf')).toBe(true);
 		});
 
 		it('should return false for a target-specific permission when mismatching target is provided', () => {
 			const manifest = createBaseManifest();
-			const source = createSourceState(manifest, true, ['mutate:comments:replace']);
+			const source = createSourceState(manifest, true, ['mutate:comments:replace:dtf']);
 			expect(hasPermission(source, 'mutate:comments:replace', 'other-target')).toBe(false);
 		});
 
 		it('should return false for a target-specific permission when no target is provided', () => {
 			const manifest = createBaseManifest();
-			const source = createSourceState(manifest, true, ['mutate:comments:replace']);
+			const source = createSourceState(manifest, true, ['mutate:comments:replace:dtf']);
 			expect(hasPermission(source, 'mutate:comments:replace')).toBe(false);
 		});
 

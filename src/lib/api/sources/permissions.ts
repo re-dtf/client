@@ -1,6 +1,13 @@
 import type { SourceManifest, SourcePermission, SourceState } from './types';
 
 /**
+ * Создает композитный ключ для выданного разрешения.
+ */
+export function getPermissionKey(permissionId: string, target?: string): string {
+	return target ? `${permissionId}:${target}` : permissionId;
+}
+
+/**
  * Возвращает полный список разрешений манифеста, включая неявные разрешения,
  * такие как 'auth:bio_write' для метода авторизации 'bio_verification'.
  */
@@ -28,10 +35,6 @@ export function hasPermission(source: SourceState, permissionId: string, target?
 		return false;
 	}
 
-	if (!source.grantedPermissions.includes(permissionId)) {
-		return false;
-	}
-
 	const permissions = getManifestPermissions(source.manifest);
 
 	const found = permissions.find((p) => {
@@ -44,7 +47,12 @@ export function hasPermission(source: SourceState, permissionId: string, target?
 		return true;
 	});
 
-	return !!found;
+	if (!found) {
+		return false;
+	}
+
+	const checkKey = getPermissionKey(found.id, found.target);
+	return source.grantedPermissions.includes(checkKey);
 }
 
 export interface PermissionsDiff {
@@ -66,7 +74,12 @@ export function diffPermissions(oldManifest: SourceManifest, newManifest: Source
 
 	// Находим добавленные разрешения
 	for (const newPerm of newList) {
-		const exists = oldList.some((oldPerm) => oldPerm.id === newPerm.id && oldPerm.target === newPerm.target);
+		const exists = oldList.some((oldPerm) => 
+			oldPerm.id === newPerm.id && 
+			oldPerm.target === newPerm.target &&
+			oldPerm.description === newPerm.description &&
+			!!oldPerm.required === !!newPerm.required
+		);
 		if (!exists) {
 			added.push(newPerm);
 		}
@@ -74,7 +87,12 @@ export function diffPermissions(oldManifest: SourceManifest, newManifest: Source
 
 	// Находим удаленные разрешения
 	for (const oldPerm of oldList) {
-		const exists = newList.some((newPerm) => newPerm.id === oldPerm.id && newPerm.target === oldPerm.target);
+		const exists = newList.some((newPerm) => 
+			newPerm.id === oldPerm.id && 
+			newPerm.target === oldPerm.target &&
+			newPerm.description === oldPerm.description &&
+			!!newPerm.required === !!oldPerm.required
+		);
 		if (!exists) {
 			removed.push(oldPerm);
 		}

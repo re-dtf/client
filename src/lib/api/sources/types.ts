@@ -98,7 +98,7 @@ export interface SourceState {
 	manifestUrl: string; // URL, с которого был загружен манифест
 	manifest: SourceManifest; // Кэшированный манифест
 	enabled: boolean; // Включен ли источник
-	grantedPermissions: string[]; // Список предоставленных разрешений (ID разрешений)
+	grantedPermissions: string[]; // Список предоставленных разрешений (формат: 'id' или 'id:target')
 	authToken?: string; // Токен авторизации (если получен)
 	authTokenExpiresAt?: number; // Время истечения токена в миллисекундах (timestamp)
 	addedAt: number; // Время добавления источника (timestamp)
@@ -176,9 +176,9 @@ function isSafeRelativePath(path: string): boolean {
  * Сохраняет subpaths (например, /api/v1) в baseUrl и корректно обрабатывает ведущие/ведомые слеши.
  */
 export function resolveSourceUrl(baseUrl: string, path: string): string {
-	const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-	const cleanPath = path.startsWith('/') ? path : '/' + path;
-	return new URL(cleanBase + cleanPath).href;
+	const base = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+	const relativePath = path.startsWith('/') ? path.slice(1) : path;
+	return new URL(relativePath, base).href;
 }
 
 export function isSourceManifest(obj: unknown, isBuiltin = false): obj is SourceManifest {
