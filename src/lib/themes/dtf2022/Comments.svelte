@@ -7,9 +7,9 @@
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
 	import CommentCard from './CommentCard.svelte';
 
-	let { postId, commentsCount = 0 } = $props<{ postId: number; commentsCount?: number }>();
+	let { postId, sourceId = 'dtf', commentsCount = 0 } = $props<{ postId: number; sourceId?: string; commentsCount?: number }>();
 
-	let logic = new CommentsLogic(() => postId);
+	let logic = new CommentsLogic(() => postId, () => sourceId);
 </script>
 
 <CommentPreview

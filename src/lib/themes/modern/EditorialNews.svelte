@@ -26,7 +26,7 @@
 		event.preventDefault();
 		const overlays = $page.state.overlays || [];
 		pushState(resolve(`/post/${post.id}`), { 
-			overlays: [...overlays, { id: `post-${post.id}`, type: 'post', data: { postId: post.id } }] 
+			overlays: [...overlays, { id: `post-${post.sourceId}-${post.id}`, type: 'post', data: { postId: post.id, sourceId: post.sourceId } }] 
 		});
 	}
 </script>

@@ -1,13 +1,12 @@
 <script lang="ts">
 	import type { CommentTreeItem } from '$lib/api/types';
 
-	let { parentComment, replyToId } = $props<{ 
+	let { parentComment } = $props<{ 
 		parentComment: CommentTreeItem;
-		replyToId: number;
 	}>();
 
 	function scrollToParent() {
-		const el = document.getElementById(`comment-${replyToId}`);
+		const el = document.getElementById(`comment-${parentComment.sourceId}_${parentComment.id}`);
 		if (el) {
 			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 			el.classList.add('highlighted');

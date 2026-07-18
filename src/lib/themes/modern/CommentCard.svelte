@@ -13,7 +13,7 @@
 </script>
 
 {#if showBreadcrumb && parentComment}
-	<CommentBreadcrumb {parentComment} replyToId={comment.replyTo!} />
+	<CommentBreadcrumb {parentComment} />
 {/if}
 
 {#if comment.isRemoved}
