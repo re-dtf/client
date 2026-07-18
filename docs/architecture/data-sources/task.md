@@ -21,16 +21,16 @@
 ## Фаза 2: Механика источников (Реестр и Загрузчик)
 Изолированная логика работы с конфигурациями.
 
-- `[ ]` **Шаг 2.1: Загрузчик манифестов (`src/lib/api/sources/manifest-loader.ts`)**
+- `[x]` **Шаг 2.1: Загрузчик манифестов (`src/lib/api/sources/manifest-loader.ts`)**
   - Реализовать функцию загрузки JSON.
   - Загрузка с `github:` должна преобразовываться в `https://raw.githubusercontent.com/...` (для работы CORS).
   - Строгая валидация, что `api.baseUrl` начинается с `https://` (защита от Mixed Content).
-- `[ ]` **Шаг 2.2: Проверка разрешений (`src/lib/api/sources/permissions.ts`)**
+- `[x]` **Шаг 2.2: Проверка разрешений (`src/lib/api/sources/permissions.ts`)**
   - Написать функцию `hasPermission(source, permissionId, targetId)`.
   - Написать функцию `diffPermissions` для вычисления разницы при апдейте манифеста.
-- `[ ]` **Шаг 2.3: Вшитые источники (`src/lib/api/sources/builtins.ts`)**
+- `[x]` **Шаг 2.3: Вшитые источники (`src/lib/api/sources/builtins.ts`)**
   - Создать константу с массивом URL доверенных источников.
-- `[ ]` **Шаг 2.4: Реестр источников (`src/lib/api/sources/registry.svelte.ts`)**
+- `[x]` **Шаг 2.4: Реестр источников (`src/lib/api/sources/registry.svelte.ts`)**
   - Обернуть хранилище в удобный реактивный API (`addSource`, `removeSource`, `toggleSource`).
 
 ## Фаза 3: Svelte Реактивность (Критический узел)
