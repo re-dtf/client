@@ -111,7 +111,7 @@
 				{/if}
 				
 				<div class="replies">
-					{#each visibleChildren as child (child.id)}
+					{#each visibleChildren as child (child.sourceId + '_' + child.id)}
 						<CommentItem
 							comment={child}
 							depth={depth + 1}

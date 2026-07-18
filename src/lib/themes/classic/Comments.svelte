@@ -36,7 +36,7 @@
 		bind:this={logic.viewportElement}
 	>
 		<div class="comments-list">
-			{#each logic.comments as comment (comment.id)}
+			{#each logic.comments as comment (comment.sourceId + '_' + comment.id)}
 				<CommentItem
 					{comment}
 					depth={0}

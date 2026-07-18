@@ -110,7 +110,7 @@
 		<div class="empty">Нет постов</div>
 	{:else if feedResult}
 		<div in:fade={{ duration: 400 }}>
-			{#each feedResult.items as post (post.id)}
+			{#each feedResult.items as post (post.sourceId + '_' + post.id)}
 				<ThemeLoader componentName="Post" {post} />
 			{/each}
 			

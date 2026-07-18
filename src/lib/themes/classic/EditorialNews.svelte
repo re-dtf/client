@@ -40,7 +40,7 @@
 		<div class="error-state">{error}</div>
 	{:else if news && news.length > 0}
 		<div class="news-list" in:fade={{ duration: 300 }}>
-			{#each news as item (item.id)}
+			{#each news as item (item.sourceId + '_' + item.id)}
 				<a href="/post/{item.id}" class="news-item" onclick={(e) => openPost(e, item)}>
 					<span class="news-title">{item.title}</span>
 					{#if item.commentsCount > 0}
