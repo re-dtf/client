@@ -664,11 +664,11 @@ export const api = {
     return mergePosts([
       { sourceId: 'dtf', posts: dtfResult.items },
       ...extras
-        .filter(r => r.status === 'fulfilled')
-        .map((r, i) => ({
+        .map((r, i) => r.status === 'fulfilled' ? {
           sourceId: extraSources[i].manifest.id,
           posts: r.value.items
-        }))
+        } : null)
+        .filter(x => x !== null)
     ]);
   },
 
