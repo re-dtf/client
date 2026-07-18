@@ -7,36 +7,36 @@
 	let { comment } = $props<{ comment: CommentTreeItem }>();
 
 	let reactionError = $state<string | null>(null);
-	let reactions = $state<any>(null);
-
-	$effect(() => {
-		reactions = comment.reactions ? structuredClone(comment.reactions) : null;
-	});
 
 	async function react(reactionId: number) {
-		if (!reactions) return;
-		const prevReactionId = reactions.reactionId;
-		const prevCounters = reactions.counters.map((c: any) => ({ ...c }));
+		if (!comment.reactions) {
+			comment.reactions = { counters: [], reactionId: 0 };
+		}
+		
+		const prevReactionId = comment.reactions.reactionId;
+		// Clone counters for rollback
+		const prevCounters = comment.reactions.counters.map((c: any) => ({ ...c }));
+		
 		try {
-			const existing = reactions.counters.find((c: any) => c.id === reactionId);
+			const existing = comment.reactions.counters.find((c: any) => c.id === reactionId);
 			let targetReactionId = reactionId;
-			if (reactions.reactionId === reactionId) {
-				reactions.reactionId = 0;
+			if (comment.reactions.reactionId === reactionId) {
+				comment.reactions.reactionId = 0;
 				if (existing) existing.count--;
 				targetReactionId = 0;
 			} else {
-				if (reactions.reactionId) {
-					const old = reactions.counters.find((c: any) => c.id === reactions.reactionId);
+				if (comment.reactions.reactionId) {
+					const old = comment.reactions.counters.find((c: any) => c.id === comment.reactions.reactionId);
 					if (old) old.count--;
 				}
-				reactions.reactionId = reactionId;
+				comment.reactions.reactionId = reactionId;
 				if (existing) existing.count++;
-				else reactions.counters.push({ id: reactionId, count: 1 });
+				else comment.reactions.counters.push({ id: reactionId, count: 1 });
 			}
 			await api.reactToComment(comment.id, targetReactionId);
 		} catch (e: any) {
-			reactions.reactionId = prevReactionId;
-			reactions.counters = prevCounters;
+			comment.reactions.reactionId = prevReactionId;
+			comment.reactions.counters = prevCounters;
 			const msg = e.message || '';
 			if (msg.includes('403') || msg.toLowerCase().includes('недостаточно прав')) {
 				reactionError = 'Для этой реакции нужен DTF Plus';
@@ -49,11 +49,11 @@
 </script>
 
 <div class="comment-actions">
-	{#if reactions && reactions.counters.length > 0}
-		{#each reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
+	{#if comment.reactions && comment.reactions.counters.length > 0}
+		{#each comment.reactions.counters.filter((c: any) => c.count > 0) as reaction (reaction.id)}
 			{@const rc = REACTIONS[reaction.id]}
 			<button
-				class={['reaction-chip', { active: reactions.reactionId === reaction.id }]}
+				class={['reaction-chip', { active: comment.reactions.reactionId === reaction.id }]}
 				onclick={() => react(reaction.id)}
 			>
 				<span class="emoji">
@@ -67,7 +67,7 @@
 			</button>
 		{/each}
 	{/if}
-	{#if !reactions || reactions.counters.every((c: any) => c.count === 0)}
+	{#if !comment.reactions || comment.reactions.counters.every((c: any) => c.count === 0)}
 		{@const rc = REACTIONS[1]}
 		<button class="reaction-chip" onclick={() => react(1)}>
 			<span class="emoji">
