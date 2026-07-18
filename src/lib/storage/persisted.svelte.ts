@@ -12,6 +12,18 @@ export function persistedState<T>(key: string, initialValue: T) {
 				console.error(`Error parsing localStorage key "${key}":`, e);
 			}
 		}
+
+		// Автоматически отслеживаем любые глубокие изменения (включая мутации массивов)
+		// и сохраняем их в localStorage через реактивный эффект Svelte 5.
+		$effect.root(() => {
+			$effect(() => {
+				try {
+					localStorage.setItem(key, JSON.stringify(value));
+				} catch (e) {
+					console.error(`Error saving persisted state for key "${key}":`, e);
+				}
+			});
+		});
 	}
 
 	return {
@@ -21,7 +33,11 @@ export function persistedState<T>(key: string, initialValue: T) {
 		set value(newValue: T) {
 			value = newValue;
 			if (browser) {
-				localStorage.setItem(key, JSON.stringify(newValue));
+				try {
+					localStorage.setItem(key, JSON.stringify(newValue));
+				} catch (e) {
+					console.error(`Error saving persisted state for key "${key}":`, e);
+				}
 			}
 		}
 	};
