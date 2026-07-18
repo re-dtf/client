@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { tick } from 'svelte';
 
 // Use vi.hoisted to ensure localStorage mock is available before imports run
 vi.hoisted(() => {
@@ -102,13 +103,21 @@ describe('sourceStorage', () => {
 		expect(token).toBeUndefined();
 	});
 
-	it('should return undefined when token is expired', () => {
+	it('should return undefined and clean up token when token is expired', async () => {
 		const pastTime = Date.now() - 1000; // 1 second ago
 		const source = mockSourceState('expired-source', 'old-token', pastTime);
 		sourceStorage.sources = [source];
 
 		const token = sourceStorage.getToken('expired-source');
 		expect(token).toBeUndefined();
+
+		// Wait for the cleanup microtask to execute
+		await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
+
+		// Verify lazy cleanup updated storage
+		const storedSource = sourceStorage.sources.find((s) => s.manifest.id === 'expired-source');
+		expect(storedSource?.authToken).toBeUndefined();
+		expect(storedSource?.authTokenExpiresAt).toBeUndefined();
 	});
 
 	it('should retrieve token when expiresAt is in the future', () => {
@@ -152,11 +161,24 @@ describe('sourceStorage', () => {
 			originalBio: 'original-bio-text',
 			sourceId: 'bio-source',
 			code: 'reDTF-12345',
-			timestamp: Date.now()
+			timestamp: Date.now(),
+			dtfUserId: 12345
 		};
 
 		sourceStorage.pendingBioCleanup = cleanupData;
 
 		expect(sourceStorage.pendingBioCleanup).toEqual(cleanupData);
+	});
+
+	it('should persist state to localStorage on assignment', () => {
+		const source = mockSourceState('persist-source');
+		sourceStorage.sources = [source];
+
+		// Verify that localStorage contains the updated state immediately
+		const stored = localStorage.getItem('redtf:sources');
+		expect(stored).not.toBeNull();
+		const parsed = JSON.parse(stored!);
+		expect(parsed).toHaveLength(1);
+		expect(parsed[0].manifest.id).toBe('persist-source');
 	});
 });

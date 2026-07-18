@@ -19,6 +19,13 @@ export const sourceStorage = {
 		}
 		// Check token expiration if expiresAt is set
 		if (source.authTokenExpiresAt && Date.now() > source.authTokenExpiresAt) {
+			// Lazy cleanup of expired token from storage (deferred to prevent Svelte 5 unsafe mutation)
+			queueMicrotask(() => {
+				const current = sourcesState.value.find((s) => s.manifest.id === sourceId);
+				if (current && current.authTokenExpiresAt && Date.now() > current.authTokenExpiresAt) {
+					sourceStorage.setToken(sourceId, undefined);
+				}
+			});
 			return undefined;
 		}
 		return source.authToken;
