@@ -37,10 +37,16 @@ export interface SubsiteItem {
 	};
 }
 
+export interface CursorData {
+	lastId: number;
+	lastSortingValue: number;
+}
+
 export interface PaginatedResult<T> {
 	items: T[];
 	lastId?: number;
 	lastSortingValue?: number;
+	cursors?: Record<string, CursorData>;
 }
 
 export interface Post {
@@ -130,7 +136,8 @@ export interface PostHistoryVersion {
 export interface GetPostsOptions {
 	pageName?: 'popular' | 'new' | 'my';
 	sorting?: string;
-	cursor?: { lastId: number; lastSortingValue: number };
+	cursor?: CursorData;
+	cursors?: Record<string, CursorData>;
 }
 
 export interface ApiProvider {
@@ -139,7 +146,7 @@ export interface ApiProvider {
 	loginByToken?(token: string): Promise<Session>;
 	getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>>;
 	getPost(id: number): Promise<Post>;
-	getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting?: string): Promise<PaginatedResult<Comment>>;
+	getComments(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 	getEditorialNews?(): Promise<Post[]>;
 	

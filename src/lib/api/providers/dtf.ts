@@ -235,7 +235,7 @@ export const dtfApiProvider: ApiProvider = {
 		return mapEntryToPost(json.result);
 	},
 
-	async getComments(postId: number, cursor?: { lastId: number; lastSortingValue: number }, sorting: string = 'date'): Promise<PaginatedResult<Comment>> {
+	async getComments(postId: number, cursor?: import('../types').CursorData, sorting: string = 'date'): Promise<PaginatedResult<Comment>> {
 		let url = `https://api.dtf.ru/v2.10/comments?contentId=${postId}&sorting=${sorting}`;
 		if (cursor) {
 			url += `&lastId=${cursor.lastId}&lastSortingValue=${cursor.lastSortingValue}`;
