@@ -4,9 +4,12 @@
 	import SourceCard from './SourceCard.svelte';
 	import SourcePermissions from './SourcePermissions.svelte';
 	import SourceUpdate from './SourceUpdate.svelte';
+	import SourceCatalog from './SourceCatalog.svelte';
 	import type { SourceManifest } from '$lib/api/sources/types';
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
 	import { fade } from 'svelte/transition';
+
+	let showCatalog = $state(false);
 
 	let newSourceUrl = $state('');
 	let isAdding = $state(false);
@@ -33,6 +36,12 @@
 		} finally {
 			isAdding = false;
 		}
+	}
+
+	function handleInstallFromCatalog(manifestUrl: string) {
+		showCatalog = false;
+		newSourceUrl = manifestUrl;
+		handleAddSource();
 	}
 
 	function handleConfirmPermissions(grantedPermissions: string[]) {
@@ -96,7 +105,7 @@
 			<button class="btn primary" onclick={handleAddSource} disabled={isAdding || !newSourceUrl}>
 				{isAdding ? 'Загрузка...' : 'Добавить'}
 			</button>
-			<button class="btn secondary">Каталог</button>
+			<button class="btn secondary" onclick={() => showCatalog = true}>Каталог</button>
 		</div>
 		{#if addError}
 			<div class="error-msg" in:fade={{ duration: 200 }}>{addError}</div>
@@ -130,6 +139,13 @@
 		currentGranted={sources.find(s => s.manifest.id === updateSourceId)?.grantedPermissions || []}
 		onConfirm={handleConfirmUpdate}
 		onCancel={handleCancelUpdate}
+	/>
+{/if}
+
+{#if showCatalog}
+	<SourceCatalog 
+		onClose={() => showCatalog = false}
+		onInstall={handleInstallFromCatalog}
 	/>
 {/if}
 
