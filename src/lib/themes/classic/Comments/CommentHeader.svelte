@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { CommentTreeItem } from '$lib/api/types';
+	import SourceBadge from '$lib/components/SourceBadge.svelte';
 
 	let { comment } = $props<{ comment: CommentTreeItem }>();
 </script>
@@ -11,6 +12,10 @@
 		<div class="avatar-fallback">{comment.author.name.charAt(0).toUpperCase()}</div>
 	{/if}
 	<span class="author">{comment.author.name}</span>
+	<SourceBadge sourceId={comment.sourceId} />
+	{#if comment.isReplaced}
+		<span class="replaced-badge" title="Комментарий был удален и восстановлен из архива">восстановлен</span>
+	{/if}
 	{#if comment.donation}
 		<span class="donation-badge" title="Донат {comment.donation} ₽">
 			💎 {comment.donation} ₽
@@ -37,6 +42,16 @@
 	.date {
 		font-size: 0.78em;
 		color: var(--comment-date-color, #999);
+	}
+
+	.replaced-badge {
+		font-size: 0.7em;
+		padding: 2px 6px;
+		background: rgba(244, 67, 54, 0.1);
+		color: #d32f2f;
+		border-radius: 4px;
+		text-transform: uppercase;
+		font-weight: 600;
 	}
 
 	.donation-badge {

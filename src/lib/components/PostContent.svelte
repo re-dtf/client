@@ -4,15 +4,16 @@
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import type { Snippet } from 'svelte';
 
-	let { postId, onLoaded, backButton } = $props<{
+	let { postId, sourceId = 'dtf', onLoaded, backButton } = $props<{
 		postId: number;
+		sourceId?: string;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	}>();
 
 	let themeClass = $derived(`theme-${themeState.value}`);
 	// svelte-ignore state_referenced_locally
-	let postPromise = api.getPost(postId);
+	let postPromise = api.getPost(postId, sourceId);
 
 	$effect(() => {
 		postPromise
@@ -28,7 +29,7 @@
 		</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
-		<ThemeLoader componentName="Comments" postId={post.id} commentsCount={post.commentsCount} />
+		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} />
 		{#if backButton}
 			<div class="actions">
 				{@render backButton()}

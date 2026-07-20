@@ -1,14 +1,14 @@
 <script lang="ts">
 	import PostContent from '$lib/components/PostContent.svelte';
 
-	let { postId } = $props<{ postId: number }>();
+	let { postId, sourceId = 'dtf' } = $props<{ postId: number, sourceId?: string }>();
 
 	function goBack() {
 		history.back();
 	}
 </script>
 
-<PostContent {postId}>
+<PostContent {postId} {sourceId}>
 	{#snippet backButton()}
 		<button class="back-link" onclick={goBack}>← Вернуться в ленту</button>
 	{/snippet}

@@ -109,7 +109,7 @@
 				}}
 			>
 				{#if overlay.type === 'post'}
-					<PostOverlay postId={overlay.data.postId} />
+					<PostOverlay postId={overlay.data.postId} sourceId={overlay.data.sourceId} />
 				{:else if overlay.type === 'settings'}
 					<SettingsOverlay />
 				{:else if overlay.type === 'login'}

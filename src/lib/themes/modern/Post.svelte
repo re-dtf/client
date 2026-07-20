@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Post } from '$lib/api/types';
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
+	import SourceBadge from '$lib/components/SourceBadge.svelte';
 	import { resolve } from '$app/paths';
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/state';
@@ -9,11 +10,13 @@
 
 	let displayBlocks = $derived(preview ? post.blocks.filter((b: any) => b.cover) : post.blocks);
 
+	let postUrl = $derived(post.sourceId !== 'dtf' ? `/post/${post.id}?source=${post.sourceId}` : `/post/${post.id}`);
+
 	function openPost(e: MouseEvent) {
 		e.preventDefault();
 		const overlays = page.state.overlays || [];
-		pushState(resolve(`/post/${post.id}`), { 
-			overlays: [...overlays, { id: `post-${post.id}`, type: 'post', data: { postId: post.id } }] 
+		pushState(resolve(postUrl), { 
+			overlays: [...overlays, { id: `post-${post.id}`, type: 'post', data: { postId: post.id, sourceId: post.sourceId } }] 
 		});
 	}
 </script>
@@ -30,11 +33,12 @@
 		<div class="post-body">
 			<div class="author-info">
 				<strong>{post.author.name}</strong>
+				<SourceBadge sourceId={post.sourceId} />
 				<span class="date">{new Date(post.createdAt).toLocaleDateString()}</span>
 			</div>
 			<h3 class="title">
 				{#if preview}
-					<a href={resolve(`/post/${post.id}`)} onclick={openPost}>{post.title}</a>
+					<a href={resolve(postUrl)} onclick={openPost}>{post.title}</a>
 				{:else}
 					{post.title}
 				{/if}
@@ -43,7 +47,7 @@
 				<BlockRenderer blocks={displayBlocks} />
 				{#if preview && post.blocks.length > displayBlocks.length}
 					<div class="read-more">
-						<a href={resolve(`/post/${post.id}`)} onclick={openPost}>Читать далее...</a>
+						<a href={resolve(postUrl)} onclick={openPost}>Читать далее...</a>
 					</div>
 				{/if}
 			</div>
