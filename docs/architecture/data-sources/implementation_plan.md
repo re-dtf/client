@@ -850,6 +850,9 @@ OAuth2 PKCE: code_verifier/challenge генерация, popup, token exchange.
 #### [MODIFY] [index.svelte.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/index.svelte.ts)
 Убрать хардкод custom provider. Мультипровайдерный роутинг через registry. `sourceId` в аргументах write-методов.
 
+#### [MODIFY] [commentsLogic.svelte.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/components/Comments/commentsLogic.svelte.ts)
+Адаптировать под прием составного курсора `cursors` вместо одиночного `lastId`. При вызове `buildTree` передавать `this.sourceId` для корректного связывания родительских и дочерних комментариев со сторонних источников.
+
 #### [MODIFY] [types.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/types.ts)
 Добавить `sourceId: string` в `Post` и `Comment`.
 
