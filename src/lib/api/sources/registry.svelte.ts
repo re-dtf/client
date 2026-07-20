@@ -165,7 +165,29 @@ export const sourceRegistry = {
 	},
 
 	async authenticate(sourceId: string): Promise<void> {
-		console.warn(`authenticate(${sourceId}) is not fully implemented yet`);
+		const source = sourceStorage.sources.find((s) => s.manifest.id === sourceId);
+		if (!source) {
+			throw new Error(`Источник '${sourceId}' не найден`);
+		}
+
+		if (source.manifest.auth.type === 'bio_verification') {
+			const { verifyBioAuth, startBioVerification } = await import('./bio-auth');
+			
+			const pendingCleanup = sourceStorage.pendingBioCleanup;
+			if (pendingCleanup && pendingCleanup.sourceId === sourceId) {
+				await verifyBioAuth(source);
+			} else {
+				await startBioVerification(source);
+				await verifyBioAuth(source);
+			}
+		} else if (source.manifest.auth.type === 'oauth2_pkce') {
+			const { startOAuth2PKCE } = await import('./oauth-auth');
+			await startOAuth2PKCE(source);
+		} else if (source.manifest.auth.type === 'token_header') {
+			console.warn(`Авторизация 'token_header' должна обрабатываться в UI с ручным вводом токена`);
+		} else {
+			console.warn(`Авторизация для типа '${source.manifest.auth.type}' еще не реализована`);
+		}
 	},
 
 	revokeAuth(sourceId: string): void {
