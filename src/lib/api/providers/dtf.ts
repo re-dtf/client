@@ -45,7 +45,7 @@ async function refreshSession(): Promise<boolean> {
 	}
 }
 
-async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader: 'x-device-token' | 'JWTAuthorization' = 'x-device-token'): Promise<Response> {
+async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader: 'x-device-token' | 'JWTAuthorization' = 'JWTAuthorization'): Promise<Response> {
 	const headers = new Headers(options.headers || { 'Accept': 'application/json' });
 	
 	const setAuth = (token: string) => {
@@ -184,7 +184,7 @@ export const dtfApiProvider: ApiProvider = {
 		} else {
 			// Проверим access токен запросом профиля
 			try {
-				await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
+				await fetchWithAuth(`${baseUrl}/user/me`);
 			} catch (e: unknown) {
 				throw new Error('Токен недействителен или устарел: ' + (e instanceof Error ? e.message : 'Неизвестная ошибка'));
 			}
@@ -213,7 +213,7 @@ export const dtfApiProvider: ApiProvider = {
 			url += `&lastId=${options.cursor.lastId}&lastSortingValue=${options.cursor.lastSortingValue}`;
 		}
 
-		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
+		const authHeader = 'JWTAuthorization';
 		const response = await fetchWithAuth(url, {}, authHeader);
 		const json = await response.json();
 		
@@ -229,7 +229,7 @@ export const dtfApiProvider: ApiProvider = {
 	},
 
 	async getPost(id: number): Promise<Post> {
-		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
+		const authHeader = 'JWTAuthorization';
 		const response = await fetchWithAuth(`${baseUrl}/content?id=${id}`, {}, authHeader);
 		const json = await response.json();
 		return mapEntryToPost(json.result);
@@ -288,7 +288,7 @@ export const dtfApiProvider: ApiProvider = {
 	},
 
 	async getEditorialNews(): Promise<Post[]> {
-		const authHeader = authStorage.dtfToken ? 'JWTAuthorization' : 'x-device-token';
+		const authHeader = 'JWTAuthorization';
 		const response = await fetchWithAuth(`${baseUrl}/news/min`, {}, authHeader);
 		const json = await response.json();
 		
@@ -398,8 +398,8 @@ export const dtfApiProvider: ApiProvider = {
 
 	async getMe(): Promise<any> {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
-		// Using the x-device-token for standard user endpoints (less restrictive CORS sometimes)
-		const response = await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
+		// Using JWTAuthorization uniformly for modern API standard
+		const response = await fetchWithAuth(`${baseUrl}/user/me`);
 		const json = await response.json();
 		
 		if (!json.result || !json.result.id) {
@@ -407,7 +407,7 @@ export const dtfApiProvider: ApiProvider = {
 		}
 		
 		// Запрашиваем профиль subsite (как в HAR get-account), чтобы гарантированно получить description (bio)
-		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${json.result.id}&markdown=false`, {}, 'x-device-token');
+		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${json.result.id}&markdown=false`);
 		const subsiteJson = await subsiteRes.json();
 
 		return subsiteJson.result;
@@ -417,7 +417,7 @@ export const dtfApiProvider: ApiProvider = {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
 		
 		// Сначала получаем текущий профиль, чтобы не затереть name и commentingPermissions (как видно в HAR)
-		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${userId}&markdown=false`, {}, 'x-device-token');
+		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${userId}&markdown=false`);
 		const subsiteJson = await subsiteRes.json();
 		const currentSubsite = subsiteJson.result || {};
 
@@ -434,10 +434,10 @@ export const dtfApiProvider: ApiProvider = {
 		
 		// Typically in Osnova API v2 it's /subsite/update
 		// В HAR файле update-bio1.har используется v2.1/subsite/update, но baseUrl (v2.31) тоже сработает.
-		// Заголовок оставляем x-device-token согласно правилу AGENTS.md (избегаем preflight CORS).
+		// Переведено на JWTAuthorization как современный стандарт
 		await fetchWithAuth(`${baseUrl}/subsite/update`, {
 			method: 'POST',
 			body: formData
-		}, 'x-device-token');
+		});
 	}
 };
