@@ -9,9 +9,7 @@
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
 
-	function updateApi(e: Event) {
-		api.enableCustomApi = (e.target as HTMLInputElement).checked;
-	}
+
 
 	function updateTheme(e: Event) {
 		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
@@ -25,17 +23,7 @@
 <div class="settings classic-settings">
 	<h2>Настройки клиента <span class="badge">Classic</span></h2>
 
-	<div class="section">
-		<h3>Источники данных (API)</h3>
-		<p class="description">Основным источником всегда является официальный API DTF. Вы можете подключить дополнительный сервер для расширения функционала.</p>
-		
-		<div class="control checkbox-control">
-			<label>
-				<input type="checkbox" checked={api.enableCustomApi} onchange={updateApi} />
-				Подключить кастомный сервер (Мой API)
-			</label>
-		</div>
-	</div>
+
 
 	<div class="section">
 		<h3>Внешний вид</h3>

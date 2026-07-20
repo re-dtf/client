@@ -39,21 +39,17 @@
 	});
 
 	async function loadMore() {
-		if (loading || loadingMore || !feedResult?.lastId || !feedResult?.lastSortingValue) return;
+		if (loading || loadingMore || !feedResult?.cursors || Object.keys(feedResult.cursors).length === 0) return;
 		try {
 			loadingMore = true;
 			const next = await api.getPosts({ 
 				pageName: currentFeed,
 				sorting: FEED_SORTING[currentFeed],
-				cursor: {
-					lastId: feedResult.lastId, 
-					lastSortingValue: feedResult.lastSortingValue 
-				}
+				cursors: feedResult.cursors
 			});
 			feedResult = {
 				items: [...feedResult.items, ...next.items],
-				lastId: next.lastId,
-				lastSortingValue: next.lastSortingValue
+				cursors: next.cursors
 			};
 		} catch (e: any) {
 			console.error('Failed to load more posts:', e);
@@ -114,7 +110,7 @@
 				<ThemeLoader componentName="Post" {post} />
 			{/each}
 			
-			{#if feedResult.lastId}
+			{#if feedResult.cursors && Object.keys(feedResult.cursors).length > 0}
 				<div bind:this={loaderNode} class="infinite-loader">
 					{#if loadingMore}
 						<ThemeLoader componentName="Spinner" inline={true} />

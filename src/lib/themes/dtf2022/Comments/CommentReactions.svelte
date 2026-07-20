@@ -33,7 +33,7 @@
 				if (existing) existing.count++;
 				else comment.reactions.counters.push({ id: reactionId, count: 1 });
 			}
-			await api.reactToComment(comment.id, targetReactionId);
+			await api.reactToComment(comment.id, targetReactionId, comment.sourceId);
 		} catch (e: any) {
 			comment.reactions.reactionId = prevReactionId;
 			comment.reactions.counters = prevCounters;

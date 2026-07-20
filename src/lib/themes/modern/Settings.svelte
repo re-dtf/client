@@ -6,8 +6,7 @@
 	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 
-	// Helper for two-way binding
-	let enableCustomApi = $derived(api.enableCustomApi);
+
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
 
@@ -17,9 +16,7 @@
 		authStorage.proxyUrl = proxyUrl;
 	});
 
-	function updateApi(e: Event) {
-		api.enableCustomApi = (e.target as HTMLInputElement).checked;
-	}
+
 
 	function updateTheme(e: Event) {
 		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
@@ -40,19 +37,7 @@
 	</div>
 
 	<div class="cards">
-		<div class="card">
-			<div class="card-header">
-				<span class="card-icon">🔌</span>
-				<h3>Источники API</h3>
-			</div>
-			<p class="description">Официальный API DTF включен по умолчанию. Подключите кастомный сервер для расширенных функций.</p>
-			
-			<label class="toggle">
-				<input type="checkbox" checked={enableCustomApi} onchange={updateApi} />
-				<span class="slider"></span>
-				<span class="label-text">Кастомный сервер (Мой API)</span>
-			</label>
-		</div>
+
 
 		<div class="card">
 			<div class="card-header">

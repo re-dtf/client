@@ -109,12 +109,12 @@ export class CommentsLogic {
 			const result = await api.getComments(this.postId, this.sourceId, this.cursor, this.sorting);
 			
 			this.flatComments = [...this.flatComments, ...result.items];
-			const tree = buildTree(this.flatComments);
+			const tree = buildTree(this.flatComments, this.sourceId);
 			this.comments = tree.roots;
 			this.allCommentsMap = tree.map;
 
-			if (result.lastId && result.lastSortingValue) {
-				this.cursor = { ...this.cursor, [this.sourceId]: { lastId: result.lastId, lastSortingValue: result.lastSortingValue } };
+			if (result.cursors && Object.keys(result.cursors).length > 0) {
+				this.cursor = result.cursors;
 				this.hasMore = true;
 			} else {
 				this.hasMore = false;

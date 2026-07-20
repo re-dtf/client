@@ -1,19 +1,13 @@
 import { dtfApiProvider } from './providers/dtf';
-import { customApiProvider } from './providers/custom';
 import { persistedState } from '$lib/storage/persisted.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
-import type { GetPostsOptions } from './types';
-
-const enableCustomApiState = persistedState<boolean>('redtf:api:custom_enabled', false);
+import type { GetPostsOptions, PaginatedResult, Post, Comment } from './types';
+import { sourceRegistry } from './sources/registry.svelte';
+import { fetchFromSource } from './sources/source-fetcher';
+import { mergePosts, mergeComments } from './sources/merger';
+import { hasPermission } from './sources/permissions';
 
 export const api = {
-	get enableCustomApi(): boolean {
-		return enableCustomApiState.value;
-	},
-	set enableCustomApi(value: boolean) {
-		enableCustomApiState.value = value;
-	},
-
 	async login(email: string, password: string) {
 		if (!dtfApiProvider.login) throw new Error("Вход по паролю в данный момент недоступен");
 		const session = await dtfApiProvider.login(email, password);
@@ -30,65 +24,157 @@ export const api = {
 	},
 
 	async getPosts(options?: GetPostsOptions) {
-		const dtfPostsPromise = dtfApiProvider.getPosts(options);
+		const isSubsequentPage = options?.cursors !== undefined || options?.cursor !== undefined;
+		const cursors = options?.cursors || {};
 		
-		if (this.enableCustomApi) {
-			const customPostsPromise = customApiProvider.getPosts(options);
-			
-			const [dtfResult, customResult] = await Promise.all([
-				dtfPostsPromise, 
-				customPostsPromise
-			]);
-			
-			return {
-				items: [...dtfResult.items, ...customResult.items].sort(
-					(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				),
-				lastId: dtfResult.lastId,
-				lastSortingValue: dtfResult.lastSortingValue
-			};
+		const fetchDtf = !isSubsequentPage || cursors['dtf'] !== undefined || (options?.cursor !== undefined && Object.keys(cursors).length === 0);
+		let dtfPostsPromise: Promise<PaginatedResult<Post>> = Promise.resolve({ items: [] });
+		if (fetchDtf) {
+			const dtfCursor = cursors['dtf'] || options?.cursor;
+			dtfPostsPromise = dtfApiProvider.getPosts({ ...options, cursor: dtfCursor });
 		}
+		
+		const extraSources = sourceRegistry.activeSources.filter(s => {
+			if (!s.manifest.endpoints['getPosts']) return false;
+			if (isSubsequentPage && cursors[s.manifest.id] === undefined && options?.cursors !== undefined) return false;
+			return true;
+		});
+		
+		const extrasPromise = Promise.allSettled(
+			extraSources.map(s => {
+				const sourceCursor = cursors[s.manifest.id];
+				const queryOverrides: Record<string, string> = {};
+				if (sourceCursor) {
+					queryOverrides.cursor = JSON.stringify(sourceCursor);
+				}
+				if (options?.sorting) {
+					queryOverrides.sorting = options.sorting;
+				}
+				if (options?.pageName) {
+					queryOverrides.page = options.pageName;
+				}
+				return fetchFromSource<PaginatedResult<Post>>(s, 'getPosts', {}, queryOverrides);
+			})
+		);
 
-		return await dtfPostsPromise;
+		const [dtfResult, extras] = await Promise.all([dtfPostsPromise, extrasPromise]);
+		
+		const results = [
+			{ sourceId: 'dtf', result: dtfResult },
+			...extras.map((r, i) => {
+				if (r.status === 'fulfilled') {
+					return { sourceId: extraSources[i].manifest.id, result: r.value };
+				}
+				return null;
+			}).filter((x): x is NonNullable<typeof x> => x !== null)
+		];
+		
+		return mergePosts(results, options?.sorting);
 	},
 
-	async getPost(id: number) {
-		if (this.enableCustomApi && id >= 1000) {
-			return customApiProvider.getPost(id);
+	async getPost(id: number, sourceId: string = 'dtf') {
+		if (sourceId === 'dtf') {
+			return dtfApiProvider.getPost(id);
 		}
-		
-		return dtfApiProvider.getPost(id);
+		const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
+		if (source && source.manifest.endpoints['getPost']) {
+			return fetchFromSource<Post>(source, 'getPost', { postId: id });
+		}
+		throw new Error(`Cannot get post from source ${sourceId}`);
 	},
 
-	async getComments(postId: number, sourceId: string, cursor?: Record<string, { lastId: number; lastSortingValue: number }>, sorting: string = 'date') {
-		const dtfCursor = cursor?.['dtf'];
-		const dtfCommentsPromise = dtfApiProvider.getComments(postId, dtfCursor, sorting);
-		
-		if (this.enableCustomApi) {
-			const customCommentsPromise = customApiProvider.getComments(postId);
-			
-			const [dtfComments, customComments] = await Promise.all([
-				dtfCommentsPromise, 
-				customCommentsPromise
-			]);
-			
-			return {
-				items: [...dtfComments.items, ...customComments.items],
-				lastId: dtfComments.lastId,
-				lastSortingValue: dtfComments.lastSortingValue
-			};
+	async getComments(postId: number, sourceId: string = 'dtf', cursors?: Record<string, { lastId: number; lastSortingValue: number }>, sorting: string = 'date') {
+		const isSubsequentPage = cursors !== undefined;
+		const safeCursors = cursors || {};
+
+		let primaryCommentsPromise: Promise<PaginatedResult<Comment>> = Promise.resolve({ items: [] });
+		const fetchPrimary = !isSubsequentPage || safeCursors[sourceId] !== undefined;
+
+		if (fetchPrimary) {
+			if (sourceId === 'dtf') {
+				const dtfCursor = safeCursors['dtf'];
+				primaryCommentsPromise = dtfApiProvider.getComments(postId, dtfCursor, sorting);
+			} else {
+				const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
+				if (source) {
+					const sourceCursor = safeCursors[sourceId];
+					const queryOverrides: Record<string, string> = { sorting };
+					if (sourceCursor) queryOverrides.cursor = JSON.stringify(sourceCursor);
+					primaryCommentsPromise = fetchFromSource<PaginatedResult<Comment>>(source, 'getComments', { postId }, queryOverrides);
+				} else {
+					throw new Error(`Source ${sourceId} not found`);
+				}
+			}
 		}
 		
-		return await dtfCommentsPromise;
+		const extraSources = sourceRegistry.activeSources.filter(s => {
+			if (s.manifest.id === sourceId) return false;
+			if (!hasPermission(s, 'mutate:comments:append', sourceId) && !hasPermission(s, 'mutate:comments:replace', sourceId)) return false;
+			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined) return false;
+			return true;
+		});
+
+		const extrasPromise = Promise.allSettled(
+			extraSources.map(s => {
+				const mode = hasPermission(s, 'mutate:comments:replace', sourceId) ? 'replace' : 'append';
+				const endpointKey = mode === 'replace' && s.manifest.endpoints['getReplacedComments'] ? 'getReplacedComments' : 'getComments';
+				const sourceCursor = safeCursors[s.manifest.id];
+				const queryOverrides: Record<string, string> = { sorting };
+				if (sourceCursor) queryOverrides.cursor = JSON.stringify(sourceCursor);
+				return fetchFromSource<PaginatedResult<Comment>>(s, endpointKey, { postId }, queryOverrides);
+			})
+		);
+
+		const [primaryResult, extras] = await Promise.all([primaryCommentsPromise, extrasPromise]);
+		
+		const additions = extras.map((r, i) => {
+			if (r.status === 'fulfilled') {
+				const source = extraSources[i];
+				const mode = hasPermission(source, 'mutate:comments:replace', sourceId) ? 'replace' : 'append' as 'replace' | 'append';
+				return {
+					sourceId: source.manifest.id,
+					comments: r.value.items,
+					mode
+				};
+			}
+			return null;
+		}).filter((x): x is NonNullable<typeof x> => x !== null);
+
+		const mergedComments = mergeComments(primaryResult.items, additions);
+		
+		const resultCursors: Record<string, CursorData> = {};
+		if (primaryResult.lastId !== undefined && primaryResult.lastSortingValue !== undefined) {
+			resultCursors[sourceId] = { lastId: primaryResult.lastId, lastSortingValue: primaryResult.lastSortingValue };
+		}
+		extras.forEach((r, i) => {
+			if (r.status === 'fulfilled') {
+				const source = extraSources[i];
+				if (r.value.lastId !== undefined && r.value.lastSortingValue !== undefined) {
+					resultCursors[source.manifest.id] = { lastId: r.value.lastId, lastSortingValue: r.value.lastSortingValue };
+				}
+			}
+		});
+
+		return {
+			items: mergedComments,
+			lastId: primaryResult.lastId,
+			lastSortingValue: primaryResult.lastSortingValue,
+			cursors: resultCursors
+		};
 	},
 
-	async reactToComment(commentId: number, reactionId: number) {
-		if (this.enableCustomApi && commentId >= 1000 && typeof customApiProvider.reactToComment === 'function') {
-			return customApiProvider.reactToComment(commentId, reactionId);
+	async reactToComment(commentId: number, reactionId: number, sourceId: string = 'dtf') {
+		if (sourceId === 'dtf') {
+			if (dtfApiProvider.reactToComment) {
+				return dtfApiProvider.reactToComment(commentId, reactionId);
+			}
+			throw new Error("reactToComment is not implemented for DTF provider");
 		}
-		if (dtfApiProvider.reactToComment) {
-			return dtfApiProvider.reactToComment(commentId, reactionId);
+		const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
+		if (source && hasPermission(source, 'write:reactions')) {
+			return fetchFromSource(source, 'reactToComment', { commentId }, { reactionId: String(reactionId) });
 		}
+		throw new Error(`Cannot react to comment: Source ${sourceId} not found or permission denied`);
 	},
 
 	async getEditorialNews() {
