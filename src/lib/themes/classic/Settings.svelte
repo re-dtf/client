@@ -5,6 +5,7 @@
 	import { commentSettings } from '$lib/storage/commentSettings.svelte';
 	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
+	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 
 	let currentTheme = $derived(themeState.value);
 	let nestingMode = $derived(commentSettings.value.nestingMode);
@@ -81,6 +82,10 @@
 				}}>прокси от автора проекта</button>
 			</small>
 		</div>
+	</div>
+
+	<div class="section">
+		<SourcesSettings />
 	</div>
 </div>
 
