@@ -26,9 +26,8 @@ export const sourceRegistry = {
 	},
 
 	/**
-	 * Загружает манифест и добавляет источник в реестр (в отключенном состоянии).
-	 * UI должен показать ревью пермиссий, затем вызвать updatePermissions и toggleSource(true).
-	 * Если пользователь отменяет добавление, UI должен вызвать removeSource.
+	 * Загружает манифест (в памяти).
+	 * UI должен показать ревью пермиссий, затем вызвать installSource.
 	 */
 	async addSource(manifestUrl: string, isBuiltin = false): Promise<SourceManifest> {
 		const existingByUrl = sourceStorage.sources.find((s) => s.manifestUrl === manifestUrl);
@@ -43,19 +42,24 @@ export const sourceRegistry = {
 			throw new Error(`Источник с ID '${manifest.id}' уже существует`);
 		}
 
+		return manifest;
+	},
+
+	/**
+	 * Сохраняет источник в хранилище после подтверждения юзером.
+	 */
+	installSource(manifestUrl: string, manifest: SourceManifest, grantedPermissions: string[], isBuiltin = false): void {
 		const newState: SourceState = {
 			manifestUrl,
 			manifest,
-			enabled: false,
-			grantedPermissions: [],
+			enabled: true,
+			grantedPermissions,
 			addedAt: Date.now(),
 			lastUpdated: Date.now(),
 			isBuiltin
 		};
 
 		sourceStorage.sources = [...sourceStorage.sources, newState];
-
-		return manifest;
 	},
 
 	/**
