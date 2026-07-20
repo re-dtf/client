@@ -22,4 +22,4 @@ These are the strict project-scoped rules for AI agents working on the **reDTF**
 - **API Error Encapsulation:** All network errors, timeouts, or bad responses must be caught and handled inside the API Providers (`src/lib/api/providers/`). Do not leak raw fetch errors to the UI components. The UI should only receive cleanly formatted data or standardized error states.
 
 ## 5. DTF API Specifics
-- **CORS and Auth:** When making requests to DTF API, use the `x-device-token` header instead of `x-authenticate` to avoid CORS preflight failures.
+- **CORS and Auth:** When making requests to DTF API, use the standard `JWTAuthorization` (Bearer token) header. Do not use the legacy `x-authenticate` header. Both `JWTAuthorization` and `X-Device-Token` are allowed by the backend's CORS policies, but `JWTAuthorization` is the modern standard used by DTF.
