@@ -3,7 +3,9 @@
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
 	import SourceCard from './SourceCard.svelte';
 	import SourcePermissions from './SourcePermissions.svelte';
+	import SourceUpdate from './SourceUpdate.svelte';
 	import type { SourceManifest } from '$lib/api/sources/types';
+	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
 	import { fade } from 'svelte/transition';
 
 	let newSourceUrl = $state('');
@@ -11,6 +13,9 @@
 	let addError = $state('');
 	let reviewManifest = $state<SourceManifest | null>(null);
 	let reviewManifestUrl = $state('');
+
+	let updateResult = $state<ManifestUpdateResult | null>(null);
+	let updateSourceId = $state('');
 
 	let sources = $derived(sourceStorage.sources);
 
@@ -41,6 +46,33 @@
 	function handleCancelPermissions() {
 		reviewManifest = null;
 		reviewManifestUrl = '';
+	}
+
+	function handleUpdateReady(sourceId: string, result: ManifestUpdateResult) {
+		if (result.newVersion === result.oldVersion && 
+			Object.keys(result.addedEndpoints).length === 0 &&
+			result.removedEndpoints.length === 0 &&
+			Object.keys(result.modifiedEndpoints).length === 0 &&
+			result.addedPermissions.length === 0 &&
+			result.removedPermissions.length === 0) {
+			alert('Нет новых обновлений.');
+			return;
+		}
+		updateResult = result;
+		updateSourceId = sourceId;
+	}
+
+	function handleConfirmUpdate(grantedPermissions: string[]) {
+		if (updateResult && updateSourceId) {
+			sourceRegistry.applyUpdate(updateSourceId, updateResult, grantedPermissions);
+			updateResult = null;
+			updateSourceId = '';
+		}
+	}
+
+	function handleCancelUpdate() {
+		updateResult = null;
+		updateSourceId = '';
 	}
 </script>
 
@@ -77,7 +109,7 @@
 		{:else}
 			{#each sources as source (source.manifest.id)}
 				<div transition:fade={{ duration: 200 }}>
-					<SourceCard {source} />
+					<SourceCard {source} onUpdateReady={handleUpdateReady} />
 				</div>
 			{/each}
 		{/if}
@@ -89,6 +121,15 @@
 		manifest={reviewManifest} 
 		onConfirm={handleConfirmPermissions} 
 		onCancel={handleCancelPermissions} 
+	/>
+{/if}
+
+{#if updateResult}
+	<SourceUpdate 
+		{updateResult}
+		currentGranted={sources.find(s => s.manifest.id === updateSourceId)?.grantedPermissions || []}
+		onConfirm={handleConfirmUpdate}
+		onCancel={handleCancelUpdate}
 	/>
 {/if}
 

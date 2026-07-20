@@ -1,13 +1,31 @@
 <script lang="ts">
 	import type { SourceState } from '$lib/api/sources/types';
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
+	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
 
-	let { source } = $props<{ source: SourceState }>();
+	let { source, onUpdateReady } = $props<{ 
+		source: SourceState;
+		onUpdateReady?: (sourceId: string, result: ManifestUpdateResult) => void;
+	}>();
 
 	let manifest = $derived(source.manifest);
+	let isUpdating = $state(false);
 
 	function toggleEnabled() {
 		sourceRegistry.toggleSource(manifest.id, !source.enabled);
+	}
+
+	async function handleUpdate() {
+		if (isUpdating || !onUpdateReady) return;
+		isUpdating = true;
+		try {
+			const result = await sourceRegistry.refreshManifest(manifest.id);
+			onUpdateReady(manifest.id, result);
+		} catch (err: any) {
+			alert('Ошибка при проверке обновлений: ' + err.message);
+		} finally {
+			isUpdating = false;
+		}
 	}
 
 	function removeSource() {
@@ -75,7 +93,9 @@
 
 	<div class="card-footer">
 		<button class="btn secondary">Настроить</button>
-		<button class="btn secondary">Обновить</button>
+		<button class="btn secondary" onclick={handleUpdate} disabled={isUpdating}>
+			{isUpdating ? 'Поиск...' : 'Обновить'}
+		</button>
 		{#if manifest.auth && manifest.auth.type !== 'none'}
 			{#if source.authToken}
 				<button class="btn secondary" onclick={handleRevokeAuth}>Выйти</button>
