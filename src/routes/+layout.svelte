@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/environment';
+	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	
 	import '../app.css';
 	// Статические импорты CSS тем оставлены намеренно: 
@@ -54,6 +55,7 @@
 	});
 	
 	onMount(() => {
+		cleanupHangingBio(true);
 		// Check if the user has completed the first setup
 		const firstSetupCompleted = localStorage.getItem('redtf:setup:completed');
 		if (!firstSetupCompleted) {

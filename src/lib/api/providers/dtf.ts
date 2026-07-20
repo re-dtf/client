@@ -394,5 +394,50 @@ export const dtfApiProvider: ApiProvider = {
 		const json = await response.json();
 		if (json.error) throw new Error(json.message?.text || 'Failed to fetch history version');
 		return json.result?.entry;
+	},
+
+	async getMe(): Promise<any> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+		// Using the x-device-token for standard user endpoints (less restrictive CORS sometimes)
+		const response = await fetchWithAuth(`${baseUrl}/user/me`, {}, 'x-device-token');
+		const json = await response.json();
+		
+		if (!json.result || !json.result.id) {
+			throw new Error("Failed to get user ID");
+		}
+		
+		// Запрашиваем профиль subsite (как в HAR get-account), чтобы гарантированно получить description (bio)
+		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${json.result.id}&markdown=false`, {}, 'x-device-token');
+		const subsiteJson = await subsiteRes.json();
+
+		return subsiteJson.result;
+	},
+
+	async updateBio(description: string, userId: number): Promise<void> {
+		if (!authStorage.dtfToken) throw new Error("Requires authorization");
+		
+		// Сначала получаем текущий профиль, чтобы не затереть name и commentingPermissions (как видно в HAR)
+		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${userId}&markdown=false`, {}, 'x-device-token');
+		const subsiteJson = await subsiteRes.json();
+		const currentSubsite = subsiteJson.result || {};
+
+		const formData = new FormData();
+		formData.append('subsiteId', userId.toString());
+		formData.append('description', description);
+		
+		if (currentSubsite.name) {
+			formData.append('name', currentSubsite.name);
+		}
+		if (currentSubsite.commentingPermissions) {
+			formData.append('commentingPermissions', currentSubsite.commentingPermissions);
+		}
+		
+		// Typically in Osnova API v2 it's /subsite/update
+		// В HAR файле update-bio1.har используется v2.1/subsite/update, но baseUrl (v2.31) тоже сработает.
+		// Заголовок оставляем x-device-token согласно правилу AGENTS.md (избегаем preflight CORS).
+		await fetchWithAuth(`${baseUrl}/subsite/update`, {
+			method: 'POST',
+			body: formData
+		}, 'x-device-token');
 	}
 };

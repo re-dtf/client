@@ -158,4 +158,6 @@ export interface ApiProvider {
 	setCommentPermissions?(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'): Promise<void>;
 	getPostHistory?(postId: number): Promise<PostHistoryVersion[]>;
 	getPostHistoryVersion?(postId: number, versionId: number): Promise<DtfEditorEntry>;
+	getMe?(): Promise<any>;
+	updateBio?(description: string, userId: number): Promise<void>;
 }

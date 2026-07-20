@@ -1,7 +1,7 @@
 import { dtfApiProvider } from './providers/dtf';
 import { persistedState } from '$lib/storage/persisted.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
-import type { GetPostsOptions, PaginatedResult, Post, Comment } from './types';
+import type { GetPostsOptions, PaginatedResult, Post, Comment, CursorData } from './types';
 import { sourceRegistry } from './sources/registry.svelte';
 import { fetchFromSource } from './sources/source-fetcher';
 import { mergePosts, mergeComments } from './sources/merger';
