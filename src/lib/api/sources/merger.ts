@@ -1,4 +1,4 @@
-import type { Post, PaginatedResult, CursorData } from '../types';
+import type { Post, PaginatedResult, CursorData, Comment } from '../types';
 
 /**
  * Объединить результаты запроса постов из нескольких источников.
@@ -27,7 +27,9 @@ export function mergePosts(
 		
 		// Защитный fallback: проверяем result и фильтруем битые элементы (null/undefined)
 		return Array.isArray(result?.items) 
-			? result.items.filter(item => item !== null && typeof item === 'object') 
+			? result.items
+					.filter(item => item !== null && typeof item === 'object')
+					.map(item => ({ ...item, sourceId: item.sourceId ?? sourceId }))
 			: [];
 	});
 
@@ -74,4 +76,61 @@ export function mergePosts(
 			cursors
 		};
 	}
+}
+
+/**
+ * Объединить комментарии с поддержкой append и replace.
+ *
+ * @param primary Основной массив комментариев (обычно из DTF)
+ * @param additions Массив дополнительных комментариев от других источников
+ * @returns Итоговый массив комментариев
+ */
+export function mergeComments(
+	primary: Comment[],
+	additions: { sourceId: string; comments: Comment[]; mode: 'append' | 'replace' }[]
+): Comment[] {
+	// Защита от битых элементов в массиве
+	const result = primary.filter(c => c !== null && typeof c === 'object');
+	
+	// Используем Map для защиты от Prototype Pollution и O(1) поиска
+	const primaryMap = new Map<number, number>(); // id -> index в result
+	for (let i = 0; i < result.length; i++) {
+		primaryMap.set(result[i].id, i);
+	}
+
+	for (const addition of additions) {
+		// Защита от некорректных данных от сторонних источников
+		if (!addition || !Array.isArray(addition.comments)) continue;
+
+		if (addition.mode === 'replace') {
+			for (const addedComment of addition.comments) {
+				if (!addedComment || typeof addedComment !== 'object') continue;
+
+				const normalizedId = Number(addedComment.id);
+				const existingIndex = Number.isNaN(normalizedId) ? undefined : primaryMap.get(normalizedId);
+				if (existingIndex !== undefined) {
+					const existing = result[existingIndex];
+					result[existingIndex] = {
+						...addedComment,
+						sourceId: addedComment.sourceId ?? addition.sourceId,
+						id: existing.id,
+						replyTo: existing.replyTo,
+						isReplaced: true,
+						// Сохраняем самый первый sourceId, даже если комментарий подменяется дважды
+						originalSourceId: existing.originalSourceId ?? existing.sourceId
+					};
+				}
+			}
+		} else if (addition.mode === 'append') {
+			for (const addedComment of addition.comments) {
+				if (!addedComment || typeof addedComment !== 'object') continue;
+				result.push({
+					...addedComment,
+					sourceId: addedComment.sourceId ?? addition.sourceId
+				});
+			}
+		}
+	}
+
+	return result;
 }
