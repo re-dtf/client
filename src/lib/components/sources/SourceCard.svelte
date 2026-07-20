@@ -2,6 +2,7 @@
 	import type { SourceState } from '$lib/api/sources/types';
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
+	import BioVerification from './BioVerification.svelte';
 
 	let { source, onUpdateReady } = $props<{ 
 		source: SourceState;
@@ -10,6 +11,7 @@
 
 	let manifest = $derived(source.manifest);
 	let isUpdating = $state(false);
+	let showBioAuth = $state(false);
 
 	function toggleEnabled() {
 		sourceRegistry.toggleSource(manifest.id, !source.enabled);
@@ -35,9 +37,13 @@
 	}
 	
 	function handleAuth() {
-		sourceRegistry.authenticate(manifest.id).catch(err => {
-			alert('Ошибка авторизации: ' + err.message);
-		});
+		if (manifest.auth?.type === 'bio_verification') {
+			showBioAuth = true;
+		} else {
+			sourceRegistry.authenticate(manifest.id).catch(err => {
+				alert('Ошибка авторизации: ' + err.message);
+			});
+		}
 	}
 	
 	function handleRevokeAuth() {
@@ -108,6 +114,14 @@
 		{/if}
 	</div>
 </div>
+
+{#if showBioAuth}
+	<BioVerification 
+		source={source} 
+		onComplete={() => { showBioAuth = false; }} 
+		onCancel={() => { showBioAuth = false; }} 
+	/>
+{/if}
 
 <style>
 	.source-card {

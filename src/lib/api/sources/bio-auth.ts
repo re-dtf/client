@@ -16,7 +16,7 @@ export function getBioInjection(code: string): string {
 	return `\n\n[${code}]\nЭто токен авторизации re:connect (reDTF).\nУдалите его, если он не удалился автоматически.`;
 }
 
-export async function startBioVerification(source: SourceState): Promise<void> {
+export async function startBioVerification(source: SourceState, signal?: AbortSignal): Promise<void> {
 	if (source.manifest.auth.type !== 'bio_verification' || !source.manifest.auth.bioVerification) {
 		throw new Error('Source does not support bio verification');
 	}
@@ -76,6 +76,10 @@ export async function startBioVerification(source: SourceState): Promise<void> {
 	const code = challengeResponse.code;
 	if (!code) throw new Error('Source did not return a verification code');
 
+	if (signal?.aborted) {
+		throw new Error('Verification cancelled');
+	}
+
 	// Save to local storage
 	sourceStorage.pendingBioCleanup = {
 		originalBio,
@@ -96,9 +100,22 @@ export async function startBioVerification(source: SourceState): Promise<void> {
 		// Do NOT revert sourceStorage.pendingBioCleanup here.
 		// If network fails but server actually processed the update, reverting would cause us to lose the originalBio forever.
 		if (e.message.includes('422') || e.message.includes('400')) {
+			sourceStorage.pendingBioCleanup = null;
 			throw new Error('Не удалось обновить профиль DTF. Возможно, ваше описание профиля слишком длинное. Пожалуйста, временно удалите часть текста из профиля для прохождения верификации.');
 		}
 		throw new Error('Failed to update DTF bio: ' + e.message);
+	}
+}
+
+export async function isPendingCleanupValidForCurrentUser(): Promise<boolean> {
+	const cleanup = sourceStorage.pendingBioCleanup;
+	if (!cleanup) return false;
+	try {
+		if (!dtfApiProvider.getMe) return false;
+		const me = await dtfApiProvider.getMe();
+		return !!(me && me.id === cleanup.dtfUserId);
+	} catch {
+		return false;
 	}
 }
 
@@ -124,6 +141,10 @@ export async function cleanupHangingBio(force: boolean = false): Promise<void> {
 					await dtfApiProvider.updateBio(cleanBio, cleanup.dtfUserId);
 				}
 				sourceStorage.pendingBioCleanup = null;
+			} else if (me && me.id !== cleanup.dtfUserId) {
+				// We are a different user. We cannot modify the old user's bio, 
+				// but we must clear the flag so this new user is not locked out.
+				sourceStorage.pendingBioCleanup = null;
 			}
 		} catch (e) {
 			// Silent fail, will retry on next reload
@@ -133,7 +154,7 @@ export async function cleanupHangingBio(force: boolean = false): Promise<void> {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export async function verifyBioAuth(source: SourceState): Promise<void> {
+export async function verifyBioAuth(source: SourceState, onProgress?: (attempt: number, max: number) => boolean): Promise<void> {
 	const cleanup = sourceStorage.pendingBioCleanup;
 	if (!cleanup) throw new Error("Нет активного процесса верификации");
 	if (cleanup.sourceId !== source.manifest.id) throw new Error("Активный процесс верификации относится к другому источнику");
@@ -148,6 +169,10 @@ export async function verifyBioAuth(source: SourceState): Promise<void> {
 	const verifyUrl = resolveSourceUrl(source.manifest.api.baseUrl, bioAuth.verifyEndpoint);
 	
 	for (let attempt = 1; attempt <= BIO_VERIFY_MAX_ATTEMPTS; attempt++) {
+		if (onProgress) {
+			const shouldAbort = onProgress(attempt, BIO_VERIFY_MAX_ATTEMPTS);
+			if (shouldAbort) throw new Error("Верификация прервана пользователем");
+		}
 		try {
 			const headers = new Headers(source.manifest.api.defaultHeaders || {});
 			const init: RequestInit = {
