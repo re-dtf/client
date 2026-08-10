@@ -12,7 +12,11 @@
 	{@const LoadedComponent = module.default}
 	<LoadedComponent {...props} />
 {:catch error}
-	<div style="color: red; border: 1px solid red; padding: 10px;">
-		ThemeLoader Error ({themeState.value}/{componentName}): {error.message}
-	</div>
+	{#if props.children}
+		{@render props.children()}
+	{:else}
+		<div style="color: red; border: 1px solid red; padding: 10px;">
+			ThemeLoader Error ({themeState.value}/{componentName}): {error.message}
+		</div>
+	{/if}
 {/await}

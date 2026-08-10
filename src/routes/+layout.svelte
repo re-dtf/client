@@ -87,7 +87,7 @@
 <div class="app">
 	<ThemeLoader componentName="Header" />
 
-	<main class="container">
+	<ThemeLoader componentName="MainLayout">
 		<div style:display={topmostPageOverlayIndex >= 0 ? 'none' : undefined}>
 			{@render children()}
 		</div>
@@ -119,7 +119,7 @@
 				{/if}
 			</div>
 		{/each}
-	</main>
+	</ThemeLoader>
 </div>
 
 {#if dev}
@@ -136,9 +136,6 @@
 <ThemeLoader componentName="ReloadPrompt" />
 
 <style>
-
-
-
 	.overlay-wrapper.is-modal {
 		position: fixed;
 		inset: 0;
@@ -154,16 +151,6 @@
 
 	.app {
 		min-height: 100vh;
-	}
-
-	.container {
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 0 20px;
-	}
-
-	main {
-		padding: 30px 20px;
 	}
 
 	.debug-panel {
