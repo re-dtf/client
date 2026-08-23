@@ -19,11 +19,7 @@
 
 	function openLogin(e: MouseEvent) {
 		e.preventDefault();
-		if (authStorage.isAuthenticated) {
-			pushOverlay('settings', '/settings');
-		} else {
-			pushOverlay('login', '/login');
-		}
+		pushOverlay('login', '/login');
 	}
 
 	function openFeed(e: MouseEvent) {
@@ -114,13 +110,11 @@
 			
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<div class="header-user" onclick={openLogin} role="button" tabindex="0">
-				<div class="login" aria-label={authStorage.isAuthenticated ? 'Профиль' : 'Войти'}>
+				<div class="login" aria-label="Войти">
 					<svg class="icon" width="28" height="28" aria-hidden="true">
 						<use href="/icons.svg#v_login"></use>
 					</svg>
-					<span class="span">
-						{authStorage.isAuthenticated ? 'Профиль' : 'Войти'}
-					</span>
+					<span class="span">Войти</span>
 				</div>
 			</div>
 		</div>
