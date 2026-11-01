@@ -84,7 +84,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 	return response;
 }
 
-function mapAvatarUrl(subsite: any, size = '64x64'): string | undefined {
+export function mapAvatarUrl(subsite: any, size = '64x64'): string | undefined {
 	return subsite?.avatar?.url
 		|| (subsite?.avatar?.data?.uuid ? getLeonardoUrl(subsite.avatar.data.uuid, { scale_crop: size }) : subsite?.avatar_url);
 }
@@ -228,7 +228,7 @@ export const dtfApiProvider: ApiProvider = {
 		} else {
 			// Проверим access токен запросом профиля
 			try {
-				await fetchWithAuth(`${baseUrl}/user/me`);
+				await fetchWithAuth(`${baseUrl}/subsite/me`);
 			} catch (e: unknown) {
 				throw new Error('Токен недействителен или устарел: ' + (e instanceof Error ? e.message : 'Неизвестная ошибка'));
 			}
@@ -491,19 +491,16 @@ export const dtfApiProvider: ApiProvider = {
 
 	async getMe(): Promise<any> {
 		if (!authStorage.dtfToken) throw new Error("Requires authorization");
-		// Using JWTAuthorization uniformly for modern API standard
-		const response = await fetchWithAuth(`${baseUrl}/user/me`);
+		// /user/me на всех версиях API отвечает 404; текущий профиль отдаёт /subsite/me (плоский объект,
+		// markdown=false — чтобы description (bio) пришёл сырым текстом)
+		const response = await fetchWithAuth(`${baseUrl}/subsite/me?markdown=false`);
 		const json = await response.json();
-		
-		if (!json.result || !json.result.id) {
+
+		if (!json.result?.id) {
 			throw new Error("Failed to get user ID");
 		}
-		
-		// Запрашиваем профиль subsite (как в HAR get-account), чтобы гарантированно получить description (bio)
-		const subsiteRes = await fetchWithAuth(`${baseUrl}/subsite?id=${json.result.id}&markdown=false`);
-		const subsiteJson = await subsiteRes.json();
 
-		return subsiteJson.result;
+		return json.result;
 	},
 
 	async updateBio(description: string, userId: number): Promise<void> {
