@@ -62,9 +62,10 @@ describe('registry.svelte', () => {
 			const result = await sourceRegistry.addSource('https://example.com/manifest.json');
 			expect(result).toEqual(mockManifest);
 
+			sourceRegistry.installSource('https://example.com/manifest.json', result, []);
 			expect(sourceStorage.sources).toHaveLength(1);
 			expect(sourceStorage.sources[0].manifest.id).toBe('test-source');
-			expect(sourceStorage.sources[0].enabled).toBe(false);
+			expect(sourceStorage.sources[0].enabled).toBe(true);
 			expect(sourceStorage.sources[0].isBuiltin).toBe(false);
 		});
 

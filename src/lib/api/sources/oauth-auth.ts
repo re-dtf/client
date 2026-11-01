@@ -1,7 +1,7 @@
 import { sourceStorage } from '$lib/storage/sources.svelte';
 import { resolveSourceUrl } from './types';
 import type { SourceState } from './types';
-import { base } from '$app/paths';
+import { resolve } from '$app/paths';
 
 function generateRandomString(length: number): string {
 	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
@@ -53,8 +53,7 @@ export async function startOAuth2PKCE(source: SourceState): Promise<void> {
 	const state = generateRandomString(16);
 	
 	// Учитываем base path приложения (например, для хостинга на GitHub Pages, где app на /reDTF)
-	// base из $app/paths содержит строку, например, '/reDTF' (или пустую строку, если корень)
-	const redirectUri = window.location.origin + base;
+	const redirectUri = new URL(resolve('/'), window.location.origin).href.replace(/\/$/, '');
 
 	const authUrlStr = resolveSourceUrl(source.manifest.api.baseUrl, oauth2.authorizationUrl);
 	const authUrl = new URL(authUrlStr);
