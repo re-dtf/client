@@ -226,7 +226,7 @@ export interface ApiProvider {
 	getComments(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	/** Комментарии, которыми источник подменяет основные (разрешение mutate:comments:replace) */
 	getReplacedComments?(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
-	getEditorialNews?(): Promise<Post[]>;
+	getEditorialNews?(lastId?: number): Promise<PaginatedResult<Post>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 
 	// Вход

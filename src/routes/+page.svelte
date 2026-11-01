@@ -95,7 +95,9 @@
 </svelte:head>
 
 
-<ThemeLoader componentName="EditorialNews" />
+{#if currentFeed === 'popular'}
+	<ThemeLoader componentName="EditorialNews" />
+{/if}
 
 <ThemeLoader componentName="FeedTabs" {currentFeed} switchFeed={openFeedTab} />
 

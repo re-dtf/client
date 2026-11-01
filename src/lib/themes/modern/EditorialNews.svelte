@@ -12,7 +12,7 @@
 
 	onMount(async () => {
 		try {
-			news = await api.getEditorialNews();
+			news = (await api.getEditorialNews()).items;
 		} catch (e: any) {
 			error = e.message;
 		} finally {

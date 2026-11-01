@@ -156,7 +156,7 @@ export const api = {
 		return provider.reactToComment(commentId, reactionId);
 	},
 
-	getEditorialNews: () => dtfApiProvider.getEditorialNews(),
+	getEditorialNews: (lastId?: number) => dtfApiProvider.getEditorialNews(lastId),
 
 	// --- Профили (пока только DTF) ---
 

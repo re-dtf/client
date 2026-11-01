@@ -104,11 +104,12 @@ export const dtfApiProvider = {
 		await fetchWithAuth(`${COMMENTS_API_URL}/comment/${commentId}/react`, { method: 'POST', body: formData });
 	},
 
-	async getEditorialNews(): Promise<Post[]> {
-		const response = await fetchWithAuth(`${API_URL}/news/min`);
+	/** Новости редакции порциями (как «Показать ещё» у DTF): курсор — id последней новости, первая порция — без него */
+	async getEditorialNews(lastId = 0): Promise<PaginatedResult<Post>> {
+		const response = await fetchWithAuth(`${API_URL}/news?lastId=${lastId}`);
 		const { result } = await response.json();
 
-		return (Array.isArray(result) ? result : []).filter((entry: any) => entry.id !== undefined).map(mapEntryToPost);
+		return { items: entriesOf(result?.news).map(mapEntryToPost), lastId: result?.lastId };
 	},
 
 	// --- Профили ---
