@@ -3,10 +3,24 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { readFileSync } from 'fs';
+import path from 'path';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
+function pwaPlugin(options?: Parameters<typeof SvelteKitPWA>[0]) {
+	const plugins = SvelteKitPWA(options);
+	for (const p of plugins as any[]) {
+		delete p.transformIndexHtml;
+	}
+	return plugins;
+}
+
 export default defineConfig({
+	resolve: {
+		alias: {
+			'$lib': path.resolve('./src/lib')
+		}
+	},
 	plugins: [
 		sveltekit({
 			version: {
@@ -26,7 +40,7 @@ export default defineConfig({
 				handleUnseenRoutes: 'ignore'
 			}
 		}),
-		SvelteKitPWA({
+		pwaPlugin({
 			registerType: 'prompt', // Оставляем ручное подтверждение
 			workbox: {
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt,json}'],

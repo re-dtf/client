@@ -1,5 +1,5 @@
 {
-	"extends": "./.svelte-kit/tsconfig.json",
+	"extends": "$app/tsconfig",
 	"compilerOptions": {
 		"rewriteRelativeImportExtensions": true,
 		"allowJs": true,
@@ -11,8 +11,25 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler",
-		"types": ["vite-plugin-pwa/client"]
-	}
+		"types": ["$app/types", "vite-plugin-pwa/client"],
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"]
+		}
+	},
+	"include": [
+		"src",
+		"test",
+		"tests",
+		"*.ts",
+		"*.js"
+	],
+	"exclude": [
+		"node_modules",
+		"build",
+		".svelte-kit",
+		"dist"
+	]
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
 	//

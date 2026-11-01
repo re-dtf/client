@@ -3,6 +3,10 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"imports": {
+		"#lib": "./src/lib/index.ts",
+		"#lib/*": "./src/lib/*"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -12,26 +16,32 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.63.0",
-		"@sveltejs/vite-plugin-svelte": "^7.1.2",
-		"@types/dompurify": "^3.0.5",
-		"@types/node": "^26.1.1",
+		"@sveltejs/adapter-static": "^4.0.1",
+		"@sveltejs/kit": "^3.1.1",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@types/node": "^26.6.6",
 		"@vite-pwa/sveltekit": "^1.1.0",
-		"svelte": "^5.56.1",
-		"svelte-check": "^4.6.0",
+		"svelte": "^5.57.3",
+		"svelte-check": "^4.7.7",
 		"typescript": "^6.0.3",
-		"vite": "^8.0.16",
-		"vitest": "^4.1.10"
+		"vite": "^8.3.5",
+		"vitest": "^5.0.5"
 	},
 	"dependencies": {
 		"@editorjs/code": "^2.9.4",
 		"@editorjs/delimiter": "^1.4.2",
-		"@editorjs/editorjs": "^2.31.6",
+		"@editorjs/editorjs": "^2.31.7",
 		"@editorjs/header": "^2.8.9",
 		"@editorjs/image": "^2.10.3",
 		"@editorjs/list": "^2.0.9",
 		"@editorjs/quote": "^2.7.6",
-		"dompurify": "^3.4.11"
+		"dompurify": "^3.4.17"
+	},
+	"overrides": {
+		"@vite-pwa/sveltekit": {
+			"@sveltejs/kit": "$@sveltejs/kit"
+		},
+		"glob": "^14.0.3",
+		"minimatch": "^11.0.3"
 	}
 }
