@@ -61,21 +61,23 @@
 		margin-bottom: 4px;
 	}
 
-	/*
-	 * ponytail: в исходной вёрстке у варианта для комментария были свои отступы (4px/8px),
-	 * но comments.css подключён раньше style.css и они перебивались базовыми. Перенесено фактическое.
-	 */
+	/* Вариант для комментария: свой ряд, но плотнее, чем у поста */
 	.post-reactions--compact {
 		flex-basis: 100%;
+		margin-top: 0;
+		margin-bottom: 2px;
 	}
 
+	/* Кнопки устроены как кнопки оценки темы (PostButton, Rating): иконка и число, круг подсветки вокруг иконки */
 	.post-reactions__scroll {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		gap: 20px;
 		overflow-x: auto;
 		white-space: nowrap;
-		padding: 2px 0;
+		/* место под круг подсветки, иначе его обрежет overflow */
+		padding: 2px 5px;
+		margin: 0 -5px;
 		scrollbar-width: none;
 		user-select: none;
 	}
@@ -85,38 +87,46 @@
 	}
 
 	.post-reaction {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
 		flex-shrink: 0;
-		gap: 5px;
+		gap: 10px;
 		height: 28px;
-		padding: 0 8px 0 4px;
-		border: 1px solid transparent;
-		border-radius: 6px;
-		background-color: rgba(0, 0, 0, 0.03);
 		color: var(--text-muted);
+		font-size: 15px;
 		cursor: pointer;
-		transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
 	}
 
-	.post-reaction:hover {
-		background-color: rgba(0, 0, 0, 0.06);
-		color: #000;
+	.post-reaction::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: -5px;
+		width: 30px;
+		height: 30px;
+		margin-top: -15px;
+		border-radius: 50%;
+		background-color: transparent;
+		transition: background-color 0.1s;
 	}
 
-	.post-reaction:active {
-		transform: scale(0.96);
+	.post-reaction:hover::before {
+		background-color: rgba(0, 0, 0, 0.05);
 	}
 
-	.post-reaction--active {
-		background-color: rgba(70, 131, 217, 0.08);
-		border-color: rgba(70, 131, 217, 0.25);
-		color: var(--color-blue);
+	.post-reaction--active::before {
+		background-color: rgba(70, 131, 217, 0.14);
 	}
 
-	.post-reaction--active:hover {
-		background-color: rgba(70, 131, 217, 0.15);
-		color: var(--text-link);
+	.post-reaction--active:hover::before {
+		background-color: rgba(70, 131, 217, 0.22);
+	}
+
+	.post-reaction__icon,
+	.post-reaction__count,
+	.post-reaction .icon {
+		position: relative;
 	}
 
 	.post-reaction__icon {
@@ -128,9 +138,10 @@
 	}
 
 	.post-reaction__count {
-		font-size: 14px;
 		font-weight: 500;
-		line-height: 1;
+		line-height: 22px;
+		/* Измерено по canvas: центр цифр Roboto 15px лежит на 0.5px выше центра иконки (она в кадре по центру) */
+		top: 0.5px;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -140,14 +151,6 @@
 
 	.post-reaction--add {
 		justify-content: center;
-		width: 28px;
-		padding: 0;
-		background-color: transparent;
-		color: rgba(0, 0, 0, 0.4);
-	}
-
-	.post-reaction--add:hover {
-		background-color: rgba(0, 0, 0, 0.05);
-		color: rgba(0, 0, 0, 0.75);
+		width: 20px;
 	}
 </style>
