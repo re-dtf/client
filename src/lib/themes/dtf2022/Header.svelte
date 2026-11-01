@@ -4,7 +4,7 @@
 	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import AccountMenu from './AccountMenu.svelte';
-	import { currentUser } from './currentUser.svelte';
+	import { currentUser } from '$lib/api/currentUser.svelte';
 	import Preloader from './ui/Preloader.svelte';
 
 	// ponytail: счётчик появится вместе с API уведомлений

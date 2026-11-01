@@ -1,4 +1,4 @@
-import { dtfApiProvider } from '../providers/dtf';
+import { api } from '../index.svelte';
 import { sourceStorage } from '$lib/storage/sources.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { resolveSourceUrl } from './types';
@@ -36,8 +36,7 @@ export async function startBioVerification(source: SourceState, signal?: AbortSi
 
 	let me;
 	try {
-		if (!dtfApiProvider.getMe) throw new Error('DTF provider does not support getMe');
-		me = await dtfApiProvider.getMe();
+		me = await api.getMe();
 	} catch (e: any) {
 		throw new Error('Failed to fetch DTF profile: ' + e.message);
 	}
@@ -94,8 +93,7 @@ export async function startBioVerification(source: SourceState, signal?: AbortSi
 	const newBio = originalBio + bioAddition;
 	
 	try {
-		if (!dtfApiProvider.updateBio) throw new Error('DTF provider does not support updateBio');
-		await dtfApiProvider.updateBio(newBio, dtfUserId);
+		await api.updateBio(newBio, dtfUserId);
 	} catch (e: any) {
 		// Do NOT revert sourceStorage.pendingBioCleanup here.
 		// If network fails but server actually processed the update, reverting would cause us to lose the originalBio forever.
@@ -111,8 +109,7 @@ export async function isPendingCleanupValidForCurrentUser(): Promise<boolean> {
 	const cleanup = sourceStorage.pendingBioCleanup;
 	if (!cleanup) return false;
 	try {
-		if (!dtfApiProvider.getMe) return false;
-		const me = await dtfApiProvider.getMe();
+		const me = await api.getMe();
 		return !!(me && me.id === cleanup.dtfUserId);
 	} catch {
 		return false;
@@ -128,8 +125,7 @@ export async function cleanupHangingBio(force: boolean = false): Promise<void> {
 	if (force || timePassed > BIO_CLEANUP_TTL_MS) {
 		// Time passed, we should clean up
 		try {
-			if (!dtfApiProvider.getMe || !dtfApiProvider.updateBio) return;
-			const me = await dtfApiProvider.getMe();
+			const me = await api.getMe();
 			if (me && me.id === cleanup.dtfUserId) {
 				// We are the same user, restore bio safely without overwriting manual changes
 				const currentBio = me.description || '';
@@ -138,7 +134,7 @@ export async function cleanupHangingBio(force: boolean = false): Promise<void> {
 				
 				if (injectionRegex.test(currentBio)) {
 					const cleanBio = currentBio.replace(injectionRegex, '');
-					await dtfApiProvider.updateBio(cleanBio, cleanup.dtfUserId);
+					await api.updateBio(cleanBio, cleanup.dtfUserId);
 				}
 				sourceStorage.pendingBioCleanup = null;
 			} else if (me && me.id !== cleanup.dtfUserId) {

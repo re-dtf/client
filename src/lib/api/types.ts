@@ -200,30 +200,53 @@ export interface GetPostsOptions {
 	cursors?: Record<string, CursorData>;
 }
 
-export interface ApiProvider {
+/** Вошедший пользователь DTF */
+export interface CurrentUser {
+	id: number;
 	name: string;
-	login?(email: string, password: string): Promise<Session>;
-	loginByToken?(token: string): Promise<Session>;
+	avatarUrl?: string;
+	/** Био как есть, без разметки */
+	description?: string;
+}
+
+export type CommentPermission = 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers';
+
+/**
+ * Что умеет источник данных. Обязательное есть у всех источников, остальное — по возможностям:
+ * если метода нет, источник этого не умеет. Источники из манифестов умеют только чтение
+ * и реакции (см. providers/source.ts), всё остальное делает только DTF.
+ */
+export interface ApiProvider {
+	/** Название для сообщений об ошибках */
+	name: string;
+
+	// Чтение
 	getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>>;
 	getPost(id: number): Promise<Post>;
 	getComments(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
-	reactToComment?(commentId: number, reactionId: number): Promise<void>;
+	/** Комментарии, которыми источник подменяет основные (разрешение mutate:comments:replace) */
+	getReplacedComments?(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	getEditorialNews?(): Promise<Post[]>;
+	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 
-	// Profile
+	// Вход
+	login?(email: string, password: string): Promise<Session>;
+	loginByToken?(token: string): Promise<Session>;
+	getMe?(): Promise<CurrentUser>;
+	updateBio?(description: string, userId: number): Promise<void>;
+
+	// Профили
 	getProfile?(id: number): Promise<Profile>;
-	getProfilePosts?(id: number, sorting: 'popular' | 'new', cursor?: CursorData): Promise<PaginatedResult<Post>>;
+	getProfilePosts?(id: number, sorting: ProfileSorting, cursor?: CursorData): Promise<PaginatedResult<Post>>;
 	getProfileSubscribers?(id: number): Promise<ProfileListItem[]>;
 	getProfileSubscriptions?(id: number): Promise<ProfileListItem[]>;
 
-	// Editor
-	saveDraft?(entry: DtfEditorEntry): Promise<any>;
+	// Редактор
+	saveDraft?(entry: DtfEditorEntry): Promise<DtfEditorEntry>;
 	uploadMedia?(file: File): Promise<UploadResult>;
 	getSubsites?(): Promise<SubsiteItem[]>;
-	getCommentPermissions?(postId: number): Promise<'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'>;
-	setCommentPermissions?(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'): Promise<void>;
+	getCommentPermissions?(postId: number): Promise<CommentPermission>;
+	setCommentPermissions?(postId: number, permission: CommentPermission): Promise<void>;
 	getPostHistory?(postId: number): Promise<PostHistoryVersion[]>;
 	getPostHistoryVersion?(postId: number, versionId: number): Promise<DtfEditorEntry>;
-	getMe?(): Promise<any>;
-	updateBio?(description: string, userId: number): Promise<void>;
 }

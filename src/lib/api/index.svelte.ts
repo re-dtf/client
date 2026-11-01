@@ -1,243 +1,177 @@
+import type { ApiProvider, Comment, CursorData, GetPostsOptions, PaginatedResult, Post } from './types';
 import { dtfApiProvider } from './providers/dtf';
-import { persistedState } from '$lib/storage/persisted.svelte';
-import { authStorage } from '$lib/storage/auth.svelte';
-import type { GetPostsOptions, PaginatedResult, Post, Comment, CursorData } from './types';
+import { createSourceProvider } from './providers/source';
 import { sourceRegistry } from './sources/registry.svelte';
-import { fetchFromSource } from './sources/source-fetcher';
 import { mergePosts, mergeComments } from './sources/merger';
 import { hasPermission } from './sources/permissions';
+import { authStorage } from '$lib/storage/auth.svelte';
+
+/*
+ * Единственная точка, через которую UI получает данные. Компоненты вызывают api.getPosts() и так далее
+ * и ничего не знают о провайдерах: фасад сам решает, откуда брать данные (DTF и/или подключённые источники),
+ * и сливает результат.
+ *
+ * Провайдеры: DTF (providers/dtf) и по одному на каждый подключённый источник (providers/source.ts).
+ * Ошибки сети и плохие ответы превращаются в Error внутри провайдеров. Если упал дополнительный источник,
+ * остальные всё равно показываются, а причина пишется в консоль.
+ */
+
+const DTF = 'dtf';
+
+type Cursors = Record<string, CursorData>;
+
+function providerFor(sourceId: string): ApiProvider {
+	if (sourceId === DTF) return dtfApiProvider;
+	const source = sourceRegistry.activeSources.find((s) => s.manifest.id === sourceId);
+	if (!source) throw new Error(`Источник '${sourceId}' не найден или выключен`);
+	return createSourceProvider(source);
+}
+
+/** Результаты выполненных запросов с номером запроса; упавшие пишет в консоль и пропускает */
+function settled<T>(results: PromiseSettledResult<T>[], sourceIds: string[]) {
+	return results.flatMap((result, index) => {
+		if (result.status === 'fulfilled') return [{ index, sourceId: sourceIds[index], value: result.value }];
+		console.warn(`[reDTF] Источник '${sourceIds[index]}' не ответил:`, result.reason);
+		return [];
+	});
+}
 
 export const api = {
+	// --- Вход ---
+
 	async login(email: string, password: string) {
-		if (!dtfApiProvider.login) throw new Error("Вход по паролю в данный момент недоступен");
 		const session = await dtfApiProvider.login(email, password);
 		authStorage.session = session;
 		return session;
 	},
 
 	async loginByToken(token: string) {
-		if (!dtfApiProvider.loginByToken) throw new Error("Вход по токену в данный момент недоступен");
 		const session = await dtfApiProvider.loginByToken(token);
-		// session is already stored in authStorage within the provider, but we can do it here too just in case
 		authStorage.session = session;
 		return session;
 	},
 
+	getMe: () => dtfApiProvider.getMe(),
+	updateBio: (description: string, userId: number) => dtfApiProvider.updateBio(description, userId),
+
+	// --- Чтение (DTF и подключённые источники) ---
+
 	async getPosts(options?: GetPostsOptions) {
 		const isSubsequentPage = options?.cursors !== undefined || options?.cursor !== undefined;
 		const cursors = options?.cursors || {};
-		
-		const fetchDtf = !isSubsequentPage || cursors['dtf'] !== undefined || (options?.cursor !== undefined && Object.keys(cursors).length === 0);
-		let dtfPostsPromise: Promise<PaginatedResult<Post>> = Promise.resolve({ items: [] });
-		if (fetchDtf) {
-			const dtfCursor = cursors['dtf'] || options?.cursor;
-			dtfPostsPromise = dtfApiProvider.getPosts({ ...options, cursor: dtfCursor });
-		}
-		
-		const extraSources = sourceRegistry.activeSources.filter(s => {
+
+		// DTF пропускаем на следующих страницах, если у него уже нет курсора
+		const fetchDtf = !isSubsequentPage || cursors[DTF] !== undefined || (options?.cursor !== undefined && Object.keys(cursors).length === 0);
+		const dtfPromise: Promise<PaginatedResult<Post>> = fetchDtf
+			? dtfApiProvider.getPosts({ ...options, cursor: cursors[DTF] || options?.cursor })
+			: Promise.resolve({ items: [] });
+
+		const extraSources = sourceRegistry.activeSources.filter((s) => {
 			if (!s.manifest.endpoints['getPosts']) return false;
 			if (isSubsequentPage && cursors[s.manifest.id] === undefined && options?.cursors !== undefined) return false;
 			return true;
 		});
-		
 		const extrasPromise = Promise.allSettled(
-			extraSources.map(s => {
-				const sourceCursor = cursors[s.manifest.id];
-				const queryOverrides: Record<string, string> = {};
-				if (sourceCursor) {
-					queryOverrides.cursor = JSON.stringify(sourceCursor);
-				}
-				if (options?.sorting) {
-					queryOverrides.sorting = options.sorting;
-				}
-				if (options?.pageName) {
-					queryOverrides.page = options.pageName;
-				}
-				return fetchFromSource<PaginatedResult<Post>>(s, 'getPosts', {}, queryOverrides);
-			})
+			extraSources.map((s) => createSourceProvider(s).getPosts({ ...options, cursor: cursors[s.manifest.id] }))
 		);
 
-		const [dtfResult, extras] = await Promise.all([dtfPostsPromise, extrasPromise]);
-		
+		const [dtfResult, extras] = await Promise.all([dtfPromise, extrasPromise]);
+
 		const results = [
-			{ sourceId: 'dtf', result: dtfResult },
-			...extras.map((r, i) => {
-				if (r.status === 'fulfilled') {
-					return { sourceId: extraSources[i].manifest.id, result: r.value };
-				}
-				return null;
-			}).filter((x): x is NonNullable<typeof x> => x !== null)
+			{ sourceId: DTF, result: dtfResult },
+			...settled(extras, extraSources.map((s) => s.manifest.id)).map(({ sourceId, value }) => ({ sourceId, result: value }))
 		];
-		
+
 		return mergePosts(results, options?.sorting);
 	},
 
-	async getPost(id: number, sourceId: string = 'dtf') {
-		if (sourceId === 'dtf') {
-			return dtfApiProvider.getPost(id);
-		}
-		const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
-		if (source && source.manifest.endpoints['getPost']) {
-			return fetchFromSource<Post>(source, 'getPost', { postId: id });
-		}
-		throw new Error(`Cannot get post from source ${sourceId}`);
+	getPost(id: number, sourceId: string = DTF) {
+		return providerFor(sourceId).getPost(id);
 	},
 
-	async getComments(postId: number, sourceId: string = 'dtf', cursors?: Record<string, { lastId: number; lastSortingValue: number }>, sorting: string = 'date') {
+	async getComments(postId: number, sourceId: string = DTF, cursors?: Cursors, sorting: string = 'date') {
 		const isSubsequentPage = cursors !== undefined;
 		const safeCursors = cursors || {};
 
-		let primaryCommentsPromise: Promise<PaginatedResult<Comment>> = Promise.resolve({ items: [] });
+		// Основной источник пропускаем на следующих страницах, если у него уже нет курсора
 		const fetchPrimary = !isSubsequentPage || safeCursors[sourceId] !== undefined;
+		const primaryPromise: Promise<PaginatedResult<Comment>> = fetchPrimary
+			? providerFor(sourceId).getComments(postId, safeCursors[sourceId], sorting)
+			: Promise.resolve({ items: [] });
 
-		if (fetchPrimary) {
-			if (sourceId === 'dtf') {
-				const dtfCursor = safeCursors['dtf'];
-				primaryCommentsPromise = dtfApiProvider.getComments(postId, dtfCursor, sorting);
-			} else {
-				const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
-				if (source) {
-					const sourceCursor = safeCursors[sourceId];
-					const queryOverrides: Record<string, string> = { sorting };
-					if (sourceCursor) queryOverrides.cursor = JSON.stringify(sourceCursor);
-					primaryCommentsPromise = fetchFromSource<PaginatedResult<Comment>>(source, 'getComments', { postId }, queryOverrides);
-				} else {
-					throw new Error(`Source ${sourceId} not found`);
-				}
-			}
-		}
-		
-		const extraSources = sourceRegistry.activeSources.filter(s => {
+		// Остальные источники дополняют или подменяют комментарии, если у них есть такое разрешение для этого источника
+		const extraSources = sourceRegistry.activeSources.filter((s) => {
 			if (s.manifest.id === sourceId) return false;
 			if (!hasPermission(s, 'mutate:comments:append', sourceId) && !hasPermission(s, 'mutate:comments:replace', sourceId)) return false;
 			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined) return false;
 			return true;
 		});
+		const modes = extraSources.map((s) => (hasPermission(s, 'mutate:comments:replace', sourceId) ? 'replace' : 'append') as 'replace' | 'append');
 
 		const extrasPromise = Promise.allSettled(
-			extraSources.map(s => {
-				const mode = hasPermission(s, 'mutate:comments:replace', sourceId) ? 'replace' : 'append';
-				const endpointKey = mode === 'replace' && s.manifest.endpoints['getReplacedComments'] ? 'getReplacedComments' : 'getComments';
-				const sourceCursor = safeCursors[s.manifest.id];
-				const queryOverrides: Record<string, string> = { sorting };
-				if (sourceCursor) queryOverrides.cursor = JSON.stringify(sourceCursor);
-				return fetchFromSource<PaginatedResult<Comment>>(s, endpointKey, { postId }, queryOverrides);
+			extraSources.map((s, i) => {
+				const provider = createSourceProvider(s);
+				const load = modes[i] === 'replace' && provider.getReplacedComments ? provider.getReplacedComments : provider.getComments;
+				return load(postId, safeCursors[s.manifest.id], sorting);
 			})
 		);
 
-		const [primaryResult, extras] = await Promise.all([primaryCommentsPromise, extrasPromise]);
-		
-		const additions = extras.map((r, i) => {
-			if (r.status === 'fulfilled') {
-				const source = extraSources[i];
-				const mode = hasPermission(source, 'mutate:comments:replace', sourceId) ? 'replace' : 'append' as 'replace' | 'append';
-				return {
-					sourceId: source.manifest.id,
-					comments: r.value.items,
-					mode
-				};
-			}
-			return null;
-		}).filter((x): x is NonNullable<typeof x> => x !== null);
+		const [primary, extras] = await Promise.all([primaryPromise, extrasPromise]);
 
-		const mergedComments = mergeComments(primaryResult.items, additions);
-		
-		const resultCursors: Record<string, CursorData> = {};
-		if (primaryResult.lastId !== undefined && primaryResult.lastSortingValue !== undefined) {
-			resultCursors[sourceId] = { lastId: primaryResult.lastId, lastSortingValue: primaryResult.lastSortingValue };
+		const loaded = settled(extras, extraSources.map((s) => s.manifest.id));
+		const additions = loaded.map(({ index, sourceId: extraId, value }) => ({
+			sourceId: extraId,
+			comments: value.items,
+			mode: modes[index]
+		}));
+
+		// Курсоры следующей страницы: у каждого источника свой
+		const resultCursors: Cursors = {};
+		if (primary.lastId !== undefined && primary.lastSortingValue !== undefined) {
+			resultCursors[sourceId] = { lastId: primary.lastId, lastSortingValue: primary.lastSortingValue };
 		}
-		extras.forEach((r, i) => {
-			if (r.status === 'fulfilled') {
-				const source = extraSources[i];
-				if (r.value.lastId !== undefined && r.value.lastSortingValue !== undefined) {
-					resultCursors[source.manifest.id] = { lastId: r.value.lastId, lastSortingValue: r.value.lastSortingValue };
-				}
+		for (const { sourceId: extraId, value } of loaded) {
+			if (value.lastId !== undefined && value.lastSortingValue !== undefined) {
+				resultCursors[extraId] = { lastId: value.lastId, lastSortingValue: value.lastSortingValue };
 			}
-		});
+		}
 
 		return {
-			items: mergedComments,
-			lastId: primaryResult.lastId,
-			lastSortingValue: primaryResult.lastSortingValue,
+			items: mergeComments(primary.items, additions),
+			lastId: primary.lastId,
+			lastSortingValue: primary.lastSortingValue,
 			cursors: resultCursors
 		};
 	},
 
-	async reactToComment(commentId: number, reactionId: number, sourceId: string = 'dtf') {
-		if (sourceId === 'dtf') {
-			if (dtfApiProvider.reactToComment) {
-				return dtfApiProvider.reactToComment(commentId, reactionId);
+	async reactToComment(commentId: number, reactionId: number, sourceId: string = DTF) {
+		if (sourceId !== DTF) {
+			const source = sourceRegistry.activeSources.find((s) => s.manifest.id === sourceId);
+			if (!source || !hasPermission(source, 'write:reactions')) {
+				throw new Error(`Нельзя поставить реакцию: источник '${sourceId}' не найден или нет разрешения`);
 			}
-			throw new Error("reactToComment is not implemented for DTF provider");
 		}
-		const source = sourceRegistry.activeSources.find(s => s.manifest.id === sourceId);
-		if (source && hasPermission(source, 'write:reactions')) {
-			return fetchFromSource(source, 'reactToComment', { commentId }, { reactionId: String(reactionId) });
-		}
-		throw new Error(`Cannot react to comment: Source ${sourceId} not found or permission denied`);
+		const provider = providerFor(sourceId);
+		if (!provider.reactToComment) throw new Error(`Источник '${sourceId}' не поддерживает реакции`);
+		return provider.reactToComment(commentId, reactionId);
 	},
 
-	async getEditorialNews() {
-		if (dtfApiProvider.getEditorialNews) {
-			return dtfApiProvider.getEditorialNews();
-		}
-		return [];
-	},
+	getEditorialNews: () => dtfApiProvider.getEditorialNews(),
 
-	// --- Profile (пока только DTF) ---
-	async getProfile(id: number) {
-		if (!dtfApiProvider.getProfile) throw new Error("getProfile is not implemented");
-		return dtfApiProvider.getProfile(id);
-	},
+	// --- Профили (пока только DTF) ---
 
-	async getProfilePosts(id: number, sorting: 'popular' | 'new', cursor?: CursorData) {
-		if (!dtfApiProvider.getProfilePosts) throw new Error("getProfilePosts is not implemented");
-		return dtfApiProvider.getProfilePosts(id, sorting, cursor);
-	},
+	getProfile: (id: number) => dtfApiProvider.getProfile(id),
+	getProfilePosts: dtfApiProvider.getProfilePosts,
+	getProfileSubscribers: dtfApiProvider.getProfileSubscribers,
+	getProfileSubscriptions: dtfApiProvider.getProfileSubscriptions,
 
-	async getProfileSubscribers(id: number) {
-		if (!dtfApiProvider.getProfileSubscribers) throw new Error("getProfileSubscribers is not implemented");
-		return dtfApiProvider.getProfileSubscribers(id);
-	},
+	// --- Редактор (только DTF) ---
 
-	async getProfileSubscriptions(id: number) {
-		if (!dtfApiProvider.getProfileSubscriptions) throw new Error("getProfileSubscriptions is not implemented");
-		return dtfApiProvider.getProfileSubscriptions(id);
-	},
-
-	// --- Editor ---
-	async saveDraft(entry: import('./types').DtfEditorEntry) {
-		if (!dtfApiProvider.saveDraft) throw new Error("saveDraft is not implemented");
-		return dtfApiProvider.saveDraft(entry);
-	},
-	
-	async uploadMedia(file: File) {
-		if (!dtfApiProvider.uploadMedia) throw new Error("uploadMedia is not implemented");
-		return dtfApiProvider.uploadMedia(file);
-	},
-
-	async getSubsites() {
-		if (!dtfApiProvider.getSubsites) throw new Error("getSubsites is not implemented");
-		return dtfApiProvider.getSubsites();
-	},
-
-	async setCommentPermissions(postId: number, permission: 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers') {
-		if (!dtfApiProvider.setCommentPermissions) throw new Error("setCommentPermissions is not implemented");
-		return dtfApiProvider.setCommentPermissions(postId, permission);
-	},
-
-	async getCommentPermissions(postId: number) {
-		if (!dtfApiProvider.getCommentPermissions) throw new Error("getCommentPermissions is not implemented");
-		return dtfApiProvider.getCommentPermissions(postId);
-	},
-
-	async getPostHistory(postId: number) {
-		if (!dtfApiProvider.getPostHistory) throw new Error("getPostHistory is not implemented");
-		return dtfApiProvider.getPostHistory(postId);
-	},
-
-	async getPostHistoryVersion(postId: number, versionId: number) {
-		if (!dtfApiProvider.getPostHistoryVersion) throw new Error("getPostHistoryVersion is not implemented");
-		return dtfApiProvider.getPostHistoryVersion(postId, versionId);
-	}
+	saveDraft: dtfApiProvider.saveDraft,
+	uploadMedia: dtfApiProvider.uploadMedia,
+	getSubsites: dtfApiProvider.getSubsites,
+	getCommentPermissions: dtfApiProvider.getCommentPermissions,
+	setCommentPermissions: dtfApiProvider.setCommentPermissions,
+	getPostHistory: dtfApiProvider.getPostHistory,
+	getPostHistoryVersion: dtfApiProvider.getPostHistoryVersion
 };

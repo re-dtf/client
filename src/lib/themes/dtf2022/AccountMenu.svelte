@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { getProfilePath, openOverlay, openProfile } from '$lib/navigation';
-	import type { CurrentUser } from './currentUser.svelte';
+	import type { CurrentUser } from '$lib/api/types';
 
 	let { user, onclose }: { user: CurrentUser | null; onclose: () => void } = $props();
 

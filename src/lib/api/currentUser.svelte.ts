@@ -1,13 +1,8 @@
 import { persistedState } from '$lib/storage/persisted.svelte';
-import { dtfApiProvider, mapAvatarUrl } from '$lib/api/providers/dtf';
+import { api } from './index.svelte';
+import type { CurrentUser } from './types';
 
-export interface CurrentUser {
-	id: number;
-	name: string;
-	avatarUrl?: string;
-}
-
-// Запоминаем в localStorage, чтобы аватар в шапке появлялся сразу, до ответа API
+// Копия в localStorage (слой cache), чтобы аватар в шапке появлялся сразу, до ответа API
 const stored = persistedState<CurrentUser | null>('redtf:cache:current-user', null);
 
 let loading: Promise<void> | undefined;
@@ -20,14 +15,14 @@ export const currentUser = {
 
 	/** Обновить данные один раз за загрузку страницы */
 	load() {
-		loading ??= dtfApiProvider
-			.getMe?.()
+		loading ??= api
+			.getMe()
 			.then((me) => {
-				stored.value = { id: me.id, name: me.name || 'Аноним', avatarUrl: mapAvatarUrl(me, '80x80') };
+				stored.value = me;
 			})
 			.catch((e) => {
 				loading = undefined;
-				console.warn('[dtf2022] Не удалось получить профиль:', e);
+				console.warn('[currentUser] Не удалось получить профиль:', e);
 			});
 	},
 
