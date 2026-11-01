@@ -1,0 +1,3 @@
+[submodule ".agents/skills/dtf-api"]
+	path = .agents/skills/dtf-api
+	url = https://github.com/re-dtf/api-docs

@@ -6,5 +6,5 @@
 
 - `rules/ponytail.md` — стиль «ленивого senior»: минимум кода, ничего лишнего. Обязателен.
 - `skills/svelte-core-bestpractices` — справка по современному Svelte 5 (руны, сниппеты, `{@attach}`, контекст).
-- `skills/dtf-api` — справка по API DTF (спецификации, ответы редактора, авторизация).
+- `skills/dtf-api` — подмодуль с описанием API DTF ([re-dtf/api-docs](https://github.com/re-dtf/api-docs), [сайт](https://re-dtf.github.io/api-docs/)). Читайте `SKILL.md` внутри, там таблица «задача → файл».
 - `skills/ponytail*` — навыки для аудита и ревью в стиле ponytail.

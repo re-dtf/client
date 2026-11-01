@@ -1,6 +1,6 @@
 # Добавить метод API
 
-Как устроен слой: [architecture/api.md](../architecture/api.md).
+Как устроен слой: [architecture/api.md](../architecture/api.md). Прежде чем писать запрос, найдите метод в описании API (`.agents/skills/dtf-api`, см. `SKILL.md` внутри). Если его там нет, снимите запись трафика сайта и добавьте метод в [api-docs](https://github.com/re-dtf/api-docs), а не угадывайте поля.
 
 Пример: `getSubscriptionsFeed(cursor)` — лента подписок вошедшего пользователя только у DTF.
 

@@ -32,7 +32,7 @@ UI ──► api (фасад) ──┬──► providers/dtf          офиц
 | `mappers.ts` | перевод ответов DTF в наши типы |
 | `index.ts` | `dtfApiProvider`: методы API |
 
-Токены: заголовок `JWTAuthorization: Bearer …` (старый `x-authenticate` не использовать). Вход по паролю уходит через CORS-прокси из настроек, остальные запросы — напрямую на `api.dtf.ru`. Справка по самому API DTF лежит в `.agents/skills/dtf-api`.
+Токены: заголовок `JWTAuthorization: Bearer …` (старый `x-authenticate` не использовать). Вход и обновление токена уходят через CORS-прокси из настроек, остальные запросы — напрямую на `api.dtf.ru`. Описание самого API DTF: подмодуль `.agents/skills/dtf-api` ([re-dtf/api-docs](https://github.com/re-dtf/api-docs), [сайт](https://re-dtf.github.io/api-docs/)).
 
 ### Провайдер источника (`providers/source.ts`)
 
