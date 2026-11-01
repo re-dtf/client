@@ -34,8 +34,19 @@
 	}
 
 	$effect(() => {
+		const handleSwitchFeed = (e: Event) => {
+			const customEvent = e as CustomEvent<'popular' | 'new' | 'my'>;
+			if (customEvent.detail) {
+				switchFeed(customEvent.detail);
+			}
+		};
+
 		window.addEventListener('refreshFeed', handleRefresh);
-		return () => window.removeEventListener('refreshFeed', handleRefresh);
+		window.addEventListener('switchFeed', handleSwitchFeed);
+		return () => {
+			window.removeEventListener('refreshFeed', handleRefresh);
+			window.removeEventListener('switchFeed', handleSwitchFeed);
+		};
 	});
 
 	async function loadMore() {
@@ -122,6 +133,10 @@
 </div>
 
 <style>
+	/* В темах с flex-раскладкой (dtf2022) иначе лента сжимается по контенту */
+	.feed {
+		width: 100%;
+	}
 	.empty, .infinite-loader {
 		text-align: center;
 		padding: 40px;

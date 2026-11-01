@@ -22,7 +22,7 @@
 	});
 </script>
 
-<div class="post-page {themeClass}">
+<div class="post-screen {themeClass}">
 	{#await postPromise}
 		<div class="spinner-wrapper">
 			<ThemeLoader componentName="Spinner" />
@@ -41,10 +41,12 @@
 </div>
 
 <style>
-	.post-page {
-		max-width: 800px;
+	/* Темы подстраивают обёртку через CSS-переменные (см. dtf2022/theme.css) */
+	.post-screen {
+		width: 100%;
+		max-width: var(--post-screen-max-width, 800px);
 		margin: 0 auto;
-		padding: 20px 0;
+		padding: var(--post-screen-padding, 20px 0);
 	}
 	.message {
 		text-align: center;
@@ -56,6 +58,7 @@
 		color: #d32f2f;
 	}
 	.actions {
+		display: var(--post-screen-actions-display, block);
 		margin-top: 20px;
 	}
 </style>

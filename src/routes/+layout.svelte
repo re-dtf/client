@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
+	import ProfileContent from '$lib/components/ProfileContent.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
@@ -88,22 +89,44 @@
 	<ThemeLoader componentName="Header" />
 
 	<ThemeLoader componentName="MainLayout">
-		<div style:display={topmostPageOverlayIndex >= 0 ? 'none' : undefined}>
+		<!-- display: contents — обёртки не должны ломать раскладку темы (flex/grid в MainLayout) -->
+		<div style:display={topmostPageOverlayIndex >= 0 ? 'none' : 'contents'}>
 			{@render children()}
 		</div>
-		
+
 		{#each overlays as overlay, index (overlay.id)}
-			{@const isModal = overlay.presentation === 'modal'}
-			{@const isHidden = !isModal && index < topmostPageOverlayIndex}
-			
+			{#if overlay.presentation !== 'modal'}
+				{@const isHidden = index < topmostPageOverlayIndex}
+
+				<div
+					class="overlay-wrapper"
+					style:display={isHidden ? 'none' : 'contents'}
+				>
+					{#if overlay.type === 'post'}
+						<PostOverlay postId={overlay.data.postId} sourceId={overlay.data.sourceId} />
+					{:else if overlay.type === 'profile'}
+						<ProfileContent profileId={overlay.data.profileId} />
+					{:else if overlay.type === 'settings'}
+						<SettingsOverlay />
+					{:else if overlay.type === 'login'}
+						<LoginOverlay />
+					{:else if overlay.type === 'editor'}
+						<EditorOverlay postId={overlay.data?.postId} />
+					{/if}
+				</div>
+			{/if}
+		{/each}
+	</ThemeLoader>
+
+	{#each overlays as overlay, index (overlay.id)}
+		{#if overlay.presentation === 'modal'}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div 
-				class={['overlay-wrapper', { 'is-modal': isModal }]}
-				style:display={isHidden ? 'none' : undefined}
+				class="overlay-wrapper is-modal"
 				style:z-index={100 + index}
 				onclick={(e) => {
-					if (isModal && e.target === e.currentTarget) {
+					if (e.target === e.currentTarget) {
 						history.back();
 					}
 				}}
@@ -118,8 +141,8 @@
 					<EditorOverlay postId={overlay.data?.postId} />
 				{/if}
 			</div>
-		{/each}
-	</ThemeLoader>
+		{/if}
+	{/each}
 </div>
 
 {#if dev}
@@ -136,16 +159,18 @@
 <ThemeLoader componentName="ReloadPrompt" />
 
 <style>
+	/* Темы настраивают фон модалок через CSS-переменные (см. dtf2022/theme.css) */
 	.overlay-wrapper.is-modal {
 		position: fixed;
 		inset: 0;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		background: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(4px);
-		-webkit-backdrop-filter: blur(4px);
-		padding: 20px;
+		background: var(--modal-backdrop, rgba(0, 0, 0, 0.4));
+		backdrop-filter: var(--modal-backdrop-filter, blur(4px));
+		-webkit-backdrop-filter: var(--modal-backdrop-filter, blur(4px));
+		padding: var(--modal-padding, 20px);
+		overflow-y: var(--modal-overflow-y, visible);
 		box-sizing: border-box;
 	}
 
