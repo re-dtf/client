@@ -6,6 +6,7 @@
 	import AccountMenu from './AccountMenu.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import Preloader from './ui/Preloader.svelte';
+	import { sidebar } from './sidebar.svelte';
 
 	// ponytail: счётчик появится вместе с API уведомлений
 	const unreadCount = 0;
@@ -54,8 +55,15 @@
 <header class="header">
 	<div class="header-container">
 		<div class="header-left">
-			<!-- ponytail: меню пока ничего не открывает -->
-			<div class="header-menu" aria-label="Открыть меню" role="button" tabindex="0" onkeydown={clickOnKey}>
+			<div
+				class="header-menu"
+				aria-label="Открыть меню"
+				aria-expanded={sidebar.open}
+				role="button"
+				tabindex="0"
+				onclick={() => sidebar.toggle()}
+				onkeydown={clickOnKey}
+			>
 				<svg width="24" height="24" aria-hidden="true">
 					<use href="/icons.svg#v_menu"></use>
 				</svg>
@@ -197,6 +205,11 @@
 		height: 24px;
 		padding-left: 20px;
 		box-sizing: content-box;
+		cursor: pointer;
+	}
+
+	.header-menu:hover {
+		opacity: 0.6;
 	}
 
 	.header-logo {

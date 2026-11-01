@@ -3,11 +3,12 @@
 	import SidebarLeft from './SidebarLeft.svelte';
 	import SidebarRight from './SidebarRight.svelte';
 	import MobileBar from './MobileBar.svelte';
+	import { sidebar } from './sidebar.svelte';
 
 	let { children }: { children?: Snippet } = $props();
 </script>
 
-<div class="layout">
+<div class={['layout', { 'layout--no-left': sidebar.collapsed }]}>
 	<SidebarLeft />
 
 	<main class="page-content" id="content">
@@ -47,6 +48,21 @@
 
 	.layout:has(:global(.profile-section)) > :global(.sidebar-right) {
 		display: none;
+	}
+
+	/* Левую колонку свернули бургером: у DTF правая остаётся с 960px, у профиля её нет */
+	.layout.layout--no-left {
+		grid-template-columns: 1fr var(--sidebar-right-width);
+	}
+
+	@media (max-width: 959px) {
+		.layout.layout--no-left {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.layout.layout--no-left:has(:global(.profile-section)) {
+		grid-template-columns: 1fr;
 	}
 
 	@media (max-width: 859px) {
