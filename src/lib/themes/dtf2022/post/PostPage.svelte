@@ -17,6 +17,8 @@
 		const index = blocks.findIndex((b) => b.type === 'text');
 		return index >= 0 && blocks[index].cover ? index + 1 : 0;
 	});
+	// У DTF панель есть только у постов от 8 блоков (проверено по архиву и API); в коротких она дублирует нижнюю
+	let showActions = $derived(blocks.length >= 8);
 	let votes = $derived(themeSettings.votes);
 	// Стрелочная оценка — осень 2022: иконки крупнее (22px), отступы между кнопками 33px, есть «Поделиться»
 	let arrows = $derived(votes === 'rating');
@@ -35,19 +37,21 @@
 		<div class="post-content">
 			<PostBlocks title={post.title} blocks={blocks.slice(0, leadEnd)} variant="page" />
 
-			<div class={['post-actions', { 'post-actions--arrows': arrows }]}>
-				<PostButton kind="comments" title="Комментарии" href="#comments" {iconSize} value={post.commentsCount} onclick={scrollToComments} />
-				<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} />
-				{#if arrows}
-					<span class="post-actions__share"><PostButton kind="share" title="Поделиться" {iconSize} /></span>
-				{/if}
-				{#if post.viewsCount}
-					<div class="post-actions__views">
-						{formatNumber(post.viewsCount)}
-						{plural(post.viewsCount, ['просмотр', 'просмотра', 'просмотров'])}
-					</div>
-				{/if}
-			</div>
+			{#if showActions}
+				<div class={['post-actions', { 'post-actions--arrows': arrows }]}>
+					<PostButton kind="comments" title="Комментарии" href="#comments" {iconSize} value={post.commentsCount} onclick={scrollToComments} />
+					<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} />
+					{#if arrows}
+						<span class="post-actions__share"><PostButton kind="share" title="Поделиться" {iconSize} /></span>
+					{/if}
+					{#if post.viewsCount}
+						<div class="post-actions__views">
+							{formatNumber(post.viewsCount)}
+							{plural(post.viewsCount, ['просмотр', 'просмотра', 'просмотров'])}
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" />
 
@@ -114,11 +118,13 @@
 		overflow-wrap: break-word;
 	}
 
+	/* Текст под панелью — на 12px, картинка — на свои 24px (отступы схлопываются, берётся большой) */
 	.post-actions {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 32px;
+		margin-bottom: 12px;
 		color: var(--text-muted);
 		font-size: 15px;
 		line-height: 22px;
