@@ -52,7 +52,7 @@
 - Новый оверлей → [docs/guides/add-an-overlay.md](docs/guides/add-an-overlay.md)
 - Новый метод API → [docs/guides/add-an-api-method.md](docs/guides/add-an-api-method.md)
 - Новый подключаемый источник данных → [docs/architecture/data-sources](docs/architecture/data-sources/README.md)
-- Архитектурное решение, которое нельзя будет понять по коду → короткая запись в [docs/decisions](docs/decisions/README.md)
+- Архитектурное решение, которое нельзя будет понять по коду → короткая запись в [decisions](decisions/README.md)
 
 ## Подводные камни
 

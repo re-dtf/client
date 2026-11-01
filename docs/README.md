@@ -9,7 +9,7 @@
 | [architecture/](architecture/README.md) | как устроено приложение: обзор, хранилище, темы, настройки, навигация, API |
 | [architecture/data-sources/](architecture/data-sources/README.md) | подключаемые источники данных: манифесты, разрешения, авторизация |
 | [guides/](guides/README.md) | пошаговые инструкции: добавить тему, настройку, оверлей, метод API |
-| [decisions/](decisions/README.md) | почему сделано так: записи об архитектурных решениях (ADR) |
+| [../decisions/](../decisions/README.md) | почему сделано так: записи об архитектурных решениях (ADR) |
 
 Правила для ИИ-агентов — в [../AGENTS.md](../AGENTS.md), правила для людей — в [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
