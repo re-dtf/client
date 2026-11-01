@@ -22,7 +22,7 @@
 	} = $props();
 
 	let blocks = $derived(post.blocks.filter((b) => b.cover));
-	let votes = $derived(themeSettings.value.votes);
+	let votes = $derived(themeSettings.votes);
 	// Стрелочная оценка — осень 2022: иконки футера крупнее (22px)
 	let arrows = $derived(votes === 'rating');
 	let iconSize = $derived(arrows ? 22 : 20);

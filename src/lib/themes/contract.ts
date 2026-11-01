@@ -5,7 +5,7 @@ import type { Post, Profile, ProfileListItem, ProfileSorting } from '$lib/api/ty
  * Какие компоненты есть у темы и какие пропсы им передают.
  * Каждый лежит в корне папки темы: `<тема>/<Имя>.svelte`.
  *
- * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt, Settings.
+ * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
  * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, LoginModal.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
@@ -34,7 +34,6 @@ export interface ThemeComponents {
 	};
 	LoginModal: {};
 	EditorScreen: { session: any };
-	Settings: {};
 	Spinner: { inline?: boolean };
 	ReloadPrompt: {};
 }

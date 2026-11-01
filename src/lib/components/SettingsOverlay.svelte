@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
+	import SettingsScreen from './settings/SettingsScreen.svelte';
 
 	function goBack() {
 		history.back();
@@ -10,7 +10,7 @@
 	<div class="actions">
 		<button class="back-link" onclick={goBack}>← Закрыть настройки</button>
 	</div>
-	<ThemeLoader componentName="Settings" />
+	<SettingsScreen />
 </div>
 
 <style>

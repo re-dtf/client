@@ -1,11 +1,11 @@
 <script lang="ts">
-	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
+	import SettingsScreen from '$lib/components/settings/SettingsScreen.svelte';
 </script>
 
 <svelte:head>
 	<title>reDTF - Настройки</title>
 </svelte:head>
 
-<ThemeLoader componentName="Settings" />
+<SettingsScreen />
 
 

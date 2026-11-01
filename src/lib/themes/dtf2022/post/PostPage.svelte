@@ -17,7 +17,7 @@
 		const index = blocks.findIndex((b) => b.type === 'text');
 		return index >= 0 && blocks[index].cover ? index + 1 : 0;
 	});
-	let votes = $derived(themeSettings.value.votes);
+	let votes = $derived(themeSettings.votes);
 	// Стрелочная оценка — осень 2022: иконки крупнее (22px), отступы между кнопками 33px, есть «Поделиться»
 	let arrows = $derived(votes === 'rating');
 	let iconSize = $derived(arrows ? 22 : 20);

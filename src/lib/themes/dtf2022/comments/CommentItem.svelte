@@ -41,7 +41,7 @@
 	} = $props();
 
 	let comment = $derived(row.comment);
-	let votes = $derived(themeSettings.value.votes);
+	let votes = $derived(themeSettings.votes);
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
 
