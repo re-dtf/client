@@ -122,16 +122,14 @@
 	{:else}
 		<form onsubmit={handleTokenSubmit} class="login-form">
 			<div class="help-text info-box">
-				Вход по токену работает напрямую с API DTF без использования серверов-прокси (100% безопасно).<br/><br/>
-				1. Зайдите на официальный сайт dtf.ru<br/>
-				2. Откройте DevTools (F12) -> Application -> Local Storage<br/>
-				3. Скопируйте значение ключа <b>osnova-aid</b> или <b>auth-refresh-token</b> целиком.<br/>
-				<em>(Вы можете вставить как сырой токен, так и JSON из поля auth-refresh-token)</em>
+				Подходит для аккаунтов без пароля (например, вход через соцсети). Пароль не нужен, но обновление токена идёт через тот же CORS-прокси, что и вход по паролю.<br/><br/>
+				1. Войдите на dtf.ru и откройте DevTools (F12) -> Application -> Cookies -> dtf.ru<br/>
+				2. Скопируйте значение куки <b>auth-refresh-remember</b> целиком (64 символа).
 			</div>
 
 			<div class="form-group">
-				<label for="device_secret">Токен (osnova-aid / auth-refresh-token)</label>
-				<input type="text" id="device_secret" name="auth-token-manual" autocomplete="new-password" bind:value={token} required disabled={isLoading} placeholder={'Например: {"token":"...","expTimestamp":...}'} />
+				<label for="device_secret">Токен (auth-refresh-remember)</label>
+				<input type="text" id="device_secret" name="auth-token-manual" autocomplete="new-password" bind:value={token} required disabled={isLoading} placeholder="e1af4e9c…" />
 			</div>
 
 			{#if error}

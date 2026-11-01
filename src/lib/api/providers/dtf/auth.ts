@@ -1,6 +1,6 @@
 import type { Session } from '../../types';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { API_URL, fetchWithAuth, getProxyUrl, refreshSession } from './client';
+import { getProxyUrl, refreshSession } from './client';
 
 /** Вход по почте и паролю. Только через прокси: DTF не отдаёт CORS-заголовки на вход. */
 export async function login(email: string, password: string): Promise<Session> {
@@ -33,49 +33,36 @@ export async function login(email: string, password: string): Promise<Session> {
 	return (json.data || json) as Session;
 }
 
-/**
- * Вход по токену: обычно access-токен (osnova-aid) или JSON из auth-refresh-token.
- * Токен проверяется запросом к API, сессия сохраняется.
- */
-export async function loginByToken(tokenStr: string): Promise<Session> {
-	let token = tokenStr.trim();
-	let expTimestamp = Math.floor(Date.now() / 1000) + 86400 * 30; // 30 дней по умолчанию
-	let isRefreshToken = false;
-
-	// Пользователь мог вставить JSON из auth-refresh-token
+/** Refresh-токен из того, что вставил пользователь: строка из куки `auth-refresh-remember` или JSON `{"token": …}` */
+export function parseRefreshToken(input: string): string {
+	const text = input.trim();
 	try {
-		const parsed = JSON.parse(token);
-		if (parsed.token) {
-			token = parsed.token;
-			isRefreshToken = true;
-		}
-		if (parsed.expTimestamp) {
-			expTimestamp = parsed.expTimestamp;
-		}
+		return JSON.parse(text).token || text;
 	} catch {
-		// Не JSON: значит, просто строка токена
+		return text;
+	}
+}
+
+/**
+ * Вход по refresh-токену. Access-токен живёт 5 минут, поэтому по нему одному войти нельзя:
+ * по refresh-токену получаем access. Обновление идёт через прокси, как и вход по паролю.
+ */
+export async function loginByToken(input: string): Promise<Session> {
+	if (!getProxyUrl()) {
+		throw new Error('Укажите URL прокси сервера в настройках: обновление токена заблокировано CORS политикой DTF.');
 	}
 
 	authStorage.session = {
 		type: 'Bearer',
-		accessToken: isRefreshToken ? '' : token,
-		refreshToken: isRefreshToken ? token : '',
-		accessExpTimestamp: isRefreshToken ? 0 : expTimestamp,
-		refreshExpTimestamp: isRefreshToken ? expTimestamp : 0
+		accessToken: '',
+		refreshToken: parseRefreshToken(input),
+		accessExpTimestamp: 0,
+		refreshExpTimestamp: 0
 	};
 
-	if (isRefreshToken) {
-		// Обновляем сессию, чтобы получить access-токен
-		if (!(await refreshSession())) {
-			throw new Error('Не удалось получить access token по refresh токену. Возможно, он устарел.');
-		}
-	} else {
-		// Проверяем access-токен запросом профиля
-		try {
-			await fetchWithAuth(`${API_URL}/subsite/me`);
-		} catch (e: unknown) {
-			throw new Error('Токен недействителен или устарел: ' + (e instanceof Error ? e.message : 'Неизвестная ошибка'));
-		}
+	if (!(await refreshSession())) {
+		authStorage.logout();
+		throw new Error('Не удалось войти по токену. Возможно, он устарел или скопирован не полностью.');
 	}
 
 	return authStorage.session!;

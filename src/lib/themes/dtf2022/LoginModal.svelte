@@ -139,7 +139,11 @@
 					</form>
 				{:else if mode === 'token'}
 					<form onsubmit={handleTokenLogin}>
-						<Input type="text" placeholder="Токен" name="auth-token-manual" autocomplete="off" bind:value={token} required disabled={isLoading} />
+						<p class="auth__hint">
+							Для аккаунтов без пароля. Откройте dtf.ru, затем DevTools (F12) → Application → Cookies и скопируйте значение
+							<b>auth-refresh-remember</b> целиком. Обновление токена идёт через прокси, как и вход по почте.
+						</p>
+						<Input type="text" placeholder="Токен (auth-refresh-remember)" name="auth-token-manual" autocomplete="off" bind:value={token} required disabled={isLoading} />
 						<Button type="submit" variant="blue" fullWidth disabled={isLoading} label={isLoading ? 'Загрузка...' : 'Войти'} />
 					</form>
 				{:else if mode === 'proxy'}
@@ -261,6 +265,13 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr 1fr;
 		gap: 16px 12px;
+	}
+
+	.auth__hint {
+		margin: 0 0 16px;
+		font-size: 14px;
+		line-height: 1.4;
+		color: var(--text-secondary);
 	}
 
 	.auth__default-proxy {
