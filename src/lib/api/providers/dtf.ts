@@ -1,5 +1,5 @@
 import { untrack } from 'svelte';
-import type { ApiProvider, Post, Comment, PaginatedResult, Session, GetPostsOptions } from '../types';
+import type { ApiProvider, Post, Comment, PaginatedResult, Session, GetPostsOptions, User, Likes, Reactions, Profile, ProfileListItem, CursorData } from '../types';
 import { getLeonardoUrl } from '../utils';
 import { authStorage } from '$lib/storage/auth.svelte';
 
@@ -84,6 +84,40 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, authHeader:
 	return response;
 }
 
+function mapAvatarUrl(subsite: any, size = '64x64'): string | undefined {
+	return subsite?.avatar?.url
+		|| (subsite?.avatar?.data?.uuid ? getLeonardoUrl(subsite.avatar.data.uuid, { scale_crop: size }) : subsite?.avatar_url);
+}
+
+function mapUser(author: any): User {
+	return {
+		id: author?.id || 0,
+		name: author?.name || 'Аноним',
+		avatarUrl: mapAvatarUrl(author),
+		description: author?.description || undefined,
+		isPlus: !!author?.isPlus
+	};
+}
+
+function mapProfileListItem(subsite: any): ProfileListItem {
+	return { id: subsite.id, name: subsite.name || 'Аноним', avatarUrl: mapAvatarUrl(subsite, '108x108') };
+}
+
+function mapLikes(likes: any): Likes | undefined {
+	if (!likes) return undefined;
+	return {
+		count: likes.counterLikes || 0,
+		dislikes: likes.counterDislikes ?? undefined,
+		// В постах приходит число (1/-1/0), в комментариях — boolean
+		myVote: typeof likes.isLiked === 'boolean' ? Number(likes.isLiked) : (likes.isLiked || 0)
+	};
+}
+
+function mapReactions(reactions: any): Reactions | undefined {
+	if (!reactions) return undefined;
+	return { counters: reactions.counters || [], reactionId: reactions.reactionId || 0 };
+}
+
 function mapEntryToPost(entry: any): Post {
 	const commentsCount = entry.counters?.comments || 0;
 	const unreadCommentsCount = Math.max(0, commentsCount - (entry.commentsSeenCount?.count ?? commentsCount));
@@ -93,14 +127,24 @@ function mapEntryToPost(entry: any): Post {
 		sourceId: 'dtf',
 		title: entry.title || 'Без заголовка',
 		blocks: entry.blocks || [],
-		author: {
-			id: entry.author?.id || 0,
-			name: entry.author?.name || 'Аноним',
-			avatarUrl: entry.author?.avatar?.url || (entry.author?.avatar?.data?.uuid ? getLeonardoUrl(entry.author.avatar.data.uuid, { scale_crop: '64x64' }) : entry.author?.avatar_url)
-		},
+		author: mapUser(entry.author),
 		commentsCount,
 		unreadCommentsCount: unreadCommentsCount > 0 ? unreadCommentsCount : undefined,
-		createdAt: new Date((entry.date || Date.now() / 1000) * 1000).toISOString()
+		createdAt: new Date((entry.date || Date.now() / 1000) * 1000).toISOString(),
+		subsite: entry.subsite ? {
+			id: entry.subsite.id,
+			name: entry.subsite.name,
+			avatarUrl: mapAvatarUrl(entry.subsite),
+			isSubscribed: !!entry.subsite.isSubscribed
+		} : undefined,
+		url: entry.url,
+		likes: mapLikes(entry.likes),
+		reactions: mapReactions(entry.reactions),
+		favoritesCount: entry.counters?.favorites,
+		// ponytail: hitsCount/views сейчас приходят нулями, просмотры лежат в counters.total
+		viewsCount: entry.hitsCount || entry.counters?.views || entry.counters?.total || undefined,
+		isPinned: !!entry.isPinned,
+		isFavorited: !!entry.isFavorited
 	};
 }
 
@@ -248,11 +292,7 @@ export const dtfApiProvider: ApiProvider = {
 			id: item.id,
 			sourceId: 'dtf',
 			postId,
-			author: {
-				id: item.author?.id || 0,
-				name: item.author?.name || 'Аноним',
-				avatarUrl: item.author?.avatar?.url || (item.author?.avatar?.data?.uuid ? getLeonardoUrl(item.author.avatar.data.uuid, { scale_crop: '64x64' }) : item.author?.avatar_url)
-			},
+			author: mapUser(item.author),
 			content: item.text || '',
 			createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),
 			replyTo: item.replyTo,
@@ -274,10 +314,9 @@ export const dtfApiProvider: ApiProvider = {
 				}
 			})) : undefined,
 			donation: item.donation || undefined,
-			reactions: item.reactions ? {
-				counters: item.reactions.counters || [],
-				reactionId: item.reactions.reactionId || 0
-			} : undefined
+			reactions: mapReactions(item.reactions),
+			likes: mapLikes(item.likes),
+			isPinned: !!item.isPinned
 		}));
 
 		return {
@@ -285,6 +324,60 @@ export const dtfApiProvider: ApiProvider = {
 			lastId: json.result.lastId,
 			lastSortingValue: json.result.lastSortingValue
 		};
+	},
+
+	// --- Profile ---
+
+	async getProfile(id: number): Promise<Profile> {
+		const response = await fetchWithAuth(`${baseUrl}/subsite?id=${id}`);
+		const json = await response.json();
+		const subsite = json.result?.subsite;
+		if (!subsite) throw new Error('Профиль не найден');
+
+		return {
+			id: subsite.id,
+			sourceId: 'dtf',
+			name: subsite.name || 'Аноним',
+			description: subsite.description || undefined,
+			avatarUrl: mapAvatarUrl(subsite, '200x200'),
+			coverUrl: subsite.cover?.data?.uuid ? getLeonardoUrl(subsite.cover.data.uuid, { width: 1920 }) : undefined,
+			coverY: subsite.coverY ?? undefined,
+			isPlus: !!subsite.isPlus,
+			rating: subsite.rating ?? undefined,
+			subscribersCount: subsite.counters?.subscribers,
+			subscriptionsCount: subsite.counters?.subscriptions,
+			createdAt: subsite.created ? new Date(subsite.created * 1000).toISOString() : undefined,
+			url: subsite.url
+		};
+	},
+
+	async getProfilePosts(id: number, sorting: 'popular' | 'new', cursor?: CursorData): Promise<PaginatedResult<Post>> {
+		let url = `${baseUrl}/timeline?subsitesIds=${id}&sorting=${sorting === 'popular' ? 'hotness' : 'date'}`;
+		if (cursor) url += `&lastId=${cursor.lastId}&lastSortingValue=${cursor.lastSortingValue}`;
+
+		const response = await fetchWithAuth(url);
+		const json = await response.json();
+		const entries = (json.result?.items || [])
+			.map((item: any) => item.data || item)
+			.filter((entry: any) => entry.id !== undefined);
+
+		return {
+			items: entries.map(mapEntryToPost),
+			lastId: json.result?.lastId,
+			lastSortingValue: json.result?.lastSortingValue
+		};
+	},
+
+	async getProfileSubscribers(id: number): Promise<ProfileListItem[]> {
+		const response = await fetchWithAuth(`${baseUrl}/subsite/subscribers?subsiteId=${id}`);
+		const json = await response.json();
+		return (json.result?.items || []).map(mapProfileListItem);
+	},
+
+	async getProfileSubscriptions(id: number): Promise<ProfileListItem[]> {
+		const response = await fetchWithAuth(`${baseUrl}/subsite/subscriptions?subsiteId=${id}`);
+		const json = await response.json();
+		return (json.result?.items || []).map(mapProfileListItem);
 	},
 
 	async getEditorialNews(): Promise<Post[]> {

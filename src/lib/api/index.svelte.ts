@@ -184,6 +184,27 @@ export const api = {
 		return [];
 	},
 
+	// --- Profile (пока только DTF) ---
+	async getProfile(id: number) {
+		if (!dtfApiProvider.getProfile) throw new Error("getProfile is not implemented");
+		return dtfApiProvider.getProfile(id);
+	},
+
+	async getProfilePosts(id: number, sorting: 'popular' | 'new', cursor?: CursorData) {
+		if (!dtfApiProvider.getProfilePosts) throw new Error("getProfilePosts is not implemented");
+		return dtfApiProvider.getProfilePosts(id, sorting, cursor);
+	},
+
+	async getProfileSubscribers(id: number) {
+		if (!dtfApiProvider.getProfileSubscribers) throw new Error("getProfileSubscribers is not implemented");
+		return dtfApiProvider.getProfileSubscribers(id);
+	},
+
+	async getProfileSubscriptions(id: number) {
+		if (!dtfApiProvider.getProfileSubscriptions) throw new Error("getProfileSubscriptions is not implemented");
+		return dtfApiProvider.getProfileSubscriptions(id);
+	},
+
 	// --- Editor ---
 	async saveDraft(entry: import('./types').DtfEditorEntry) {
 		if (!dtfApiProvider.saveDraft) throw new Error("saveDraft is not implemented");

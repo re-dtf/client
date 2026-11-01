@@ -1,6 +1,7 @@
 export interface Block {
 	type: string;
 	cover?: boolean;
+	hidden?: boolean;
 	data: any;
 }
 
@@ -58,9 +59,66 @@ export interface Post {
 	commentsCount: number;
 	unreadCommentsCount?: number;
 	createdAt: string;
+	// Необязательные поля: заполняет DTF, кастомные источники могут не присылать
+	/** Тема или блог, где опубликован пост. У личного блога совпадает с автором. */
+	subsite?: Subsite;
+	/** Ссылка на оригинал поста */
+	url?: string;
+	likes?: Likes;
+	reactions?: Reactions;
+	favoritesCount?: number;
+	viewsCount?: number;
+	isPinned?: boolean;
+	isFavorited?: boolean;
 }
 
 export interface User {
+	id: number;
+	name: string;
+	avatarUrl?: string;
+	description?: string;
+	isPlus?: boolean;
+}
+
+export interface Subsite {
+	id: number;
+	name: string;
+	avatarUrl?: string;
+	isSubscribed?: boolean;
+}
+
+export interface Likes {
+	count: number;
+	dislikes?: number;
+	/** 1 — лайк, -1 — дизлайк, 0 — нет голоса */
+	myVote: number;
+}
+
+export interface Reactions {
+	counters: { id: number; count: number }[];
+	/** Реакция текущего пользователя, 0 — нет */
+	reactionId: number;
+}
+
+/** Профиль пользователя или подсайта */
+export interface Profile {
+	id: number;
+	sourceId: string;
+	name: string;
+	description?: string;
+	avatarUrl?: string;
+	coverUrl?: string;
+	/** Вертикальная позиция обложки, % */
+	coverY?: number;
+	isPlus?: boolean;
+	rating?: number;
+	subscribersCount?: number;
+	subscriptionsCount?: number;
+	createdAt?: string;
+	url?: string;
+}
+
+export interface ProfileListItem {
 	id: number;
 	name: string;
 	avatarUrl?: string;
@@ -96,10 +154,9 @@ export interface Comment {
 	isRemoved?: boolean;
 	media?: CommentMedia[];
 	donation?: number;
-	reactions?: {
-		counters: { id: number; count: number }[];
-		reactionId: number;
-	};
+	reactions?: Reactions;
+	likes?: Likes;
+	isPinned?: boolean;
 	isReplaced?: boolean;
 	originalSourceId?: string;
 }
@@ -149,7 +206,13 @@ export interface ApiProvider {
 	getComments(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 	getEditorialNews?(): Promise<Post[]>;
-	
+
+	// Profile
+	getProfile?(id: number): Promise<Profile>;
+	getProfilePosts?(id: number, sorting: 'popular' | 'new', cursor?: CursorData): Promise<PaginatedResult<Post>>;
+	getProfileSubscribers?(id: number): Promise<ProfileListItem[]>;
+	getProfileSubscriptions?(id: number): Promise<ProfileListItem[]>;
+
 	// Editor
 	saveDraft?(entry: DtfEditorEntry): Promise<any>;
 	uploadMedia?(file: File): Promise<UploadResult>;
