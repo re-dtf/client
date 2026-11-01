@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import { themeState } from '$lib/themes/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import type { Snippet } from 'svelte';
 
@@ -11,7 +10,6 @@
 		backButton?: Snippet;
 	}>();
 
-	let themeClass = $derived(`theme-${themeState.value}`);
 	// svelte-ignore state_referenced_locally
 	let postPromise = api.getPost(postId, sourceId);
 
@@ -22,7 +20,7 @@
 	});
 </script>
 
-<div class="post-screen {themeClass}">
+<div class="post-screen">
 	{#await postPromise}
 		<div class="spinner-wrapper">
 			<ThemeLoader componentName="Spinner" />

@@ -8,6 +8,8 @@
  *   store.value = новое;            // заменить
  *   store.patch({ поле: значение }); // заменить часть полей объекта
  */
+import { untrack } from 'svelte';
+
 export function persistedState<T>(key: string, defaults: T, version = 1) {
 	// localStorage может быть недоступен (приватный режим, запрет cookies)
 	const storage = (): Storage | null => {
@@ -62,9 +64,9 @@ export function persistedState<T>(key: string, defaults: T, version = 1) {
 			value = next;
 			write(next);
 		},
-		/** Только для объектов: заменить часть полей */
+		/** Только для объектов: заменить часть полей. Можно вызывать из $effect: текущее значение читается без подписки */
 		patch(part: Partial<T>) {
-			this.value = { ...value, ...part };
+			this.value = { ...untrack(() => value), ...part };
 		}
 	};
 }

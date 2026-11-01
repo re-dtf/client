@@ -1,13 +1,19 @@
-import { settings } from '$lib/storage/settings.svelte';
+import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
+import { getTheme, themeChain } from './registry';
 
-export type ThemeName = 'classic' | 'modern' | 'dtf2022';
+export { themes } from './registry';
 
-// Временный адаптер: активная тема хранится в общих настройках. Заменяется реестром тем.
-export const themeState = {
-	get value() {
-		return settings.value.theme as ThemeName;
+/** Выбранная пользователем тема */
+export const activeTheme = {
+	/** id темы. Если выбранной темы больше нет, берётся тема по умолчанию */
+	get id(): string {
+		return getTheme(settings.value.theme) ? settings.value.theme : DEFAULT_THEME;
 	},
-	set value(theme: ThemeName) {
-		settings.patch({ theme });
+	/** Тема и её основы: ['my-fork', 'dtf2022'] */
+	get chain(): string[] {
+		return themeChain(activeTheme.id);
+	},
+	set(id: string) {
+		settings.patch({ theme: id });
 	}
 };

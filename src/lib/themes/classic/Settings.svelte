@@ -1,18 +1,17 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import { themeState } from '$lib/themes/index.svelte';
-	import type { ThemeName } from '$lib/themes/index.svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
 	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import type { NestingMode } from '$lib/storage/settings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 
-	let currentTheme = $derived(themeState.value);
+	let currentTheme = $derived(activeTheme.id);
 	let nestingMode = $derived(settings.value.commentNesting);
 
 
 
 	function updateTheme(e: Event) {
-		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
+		activeTheme.set((e.target as HTMLSelectElement).value);
 	}
 
 	function updateNestingMode(mode: NestingMode) {

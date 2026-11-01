@@ -118,6 +118,9 @@ export interface Profile {
 	url?: string;
 }
 
+/** Сортировка постов в профиле */
+export type ProfileSorting = 'popular' | 'new';
+
 export interface ProfileListItem {
 	id: number;
 	name: string;

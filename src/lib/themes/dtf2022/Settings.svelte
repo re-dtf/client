@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { themeState } from '$lib/themes/index.svelte';
-	import type { ThemeName } from '$lib/themes/index.svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
 	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import type { NestingMode } from '$lib/storage/settings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
@@ -23,7 +22,7 @@
 	let nestingMode = $derived(settings.value.commentNesting);
 
 	function updateTheme(e: Event) {
-		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
+		activeTheme.set((e.target as HTMLSelectElement).value);
 	}
 
 	function useAuthorProxy() {
@@ -48,7 +47,7 @@
 		<h3 class="settings__heading" id="settings-design">Внешний вид</h3>
 
 		<label class="settings__label" for="settings-theme">Дизайн (тема)</label>
-		<select class="settings__select" id="settings-theme" value={themeState.value} onchange={updateTheme}>
+		<select class="settings__select" id="settings-theme" value={activeTheme.id} onchange={updateTheme}>
 			<option value="classic">Классический дизайн (Classic)</option>
 			<option value="modern">Современный дизайн (Modern)</option>
 			<option value="dtf2022">DTF 2022</option>

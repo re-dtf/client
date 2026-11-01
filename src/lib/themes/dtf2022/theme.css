@@ -10,7 +10,7 @@
     font-display: swap;
 }
 
-:root[data-theme="dtf2022"] {
+:root[data-theme~="dtf2022"] {
     /* Размеры */
     --header-height: 60px;
     --content-width: 640px;
@@ -64,12 +64,12 @@
 }
 
 @media (min-width: 640px) {
-    :root[data-theme="dtf2022"] {
+    :root[data-theme~="dtf2022"] {
         --island-offset-x: 20px;
     }
 }
 
-[data-theme="dtf2022"] body {
+[data-theme~="dtf2022"] body {
     font-family: var(--font-family);
     background-color: var(--bg-main);
     color: var(--text-primary);
@@ -79,17 +79,17 @@
     overflow-x: clip;
 }
 
-[data-theme="dtf2022"] ::selection {
+[data-theme~="dtf2022"] ::selection {
     background: var(--color-accent);
     color: #fff;
 }
 
-[data-theme="dtf2022"] .icon {
+[data-theme~="dtf2022"] .icon {
     fill: currentColor;
 }
 
 /* Сброс в app.css убирает outline у кнопок — возвращаем видимый фокус для клавиатуры */
-[data-theme="dtf2022"] :focus-visible:not(input, textarea, [contenteditable]) {
+[data-theme~="dtf2022"] :focus-visible:not(input, textarea, [contenteditable]) {
     outline: 2px solid var(--color-blue);
     outline-offset: 2px;
 }

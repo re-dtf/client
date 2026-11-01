@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CursorData, Post } from '$lib/api/types';
+	import type { CursorData, Post, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { untrack } from 'svelte';
@@ -9,8 +9,6 @@
 	 * Разметку рисует компонент темы Profile.
 	 */
 	let { profileId, onLoaded }: { profileId: number; onLoaded?: (name: string) => void } = $props();
-
-	type Sorting = 'popular' | 'new';
 
 	let profilePromise = $derived(api.getProfile(profileId));
 	let subscribersPromise = $derived(api.getProfileSubscribers(profileId).catch(() => []));

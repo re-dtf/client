@@ -1,34 +1,71 @@
-<script lang="ts">
-	import { themeState } from './index.svelte.js';
-	import ThemeLoader from './ThemeLoader.svelte';
+<script lang="ts" module>
+	import type { Component } from 'svelte';
 
-	let { componentName, ...props } = $props<{ componentName: string, [key: string]: any }>();
+	// Только компоненты в корне папки темы (./dtf2022/Post.svelte), вложенные папки — внутренности темы
+	const modules = import.meta.glob<{ default: Component<any> }>('./*/*.svelte');
 
-	const themeModules = import.meta.glob('./**/*.svelte');
+	// Уже загруженные компоненты: следующие ThemeLoader рисуют их сразу, без спиннера
+	const loaded = new Map<string, Component<any>>();
+	// Один промис на путь. Если блок {#await} пересчитается, он получит тот же промис и не перерисуется
+	const loading = new Map<string, Promise<Component<any>>>();
 
-	let loaderPromise = $derived.by(() => {
-		const key = `./${themeState.value}/${componentName}.svelte`;
-		const importFn = themeModules[key];
-		if (!importFn) {
-			return Promise.reject(new Error(`Component ${key} not found in theme modules`));
+	/** Путь компонента: у самой темы или, если там нет, у её основы */
+	function findPath(chain: string[], name: string): string | undefined {
+		return chain.map((id) => `./${id}/${name}.svelte`).find((path) => path in modules);
+	}
+
+	function load(path: string): Promise<Component<any>> {
+		let promise = loading.get(path);
+		if (!promise) {
+			promise = modules[path]().then((module) => {
+				loaded.set(path, module.default);
+				return module.default;
+			});
+			loading.set(path, promise);
 		}
-		return importFn();
-	});
+		return promise;
+	}
 </script>
 
-{#await loaderPromise}
-	{#if componentName !== 'Spinner'}
-		<ThemeLoader componentName="Spinner" />
-	{/if}
-{:then module}
-	{@const LoadedComponent = (module as any).default}
-	<LoadedComponent {...props} />
-{:catch error}
+<script lang="ts" generics="N extends keyof ThemeComponents">
+	import type { Snippet } from 'svelte';
+	import Self from './ThemeLoader.svelte';
+	import { activeTheme } from './index.svelte';
+	import type { ThemeComponents } from './contract';
+
+	/*
+	 * Рисует компонент активной темы по имени. Пропсы из контракта (contract.ts) передаются как есть.
+	 * Если у темы такого компонента нет, показывается содержимое тега (children), а без него — ошибка.
+	 */
+	let { componentName, ...props }: { componentName: N; children?: Snippet } & ThemeComponents[N] = $props();
+
+	let path = $derived(findPath(activeTheme.chain, componentName));
+	let cached = $derived(path ? loaded.get(path) : undefined);
+</script>
+
+{#snippet fallback(message: string)}
 	{#if props.children}
 		{@render props.children()}
 	{:else}
 		<div style="color: red; border: 1px solid red; padding: 10px;">
-			ThemeLoader Error ({themeState.value}/{componentName}): {error.message}
+			ThemeLoader ({activeTheme.id}/{componentName}): {message}
 		</div>
 	{/if}
-{/await}
+{/snippet}
+
+{#if !path}
+	{@render fallback('в теме нет такого компонента')}
+{:else if cached}
+	{@const Cached = cached}
+	<Cached {...props} />
+{:else}
+	{#await load(path)}
+		{#if componentName !== 'Spinner'}
+			<Self componentName="Spinner" />
+		{/if}
+	{:then Loaded}
+		<Loaded {...props} />
+	{:catch error}
+		{@render fallback(error.message)}
+	{/await}
+{/if}

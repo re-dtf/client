@@ -1,13 +1,11 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
-	import type { Post, Profile, ProfileListItem } from '$lib/api/types';
+	import type { Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { getProfilePath, openProfile } from '$lib/overlays';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
 	import Preloader from './ui/Preloader.svelte';
-
-	type Sorting = 'popular' | 'new';
 
 	let {
 		profile,

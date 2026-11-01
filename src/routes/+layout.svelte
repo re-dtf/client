@@ -11,12 +11,8 @@
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	
 	import '../app.css';
-	// Статические импорты CSS тем оставлены намеренно: 
-	// при ленивой загрузке через JS происходило бы FOUC (Flash of Unstyled Content)
-	import '$lib/themes/classic/theme.css';
-	import '$lib/themes/modern/theme.css';
-	import '$lib/themes/dtf2022/theme.css';
-	import { themeState } from '$lib/themes/index.svelte.js';
+	import { activeTheme } from '$lib/themes/index.svelte';
+	import { loadThemeStyles } from '$lib/themes/registry';
 	
 	let { children } = $props();
 	let isFirstVisit = $state(false);
@@ -51,8 +47,15 @@
 		}
 	});
 
+	// Стили темы подключаются лениво. data-theme ставится после загрузки стилей, чтобы не было
+	// вспышки без оформления. Значение — цепочка тем ("my-fork dtf2022"), стили ищут тему через [data-theme~="..."]
 	$effect(() => {
-		document.documentElement.setAttribute('data-theme', themeState.value);
+		const chain = activeTheme.chain;
+		let outdated = false;
+		loadThemeStyles(chain).then(() => {
+			if (!outdated) document.documentElement.setAttribute('data-theme', chain.join(' '));
+		});
+		return () => (outdated = true);
 	});
 	
 	onMount(() => {
