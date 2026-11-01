@@ -71,8 +71,6 @@
 		gap: 12px;
 		width: 100%;
 		max-width: 640px;
-		/* верхний отступ ленты (padding страницы у DTF; ниже него там панель сортировки в 36px — её у нас нет) */
-		margin-top: 16px;
 		padding: 20px;
 		border-radius: 8px;
 		background: var(--bg-card);

@@ -1,5 +1,6 @@
 import type { Snippet } from 'svelte';
 import type { Post, Profile, ProfileListItem, ProfileSorting } from '$lib/api/types';
+import type { Period } from '$lib/feed.svelte';
 
 /**
  * Какие компоненты есть у темы и какие пропсы им передают.
@@ -17,6 +18,9 @@ export interface ThemeComponents {
 	FeedTabs: {
 		currentFeed: 'popular' | 'new' | 'my';
 		switchFeed: (feed: 'popular' | 'new' | 'my') => void;
+		/** Период «Популярного» (`now` — обычное) и переход на другой */
+		period: Period;
+		switchPeriod: (period: Period) => void;
 	};
 	Post: { post: Post; preview?: boolean };
 	Comments: { postId: number; sourceId?: string; commentsCount?: number };

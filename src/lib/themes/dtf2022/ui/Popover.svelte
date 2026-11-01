@@ -3,8 +3,8 @@
 	import { clickOnKey } from '../a11y';
 
 	/**
-	 * Выпадающий список под кнопкой-триггером (children), выровненный по её правому краю.
-	 * Триггер сам переключает `open`.
+	 * Выпадающий список под кнопкой-триггером (children), по умолчанию выровненный по её правому краю.
+	 * Триггер сам переключает `open`. Отступ вниз и вбок можно задать снаружи: --popover-gap и --popover-left.
 	 */
 	let {
 		open = $bindable(false),
@@ -12,6 +12,7 @@
 		selected,
 		onselect,
 		width = 143,
+		align = 'right',
 		label,
 		children
 	}: {
@@ -20,6 +21,7 @@
 		selected?: T;
 		onselect: (value: T) => void;
 		width?: number;
+		align?: 'left' | 'right';
 		label?: string;
 		children: Snippet;
 	} = $props();
@@ -42,7 +44,7 @@
 	{@render children()}
 
 	{#if open}
-		<div class="popover" style:width="{width}px" role="listbox" aria-label={label}>
+		<div class={['popover', { 'popover--left': align === 'left' }]} style:width="{width}px" role="listbox" aria-label={label}>
 			<div class="popover__content">
 				{#each items as item (item.value)}
 					<div
@@ -71,7 +73,7 @@
 		--item-offset-right: 18px;
 
 		position: absolute;
-		top: calc(100% + 8px);
+		top: calc(100% + var(--popover-gap, 8px));
 		right: 0;
 		z-index: 17;
 		max-width: 400px;
@@ -84,6 +86,11 @@
 		line-height: 1.5em;
 		text-align: left;
 		user-select: none;
+	}
+
+	.popover--left {
+		right: auto;
+		left: var(--popover-left, 0);
 	}
 
 	.popover__content {

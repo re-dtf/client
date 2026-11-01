@@ -69,7 +69,9 @@ export const dtfApiProvider = {
 	async getPosts(options?: GetPostsOptions): Promise<PaginatedResult<Post>> {
 		const pageName = options?.pageName || 'popular';
 		const sorting = options?.sorting || 'hotness';
-		const response = await fetchWithAuth(`${API_URL}/feed?pageName=${pageName}&sorting=${sorting}${cursorQuery(options?.cursor)}`);
+		// Новости в популярном показываются отдельным блоком, в самой ленте их не нужно
+		const withoutNews = pageName === 'popular' ? '&isWithoutNews=true' : '';
+		const response = await fetchWithAuth(`${API_URL}/feed?pageName=${pageName}&sorting=${sorting}${withoutNews}${cursorQuery(options?.cursor)}`);
 		const { result } = await response.json();
 
 		return {

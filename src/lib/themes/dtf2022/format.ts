@@ -44,6 +44,13 @@ export function formatTime(iso: string, withTime = false, now = Date.now()): str
 	return withTime ? `${day} в ${pad(date.getHours())}:${pad(date.getMinutes())}` : day;
 }
 
+const MONTHS_GENITIVE = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+/** «1 марта» */
+export function formatDay(date: Date): string {
+	return `${date.getDate()} ${MONTHS_GENITIVE[date.getMonth()]}`;
+}
+
 /** «4 мар 2019» */
 export function formatDate(iso: string): string {
 	const date = new Date(iso);

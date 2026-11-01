@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatTime, plural, formatRating } from './format';
+import { formatDay, formatTime, plural, formatRating } from './format';
 import { parseCommentText } from './comments/commentText';
 import { flattenComments } from './comments/flatten';
 import { isWideMedia, mediaMaxWidth } from './media';
@@ -14,6 +14,10 @@ describe('format', () => {
 		expect(formatTime('2026-02-26T21:15:00', false, now)).toBe('26 фев');
 		expect(formatTime('2026-02-26T21:15:00', true, now)).toBe('26 фев в 21:15');
 		expect(formatTime('2022-12-30T10:00:00', false, now)).toBe('30.12.2022');
+	});
+
+	it('день в панели периодов', () => {
+		expect(formatDay(new Date('2023-03-01T12:00:00'))).toBe('1 марта');
 	});
 
 	it('склонения и рейтинг', () => {

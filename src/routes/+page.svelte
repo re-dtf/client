@@ -2,7 +2,7 @@
 	import { api } from '$lib/api/index.svelte';
 	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import { feed, feedFromUrl, openFeedTab, type FeedName } from '$lib/feed.svelte';
+	import { feed, feedFromUrl, openFeedTab, periodFromUrl, type FeedName, type Period } from '$lib/feed.svelte';
 	import { untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 
@@ -13,8 +13,14 @@
 
 	// Лента лежит в адресе (/?feed=new), так что на неё можно дать ссылку
 	let currentFeed = $derived(feedFromUrl());
+	let currentPeriod = $derived(periodFromUrl());
 
 	const FEED_SORTING: Record<FeedName, string> = { new: 'all', popular: 'hotness', my: 'new' };
+
+	// За выбранный период «Популярное» сортируется по самому периоду (day, week, …)
+	function sortingOf(feedName: FeedName, period: Period): string {
+		return feedName === 'popular' && period !== 'now' ? period : FEED_SORTING[feedName];
+	}
 
 	// Номер запроса: ответ прежней ленты не должен перетереть новую
 	let requestId = 0;
@@ -24,7 +30,7 @@
 		try {
 			error = null;
 			if (!isRefresh) loading = true;
-			const result = await api.getPosts({ pageName: currentFeed, sorting: FEED_SORTING[currentFeed] });
+			const result = await api.getPosts({ pageName: currentFeed, sorting: sortingOf(currentFeed, currentPeriod) });
 			if (id === requestId) feedResult = result;
 		} catch (e: any) {
 			if (id === requestId) error = e.message;
@@ -41,7 +47,7 @@
 			loadingMore = true;
 			const next = await api.getPosts({
 				pageName: currentFeed,
-				sorting: FEED_SORTING[currentFeed],
+				sorting: sortingOf(currentFeed, currentPeriod),
 				cursors: feedResult.cursors
 			});
 			if (id === requestId) {
@@ -56,7 +62,7 @@
 
 	// Открыли другую ленту (или зашли на главную): загружаем её с начала
 	$effect(() => {
-		feed.setCurrent(currentFeed);
+		feed.setCurrent(currentFeed, currentPeriod);
 		untrack(() => {
 			feedResult = null;
 			loadInitial();
@@ -95,11 +101,18 @@
 </svelte:head>
 
 
-{#if currentFeed === 'popular'}
+<ThemeLoader
+	componentName="FeedTabs"
+	{currentFeed}
+	switchFeed={openFeedTab}
+	period={currentPeriod}
+	switchPeriod={(period: Period) => openFeedTab('popular', period)}
+/>
+
+<!-- Новости есть только у обычного популярного, как у DTF -->
+{#if currentFeed === 'popular' && currentPeriod === 'now'}
 	<ThemeLoader componentName="EditorialNews" />
 {/if}
-
-<ThemeLoader componentName="FeedTabs" {currentFeed} switchFeed={openFeedTab} />
 
 <div class="feed">
 	{#if error}
