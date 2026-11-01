@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { resolve } from '$app/paths';
-	import { pushState } from '$app/navigation';
-	import { page } from '$app/state';
+	import { openFeed, openOverlay } from '$lib/navigation';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
@@ -12,41 +11,17 @@
 
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/settings'), { 
-			overlays: [...overlays, { id: `settings-${Date.now()}`, type: 'settings', presentation: 'modal' }] 
-		});
+		openOverlay({ type: 'settings' });
 	}
 
 	function openLogin(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/login'), { 
-			overlays: [...overlays, { id: `login-${Date.now()}`, type: 'login', presentation: 'modal' }] 
-		});
+		openOverlay({ type: 'login' });
 	}
 
 	function openEditor(e: MouseEvent) {
 		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve('/write'), { 
-			overlays: [...overlays, { id: `editor-${Date.now()}`, type: 'editor', presentation: 'modal' }] 
-		});
-	}
-
-	function openFeed(e: MouseEvent) {
-		if (page.state.overlays && page.state.overlays.length > 0) {
-			e.preventDefault();
-			pushState(resolve('/'), { overlays: [] });
-			return;
-		}
-
-		if (page.url.pathname === resolve('/')) {
-			e.preventDefault();
-			window.scrollTo({ top: 0, behavior: 'smooth' });
-			window.dispatchEvent(new CustomEvent('refreshFeed'));
-			return;
-		}
+		openOverlay({ type: 'editor' });
 	}
 </script>
 

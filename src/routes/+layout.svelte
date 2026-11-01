@@ -7,7 +7,8 @@
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
-	import { dev } from '$app/environment';
+	import { dev } from '$app/env';
+	import { closeOverlay } from '$lib/navigation';
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	
 	import '../app.css';
@@ -88,6 +89,20 @@
 
 
 
+{#snippet overlayContent(overlay: App.OverlayState)}
+	{#if overlay.type === 'post'}
+		<PostOverlay {...overlay.data} />
+	{:else if overlay.type === 'profile'}
+		<ProfileContent {...overlay.data} />
+	{:else if overlay.type === 'settings'}
+		<SettingsOverlay />
+	{:else if overlay.type === 'login'}
+		<LoginOverlay />
+	{:else if overlay.type === 'editor'}
+		<EditorOverlay {...overlay.data} />
+	{/if}
+{/snippet}
+
 <div class="app">
 	<ThemeLoader componentName="Header" />
 
@@ -99,23 +114,8 @@
 
 		{#each overlays as overlay, index (overlay.id)}
 			{#if overlay.presentation !== 'modal'}
-				{@const isHidden = index < topmostPageOverlayIndex}
-
-				<div
-					class="overlay-wrapper"
-					style:display={isHidden ? 'none' : 'contents'}
-				>
-					{#if overlay.type === 'post'}
-						<PostOverlay postId={overlay.data.postId} sourceId={overlay.data.sourceId} />
-					{:else if overlay.type === 'profile'}
-						<ProfileContent profileId={overlay.data.profileId} />
-					{:else if overlay.type === 'settings'}
-						<SettingsOverlay />
-					{:else if overlay.type === 'login'}
-						<LoginOverlay />
-					{:else if overlay.type === 'editor'}
-						<EditorOverlay postId={overlay.data?.postId} />
-					{/if}
+				<div class="overlay-wrapper" style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'}>
+					{@render overlayContent(overlay)}
 				</div>
 			{/if}
 		{/each}
@@ -125,24 +125,14 @@
 		{#if overlay.presentation === 'modal'}
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div 
+			<div
 				class="overlay-wrapper is-modal"
 				style:z-index={100 + index}
 				onclick={(e) => {
-					if (e.target === e.currentTarget) {
-						history.back();
-					}
+					if (e.target === e.currentTarget) closeOverlay();
 				}}
 			>
-				{#if overlay.type === 'post'}
-					<PostOverlay postId={overlay.data.postId} sourceId={overlay.data.sourceId} />
-				{:else if overlay.type === 'settings'}
-					<SettingsOverlay />
-				{:else if overlay.type === 'login'}
-					<LoginOverlay />
-				{:else if overlay.type === 'editor'}
-					<EditorOverlay postId={overlay.data?.postId} />
-				{/if}
+				{@render overlayContent(overlay)}
 			</div>
 		{/if}
 	{/each}

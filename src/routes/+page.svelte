@@ -2,72 +2,75 @@
 	import { api } from '$lib/api/index.svelte';
 	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import { onMount } from 'svelte';
+	import { feed, feedFromUrl, openFeedTab, type FeedName } from '$lib/feed.svelte';
+	import { untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 
 	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let error = $state<string | null>(null);
-	let currentFeed = $state<'popular' | 'new' | 'my'>('popular');
 
-	const FEED_SORTING: Record<string, string> = { new: 'all', popular: 'hotness', my: 'new' };
+	// Лента лежит в адресе (/?feed=new), так что на неё можно дать ссылку
+	let currentFeed = $derived(feedFromUrl());
+
+	const FEED_SORTING: Record<FeedName, string> = { new: 'all', popular: 'hotness', my: 'new' };
+
+	// Номер запроса: ответ прежней ленты не должен перетереть новую
+	let requestId = 0;
 
 	async function loadInitial(isRefresh = false) {
+		const id = ++requestId;
 		try {
 			error = null;
 			if (!isRefresh) loading = true;
-			feedResult = await api.getPosts({ 
-				pageName: currentFeed, 
-				sorting: FEED_SORTING[currentFeed] 
-			});
+			const result = await api.getPosts({ pageName: currentFeed, sorting: FEED_SORTING[currentFeed] });
+			if (id === requestId) feedResult = result;
 		} catch (e: any) {
-			error = e.message;
+			if (id === requestId) error = e.message;
 			console.error('Failed to load posts:', e);
 		} finally {
-			loading = false;
+			if (id === requestId) loading = false;
 		}
 	}
 
-	function handleRefresh() {
-		loadInitial(true);
-	}
-
-	$effect(() => {
-		const handleSwitchFeed = (e: Event) => {
-			const customEvent = e as CustomEvent<'popular' | 'new' | 'my'>;
-			if (customEvent.detail) {
-				switchFeed(customEvent.detail);
-			}
-		};
-
-		window.addEventListener('refreshFeed', handleRefresh);
-		window.addEventListener('switchFeed', handleSwitchFeed);
-		return () => {
-			window.removeEventListener('refreshFeed', handleRefresh);
-			window.removeEventListener('switchFeed', handleSwitchFeed);
-		};
-	});
-
 	async function loadMore() {
 		if (loading || loadingMore || !feedResult?.cursors || Object.keys(feedResult.cursors).length === 0) return;
+		const id = requestId;
 		try {
 			loadingMore = true;
-			const next = await api.getPosts({ 
+			const next = await api.getPosts({
 				pageName: currentFeed,
 				sorting: FEED_SORTING[currentFeed],
 				cursors: feedResult.cursors
 			});
-			feedResult = {
-				items: [...feedResult.items, ...next.items],
-				cursors: next.cursors
-			};
+			if (id === requestId) {
+				feedResult = { items: [...feedResult.items, ...next.items], cursors: next.cursors };
+			}
 		} catch (e: any) {
 			console.error('Failed to load more posts:', e);
 		} finally {
 			loadingMore = false;
 		}
 	}
+
+	// Открыли другую ленту (или зашли на главную): загружаем её с начала
+	$effect(() => {
+		feed.setCurrent(currentFeed);
+		untrack(() => {
+			feedResult = null;
+			loadInitial();
+		});
+	});
+
+	// Клик по логотипу на самой ленте: обновить без сброса списка
+	let handledRefresh = feed.refreshCount;
+	$effect(() => {
+		if (feed.refreshCount !== handledRefresh) {
+			handledRefresh = feed.refreshCount;
+			untrack(() => loadInitial(true));
+		}
+	});
 
 	let loaderNode = $state<HTMLElement>();
 
@@ -85,18 +88,6 @@
 			observer.disconnect();
 		};
 	});
-
-	function switchFeed(feed: 'popular' | 'new' | 'my') {
-		if (currentFeed === feed) return;
-		currentFeed = feed;
-		feedResult = null;
-		loadInitial();
-	}
-
-	// Load posts purely on the client
-	onMount(() => {
-		loadInitial();
-	});
 </script>
 
 <svelte:head>
@@ -106,7 +97,7 @@
 
 <ThemeLoader componentName="EditorialNews" />
 
-<ThemeLoader componentName="FeedTabs" {currentFeed} {switchFeed} />
+<ThemeLoader componentName="FeedTabs" {currentFeed} switchFeed={openFeedTab} />
 
 <div class="feed">
 	{#if error}

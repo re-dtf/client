@@ -1,7 +1,7 @@
 import type { Comment } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { pushOverlay } from '$lib/overlays';
+import { openOverlay } from '$lib/navigation';
 
 /**
  * Поставить или снять реакцию на комментарий. Счётчики меняются сразу,
@@ -10,7 +10,7 @@ import { pushOverlay } from '$lib/overlays';
  */
 export async function toggleCommentReaction(comment: Comment, reactionId: number) {
 	if (comment.sourceId === 'dtf' && !authStorage.isAuthenticated) {
-		pushOverlay('login', '/login');
+		openOverlay({ type: 'login' });
 		return;
 	}
 

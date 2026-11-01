@@ -2,6 +2,7 @@
 	import { api } from '$lib/api/index.svelte';
 	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 
 	let { backButton } = $props<{ backButton?: Snippet }>();
@@ -27,7 +28,7 @@
 		try {
 			if (!api.login) throw new Error('Вход по паролю в данный момент недоступен');
 			await api.login(email, password);
-			goto('/');
+			goto(resolve('/'));
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Произошла ошибка при авторизации';
 			if (error.includes('Failed to fetch') || error.includes('CORS')) {
@@ -47,7 +48,7 @@
 		try {
 			if (!api.loginByToken) throw new Error('Вход по токену в данный момент недоступен');
 			await api.loginByToken(token.trim());
-			goto('/');
+			goto(resolve('/'));
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Произошла ошибка проверки токена';
 		} finally {

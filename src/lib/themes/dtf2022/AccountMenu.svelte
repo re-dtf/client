@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { authStorage } from '$lib/storage/auth.svelte';
-	import { getProfilePath, openProfile, pushOverlay } from '$lib/overlays';
+	import { getProfilePath, openOverlay, openProfile } from '$lib/navigation';
 	import type { CurrentUser } from './currentUser.svelte';
 
 	let { user, onclose }: { user: CurrentUser | null; onclose: () => void } = $props();
@@ -11,7 +11,7 @@
 	const ITEMS: { icon: string; label: string; url?: string; action?: () => void }[] = [
 		{ icon: 'v_pen', label: 'Черновики', url: 'https://dtf.ru/u/me/drafts' },
 		{ icon: 'v_rouble', label: 'Донаты', url: 'https://dtf.ru/u/me/donates' },
-		{ icon: 'v_gear', label: 'Настройки', action: () => pushOverlay('settings', '/settings') },
+		{ icon: 'v_gear', label: 'Настройки', action: () => openOverlay({ type: 'settings' }) },
 		{ icon: 'v_logout', label: 'Выйти', action: () => authStorage.logout() }
 	];
 

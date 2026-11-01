@@ -1,8 +1,9 @@
 <script lang="ts">
 	import SettingsScreen from './settings/SettingsScreen.svelte';
+	import { closeOverlay } from '$lib/navigation';
 
 	function goBack() {
-		history.back();
+		closeOverlay();
 	}
 </script>
 

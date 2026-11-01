@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
-	import { getPostPath, openPost } from '$lib/overlays';
+	import { getPostPath, openPost } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import { formatNumber } from './format';
 

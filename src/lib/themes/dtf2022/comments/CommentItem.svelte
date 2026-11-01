@@ -4,7 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openProfile } from '$lib/overlays';
+	import { getPostPath, getProfilePath, openProfile } from '$lib/navigation';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatFullDate, formatTime, plural } from '../format';
 	import PostButton from '../post/PostButton.svelte';

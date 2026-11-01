@@ -1,10 +1,11 @@
 <script lang="ts">
 	import PostContent from '$lib/components/PostContent.svelte';
+	import { closeOverlay } from '$lib/navigation';
 
 	let { postId, sourceId = 'dtf' } = $props<{ postId: number, sourceId?: string }>();
 
 	function goBack() {
-		history.back();
+		closeOverlay();
 	}
 </script>
 

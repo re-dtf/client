@@ -1,12 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { pushState } from '$app/navigation';
-	import { page } from '$app/state';
-	import { pushOverlay } from '$lib/overlays';
+	import { feed, openFeedTab, type FeedName } from '$lib/feed.svelte';
+	import { openOverlay } from '$lib/navigation';
 
-	type Feed = 'popular' | 'new' | 'my';
-
-	const feeds: { id: Feed; label: string; icon: string }[] = [
+	const feeds: { id: FeedName; label: string; icon: string }[] = [
 		{ id: 'popular', label: 'Популярное', icon: 'ui_sidebar_feed' },
 		{ id: 'new', label: 'Свежее', icon: 'ui_sidebar_recent_big' },
 		{ id: 'my', label: 'Подписки', icon: 'ui_sidebar_subscriptions' }
@@ -21,43 +18,25 @@
 		{ label: 'Жизнь', image: '968a91e7-3a3c-5c79-a0cb-2b3df974a697' }
 	];
 
-	let activeFeed = $state<Feed>('popular');
-
-	function selectFeed(feed: Feed) {
-		// Лента лежит под оверлеями — сначала возвращаемся к ней
-		if (page.state.overlays?.length) {
-			pushState(resolve('/'), { overlays: [] });
-		}
-		if (activeFeed === feed) return;
-		activeFeed = feed;
-		window.dispatchEvent(new CustomEvent('switchFeed', { detail: feed }));
-	}
-
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
-		pushOverlay('settings', '/settings');
-	}
-
-	function syncFeed(e: CustomEvent<Feed>) {
-		activeFeed = e.detail;
+		openOverlay({ type: 'settings' });
 	}
 </script>
-
-<svelte:window onswitchFeed={syncFeed} />
 
 <aside class="sidebar-left">
 	<div class="sidebar-top">
 		<nav class="feed-switcher" aria-label="Ленты">
-			{#each feeds as feed (feed.id)}
+			{#each feeds as item (item.id)}
 				<button
-					class={['switch-button', { active: activeFeed === feed.id }]}
-					aria-current={activeFeed === feed.id ? 'page' : undefined}
-					onclick={() => selectFeed(feed.id)}
+					class={['switch-button', { active: feed.current === item.id }]}
+					aria-current={feed.current === item.id ? 'page' : undefined}
+					onclick={() => openFeedTab(item.id)}
 				>
 					<svg height="24" width="24" class="icon" aria-hidden="true">
-						<use href="/icons.svg#{feed.icon}"></use>
+						<use href="/icons.svg#{item.icon}"></use>
 					</svg>
-					<span class="label">{feed.label}</span>
+					<span class="label">{item.label}</span>
 				</button>
 			{/each}
 		</nav>

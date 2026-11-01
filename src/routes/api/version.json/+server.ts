@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { version } from '$app/environment';
+import { version } from '$app/env';
 
 export const prerender = true;
 

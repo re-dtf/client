@@ -1,5 +1,5 @@
 import type { Action } from 'svelte/action';
-import { browser } from '$app/environment';
+import { browser } from '$app/env';
 
 export type LottieLoader = () => Promise<{ default: object }>;
 

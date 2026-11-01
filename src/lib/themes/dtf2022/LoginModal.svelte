@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
-	import { pushOverlay } from '$lib/overlays';
+	import { closeOverlay, openOverlay } from '$lib/navigation';
 	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import { clickOnKey } from './a11y';
 	import Button from './ui/Button.svelte';
@@ -17,7 +17,7 @@
 
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
-		pushOverlay('settings', '/settings');
+		openOverlay({ type: 'settings' });
 	}
 
 	let isLoading = $state(false);
@@ -31,7 +31,7 @@
 	}
 
 	function closeModal() {
-		history.back();
+		closeOverlay();
 	}
 
 	async function handleEmailLogin(e: SubmitEvent) {

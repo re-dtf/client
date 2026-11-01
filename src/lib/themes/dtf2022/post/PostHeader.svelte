@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
-	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/overlays';
+	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
 	import { formatFullDate, formatTime } from '../format';
 
 	let {

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { openFeed, pushOverlay } from '$lib/overlays';
+	import { openFeed, openOverlay } from '$lib/navigation';
 	import { authStorage } from '$lib/storage/auth.svelte';
 
 	function openAccount() {
 		if (authStorage.isAuthenticated) {
-			pushOverlay('settings', '/settings');
+			openOverlay({ type: 'settings' });
 		} else {
-			pushOverlay('login', '/login');
+			openOverlay({ type: 'login' });
 		}
 	}
 </script>

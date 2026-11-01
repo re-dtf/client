@@ -1,7 +1,7 @@
 <script lang="ts">
   import { registerSW } from 'virtual:pwa-register';
   import { onMount } from 'svelte';
-  import { version as currentVersion } from '$app/environment';
+  import { version as currentVersion } from '$app/env';
 
   let needRefresh = $state(false);
   let newVersion = $state<string | null>(null);

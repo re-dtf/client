@@ -5,27 +5,29 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		interface OverlayState {
+
+		/**
+		 * Оверлей поверх ленты. Что открыть и с какими данными. Новый тип оверлея описывается здесь,
+		 * в src/lib/navigation.ts (адрес и способ показа) и в src/routes/+layout.svelte (компонент).
+		 */
+		type OverlayData =
+			| { type: 'post'; data: { postId: number; sourceId: string } }
+			| { type: 'profile'; data: { profileId: number } }
+			| { type: 'settings' }
+			| { type: 'login' }
+			| { type: 'editor'; data?: { postId?: number | null } };
+
+		/** Оверлей в стеке: то, что открыли, плюс служебные поля */
+		type OverlayState = OverlayData & {
 			id: string;
-			type: 'post' | 'settings' | 'login' | 'editor' | 'profile';
-			presentation?: 'page' | 'modal';
-			data?: any;
-		}
+			/** page — вместо страницы, лента под ним скрыта; modal — окно поверх */
+			presentation: 'page' | 'modal';
+		};
 
 		interface PageState {
 			overlays?: OverlayState[];
 		}
 		// interface Platform {}
-	}
-}
-
-declare module 'svelte/elements' {
-	export interface WindowAttributes {
-		onrefreshFeed?: (event: CustomEvent | Event) => void;
-	}
-
-	export interface SvelteWindowAttributes {
-		onswitchFeed?: (event: CustomEvent<'popular' | 'new' | 'my'>) => void;
 	}
 }
 

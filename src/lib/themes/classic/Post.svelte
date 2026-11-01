@@ -3,29 +3,20 @@
 	import BlockRenderer from '$lib/components/BlockRenderer.svelte';
 	import SourceBadge from '$lib/components/SourceBadge.svelte';
 	import { resolve } from '$app/paths';
-	import { pushState } from '$app/navigation';
-	import { page } from '$app/state';
+	import { openPost } from '$lib/navigation';
 
 	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
 
 	let displayBlocks = $derived(preview ? post.blocks.filter((b: any) => b.cover) : post.blocks);
 
 	let postUrl = $derived(post.sourceId !== 'dtf' ? `/post/${post.id}?source=${post.sourceId}` : `/post/${post.id}`);
-
-	function openPost(e: MouseEvent) {
-		e.preventDefault();
-		const overlays = page.state.overlays || [];
-		pushState(resolve(postUrl), { 
-			overlays: [...overlays, { id: `post-${post.id}`, type: 'post', data: { postId: post.id, sourceId: post.sourceId } }] 
-		});
-	}
 </script>
 
 <article class="classic-post">
 	<header>
 		<h2>
 			{#if preview}
-				<a href={resolve(postUrl)} onclick={openPost}>{post.title}</a>
+				<a href={resolve(postUrl)} onclick={(e) => openPost(e, post)}>{post.title}</a>
 			{:else}
 				{post.title}
 			{/if}
@@ -40,7 +31,7 @@
 		<BlockRenderer blocks={displayBlocks} />
 		{#if preview && post.blocks.length > displayBlocks.length}
 			<div class="read-more">
-				<a href={resolve(postUrl)} onclick={openPost}>Читать далее...</a>
+				<a href={resolve(postUrl)} onclick={(e) => openPost(e, post)}>Читать далее...</a>
 			</div>
 		{/if}
 	</div>

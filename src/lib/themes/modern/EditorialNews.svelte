@@ -4,9 +4,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import Spinner from './Spinner.svelte';
-	import { pushState } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { resolve } from '$app/paths';
+	import { openPost } from '$lib/navigation';
 
 	let news = $state<Post[] | null>(null);
 	let loading = $state(true);
@@ -21,14 +19,6 @@
 			loading = false;
 		}
 	});
-
-	function openPost(event: Event, post: Post) {
-		event.preventDefault();
-		const overlays = $page.state.overlays || [];
-		pushState(resolve(`/post/${post.id}`), { 
-			overlays: [...overlays, { id: `post-${post.sourceId}-${post.id}`, type: 'post', data: { postId: post.id, sourceId: post.sourceId } }] 
-		});
-	}
 </script>
 
 <div class="editorial-news-container">

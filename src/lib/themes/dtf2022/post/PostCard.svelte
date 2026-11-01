@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
-	import { getPostPath, openPost } from '$lib/overlays';
+	import { getPostPath, openPost } from '$lib/navigation';
 	import { themeSettings } from '../themeSettings.svelte';
 	import PostHeader from './PostHeader.svelte';
 	import PostBlocks from './PostBlocks.svelte';

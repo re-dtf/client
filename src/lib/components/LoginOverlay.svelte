@@ -1,13 +1,14 @@
 <script lang="ts">
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import LoginContent from '$lib/components/LoginContent.svelte';
+	import { closeOverlay } from '$lib/navigation';
 </script>
 
 <ThemeLoader componentName="LoginModal">
 	<!-- Фолбэк для тем без своего окна входа -->
 	<LoginContent>
 		{#snippet backButton()}
-			<button class="back-link" onclick={() => history.back()}>← Назад</button>
+			<button class="back-link" onclick={closeOverlay}>← Назад</button>
 		{/snippet}
 	</LoginContent>
 </ThemeLoader>

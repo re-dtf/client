@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { resolve } from '$app/paths';
-	import { pushState } from '$app/navigation';
-	import { page } from '$app/state';
-	import { pushOverlay } from '$lib/overlays';
+	import { openFeed, openOverlay } from '$lib/navigation';
 
 	function handleLogout(e: Event) {
 		e.preventDefault();
@@ -13,36 +11,17 @@
 
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
-		pushOverlay('settings', '/settings');
+		openOverlay({ type: 'settings' });
 	}
 
 	function openLogin(e: MouseEvent) {
 		e.preventDefault();
-		pushOverlay('login', '/login');
+		openOverlay({ type: 'login' });
 	}
 
 	function openEditor(e: MouseEvent) {
 		e.preventDefault();
-		pushOverlay('editor', '/write');
-	}
-
-	function openFeed(e: MouseEvent) {
-		if (page.state.overlays && page.state.overlays.length > 0) {
-			// Находимся в оверлее (лента жива на фоне) - закрываем все оверлеи
-			e.preventDefault();
-			pushState(resolve('/'), { overlays: [] });
-			return;
-		}
-
-		if (page.url.pathname === resolve('/')) {
-			// Уже на ленте - просто скроллим наверх
-			e.preventDefault();
-			window.scrollTo({ top: 0, behavior: 'smooth' });
-			window.dispatchEvent(new CustomEvent('refreshFeed'));
-			return;
-		}
-		
-		// Иначе (например, прямая ссылка на /post/1) - происходит обычный переход
+		openOverlay({ type: 'editor' });
 	}
 </script>
 

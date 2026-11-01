@@ -2,7 +2,7 @@
 	import type { User } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
-	import { getProfilePath, openProfile } from '$lib/overlays';
+	import { getProfilePath, openProfile } from '$lib/navigation';
 	import { formatRating } from '../format';
 	import Button from '../ui/Button.svelte';
 

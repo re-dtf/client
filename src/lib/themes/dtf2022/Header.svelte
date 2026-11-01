@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { authStorage } from '$lib/storage/auth.svelte';
-	import { getProfilePath, openFeed, openProfile, pushOverlay } from '$lib/overlays';
+	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import AccountMenu from './AccountMenu.svelte';
 	import { currentUser } from './currentUser.svelte';
@@ -31,7 +31,7 @@
 	}
 
 	function openLogin() {
-		pushOverlay('login', '/login');
+		openOverlay({ type: 'login' });
 	}
 
 	function closeOnOutsideClick(e: MouseEvent) {

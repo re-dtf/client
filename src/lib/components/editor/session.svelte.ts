@@ -1,4 +1,5 @@
 import { untrack } from 'svelte';
+import { closeOverlay } from '$lib/navigation';
 import { api } from '$lib/api/index.svelte';
 import type { SubsiteItem, PostHistoryVersion } from '$lib/api/types';
 import { editorJsToDtf, dtfToEditorJs } from './mapper';
@@ -101,7 +102,7 @@ export function createEditorSession(initialPostId: number | null = null) {
 			
 			if (isPublishing) {
 				saveMessage = 'Опубликовано!';
-				setTimeout(() => { history.back(); }, 1000);
+				setTimeout(closeOverlay, 1000);
 			} else {
 				saveMessage = 'Черновик сохранен';
 			}
@@ -172,7 +173,7 @@ export function createEditorSession(initialPostId: number | null = null) {
 	}
 
 	function goBack() {
-		history.back();
+		closeOverlay();
 	}
 
 	// We can use $effect inside the session factory because it's called during component initialization
