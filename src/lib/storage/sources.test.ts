@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { tick } from 'svelte';
 
 // Use vi.hoisted to ensure localStorage mock is available before imports run
 vi.hoisted(() => {
@@ -27,11 +26,6 @@ vi.hoisted(() => {
 	});
 });
 
-// Mock SvelteKit $app/environment
-vi.mock('$app/environment', () => ({
-	browser: true
-}));
-
 // Import the module under test
 import { sourceStorage } from './sources.svelte';
 import type { SourceState, SourceManifest } from '$lib/api/sources/types';
@@ -51,13 +45,11 @@ const mockManifest: SourceManifest = {
 	responseMapping: null
 };
 
-const mockSourceState = (id: string, token?: string, expiresAt?: number): SourceState => ({
+const mockSourceState = (id: string): SourceState => ({
 	manifestUrl: 'https://manifest.test.com',
 	manifest: { ...mockManifest, id },
 	enabled: true,
 	grantedPermissions: [],
-	authToken: token,
-	authTokenExpiresAt: expiresAt,
 	addedAt: Date.now(),
 	lastUpdated: Date.now(),
 	isBuiltin: false
@@ -83,77 +75,57 @@ describe('sourceStorage', () => {
 	});
 
 	it('should retrieve auth token when valid', () => {
-		const source = mockSourceState('auth-source', 'valid-token');
-		sourceStorage.sources = [source];
+		sourceStorage.setToken('auth-source', 'valid-token');
 
-		const token = sourceStorage.getToken('auth-source');
-		expect(token).toBe('valid-token');
+		expect(sourceStorage.getToken('auth-source')).toBe('valid-token');
 	});
 
 	it('should return undefined when token is missing', () => {
-		const source = mockSourceState('no-token-source');
-		sourceStorage.sources = [source];
-
-		const token = sourceStorage.getToken('no-token-source');
-		expect(token).toBeUndefined();
+		expect(sourceStorage.getToken('no-token-source')).toBeUndefined();
 	});
 
-	it('should return undefined when source is not found', () => {
-		const token = sourceStorage.getToken('non-existent');
-		expect(token).toBeUndefined();
-	});
+	it('should return undefined when token is expired', () => {
+		sourceStorage.setToken('expired-source', 'old-token', Date.now() - 1000);
 
-	it('should return undefined and clean up token when token is expired', async () => {
-		const pastTime = Date.now() - 1000; // 1 second ago
-		const source = mockSourceState('expired-source', 'old-token', pastTime);
-		sourceStorage.sources = [source];
-
-		const token = sourceStorage.getToken('expired-source');
-		expect(token).toBeUndefined();
-
-		// Wait for the cleanup microtask to execute
-		await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-
-		// Verify lazy cleanup updated storage
-		const storedSource = sourceStorage.sources.find((s) => s.manifest.id === 'expired-source');
-		expect(storedSource?.authToken).toBeUndefined();
-		expect(storedSource?.authTokenExpiresAt).toBeUndefined();
+		expect(sourceStorage.getToken('expired-source')).toBeUndefined();
 	});
 
 	it('should retrieve token when expiresAt is in the future', () => {
-		const futureTime = Date.now() + 10000; // 10 seconds in the future
-		const source = mockSourceState('future-source', 'good-token', futureTime);
-		sourceStorage.sources = [source];
+		sourceStorage.setToken('future-source', 'good-token', Date.now() + 10000);
 
-		const token = sourceStorage.getToken('future-source');
-		expect(token).toBe('good-token');
-	});
-
-	it('should set token and expiresAt reactively', () => {
-		const source = mockSourceState('target-source');
-		sourceStorage.sources = [source];
-
-		const expires = Date.now() + 5000;
-		sourceStorage.setToken('target-source', 'newly-set-token', expires);
-
-		const updatedToken = sourceStorage.getToken('target-source');
-		expect(updatedToken).toBe('newly-set-token');
-
-		const storedSource = sourceStorage.sources.find((s) => s.manifest.id === 'target-source');
-		expect(storedSource?.authTokenExpiresAt).toBe(expires);
+		expect(sourceStorage.getToken('future-source')).toBe('good-token');
 	});
 
 	it('should clear token when set to undefined', () => {
-		const source = mockSourceState('clear-source', 'existing-token');
-		sourceStorage.sources = [source];
-
+		sourceStorage.setToken('clear-source', 'existing-token');
 		sourceStorage.setToken('clear-source', undefined);
 
-		const token = sourceStorage.getToken('clear-source');
-		expect(token).toBeUndefined();
+		expect(sourceStorage.getToken('clear-source')).toBeUndefined();
+	});
 
-		const storedSource = sourceStorage.sources.find((s) => s.manifest.id === 'clear-source');
-		expect(storedSource?.authToken).toBeUndefined();
+	it('should keep tokens out of the sources key', () => {
+		sourceStorage.sources = [mockSourceState('secret-source')];
+		sourceStorage.setToken('secret-source', 'super-secret');
+
+		expect(localStorage.getItem('redtf:data:sources')).not.toContain('super-secret');
+		expect(localStorage.getItem('redtf:secrets:source-tokens')).toContain('super-secret');
+	});
+
+	it('should drop expired tokens on startup', async () => {
+		const envelope = {
+			v: 1,
+			d: {
+				old: { token: 'a', expiresAt: Date.now() - 1000 },
+				fresh: { token: 'b', expiresAt: Date.now() + 10000 }
+			}
+		};
+		localStorage.setItem('redtf:secrets:source-tokens', JSON.stringify(envelope));
+
+		vi.resetModules();
+		await import('./sources.svelte');
+
+		const saved = JSON.parse(localStorage.getItem('redtf:secrets:source-tokens')!);
+		expect(Object.keys(saved.d)).toEqual(['fresh']);
 	});
 
 	it('should store and retrieve pending bio cleanup state', () => {
@@ -175,10 +147,10 @@ describe('sourceStorage', () => {
 		sourceStorage.sources = [source];
 
 		// Verify that localStorage contains the updated state immediately
-		const stored = localStorage.getItem('redtf:sources');
+		const stored = localStorage.getItem('redtf:data:sources');
 		expect(stored).not.toBeNull();
 		const parsed = JSON.parse(stored!);
-		expect(parsed).toHaveLength(1);
-		expect(parsed[0].manifest.id).toBe('persist-source');
+		expect(parsed.d).toHaveLength(1);
+		expect(parsed.d[0].manifest.id).toBe('persist-source');
 	});
 });

@@ -1,8 +1,21 @@
 import { persistedState } from './persisted.svelte';
 import type { SourceState, PendingBioCleanup } from '$lib/api/sources/types';
 
-const sourcesState = persistedState<SourceState[]>('redtf:sources', []);
-const pendingBioCleanupState = persistedState<PendingBioCleanup | null>('redtf:bio-cleanup', null);
+interface StoredToken {
+	token: string;
+	/** timestamp, мс */
+	expiresAt?: number;
+}
+
+const isExpired = (t: StoredToken) => t.expiresAt !== undefined && Date.now() > t.expiresAt;
+
+// Манифесты и разрешения (data) отдельно от токенов (secrets)
+const sourcesState = persistedState<SourceState[]>('redtf:data:sources', []);
+const pendingBioCleanupState = persistedState<PendingBioCleanup | null>('redtf:data:bio-cleanup', null);
+const tokensState = persistedState<Record<string, StoredToken>>('redtf:secrets:source-tokens', {});
+
+// Просроченные токены убираем при запуске: геттеры ничего не пишут
+tokensState.value = Object.fromEntries(Object.entries(tokensState.value).filter(([, t]) => !isExpired(t)));
 
 export const sourceStorage = {
 	get sources() {
@@ -13,35 +26,13 @@ export const sourceStorage = {
 	},
 
 	getToken(sourceId: string): string | undefined {
-		const source = sourcesState.value.find((s) => s.manifest.id === sourceId);
-		if (!source || !source.authToken) {
-			return undefined;
-		}
-		// Check token expiration if expiresAt is set
-		if (source.authTokenExpiresAt && Date.now() > source.authTokenExpiresAt) {
-			// Lazy cleanup of expired token from storage (deferred to prevent Svelte 5 unsafe mutation)
-			queueMicrotask(() => {
-				const current = sourcesState.value.find((s) => s.manifest.id === sourceId);
-				if (current && current.authTokenExpiresAt && Date.now() > current.authTokenExpiresAt) {
-					sourceStorage.setToken(sourceId, undefined);
-				}
-			});
-			return undefined;
-		}
-		return source.authToken;
+		const stored = tokensState.value[sourceId];
+		return stored && !isExpired(stored) ? stored.token : undefined;
 	},
 
 	setToken(sourceId: string, token: string | undefined, expiresAt?: number): void {
-		sourcesState.value = sourcesState.value.map((s) => {
-			if (s.manifest.id === sourceId) {
-				return {
-					...s,
-					authToken: token,
-					authTokenExpiresAt: expiresAt
-				};
-			}
-			return s;
-		});
+		const { [sourceId]: _removed, ...rest } = tokensState.value;
+		tokensState.value = token ? { ...rest, [sourceId]: { token, expiresAt } } : rest;
 	},
 
 	get pendingBioCleanup() {

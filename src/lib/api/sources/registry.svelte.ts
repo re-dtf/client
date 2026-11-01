@@ -75,6 +75,7 @@ export const sourceRegistry = {
 		}
 
 		sourceStorage.sources = sourceStorage.sources.filter((s) => s.manifest.id !== sourceId);
+		sourceStorage.setToken(sourceId, undefined);
 	},
 
 	/**

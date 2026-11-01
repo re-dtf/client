@@ -7,4 +7,4 @@ import { persistedState } from '$lib/storage/persisted.svelte';
  */
 export type VotesStyle = 'likes' | 'rating' | 'reactions';
 
-export const themeSettings = persistedState<{ votes: VotesStyle }>('redtf:dtf2022', { votes: 'likes' });
+export const themeSettings = persistedState<{ votes: VotesStyle }>('redtf:theme:dtf2022', { votes: 'likes' });

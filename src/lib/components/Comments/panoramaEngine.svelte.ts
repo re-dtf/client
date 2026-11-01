@@ -1,4 +1,4 @@
-import { commentSettings } from '$lib/storage/commentSettings.svelte';
+import { settings } from '$lib/storage/settings.svelte';
 
 export class PanoramaEngine {
 	panVisibleItems = new Set<HTMLElement>();
@@ -43,7 +43,7 @@ export class PanoramaEngine {
 			const mainWidth = Math.max(200, width - 64);
 			this.viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
 
-			if (commentSettings.value.nestingMode === 'autopan' && !this.isPanning) {
+			if (settings.value.commentNesting === 'autopan' && !this.isPanning) {
 				const prevTarget = this.targetScrollLeft;
 				this.lastScrollY = -1; // Force recalculation
 				this.isPanning = true;
@@ -68,14 +68,14 @@ export class PanoramaEngine {
 	}
 
 	handleScroll() {
-		if (commentSettings.value.nestingMode === 'autopan' && !this.isPanning) {
+		if (settings.value.commentNesting === 'autopan' && !this.isPanning) {
 			this.isPanning = true;
 			this.panLoop();
 		}
 	}
 
 	private panLoop = () => {
-		if (!this.viewportElement || commentSettings.value.nestingMode !== 'autopan') {
+		if (!this.viewportElement || settings.value.commentNesting !== 'autopan') {
 			this.isPanning = false;
 			return;
 		}

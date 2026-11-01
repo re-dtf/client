@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
 	import { pushOverlay } from '$lib/overlays';
-	import { authStorage } from '$lib/storage/auth.svelte';
+	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import { clickOnKey } from './a11y';
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
@@ -13,7 +13,7 @@
 	let email = $state('');
 	let password = $state('');
 	let token = $state('');
-	let proxyUrl = $state(authStorage.proxyUrl || '');
+	let proxyUrl = $state(settings.value.proxyUrl);
 
 	function openSettings(e: MouseEvent) {
 		e.preventDefault();
@@ -71,15 +71,14 @@
 
 	function handleSaveProxy(e: SubmitEvent) {
 		e.preventDefault();
-		authStorage.proxyUrl = proxyUrl.trim();
+		settings.patch({ proxyUrl: proxyUrl.trim() });
 		successMsg = 'Настройки прокси сохранены';
 		error = '';
 	}
 
 	function useDefaultProxy() {
-		const defaultProxy = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
-		proxyUrl = defaultProxy;
-		authStorage.proxyUrl = defaultProxy;
+		proxyUrl = DEFAULT_PROXY_URL;
+		settings.patch({ proxyUrl: DEFAULT_PROXY_URL });
 		successMsg = 'Установлен встроенный прокси';
 		error = '';
 	}
@@ -146,9 +145,11 @@
 				{:else if mode === 'proxy'}
 					<form onsubmit={handleSaveProxy}>
 						<Input type="url" placeholder="Ссылка на прокси" name="proxy-url" bind:value={proxyUrl} required />
-						<div class="auth__default-proxy">
-							<Button fullWidth label="Использовать встроенный" onclick={useDefaultProxy} />
-						</div>
+						{#if DEFAULT_PROXY_URL}
+							<div class="auth__default-proxy">
+								<Button fullWidth label="Использовать встроенный" onclick={useDefaultProxy} />
+							</div>
+						{/if}
 						<Button type="submit" variant="blue" fullWidth label="Сохранить" />
 					</form>
 				{/if}

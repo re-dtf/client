@@ -2,6 +2,7 @@ import { untrack } from 'svelte';
 import type { ApiProvider, Post, Comment, PaginatedResult, Session, GetPostsOptions, User, Likes, Reactions, Profile, ProfileListItem, CursorData } from '../types';
 import { getLeonardoUrl } from '../utils';
 import { authStorage } from '$lib/storage/auth.svelte';
+import { settings } from '$lib/storage/settings.svelte';
 
 const baseUrl = 'https://api.dtf.ru/v2.31';
 const authUrl = 'https://api.dtf.ru/v3.4';
@@ -13,7 +14,7 @@ async function refreshSession(): Promise<boolean> {
 	const formData = new FormData();
 	formData.append('token', session.refreshToken);
 
-	let proxyBase = untrack(() => authStorage.proxyUrl) || '';
+	let proxyBase = untrack(() => settings.value.proxyUrl) || '';
 	proxyBase = proxyBase.replace(/\/$/, '');
 	const targetUrl = proxyBase ? `${proxyBase}/v3.4/auth/refresh` : `${authUrl}/auth/refresh`;
 
@@ -157,7 +158,7 @@ export const dtfApiProvider: ApiProvider = {
 		formData.append('password', password);
 
 		let response;
-		let proxyBase = authStorage.proxyUrl || '';
+		let proxyBase = settings.value.proxyUrl;
 		proxyBase = proxyBase.replace(/\/$/, '');
 		
 		if (!proxyBase) {

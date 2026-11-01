@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import { authStorage } from '$lib/storage/auth.svelte';
+	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import { goto } from '$app/navigation';
 	import type { Snippet } from 'svelte';
 
@@ -95,14 +95,16 @@
 						<p class="help-text">В связи с CORS-блокировкой запросов входа от DTF, логин по паролю возможен только через прокси. Вы можете воспользоваться официальным прокси, или развернуть свой: https://github.com/re-dtf/proxy.</p>
 						<div class="form-group">
 							<label for="proxy">URL Прокси</label>
-							<input type="url" id="proxy" bind:value={authStorage.proxyUrl} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
-							<div class="help-text" style="margin-top: 5px;">
-								Вы можете использовать <button type="button" class="link-button" onclick={() => {
-									if (confirm('Использовать прокси от автора проекта?')) {
-										authStorage.proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
-									}
+							<input type="url" id="proxy" bind:value={() => settings.value.proxyUrl, (v) => settings.patch({ proxyUrl: v })} placeholder="https://auth-proxy.example.workers.dev" required disabled={isLoading} />
+							{#if DEFAULT_PROXY_URL}
+								<div class="help-text" style="margin-top: 5px;">
+									Вы можете использовать <button type="button" class="link-button" onclick={() => {
+										if (confirm('Использовать прокси от автора проекта?')) {
+											settings.patch({ proxyUrl: DEFAULT_PROXY_URL });
+										}
 								}}>прокси от автора проекта</button>
-							</div>
+								</div>
+							{/if}
 						</div>
 					</div>
 				{/if}

@@ -1,44 +1,70 @@
-import { browser } from '$app/environment';
-
-export function persistedState<T>(key: string, initialValue: T) {
-	let value = $state<T>(initialValue);
-
-	if (browser) {
-		const item = localStorage.getItem(key);
-		if (item !== null) {
-			try {
-				value = JSON.parse(item);
-			} catch (e) {
-				console.error(`Error parsing localStorage key "${key}":`, e);
-			}
+/**
+ * Реактивное значение, которое хранится в localStorage.
+ *
+ * Ключ называется `redtf:<слой>:<имя>`, слои: settings, theme, secrets, data, cache
+ * (см. docs/architecture/storage.md).
+ *
+ * Значение заменяется целиком, а не меняется "изнутри":
+ *   store.value = новое;            // заменить
+ *   store.patch({ поле: значение }); // заменить часть полей объекта
+ */
+export function persistedState<T>(key: string, defaults: T, version = 1) {
+	// localStorage может быть недоступен (приватный режим, запрет cookies)
+	const storage = (): Storage | null => {
+		try {
+			return globalThis.localStorage ?? null;
+		} catch {
+			return null;
 		}
+	};
 
-		// Автоматически отслеживаем любые глубокие изменения (включая мутации массивов)
-		// и сохраняем их в localStorage через реактивный эффект Svelte 5.
-		$effect.root(() => {
-			$effect(() => {
-				try {
-					localStorage.setItem(key, JSON.stringify(value));
-				} catch (e) {
-					console.error(`Error saving persisted state for key "${key}":`, e);
-				}
-			});
-		});
+	const isObject = (x: unknown): x is Record<string, unknown> =>
+		typeof x === 'object' && x !== null && !Array.isArray(x);
+
+	// Читает сохранённое значение. В localStorage лежит { v: версия, d: данные }.
+	// Если версия не совпала (формат поменяли) или JSON битый, берём значение по умолчанию.
+	function read(): T {
+		const raw = storage()?.getItem(key);
+		if (raw == null) return defaults;
+		try {
+			const saved = JSON.parse(raw);
+			if (saved?.v !== version) return defaults;
+			// Поля, которые добавили в defaults позже, не пропадают
+			return isObject(defaults) && isObject(saved.d) ? ({ ...defaults, ...saved.d } as T) : saved.d;
+		} catch (e) {
+			console.error(`[storage] Не удалось прочитать "${key}":`, e);
+			return defaults;
+		}
 	}
+
+	function write(next: T) {
+		try {
+			storage()?.setItem(key, JSON.stringify({ v: version, d: next }));
+		} catch (e) {
+			console.error(`[storage] Не удалось сохранить "${key}":`, e);
+		}
+	}
+
+	let value = $state.raw<T>(read());
+
+	// Значение изменили в другой вкладке — подхватываем
+	globalThis.addEventListener?.('storage', (e: StorageEvent) => {
+		if (e.storageArea === storage() && (e.key === key || e.key === null)) {
+			value = read();
+		}
+	});
 
 	return {
 		get value() {
 			return value;
 		},
-		set value(newValue: T) {
-			value = newValue;
-			if (browser) {
-				try {
-					localStorage.setItem(key, JSON.stringify(newValue));
-				} catch (e) {
-					console.error(`Error saving persisted state for key "${key}":`, e);
-				}
-			}
+		set value(next: T) {
+			value = next;
+			write(next);
+		},
+		/** Только для объектов: заменить часть полей */
+		patch(part: Partial<T>) {
+			this.value = { ...value, ...part };
 		}
 	};
 }

@@ -8,7 +8,7 @@ export interface CurrentUser {
 }
 
 // Запоминаем в localStorage, чтобы аватар в шапке появлялся сразу, до ответа API
-const stored = persistedState<CurrentUser | null>('redtf:dtf2022:user', null);
+const stored = persistedState<CurrentUser | null>('redtf:cache:current-user', null);
 
 let loading: Promise<void> | undefined;
 

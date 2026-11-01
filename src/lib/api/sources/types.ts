@@ -99,8 +99,6 @@ export interface SourceState {
 	manifest: SourceManifest; // Кэшированный манифест
 	enabled: boolean; // Включен ли источник
 	grantedPermissions: string[]; // Список предоставленных разрешений (формат: 'id' или 'id:target')
-	authToken?: string; // Токен авторизации (если получен)
-	authTokenExpiresAt?: number; // Время истечения токена в миллисекундах (timestamp)
 	addedAt: number; // Время добавления источника (timestamp)
 	lastUpdated: number; // Время последнего обновления манифеста (timestamp)
 	isBuiltin: boolean; // Флаг встроенного источника (нельзя удалить, только выключить)

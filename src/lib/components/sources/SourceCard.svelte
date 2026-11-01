@@ -2,6 +2,7 @@
 	import type { SourceState } from '$lib/api/sources/types';
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
+	import { sourceStorage } from '$lib/storage/sources.svelte';
 	import BioVerification from './BioVerification.svelte';
 
 	let { source, onUpdateReady } = $props<{ 
@@ -10,6 +11,7 @@
 	}>();
 
 	let manifest = $derived(source.manifest);
+	let hasToken = $derived(!!sourceStorage.getToken(source.manifest.id));
 	let isUpdating = $state(false);
 	let showBioAuth = $state(false);
 
@@ -89,7 +91,7 @@
 			<span class="tag">{tag}</span>
 		{/each}
 		{#if manifest.auth && manifest.auth.type !== 'none'}
-			{#if source.authToken}
+			{#if hasToken}
 				<span class="tag auth-success">✓ Авторизован</span>
 			{:else}
 				<span class="tag auth-required">⚠ Требуется вход</span>
@@ -103,7 +105,7 @@
 			{isUpdating ? 'Поиск...' : 'Обновить'}
 		</button>
 		{#if manifest.auth && manifest.auth.type !== 'none'}
-			{#if source.authToken}
+			{#if hasToken}
 				<button class="btn secondary" onclick={handleRevokeAuth}>Выйти</button>
 			{:else}
 				<button class="btn primary" onclick={handleAuth}>Авторизоваться</button>

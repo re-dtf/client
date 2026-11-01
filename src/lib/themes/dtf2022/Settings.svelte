@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { themeState } from '$lib/themes/index.svelte';
 	import type { ThemeName } from '$lib/themes/index.svelte';
-	import { commentSettings } from '$lib/storage/commentSettings.svelte';
-	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
-	import { authStorage } from '$lib/storage/auth.svelte';
+	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
+	import type { NestingMode } from '$lib/storage/settings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { themeSettings, type VotesStyle } from './themeSettings.svelte';
 	import { Input } from './ui';
@@ -21,7 +20,7 @@
 	];
 
 	let votes = $derived(themeSettings.value.votes);
-	let nestingMode = $derived(commentSettings.value.nestingMode);
+	let nestingMode = $derived(settings.value.commentNesting);
 
 	function updateTheme(e: Event) {
 		themeState.value = (e.target as HTMLSelectElement).value as ThemeName;
@@ -29,7 +28,7 @@
 
 	function useAuthorProxy() {
 		if (confirm('Использовать прокси от автора проекта?')) {
-			authStorage.proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+			settings.patch({ proxyUrl: DEFAULT_PROXY_URL });
 		}
 	}
 </script>
@@ -73,7 +72,7 @@
 
 		<div class="settings__options">
 			{#each NESTING as item (item.value)}
-				{@render option('nesting', item.value, nestingMode === item.value, item.title, item.description, () => (commentSettings.value = { ...commentSettings.value, nestingMode: item.value }))}
+				{@render option('nesting', item.value, nestingMode === item.value, item.title, item.description, () => settings.patch({ commentNesting: item.value }))}
 			{/each}
 		</div>
 	</section>
@@ -82,10 +81,12 @@
 		<h3 class="settings__heading" id="settings-network">Сеть и авторизация</h3>
 		<p class="settings__description">CORS-прокси для обхода блокировок при входе и обновлении токена (Cloudflare Pages и др.).</p>
 
-		<Input type="url" aria-label="URL прокси" placeholder="https://auth-proxy.example.workers.dev" bind:value={authStorage.proxyUrl} />
-		<p class="settings__hint">
-			Можно использовать <button type="button" class="settings__link" onclick={useAuthorProxy}>прокси от автора проекта</button>
-		</p>
+		<Input type="url" aria-label="URL прокси" placeholder="https://auth-proxy.example.workers.dev" bind:value={() => settings.value.proxyUrl, (v) => settings.patch({ proxyUrl: v })} />
+		{#if DEFAULT_PROXY_URL}
+			<p class="settings__hint">
+				Можно использовать <button type="button" class="settings__link" onclick={useAuthorProxy}>прокси от автора проекта</button>
+			</p>
+		{/if}
 	</section>
 
 	<section class="settings__section">

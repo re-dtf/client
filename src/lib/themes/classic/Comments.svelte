@@ -4,7 +4,7 @@
 	import Spinner from './Spinner.svelte';
 	import CommentsHeader from './Comments/CommentsHeader.svelte';
 	import CommentPreview from './Comments/CommentPreview.svelte';
-	import { commentSettings } from '$lib/storage/commentSettings.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
 	import CommentCard from './CommentCard.svelte';
 
 	let { postId, sourceId = 'dtf', commentsCount = 0 } = $props<{ postId: number; sourceId?: string; commentsCount?: number }>();
@@ -19,7 +19,7 @@
 	y={logic.previewY}
 />
 
-<div class={['comments-section classic-theme-container', { autopan: commentSettings.value.nestingMode === 'autopan' }]}>
+<div class={['comments-section classic-theme-container', { autopan: settings.value.commentNesting === 'autopan' }]}>
 	<CommentsHeader {commentsCount} sorting={logic.sorting} onSortingChange={logic.onSortingChange} />
 
 	{#if logic.comments.length === 0 && logic.loading}
@@ -42,7 +42,7 @@
 					depth={0}
 					maxVisualDepth={logic.maxVisualDepth}
 					allComments={logic.allCommentsMap}
-					nestingMode={commentSettings.value.nestingMode}
+					nestingMode={settings.value.commentNesting}
 					onShowPreview={logic.showPreview}
 					onHidePreview={logic.hidePreview}
 					panObserver={logic.engine.panObserver}

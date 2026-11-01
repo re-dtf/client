@@ -2,19 +2,18 @@
 	import { api } from '$lib/api/index.svelte';
 	import { themeState } from '$lib/themes/index.svelte';
 	import type { ThemeName } from '$lib/themes/index.svelte';
-	import { commentSettings } from '$lib/storage/commentSettings.svelte';
-	import type { NestingMode } from '$lib/storage/commentSettings.svelte';
-	import { authStorage } from '$lib/storage/auth.svelte';
+	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
+	import type { NestingMode } from '$lib/storage/settings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 
 
 	let currentTheme = $derived(themeState.value);
-	let nestingMode = $derived(commentSettings.value.nestingMode);
+	let nestingMode = $derived(settings.value.commentNesting);
 
-	let proxyUrl = $state(authStorage.proxyUrl || '');
+	let proxyUrl = $state(settings.value.proxyUrl);
 
 	$effect(() => {
-		authStorage.proxyUrl = proxyUrl;
+		settings.patch({ proxyUrl });
 	});
 
 
@@ -24,7 +23,7 @@
 	}
 
 	function updateNestingMode(mode: NestingMode) {
-		commentSettings.value = { ...commentSettings.value, nestingMode: mode };
+		settings.patch({ commentNesting: mode });
 	}
 </script>
 
@@ -114,7 +113,7 @@
 				<span class="proxy-desc">
 					Вы можете использовать <button type="button" class="link-button" onclick={() => {
 						if (confirm('Использовать прокси от автора проекта?')) {
-							proxyUrl = import.meta.env.VITE_AUTH_PROXY_URL || 'https://dtf-proxy.re-dtf.workers.dev';
+							proxyUrl = DEFAULT_PROXY_URL;
 						}
 					}}>прокси от автора проекта</button>
 				</span>
