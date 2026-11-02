@@ -71,6 +71,13 @@
     }
 }
 
+/* На очень широких экранах колонка текста поста и комментариев становится шириной ленты */
+@media (min-width: 1560px) {
+    :root[data-theme~="dtf2022"] {
+        --inner-content-width: var(--content-width);
+    }
+}
+
 [data-theme~="dtf2022"] body {
     font-family: var(--font-family);
     background-color: var(--bg-main);

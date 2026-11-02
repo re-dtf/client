@@ -108,16 +108,10 @@
 		container-type: inline-size;
 	}
 
-	/* У DTF колонка текста 600px, на очень широких экранах (≥1560px, как и у комментариев) — 640px */
+	/* Колонка текста: --inner-content-width, но не шире белого блока за вычетом полей --text-gap */
 	.post-container {
 		width: 100%;
-		max-width: var(--inner-content-width);
-	}
-
-	@media (min-width: 1560px) {
-		.post-container {
-			max-width: var(--content-width);
-		}
+		max-width: min(var(--inner-content-width), calc(100% - 2 * var(--text-gap, 0px)));
 	}
 
 	.post-content {

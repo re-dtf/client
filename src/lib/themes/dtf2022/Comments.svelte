@@ -405,19 +405,13 @@
 		}
 
 		.comments-wrapper {
-			width: var(--inner-content-width);
+			max-width: min(var(--inner-content-width), calc(100% - 2 * var(--text-gap, 0px)));
 		}
 	}
 
 	@media (min-width: 720px) {
 		.comment-fake-form__button--gif {
 			display: none;
-		}
-	}
-
-	@media (min-width: 1560px) {
-		.comments-wrapper {
-			width: var(--content-width);
 		}
 	}
 
