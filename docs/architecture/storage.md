@@ -21,6 +21,7 @@
 | Ключ | Слой | Содержимое | Файл |
 | --- | --- | --- | --- |
 | `redtf:settings` | settings | `{ theme, proxyUrl, commentNesting, collectStats }` | `storage/settings.svelte.ts` |
+| `redtf:settings:reactions` | settings | правила реакций (вид и вес), реакции лайка и дизлайка, сортировка по рейтингу | `storage/reactions.svelte.ts` |
 | `redtf:theme:<id>` | theme | значения полей настроек темы | `themes/settings.svelte.ts` |
 | `redtf:secrets:dtf-session` | secrets | сессия DTF: токены и сроки | `storage/auth.svelte.ts` |
 | `redtf:secrets:source-tokens` | secrets | токены подключённых источников по их id | `storage/sources.svelte.ts` |

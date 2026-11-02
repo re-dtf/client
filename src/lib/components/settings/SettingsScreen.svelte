@@ -2,6 +2,7 @@
 	import FieldControl from './FieldControl.svelte';
 	import ProxySettings from './ProxySettings.svelte';
 	import HelpSettings from './HelpSettings.svelte';
+	import ReactionsSettings from './ReactionsSettings.svelte';
 	import StatsSettings from './StatsSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
@@ -48,7 +49,8 @@
 			pages: [
 				{ id: 'themes', title: 'Темы' },
 				...(themeFields.length > 0 ? [{ id: 'theme', title: getTheme(activeTheme.id)?.name ?? activeTheme.id }] : []),
-				{ id: 'comments', title: 'Комментарии' }
+				{ id: 'comments', title: 'Комментарии' },
+				{ id: 'reactions', title: 'Реакции' }
 			]
 		},
 		{ title: 'Данные', pages: [{ id: 'stats', title: 'Статистика' }] },
@@ -129,6 +131,8 @@
 						value={settings.value.commentNesting}
 						onchange={(value) => settings.patch({ commentNesting: value as NestingMode })}
 					/>
+				{:else if current.id === 'reactions'}
+					<ReactionsSettings />
 				{:else if current.id === 'stats'}
 					<StatsSettings />
 				{:else}

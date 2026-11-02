@@ -15,7 +15,7 @@
 	import PostButton from './post/PostButton.svelte';
 	import Rating from './post/Rating.svelte';
 	import Reactions from './post/Reactions.svelte';
-	import { votesOf } from './reactionVotes';
+	import { votesOf } from '$lib/reactions';
 	import UnknownBlock from './UnknownBlock.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 	import Popover from './ui/Popover.svelte';

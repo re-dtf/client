@@ -2,7 +2,7 @@
 	import { scrollBehavior } from '$lib/motion';
 	import type { Post } from '$lib/api/types';
 	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
-	import { votesOf } from '../reactionVotes';
+	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatNumber, plural } from '../format';
 	import PostHeader from './PostHeader.svelte';

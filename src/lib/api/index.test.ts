@@ -14,6 +14,7 @@ vi.mock('./sources/registry.svelte', () => ({ sourceRegistry: mocks.registry }))
 vi.mock('$lib/storage/auth.svelte', () => ({ authStorage: {} }));
 
 import { api } from './index.svelte';
+import { reactionSettings } from '$lib/storage/reactions.svelte';
 
 const post = (id: number, sourceId: string, createdAt: string): Post =>
 	({ id, sourceId, title: `Пост ${id}`, blocks: [], author: { id: 1, name: 'a' }, commentsCount: 0, createdAt }) as Post;
@@ -87,6 +88,36 @@ describe('api.getPosts', () => {
 
 		expect(mocks.dtf.getPosts).not.toHaveBeenCalled();
 		expect(mocks.sourceProvider.getPosts).toHaveBeenCalledWith(expect.objectContaining({ cursor: { lastId: 1, lastSortingValue: 1 } }));
+	});
+});
+
+describe('ранжирование по реакциям', () => {
+	const reacted = <T extends object>(item: T, counters: { id: number; count: number }[]) => ({ ...item, reactions: { counters, reactionId: 0 } });
+	// 1 ❤️ плюсовая, 25 🤡 минусовая
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mocks.registry.activeSources = [];
+		reactionSettings.value = { rules: {}, like: 1, dislike: 23, rank: true };
+	});
+
+	it('популярное: задизлайканный пост уходит вниз, свежее не трогается', async () => {
+		const posts = [reacted(post(1, 'dtf', '2024-01-01T00:00:00.000Z'), [{ id: 25, count: 9 }]), reacted(post(2, 'dtf', '2024-01-02T00:00:00.000Z'), [{ id: 1, count: 1 }])];
+		mocks.dtf.getPosts.mockResolvedValue({ items: posts });
+
+		expect((await api.getPosts({ pageName: 'popular', sorting: 'week' })).items.map((p) => p.id)).toEqual([2, 1]);
+		expect((await api.getPosts({ pageName: 'new', sorting: 'all' })).items.map((p) => p.id)).toEqual([1, 2]);
+	});
+
+	it('комментарии «Лучшие» ранжируются, «Последние» нет, с выключенной настройкой порядок сервера', async () => {
+		const comments = [reacted(comment(1, 'dtf'), [{ id: 25, count: 4 }]), reacted(comment(2, 'dtf'), [{ id: 1, count: 2 }])];
+		mocks.dtf.getComments.mockResolvedValue({ items: comments });
+		const ids = async (sorting: string) => (await api.getComments(1, 'dtf', undefined, sorting)).items.map((c) => c.id);
+
+		expect(await ids('hotness')).toEqual([2, 1]);
+		expect(await ids('date')).toEqual([1, 2]);
+
+		reactionSettings.patch({ rank: false });
+		expect(await ids('hotness')).toEqual([1, 2]);
 	});
 });
 

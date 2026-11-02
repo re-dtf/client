@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
-	import { votesOf } from '../reactionVotes';
+	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
 	import PostHeader from './PostHeader.svelte';
 	import PostBlocks from './PostBlocks.svelte';

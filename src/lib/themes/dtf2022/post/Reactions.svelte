@@ -76,7 +76,7 @@
 	{#if picking && onreact}
 		<div class="post-reactions__picker" role="menu">
 			{#each Object.entries(REACTIONS) as [id, reaction] (id)}
-				<button class="post-reactions__pick" role="menuitem" aria-label="Реакция {id}" onclick={() => pick(Number(id))}>
+				<button class="post-reactions__pick" role="menuitem" aria-label={reaction.name} title={reaction.name} onclick={() => pick(Number(id))}>
 					<img src={reaction.url} width="24" height="24" alt="" />
 				</button>
 			{/each}

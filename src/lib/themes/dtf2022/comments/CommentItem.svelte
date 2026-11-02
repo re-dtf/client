@@ -11,7 +11,7 @@
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { ensureLogin } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
-	import { votesOf } from '../reactionVotes';
+	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatFullDate, formatTime, plural } from '../format';
 	import Popover from '../ui/Popover.svelte';
@@ -62,7 +62,7 @@
 
 	let score = $derived(votesOf(comment));
 
-	// Голос «за» и «против» — две реакции (см. reactionVotes); false — голос не принят, анимации клика не будет
+	// Голос «за» и «против» — выбранные в настройках реакции; false — голос не принят, анимации клика не будет
 	const rate = (vote: 1 | -1) => voteComment(comment, vote);
 
 	// Меню комментария: что можно править, сервер говорит при открытии

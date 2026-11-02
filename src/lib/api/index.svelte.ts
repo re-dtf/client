@@ -5,6 +5,8 @@ import { sourceRegistry } from './sources/registry.svelte';
 import { mergePosts, mergeComments } from './sources/merger';
 import { hasPermission } from './sources/permissions';
 import { authStorage } from '$lib/storage/auth.svelte';
+import { reactionSettings } from '$lib/storage/reactions.svelte';
+import { rankByScore } from '$lib/reactions';
 import { trackComment, trackFavorite, trackReaction, trackSubscription } from '$lib/storage/stats.svelte';
 
 /*
@@ -83,7 +85,9 @@ export const api = {
 			...settled(extras, extraSources.map((s) => s.manifest.id)).map(({ sourceId, value }) => ({ sourceId, result: value }))
 		];
 
-		return mergePosts(results, options?.sorting);
+		const merged = mergePosts(results, options?.sorting);
+		// Популярное (любой период) сервер ранжирует по своим очкам, в которых все реакции плюсовые: пересчитываем по правилам пользователя
+		return reactionSettings.value.rank && options?.pageName === 'popular' ? { ...merged, items: rankByScore(merged.items) } : merged;
 	},
 
 	getPost(id: number, sourceId: string = DTF) {
@@ -137,8 +141,11 @@ export const api = {
 			}
 		}
 
+		// «Лучшие» тоже ранжирует сервер; порядок меняется внутри загруженной страницы, чтобы уже показанные комментарии не прыгали
+		const merged = mergeComments(primary.items, additions);
+
 		return {
-			items: mergeComments(primary.items, additions),
+			items: reactionSettings.value.rank && sorting === 'hotness' ? rankByScore(merged) : merged,
 			lastId: primary.lastId,
 			lastSortingValue: primary.lastSortingValue,
 			cursors: resultCursors

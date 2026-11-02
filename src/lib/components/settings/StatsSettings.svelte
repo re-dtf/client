@@ -83,7 +83,7 @@
 				{#each items as item (item.id)}
 					<li class="reaction">
 						{#if REACTIONS[item.id]}
-							<img src={REACTIONS[item.id].url} width="20" height="20" alt="Реакция {item.id}" />
+							<img src={REACTIONS[item.id].url} width="20" height="20" alt={REACTIONS[item.id].name} title={REACTIONS[item.id].name} />
 						{:else}
 							<span>#{item.id}</span>
 						{/if}

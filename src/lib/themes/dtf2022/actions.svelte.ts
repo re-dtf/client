@@ -3,7 +3,8 @@ import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { openOverlay } from '$lib/navigation';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { applyReaction, nextReactionId, LIKE_REACTION, DISLIKE_REACTION } from './reactionVotes';
+import { applyReaction, nextReactionId } from '$lib/reactions';
+import { voteReaction } from '$lib/storage/reactions.svelte';
 import { notify } from './ui/notify.svelte';
 
 /** Действия вошедшего пользователя: без входа открывают окно входа и возвращают false */
@@ -54,8 +55,8 @@ export function reactToPost(post: Post, reactionId: number): boolean {
 	return true;
 }
 
-/** Голос «за» или «против» — это выбранные в reactionVotes две реакции */
-export const votePost = (post: Post, sign: 1 | -1) => reactToPost(post, sign > 0 ? LIKE_REACTION : DISLIKE_REACTION);
+/** Голос «за» или «против» — реакции, которые пользователь выбрал для лайка и дизлайка в настройках */
+export const votePost = (post: Post, sign: 1 | -1) => reactToPost(post, voteReaction(sign));
 
 export function toggleFavoritePost(post: Post) {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return;

@@ -51,7 +51,8 @@
 
 	.row__text {
 		display: flex;
-		flex: 1 1 180px;
+		/* Сколько места занимает текст, прежде чем элементы справа уйдут на следующую строку; страница может задать свой */
+		flex: 1 1 var(--row-text-basis, 180px);
 		flex-direction: column;
 		min-width: 0;
 	}
