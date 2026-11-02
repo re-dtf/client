@@ -3,6 +3,19 @@
  * Нужно, чтобы показывать окна и страницы целиком, а не по частям.
  */
 
+let feedShown!: () => void;
+const feedLoaded = new Promise<void>((done) => (feedShown = done));
+
+/** Лента сообщает, что первая загрузка постов закончилась (успешно или ошибкой). Повторные вызовы ничего не меняют */
+export const markFeedLoaded = () => feedShown();
+
+/**
+ * Дожидается, пока лента покажет посты и догрузятся картинки страницы. Заставка держится до этого момента,
+ * чтобы под ней была готовая лента, а не спиннеры. Без сети ожидание не прерывается, прерывает его
+ * кнопка «Пропустить» заставки (см. holdSplash).
+ */
+export const pageReady = () => feedLoaded.then(nextPaint).then(() => assetsReady(document.body));
+
 /** Адреса из значения background-image: `url("a"), linear-gradient(…)` → ['a'] */
 export function bgUrls(value: string): string[] {
 	return [...value.matchAll(/url\((["']?)(.*?)\1\)/g)].map((match) => match[2]);

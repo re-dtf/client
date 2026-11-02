@@ -5,6 +5,7 @@
 	import { feed, feedFromUrl, openFeedTab, periodFromUrl, type FeedName, type Period } from '$lib/feed.svelte';
 	import { untrack } from 'svelte';
 	import { appear } from '$lib/themes/appear';
+	import { markFeedLoaded } from '$lib/ready';
 
 	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
 	let loading = $state(true);
@@ -37,6 +38,7 @@
 			console.error('Failed to load posts:', e);
 		} finally {
 			if (id === requestId) loading = false;
+			markFeedLoaded();
 		}
 	}
 

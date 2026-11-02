@@ -23,6 +23,7 @@
 | `src/lib/components/` | общие компоненты (рендер блоков, комментарии, редактор, экран настроек) | [settings](docs/architecture/settings.md) |
 | `src/lib/components/overlays/ModalShell.svelte`, `src/lib/ready.ts` | окна: подложка, загрузка до показа, спиннер; `motion.ts` — анимации темы данными | [motion](docs/architecture/motion.md) |
 | `src/lib/storage/` | всё, что хранится в localStorage | [storage](docs/architecture/storage.md) |
+| `src/app.html`, `src/lib/splash.ts`, `src/lib/components/Welcome.svelte` | заставка при запуске и приветствие первого входа | [splash](docs/architecture/splash.md) |
 | `src/lib/api/` | фасад `api`, провайдеры, подключаемые источники | [api](docs/architecture/api.md), [data-sources](docs/architecture/data-sources/README.md) |
 | `docs/` | документация, решения (ADR), заготовки пользовательских доков | [docs/README.md](docs/README.md) |
 
@@ -33,7 +34,7 @@
 1. **Без SSR и серверного кода.** `ssr = false`, адаптер `adapter-static`. Не добавлять `+page.server.ts` и `+server.ts`. Единственное исключение — `routes/api/version.json/+server.ts`, он пререндерится в статический файл.
 2. **Данные только через фасад.** UI вызывает `api.getPosts()` и подобные из `src/lib/api/index.svelte.ts`. Не импортировать провайдеры (`providers/dtf`, `providers/source`) в компоненты. Ошибки сети превращаются в `Error` с понятным текстом внутри провайдеров.
 3. **Темы только через `ThemeLoader`.** Компоненты темы лежат в корне `src/lib/themes/<id>/`, у каждой темы есть `theme.ts` (манифест). Пропсы описаны в `themes/contract.ts`. Не вставлять разметку конкретной темы в общие компоненты и маршруты.
-4. **Хранилище только через `persistedState`** и только в слоях `settings`, `theme`, `secrets`, `data`, `cache` (ключ `redtf:<слой>:<имя>`). Прямой `localStorage` запрещён. Исключение — зарезервированные `redtf:setup:*` для будущего мастера первой настройки (их читает `app.html`).
+4. **Хранилище только через `persistedState`** и только в слоях `settings`, `theme`, `secrets`, `data`, `cache` (ключ `redtf:<слой>:<имя>`). Прямой `localStorage` запрещён. Исключение — `redtf:setup:*` (приветствие и первая настройка): это не слой, ключ всё равно ведётся через `persistedState`.
 5. **Навигация только через `$lib/navigation`.** Открывать оверлеи через `openOverlay`, закрывать через `closeOverlay`, ленту менять через `openFeedTab`. Не вызывать `pushState`, `history.back()` и не слать события через `window`.
 6. **Нет легаси и миграций.** Проект до релиза, пользователей нет. При изменении формата данных поднимайте `version` у `persistedState` (старые данные отбросятся) и **не пишите миграции и обратную совместимость**. Удаляя код, удаляйте его целиком, без заглушек.
 7. **Svelte 5, только руны.** `$state`, `$derived`, `$props`, `onclick={…}`, `{#snippet}`/`{@render}`, `{@attach}`. Состояние, общее между компонентами, — модули `*.svelte.ts` (объект с геттерами или класс), не сторы. Запись в состояние внутри `$effect` — крайняя мера (см. «Подводные камни»).

@@ -8,6 +8,10 @@
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
 	import ModalShell from '$lib/components/overlays/ModalShell.svelte';
+	import Welcome from '$lib/components/Welcome.svelte';
+	import { dotsAtRest, hideSplash, holdSplash, introDone, showWelcomeBackdrop } from '$lib/splash';
+	import { pageReady } from '$lib/ready';
+	import { setupCompleted } from '$lib/storage/setup.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/env';
@@ -20,7 +24,7 @@
 	import { loadThemeStyles } from '$lib/themes/registry';
 	
 	let { children } = $props();
-	let isFirstVisit = $state(false);
+	let showWelcome = $state(false);
 
 	// Компонент темы, который окно должно загрузить до показа (иначе оно мелькает спиннером)
 	const MODAL_COMPONENT: Partial<Record<App.OverlayData['type'], keyof ThemeComponents>> = {
@@ -94,34 +98,23 @@
 	onMount(() => {
 		cleanupHangingBio(true);
 		const stopTracking = startTracking(() => statsContext);
-		// Check if the user has completed the first setup
-		const firstSetupCompleted = localStorage.getItem('redtf:setup:completed');
-		if (!firstSetupCompleted) {
-			isFirstVisit = true;
-		}
 
-		// Minimum duration for the splash screen
-		setTimeout(() => {
-			// Fade out the native splash screens
-			const normalSplash = document.getElementById('native-splash-normal');
-			const firstSplash = document.getElementById('native-splash-first');
-			
-			if (normalSplash) normalSplash.classList.add('hidden');
-			if (firstSplash) firstSplash.classList.add('hidden');
-			
-			// Remove them from DOM after the 0.25s fade transition finishes
-			setTimeout(() => {
-				if (normalSplash) normalSplash.remove();
-				if (firstSplash) firstSplash.remove();
-			}, 300);
-		}, isFirstVisit ? 3000 : 1000);
+		// Заставка из app.html: тем, кто здесь впервые, она переходит в приветствие, остальным просто растворяется
+		(async () => {
+			await introDone();
+			// Под заставкой должна быть готовая лента, а не спиннеры; точки логотипа пока прыгают как индикатор загрузки
+			if (page.route.id === '/') await holdSplash(pageReady());
+			if (setupCompleted.value) return hideSplash();
+			await dotsAtRest();
+			showWelcomeBackdrop();
+			showWelcome = true;
+		})();
 
 		return stopTracking;
 	});
 </script>
 
-<svelte:body style:overflow={hasModalActive ? 'hidden' : 'auto'} />
-
+<svelte:body style:overflow={hasModalActive || showWelcome ? 'hidden' : 'auto'} />
 
 
 {#snippet overlayContent(overlay: App.OverlayState)}
@@ -142,7 +135,7 @@
 	{/if}
 {/snippet}
 
-<div class="app">
+<div class="app" inert={showWelcome}>
 	<ThemeLoader componentName="Header" />
 
 	<ThemeLoader componentName="MainLayout">
@@ -170,6 +163,10 @@
 		{/if}
 	{/each}
 </div>
+
+{#if showWelcome}
+	<Welcome ondone={() => (showWelcome = false)} />
+{/if}
 
 {#if dev}
 	<div class="debug-panel">
