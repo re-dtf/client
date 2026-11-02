@@ -4,6 +4,7 @@
 	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import AccountMenu from './AccountMenu.svelte';
+	import CreateButton from './CreateButton.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { notifications } from '$lib/api/notifications.svelte';
 	import NotificationsPanel from './NotificationsPanel.svelte';
@@ -77,11 +78,18 @@
 			</a>
 		</div>
 
+		<!-- От 1180px кнопка у правого края колонки текста, уже — слева от колокольчика -->
 		<div class="header-center">
-			<!-- В будущем здесь будут добавлены элементы -->
+			<div class="header-create header-create--column">
+				<CreateButton />
+			</div>
 		</div>
 
 		<div class="header-right">
+			<div class="header-create header-create--side">
+				<CreateButton />
+			</div>
+
 			<div
 				class={['header-notifications', { 'header-notifications--active': notificationsPopup.open }]}
 				data-notifications
@@ -189,7 +197,33 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0 24px;
+	}
+
+	.header-create {
+		display: flex;
+		align-items: center;
+	}
+
+	.header-create--column {
+		width: 100%;
+		max-width: var(--content-width);
+		justify-content: flex-end;
+	}
+
+	.header-create--side {
+		margin-right: 16px;
+	}
+
+	@media (min-width: 1180px) {
+		.header-create--side {
+			display: none;
+		}
+	}
+
+	@media (max-width: 1179px) {
+		.header-create--column {
+			display: none;
+		}
 	}
 
 	.header-menu {
@@ -381,7 +415,10 @@
 			width: 95px;
 		}
 
-		.header-right {
+		/* Колокольчик и профиль уходят в мобильную строку, «Создать» остаётся значком */
+		.header-notifications,
+		.header-profile,
+		.header-user {
 			display: none;
 		}
 	}

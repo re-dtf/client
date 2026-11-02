@@ -13,6 +13,11 @@ export function ensureLogin(): boolean {
 	return false;
 }
 
+/** «Создать» в шапке и «Новая запись» в панели: редактор открывается только вошедшему */
+export function startWriting() {
+	if (ensureLogin()) openOverlay({ type: 'editor' });
+}
+
 /*
  * Посты в ленте лежат в $state.raw, поэтому менять их на месте нельзя. Свои реакции и закладки пост
  * хранит здесь: компоненты читают пост через withActions(), и карточка в ленте с открытым постом

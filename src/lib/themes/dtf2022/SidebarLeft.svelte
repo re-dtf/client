@@ -2,8 +2,10 @@
 	import { resolve } from '$app/paths';
 	import { feed, openFeedTab, type FeedName } from '$lib/feed.svelte';
 	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
+	import { startWriting } from './actions.svelte';
 	import { clickOnKey } from './a11y';
 	import { sidebar } from './sidebar.svelte';
+	import { Button } from './ui';
 
 	const feeds: { id: FeedName; label: string; icon: string }[] = [
 		{ id: 'popular', label: 'Популярное', icon: 'ui_sidebar_feed' },
@@ -89,6 +91,11 @@
 				{/each}
 			</nav>
 
+			<!-- Только в выдвижной панели: на широком экране «Создать» есть в шапке -->
+			<div class="sidebar-write">
+				<Button label="Новая запись" fullWidth onclick={startWriting} />
+			</div>
+
 			<nav class="subsites-switcher" aria-label="Темы">
 				{#each subsites as subsite (subsite.label)}
 					<a class="switch-button" href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)}>
@@ -161,8 +168,16 @@
 
 	/* Шапка и затемнение есть только у выдвижной панели */
 	.tint,
-	.panel-header {
+	.panel-header,
+	.sidebar-write {
 		display: none;
+	}
+
+	.sidebar-write {
+		--btn-height: 48px;
+		--btn-font-size: 18px;
+		padding: 0 15px;
+		margin: 1px 0 20px;
 	}
 
 	.feed-switcher {
@@ -278,6 +293,10 @@
 			display: flex;
 			flex-shrink: 0;
 			height: var(--header-height);
+		}
+
+		.sidebar-write {
+			display: block;
 		}
 
 		.switch-button {
