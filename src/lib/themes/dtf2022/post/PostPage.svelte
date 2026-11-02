@@ -28,6 +28,7 @@
 	let votes = $derived(themeSettings.votes);
 	// Стрелочная оценка — осень 2022: иконки крупнее (22px), отступы между кнопками 33px, есть «Поделиться»
 	let arrows = $derived(votes === 'rating');
+	let arrowsLeft = $derived(arrows && themeSettings.arrowsSide === 'left');
 	let iconSize = $derived(arrows ? 22 : 20);
 
 	function scrollToComments(e: MouseEvent) {
@@ -65,7 +66,7 @@
 				<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />
 			{/if}
 
-			<div class={['post-footer', { 'post-footer--arrows': arrows }]}>
+			<div class={['post-footer', { 'post-footer--arrows': arrows, 'post-footer--arrows-left': arrowsLeft }]}>
 				<div class="post-footer__controls">
 					{#if votes === 'likes'}
 						<PostButton kind="like" title="Лайк" value={score.up || undefined} active={score.myVote === 1} onclick={() => votePost(post, 1)} />
@@ -81,7 +82,9 @@
 				{#if votes === 'likes'}
 					<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => votePost(post, -1)} />
 				{:else if votes === 'rating'}
-					<Rating value={score.up - score.down} myVote={score.myVote} onvote={(sign) => votePost(post, sign)} />
+					<div class="post-footer__rating">
+						<Rating value={score.up - score.down} myVote={score.myVote} onvote={(sign) => votePost(post, sign)} />
+					</div>
 				{/if}
 			</div>
 
@@ -159,6 +162,21 @@
 	.post-footer--arrows .post-footer__controls {
 		--post-button-value-gap: 4px;
 		gap: 33px;
+	}
+
+	/* Стрелки справа — прижаты к краю; слева — первым элементом футера, кнопки идут плотнее */
+	.post-footer__rating {
+		display: flex;
+		margin-left: auto;
+	}
+
+	.post-footer--arrows-left .post-footer__controls {
+		gap: 20px;
+	}
+
+	.post-footer--arrows-left .post-footer__rating {
+		order: -1;
+		margin: 0 20px 0 0;
 	}
 
 	@media (min-width: 640px) {

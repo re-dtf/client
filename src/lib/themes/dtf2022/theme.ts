@@ -16,6 +16,17 @@ export default defineTheme({
 				{ value: 'likes', title: 'Лайки · начало 2023', description: 'Лайк и дизлайк, как в ленте весной 2023' },
 				{ value: 'reactions', title: 'Реакции · как сейчас', description: 'Набор реакций, как на сайте сегодня' }
 			]
+		},
+		{
+			key: 'arrowsSide',
+			type: 'radio',
+			title: 'Стрелки оценки',
+			description: 'С какой стороны стоят стрелки. Действует только на «Стрелки · осень 2022».',
+			default: 'right',
+			options: [
+				{ value: 'right', title: 'Справа' },
+				{ value: 'left', title: 'Слева' }
+			]
 		}
 	]
 });

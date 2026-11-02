@@ -55,6 +55,7 @@
 
 	let comment = $derived(row.comment);
 	let votes = $derived(themeSettings.votes);
+	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
 	// Галерея просмотра — картинки комментария, видео в неё не входят
@@ -110,6 +111,12 @@
 		}
 	}
 </script>
+
+{#snippet vote()}
+	<div class={['comment-item__vote', { 'comment-item__vote--left': arrowsLeft }]}>
+		<Rating compact value={score.up - score.down} myVote={score.myVote} onvote={rate} />
+	</div>
+{/snippet}
 
 {#snippet repliesAction()}
 	{#if row.hiddenReplies > 0}
@@ -279,6 +286,10 @@
 				/>
 			{/if}
 
+			{#if votes === 'rating' && arrowsLeft}
+				{@render vote()}
+			{/if}
+
 			<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
 
 			{#if comment.sourceId === 'dtf'}
@@ -291,11 +302,9 @@
 				</Popover>
 			{/if}
 
-			<!-- Стрелки стоят в конце строки действий; на широких экранах поднимаются в строку автора -->
-			{#if votes === 'rating'}
-				<div class="comment-item__vote">
-					<Rating compact value={score.up - score.down} myVote={score.myVote} onvote={rate} />
-				</div>
+			<!-- Стрелки стоят в конце строки действий (или перед «Ответить», если слева); на широких экранах поднимаются в строку автора -->
+			{#if votes === 'rating' && !arrowsLeft}
+				{@render vote()}
 			{:else if votes === 'likes'}
 				<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => voteComment(comment, -1)} />
 			{/if}
@@ -465,6 +474,13 @@
 			height: 0;
 			margin: 0 8px 0 auto;
 		}
+	}
+
+	/* Слева стрелки стоят в строке действий перед «Ответить» на всех ширинах, без подъёма в строку автора */
+	.comment-item__vote--left {
+		order: 0;
+		height: auto;
+		margin: 0 16px 0 0;
 	}
 
 	.comment-item__icon-action .icon {

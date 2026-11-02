@@ -10,5 +10,9 @@ export type VotesStyle = 'likes' | 'rating' | 'reactions';
 export const themeSettings = {
 	get votes(): VotesStyle {
 		return activeThemeSettings().value.votes as VotesStyle;
+	},
+	/** Сторона стрелок оценки: в футере поста и в строке действий комментария */
+	get arrowsSide(): 'left' | 'right' {
+		return activeThemeSettings().value.arrowsSide as 'left' | 'right';
 	}
 };

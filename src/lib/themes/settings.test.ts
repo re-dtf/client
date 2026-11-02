@@ -20,13 +20,13 @@ describe('настройки темы', () => {
 	beforeEach(() => localStorage.clear());
 
 	it('значения по умолчанию берутся из схемы темы', () => {
-		expect(getThemeSettings('dtf2022').value).toEqual({ votes: 'likes' });
+		expect(getThemeSettings('dtf2022').value).toEqual({ votes: 'likes', arrowsSide: 'right' });
 	});
 
 	it('у каждой темы свой ключ, настройки не смешиваются', () => {
 		getThemeSettings('dtf2022').patch({ votes: 'rating' });
 
-		expect(JSON.parse(localStorage.getItem('redtf:theme:dtf2022')!).d).toEqual({ votes: 'rating' });
+		expect(JSON.parse(localStorage.getItem('redtf:theme:dtf2022')!).d).toEqual({ votes: 'rating', arrowsSide: 'right' });
 	});
 
 	it('один и тот же стор отдаётся для одной темы', () => {
