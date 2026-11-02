@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount, onDestroy, type Snippet } from 'svelte';
 	import Editor from '$lib/components/editor/Editor.svelte';
 	import { Button, Popover } from './ui';
 	import Select from './ui/Select.svelte';
 
-	let { session }: { session: any } = $props();
+	// windowed и barExtra — точки расширения для форков: класс на корне и место в панели рядом с кнопкой закрытия
+	let { session, windowed = false, barExtra }: { session: any; windowed?: boolean; barExtra?: Snippet } = $props();
 
 	onMount(() => {
 		session.init();
@@ -48,13 +49,15 @@
 	}
 </script>
 
-<div class="writing">
+<div class={['writing', { 'writing--window': windowed }]}>
 	<div class="writing__bar">
 		<button type="button" class="writing__close" aria-label="Закрыть редактор" onclick={session.goBack}>
 			<svg class="icon" width="24" height="24" aria-hidden="true">
 				<use href="/icons.svg#v_close"></use>
 			</svg>
 		</button>
+
+		{@render barExtra?.()}
 
 		<span class="writing__status" aria-live="polite">{session.saveMessage}</span>
 
@@ -82,7 +85,7 @@
 	<div class="writing__settings">
 		{#if subsiteOptions.length > 0}
 			<div class="writing__subsite">
-				<Select bind:value={session.selectedSubsiteId} options={subsiteOptions} placeholder="Выберите подсайт" />
+				<Select bind:value={session.selectedSubsiteId} options={subsiteOptions} placeholder="Выберите подсайт" searchable />
 			</div>
 		{/if}
 
