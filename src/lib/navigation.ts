@@ -90,7 +90,7 @@ export function closeOverlay() {
 }
 
 /** Ctrl/Cmd/Shift/средняя кнопка: пусть браузер сам откроет ссылку в новой вкладке */
-function isNewTabClick(e: MouseEvent) {
+export function isNewTabClick(e: MouseEvent) {
 	return e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0;
 }
 

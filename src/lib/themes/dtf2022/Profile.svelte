@@ -2,11 +2,12 @@
 	import type { Comment, CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { resolve } from '$app/paths';
-	import { getProfilePath, openProfile } from '$lib/navigation';
+	import { getProfilePath, isNewTabClick, openProfile } from '$lib/navigation';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
 	import ProfileComment from './ProfileComment.svelte';
+	import ProfileDetails, { type DetailsPage } from './ProfileDetails.svelte';
 	import Preloader from './ui/Preloader.svelte';
 
 	let {
@@ -38,11 +39,12 @@
 		{ value: 'new', label: 'Свежее' }
 	];
 
-	// Подробности профиля (дата, подписчики, подписки) пока открываются на самом DTF
+	// Ссылки на подробности ведут на DTF для «открыть в новой вкладке»; обычный клик открывает вкладку у нас
 	let externalUrl = $derived(profile.url ?? `https://dtf.ru/id${profile.id}`);
 
 	// Вкладка «Комментарии»: грузится при первом открытии, дальше подгружается по мере прокрутки
-	let tab = $state<'posts' | 'comments'>('posts');
+	let tab = $state<'posts' | 'comments' | 'details'>('posts');
+	let detailsPage = $state<DetailsPage>('all');
 	// Не $state.raw: оценка комментария меняет его на месте (comments/votes.svelte.ts)
 	let comments = $state<Comment[]>([]);
 	let commentsCursor: CursorData | undefined;
@@ -69,13 +71,29 @@
 		}
 	}
 
-	function openTab(next: 'posts' | 'comments') {
+	function openTab(next: 'posts' | 'comments' | 'details') {
 		tab = next;
 		if (next === 'comments' && !commentsLoaded) loadComments();
 	}
+
+	function openDetails(page: DetailsPage) {
+		detailsPage = page;
+		openTab('details');
+		// На телефоне это отдельный экран: начинаем с его верха
+		window.scrollTo(0, 0);
+	}
+
+	/** Ссылка на подробности: обычный клик открывает вкладку, Ctrl/Cmd/Shift и средняя кнопка — DTF в новой вкладке */
+	function detailsLink(page: DetailsPage) {
+		return (e: MouseEvent) => {
+			if (isNewTabClick(e)) return;
+			e.preventDefault();
+			openDetails(page);
+		};
+	}
 </script>
 
-{#snippet sidebarBlock(title: string, count: number | undefined, promise: Promise<ProfileListItem[]>, grid: boolean, limit: number, showAll: string, showAllUrl: string)}
+{#snippet sidebarBlock(title: string, count: number | undefined, promise: Promise<ProfileListItem[]>, grid: boolean, limit: number, showAll: string, showAllUrl: string, target: DetailsPage)}
 	{#await promise then items}
 		{#if items.length > 0}
 			<div class="profile-sidebar-block">
@@ -102,13 +120,13 @@
 					{/each}
 				</div>
 
-				<a href={showAllUrl} target="_blank" rel="noreferrer" class="profile-sidebar-block__show-all">{showAll}</a>
+				<a href={showAllUrl} target="_blank" rel="noreferrer" class="profile-sidebar-block__show-all" onclick={detailsLink(target)}>{showAll}</a>
 			</div>
 		{/if}
 	{/await}
 {/snippet}
 
-<div class="profile-section">
+<div class={['profile-section', { 'profile-section--details': tab === 'details' }]}>
 	<div class="profile-head">
 		<div
 			class="profile-head__cover"
@@ -149,7 +167,7 @@
 					</div>
 				{/if}
 				{#if profile.subscribersCount !== undefined}
-					<a href="{externalUrl}/details/subscribers" target="_blank" rel="noreferrer" class="profile-stats__link">
+					<a href="{externalUrl}/details/subscribers" target="_blank" rel="noreferrer" class="profile-stats__link" onclick={detailsLink('subscribers')}>
 						{formatNumber(profile.subscribersCount)}
 						{plural(profile.subscribersCount, ['подписчик', 'подписчика', 'подписчиков'])}
 					</a>
@@ -158,7 +176,7 @@
 			{#if profile.createdAt}
 				<div class="profile-stats__date">На проекте с {formatDate(profile.createdAt)}</div>
 			{/if}
-			<a href="{externalUrl}/details" target="_blank" rel="noreferrer" class="profile-stats__details-link">
+			<a href="{externalUrl}/details" target="_blank" rel="noreferrer" class="profile-stats__details-link" onclick={detailsLink('all')}>
 				<svg height="16" width="16" class="icon" aria-hidden="true">
 					<use href="/icons.svg#ui_info"></use>
 				</svg>
@@ -175,70 +193,81 @@
 					<button type="button" class={['profile-tabs__item', { 'profile-tabs__item--active': tab === 'comments' }]} aria-current={tab === 'comments' ? 'page' : undefined} onclick={() => openTab('comments')}>
 						<span class="profile-tabs__label">Комментарии</span>
 					</button>
-					<a href="{externalUrl}/details" target="_blank" rel="noreferrer" class="profile-tabs__item profile-tabs__details">
+					<button type="button" class={['profile-tabs__item profile-tabs__details', { 'profile-tabs__item--active': tab === 'details' }]} aria-current={tab === 'details' ? 'page' : undefined} onclick={() => openDetails('all')}>
 						<span class="profile-tabs__label">Подробнее</span>
-					</a>
+					</button>
 				</div>
 			</div>
 		</nav>
 	</div>
 
-	<div class="profile-feed">
-		{#if tab === 'posts'}
-			<div class="profile-feed-sorting">
-				{#each SORTINGS as item (item.value)}
-					<button
-						class={['profile-feed-sorting__button', { 'profile-feed-sorting__button--active': sorting === item.value }]}
-						aria-pressed={sorting === item.value}
-						onclick={() => onSortingChange(item.value)}
-					>
-						{item.label}
-					</button>
-				{/each}
-			</div>
-
-			<div class="profile-feed__posts">
-				{#each posts as post (post.sourceId + '_' + post.id)}
-					<PostCard {post} subscribe={false} />
-				{/each}
-			</div>
-
-			{#if postsError}
-				<p class="profile-feed__status">{postsError}</p>
-			{:else if !loadingPosts && posts.length === 0}
-				<p class="profile-feed__status">Постов пока нет</p>
-			{/if}
-
-			{#if hasMore}
-				<div class="profile-feed__more" {@attach loadOnVisible(loadMore)}>
-					{#if loadingPosts}<Preloader />{/if}
+	{#if tab === 'details'}
+		<ProfileDetails
+			{profile}
+			page={detailsPage}
+			{subscribersPromise}
+			{subscriptionsPromise}
+			onNavigate={openDetails}
+			onClose={() => openTab('posts')}
+		/>
+	{:else}
+		<div class="profile-feed">
+			{#if tab === 'posts'}
+				<div class="profile-feed-sorting">
+					{#each SORTINGS as item (item.value)}
+						<button
+							class={['profile-feed-sorting__button', { 'profile-feed-sorting__button--active': sorting === item.value }]}
+							aria-pressed={sorting === item.value}
+							onclick={() => onSortingChange(item.value)}
+						>
+							{item.label}
+						</button>
+					{/each}
 				</div>
-			{/if}
-		{:else}
-			<div class="profile-comments">
-				{#each comments as comment (comment.id)}
-					<ProfileComment {comment} />
-				{/each}
-			</div>
 
-			{#if commentsError}
-				<p class="profile-feed__status">{commentsError}</p>
-			{:else if commentsLoaded && !loadingComments && comments.length === 0}
-				<p class="profile-feed__status">Комментариев пока нет</p>
-			{/if}
-
-			{#if commentsHasMore}
-				<div class="profile-feed__more" {@attach loadOnVisible(loadComments)}>
-					{#if loadingComments}<Preloader />{/if}
+				<div class="profile-feed__posts">
+					{#each posts as post (post.sourceId + '_' + post.id)}
+						<PostCard {post} subscribe={false} />
+					{/each}
 				</div>
-			{/if}
-		{/if}
-	</div>
 
-	<aside class="profile-sidebar">
-		{@render sidebarBlock('Подписчики', profile.subscribersCount, subscribersPromise, true, 12, 'Показать всех', `${externalUrl}/details/subscribers`)}
-		{@render sidebarBlock('Подписки', profile.subscriptionsCount, subscriptionsPromise, false, 5, 'Показать все', `${externalUrl}/details/subscriptions`)}
-	</aside>
+				{#if postsError}
+					<p class="profile-feed__status">{postsError}</p>
+				{:else if !loadingPosts && posts.length === 0}
+					<p class="profile-feed__status">Постов пока нет</p>
+				{/if}
+
+				{#if hasMore}
+					<div class="profile-feed__more" {@attach loadOnVisible(loadMore)}>
+						{#if loadingPosts}<Preloader />{/if}
+					</div>
+				{/if}
+			{:else}
+				<div class="profile-comments">
+					{#each comments as comment (comment.id)}
+						<ProfileComment {comment} />
+					{/each}
+				</div>
+
+				{#if commentsError}
+					<p class="profile-feed__status">{commentsError}</p>
+				{:else if commentsLoaded && !loadingComments && comments.length === 0}
+					<p class="profile-feed__status">Комментариев пока нет</p>
+				{/if}
+
+				{#if commentsHasMore}
+					<div class="profile-feed__more" {@attach loadOnVisible(loadComments)}>
+						{#if loadingComments}<Preloader />{/if}
+					</div>
+				{/if}
+			{/if}
+		</div>
+
+		<aside class="profile-sidebar">
+			{@render sidebarBlock('Подписчики', profile.subscribersCount, subscribersPromise, true, 12, 'Показать всех', `${externalUrl}/details/subscribers`, 'subscribers')}
+			{@render sidebarBlock('Подписки', profile.subscriptionsCount, subscriptionsPromise, false, 5, 'Показать все', `${externalUrl}/details/subscriptions`, 'subscriptions')}
+		</aside>
+	{/if}
 </div>
 
 <style>
@@ -694,6 +723,15 @@
 		}
 
 		.profile-tabs__details {
+			display: none;
+		}
+
+		/* «Подробнее» на телефоне — отдельный экран без шапки профиля */
+		.profile-section--details {
+			gap: 0;
+		}
+
+		.profile-section--details .profile-head {
 			display: none;
 		}
 	}
