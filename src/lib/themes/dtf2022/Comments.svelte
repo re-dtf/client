@@ -36,6 +36,8 @@
 	let media = $state<CommentMedia[]>([]);
 	let donation = $state(0);
 	let paymentLink = $state('');
+	/** Подписка на новые комментарии поста: состояние известно только после нажатия */
+	let subscribedToComments = $state(false);
 	let sending = $state(false);
 	let sendError = $state('');
 	let sortingOpen = $state(false);
@@ -117,6 +119,15 @@
 		}
 	}
 
+	async function toggleCommentsSubscription() {
+		if (sourceId !== 'dtf' || !ensureLogin()) return;
+		try {
+			subscribedToComments = await api.toggleCommentsSubscription(postId);
+		} catch (e) {
+			console.warn('[dtf2022] Не удалось изменить подписку на комментарии:', e);
+		}
+	}
+
 	function highlightBranch(index: number, line: number | null) {
 		if (line === null) {
 			highlight = null;
@@ -161,10 +172,15 @@
 						</svg>
 					</button>
 				</Popover>
-				<!-- ponytail: подписки на комментарии в API клиента пока нет -->
-				<button type="button" class="comments-header__action comments-header__action--bell" title="Подписаться на комментарии">
+				<button
+					type="button"
+					class={['comments-header__action comments-header__action--bell', { 'comments-header__action--active': subscribedToComments }]}
+					title={subscribedToComments ? 'Отписаться от комментариев' : 'Подписаться на комментарии'}
+					aria-pressed={subscribedToComments}
+					onclick={toggleCommentsSubscription}
+				>
 					<svg class="icon" width="20" height="20" aria-hidden="true">
-						<use href="/icons.svg#v_bell"></use>
+						<use href="/icons.svg#{subscribedToComments ? 'bell_solid' : 'v_bell'}"></use>
 					</svg>
 				</button>
 			</div>
@@ -279,6 +295,10 @@
 
 	.comments-header__action .icon {
 		display: block;
+	}
+
+	.comments-header__action--active {
+		color: var(--color-blue);
 	}
 
 	.comments-header__action--bell .icon {
