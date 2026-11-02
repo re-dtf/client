@@ -165,11 +165,14 @@ export const dtfApiProvider = {
 		return { edit: !!(await resultOf(response, 'Не удалось получить действия')).etcControls?.edit };
 	},
 
-	/** Это GET, но он переключает подписку: ответ говорит, что получилось */
-	async toggleCommentsSubscription(postId: number): Promise<boolean> {
+	/**
+	 * Оба запроса — GET, но меняют подписку. Ответ `thread/unsubscribe` врёт (`subscribe: true`),
+	 * поэтому ему не верим: настоящее состояние лежит в посте (`subscribedToTreads`).
+	 */
+	async setCommentsSubscription(postId: number, subscribed: boolean): Promise<void> {
 		requireAuth();
-		const response = await fetchWithAuth(`${apiV('2.4')}/content/${postId}/thread/subscribe`);
-		return !!(await resultOf(response, 'Не удалось изменить подписку на комментарии')).subscribe;
+		const response = await fetchWithAuth(`${apiV('2.4')}/content/${postId}/thread/${subscribed ? 'subscribe' : 'unsubscribe'}`);
+		await resultOf(response, 'Не удалось изменить подписку на комментарии');
 	},
 
 	// --- Гифки для комментариев ---

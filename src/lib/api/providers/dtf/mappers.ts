@@ -66,7 +66,8 @@ export function mapEntryToPost(entry: any): Post {
 		// hitsCount/views сейчас приходят нулями, просмотры лежат в counters.total
 		viewsCount: entry.hitsCount || entry.counters?.views || entry.counters?.total || undefined,
 		isPinned: !!entry.isPinned,
-		isFavorited: !!entry.isFavorited
+		isFavorited: !!entry.isFavorited,
+		isSubscribedToComments: entry.subscribedToTreads
 	};
 }
 

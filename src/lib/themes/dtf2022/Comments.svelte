@@ -6,6 +6,7 @@
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import { ensureLogin } from './actions.svelte';
 	import { formatNumber, plural } from './format';
+	import { notify } from './ui/notify.svelte';
 	import Popover from './ui/Popover.svelte';
 	import Preloader from './ui/Preloader.svelte';
 	import CommentEditor from './comments/CommentEditor.svelte';
@@ -15,8 +16,9 @@
 	let {
 		postId,
 		sourceId = 'dtf',
-		commentsCount = 0
-	}: { postId: number; sourceId?: string; commentsCount?: number } = $props();
+		commentsCount = 0,
+		subscribed = false
+	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean } = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -36,8 +38,9 @@
 	let media = $state<CommentMedia[]>([]);
 	let donation = $state(0);
 	let paymentLink = $state('');
-	/** Подписка на новые комментарии поста: состояние известно только после нажатия */
-	let subscribedToComments = $state(false);
+	/** Подписка на новые комментарии поста (колокольчик): начальное состояние берём из поста */
+	// svelte-ignore state_referenced_locally
+	let subscribedToComments = $state(subscribed);
 	let sending = $state(false);
 	let sendError = $state('');
 	let sortingOpen = $state(false);
@@ -121,10 +124,14 @@
 
 	async function toggleCommentsSubscription() {
 		if (sourceId !== 'dtf' || !ensureLogin()) return;
+
+		const was = subscribedToComments;
+		subscribedToComments = !was;
 		try {
-			subscribedToComments = await api.toggleCommentsSubscription(postId);
+			await api.setCommentsSubscription(postId, !was);
 		} catch (e) {
-			console.warn('[dtf2022] Не удалось изменить подписку на комментарии:', e);
+			subscribedToComments = was;
+			notify.error((e as Error).message);
 		}
 	}
 

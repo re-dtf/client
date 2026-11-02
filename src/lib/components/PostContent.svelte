@@ -27,7 +27,7 @@
 		</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
-		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} />
+		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} />
 		{#if backButton}
 			<div class="actions">
 				{@render backButton()}

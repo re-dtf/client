@@ -70,6 +70,8 @@ export interface Post {
 	viewsCount?: number;
 	isPinned?: boolean;
 	isFavorited?: boolean;
+	/** Подписан ли пользователь на новые комментарии поста (колокольчик) */
+	isSubscribedToComments?: boolean;
 }
 
 export interface User {
@@ -262,7 +264,7 @@ export interface ApiProvider {
 	addComment?(postId: number, text: string, replyTo?: number, media?: CommentMedia[]): Promise<Comment>;
 	editComment?(commentId: number, postId: number, text: string, media?: CommentMedia[]): Promise<Comment>;
 	/** Включает или выключает уведомления о новых комментариях поста; отвечает новым состоянием */
-	toggleCommentsSubscription?(postId: number): Promise<boolean>;
+	setCommentsSubscription?(postId: number, subscribed: boolean): Promise<void>;
 	getFavoriteGifs?(): Promise<GifResult[]>;
 	searchGifs?(query: string, cursor?: string): Promise<{ items: GifResult[]; cursor?: string }>;
 	getCommentControls?(commentId: number): Promise<CommentControls>;

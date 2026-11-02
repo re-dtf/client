@@ -167,7 +167,7 @@ export const api = {
 	getCommentControls: dtfApiProvider.getCommentControls,
 	complain: dtfApiProvider.complain,
 	createDonation: dtfApiProvider.createDonation,
-	toggleCommentsSubscription: dtfApiProvider.toggleCommentsSubscription,
+	setCommentsSubscription: dtfApiProvider.setCommentsSubscription,
 	getFavoriteGifs: dtfApiProvider.getFavoriteGifs,
 	searchGifs: dtfApiProvider.searchGifs,
 	setSubscription: dtfApiProvider.setSubscription,
