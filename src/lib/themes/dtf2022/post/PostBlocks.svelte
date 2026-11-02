@@ -5,6 +5,7 @@
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
+	import { openLightbox } from '$lib/navigation';
 	import PostCard from './PostCard.svelte';
 	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth } from '../media';
 
@@ -85,11 +86,11 @@
 	Рамка (серые поля, если картинка уже колонки) → заглушка с пропорциями и цветом → img/video.
 	Размеры берём из данных картинки, ограничение высоты — как на DTF (см. media.ts).
 -->
-{#snippet placeholder(data: any, kind: 'zoom' | 'video', content: Snippet)}
+{#snippet placeholder(data: any, kind: 'video' | undefined, content: Snippet)}
 	{@const maxWidth = mediaMaxWidth(data?.width, data?.height, isFullWidth(data) ? Infinity : FEED_MEDIA_MAX_HEIGHT)}
 	<div class="media-frame" style:--media-max-w={maxWidth ? `${maxWidth}px` : '100%'}>
 		<div
-			class="media-placeholder media-placeholder--{kind}"
+			class={['media-placeholder', kind && `media-placeholder--${kind}`]}
 			style:--media-w={data?.width || 16}
 			style:--media-h={data?.height || 9}
 			style:--media-bg={data?.color ? `#${data.color}` : undefined}
@@ -99,7 +100,7 @@
 	</div>
 {/snippet}
 
-{#snippet figure(image: any, caption: string | undefined)}
+{#snippet figure(image: any, caption: string | undefined, gallery: any[])}
 	<figure class={figureClass(image.data)}>
 		{#snippet content()}
 			{#if isVideo(image)}
@@ -114,9 +115,22 @@
 				></video>
 			{:else}
 				<img src={getLeonardoUrl(image.data.uuid, { width: variant === 'page' ? 2048 : 1024 })} alt={caption || ''} loading="lazy" />
+				<!-- В ленте и во встроенном посте картинка открывает пост (ссылка поверх карточки), просмотр только на странице -->
+				{#if variant === 'page'}
+					<button
+						class="media-placeholder__zoom"
+						aria-label="Открыть изображение"
+						onclick={(e) =>
+							openLightbox(
+								gallery.map((g) => g.data),
+								gallery.indexOf(image),
+								e.currentTarget.previousElementSibling as HTMLImageElement
+							)}
+					></button>
+				{/if}
 			{/if}
 		{/snippet}
-		{@render placeholder(image.data, 'zoom', content)}
+		{@render placeholder(image.data, undefined, content)}
 		{#if caption}
 			<figcaption class="media-caption">{caption}</figcaption>
 		{/if}
@@ -131,9 +145,11 @@
 			{@html sanitize(block.data.text)}
 		</svelte:element>
 	{:else if block.type === 'media'}
+		<!-- Галерея просмотра — картинки этого блока (видео в неё не входят) -->
+		{@const gallery = (block.data.items ?? []).map((item: any) => item.image).filter((image: any) => image?.data?.uuid && !isVideo(image))}
 		{#each block.data.items ?? [] as item}
 			{#if item.image?.data?.uuid}
-				{@render figure(item.image, item.title)}
+				{@render figure(item.image, item.title, gallery)}
 			{/if}
 		{/each}
 	{:else if block.type === 'video' && block.data.video?.data}
@@ -334,19 +350,25 @@
 		border: 0;
 	}
 
-	.media-placeholder--zoom {
-		cursor: zoom-in;
+	/* Видео с кнопками и плеер YouTube поднимаем над ссылкой на пост (.post-link в PostCard), иначе клик по ним открывает пост */
+	.media-placeholder :is(video[controls], iframe) {
+		z-index: 2;
 	}
 
 	.media-placeholder--video {
 		cursor: pointer;
 	}
 
-	.media-placeholder__play {
+	.media-placeholder__play,
+	.media-placeholder__zoom {
 		position: absolute;
 		inset: 0;
 		z-index: 2;
 		cursor: pointer;
+	}
+
+	.media-placeholder__zoom {
+		cursor: zoom-in;
 	}
 
 	.icon-play {

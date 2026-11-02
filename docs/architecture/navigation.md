@@ -13,15 +13,18 @@ type OverlayData =
 	| { type: 'settings' }
 	| { type: 'notifications' }
 	| { type: 'login' }
-	| { type: 'editor'; data?: { postId?: number | null } };
+	| { type: 'editor'; data?: { postId?: number | null } }
+	| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number }[]; index: number } };
 
-type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' };
+type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' | 'fullscreen' };
 ```
 
 Способ показа (`presentation`) определяется типом:
 
 - **`page`** (пост, профиль, уведомления) — занимает место страницы. Лента под ним скрыта (`display: none`), но не размонтируется. Если открыто несколько, видим только верхний.
 - **`modal`** (настройки, вход, редактор) — окно поверх всего с подложкой. Клик по подложке закрывает его.
+
+- **`fullscreen`** (просмотр картинок) — оверлей сам рисует себя на весь экран, подложки у него нет.
 
 Корневой `+layout.svelte` рисует стек: для каждого оверлея выбирает компонент по `type` (сниппет `overlayContent`), оборачивает по способу показа и запоминает прокрутку нижнего слоя.
 
@@ -31,6 +34,7 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' }
 | --- | --- |
 | `openOverlay(overlay)` | открыть оверлей: `openOverlay({ type: 'settings' })`. Адрес вычисляется по типу |
 | `closeOverlay()` | закрыть верхний (шаг назад по истории, как кнопка «Назад») |
+| `openLightbox(images, index, origin?)` | просмотр картинок (PhotoSwipe, грузится при первом открытии). Адрес не меняется, но это шаг истории: «Назад» закрывает просмотр. `origin` — миниатюра, из которой разворачивается кадр |
 | `openPost(e, post)` | обработчик клика по ссылке на пост |
 | `openProfile(e, id)` | то же для профиля |
 | `openFeed(e)` | обработчик клика по логотипу и «Главной» |

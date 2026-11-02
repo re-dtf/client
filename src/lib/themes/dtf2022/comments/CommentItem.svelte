@@ -5,7 +5,7 @@
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openProfile } from '$lib/navigation';
+	import { getPostPath, getProfilePath, openLightbox, openProfile } from '$lib/navigation';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { ensureLogin } from '../actions.svelte';
@@ -55,6 +55,8 @@
 	let votes = $derived(themeSettings.votes);
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
+	// Галерея просмотра — картинки комментария, видео в неё не входят
+	let images = $derived((comment.media ?? []).filter((media) => media.type !== 'movie'));
 
 	let score = $derived(votesOf(comment));
 
@@ -224,7 +226,7 @@
 					{#each comment.media as media}
 						<figure class="media-figure">
 							<div
-								class="media-placeholder media-placeholder--zoom"
+								class="media-placeholder"
 								style:--media-max-w="{mediaMaxWidth(media.data.width, media.data.height, COMMENT_MEDIA_MAX_HEIGHT)}px"
 								style:--media-w={media.data.width || 16}
 								style:--media-h={media.data.height || 9}
@@ -241,6 +243,17 @@
 									></video>
 								{:else}
 									<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
+									<button
+										type="button"
+										class="media-placeholder__zoom"
+										aria-label="Открыть изображение"
+										onclick={(e) =>
+											openLightbox(
+												images.map((m) => m.data),
+												images.indexOf(media),
+												e.currentTarget.previousElementSibling as HTMLImageElement
+											)}
+									></button>
 								{/if}
 							</div>
 						</figure>
@@ -588,7 +601,9 @@
 		height: 100%;
 	}
 
-	.media-placeholder--zoom {
+	.media-placeholder__zoom {
+		position: absolute;
+		inset: 0;
 		cursor: zoom-in;
 	}
 

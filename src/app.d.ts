@@ -16,13 +16,14 @@ declare global {
 			| { type: 'settings' }
 			| { type: 'notifications' }
 			| { type: 'login' }
-			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } };
+			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } }
+			| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number }[]; index: number } };
 
 		/** Оверлей в стеке: то, что открыли, плюс служебные поля */
 		type OverlayState = OverlayData & {
 			id: string;
-			/** page — вместо страницы, лента под ним скрыта; modal — окно поверх */
-			presentation: 'page' | 'modal';
+			/** page — вместо страницы, лента под ним скрыта; modal — окно поверх; fullscreen — рисует себя сам на весь экран */
+			presentation: 'page' | 'modal' | 'fullscreen';
 		};
 
 		interface PageState {

@@ -6,6 +6,7 @@
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
 	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
+	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/env';
@@ -22,13 +23,14 @@
 	let overlays = $derived(page.state.overlays || []);
 	
 	// Determine the topmost 'page' overlay. Layers beneath it should be hidden.
-	let topmostPageOverlayIndex = $derived(overlays.findLastIndex(o => o.presentation !== 'modal'));
-	
-	let hasModalActive = $derived(overlays.some(o => o.presentation === 'modal'));
+	let topmostPageOverlayIndex = $derived(overlays.findLastIndex(o => o.presentation === 'page'));
+
+	// Модалки и просмотр картинок закрывают страницу целиком: она под ними не прокручивается
+	let hasModalActive = $derived(overlays.some(o => o.presentation !== 'page'));
 	
 	// Scroll Restoration Stack
 	let scrollPositions = new Map<string, number>();
-	let activeScrollId = $derived(overlays.findLast(o => o.presentation !== 'modal')?.id ?? '__feed__');
+	let activeScrollId = $derived(overlays.findLast(o => o.presentation === 'page')?.id ?? '__feed__');
 	let previousScrollId = '__feed__';
 
 	$effect.pre(() => {
@@ -103,6 +105,8 @@
 		<LoginOverlay />
 	{:else if overlay.type === 'editor'}
 		<EditorOverlay {...overlay.data} />
+	{:else if overlay.type === 'lightbox'}
+		<LightboxOverlay {...overlay.data} />
 	{/if}
 {/snippet}
 
@@ -116,8 +120,8 @@
 		</div>
 
 		{#each overlays as overlay, index (overlay.id)}
-			{#if overlay.presentation !== 'modal'}
-				<div class="overlay-wrapper" style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'}>
+			{#if overlay.presentation === 'page'}
+				<div class="overlay-wrapper"style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'}>
 					{@render overlayContent(overlay)}
 				</div>
 			{/if}
@@ -137,6 +141,8 @@
 			>
 				{@render overlayContent(overlay)}
 			</div>
+		{:else if overlay.presentation === 'fullscreen'}
+			{@render overlayContent(overlay)}
 		{/if}
 	{/each}
 </div>

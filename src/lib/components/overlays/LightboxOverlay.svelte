@@ -1,0 +1,54 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { getLeonardoUrl } from '$lib/api/utils';
+	import { closeOverlay, takeLightboxOrigin } from '$lib/navigation';
+
+	/** Просмотр картинок на весь экран. PhotoSwipe рисует себя сам, поэтому здесь только запуск и закрытие */
+	let { images, index }: { images: { uuid: string; width: number; height: number }[]; index: number } = $props();
+
+	const MAX_WIDTH = 2048;
+
+	onMount(() => {
+		const origin = takeLightboxOrigin();
+		let closed = false;
+		let pswp: import('photoswipe').default | undefined;
+
+		// Библиотека тяжёлая и нужна не всем: грузим при первом открытии
+		(async () => {
+			const [{ default: PhotoSwipe }] = await Promise.all([import('photoswipe'), import('photoswipe/style.css')]);
+			if (closed) return;
+
+			pswp = new PhotoSwipe({
+				index,
+				// Стандартные 0.8 просвечивают страницу под просмотром
+				bgOpacity: 0.92,
+				dataSource: images.map(({ uuid, width, height }, i) => {
+					// Картинка приходит не шире MAX_WIDTH, поэтому и размер заявляем такой, иначе приближение будет мыльным
+					const scale = Math.min(1, MAX_WIDTH / width);
+					return {
+						src: getLeonardoUrl(uuid, { width: MAX_WIDTH }),
+						width: Math.round(width * scale),
+						height: Math.round(height * scale),
+						// Только у открытого кадра: листали дальше — закрываемся плавным исчезновением
+						...(i === index && origin && { element: origin, msrc: origin.currentSrc })
+					};
+				})
+			});
+			// Закрыли крестиком, Esc или свайпом: шаг истории назад
+			pswp.on('destroy', () => {
+				if (closed) return;
+				closed = true;
+				closeOverlay();
+			});
+			// «Назад» во время раскрытия PhotoSwipe пропускает: дожидаемся конца анимации
+			pswp.on('openingAnimationEnd', () => closed && pswp?.destroy());
+			pswp.init();
+		})();
+
+		// «Назад» в браузере: оверлея уже нет в истории, просто убираем просмотр
+		return () => {
+			closed = true;
+			pswp?.destroy();
+		};
+	});
+</script>

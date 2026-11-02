@@ -6,7 +6,7 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import type { Comment } from '$lib/api/types';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
+	import { getPostPath, getProfilePath, openLightbox, openPost, openProfile } from '$lib/navigation';
 	import { ensureLogin } from './actions.svelte';
 	import { parseCommentText } from './comments/commentText';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './comments/votes.svelte';
@@ -27,6 +27,7 @@
 	let score = $derived(votesOf(comment));
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let post = $derived({ id: comment.postId, sourceId: comment.sourceId });
+	let images = $derived((comment.media ?? []).filter((media) => media.type !== 'movie'));
 	let postPath = $derived(resolve(getPostPath(post) as any));
 	let commentUrl = $derived(new URL(`${postPath}#comment-${comment.sourceId}_${comment.id}`, location.href));
 
@@ -96,7 +97,14 @@
 				{#if media.type === 'movie'}
 					<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)}></video>
 				{:else}
-					<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
+					<button
+						type="button"
+						class="profile-comment__zoom"
+						aria-label="Открыть изображение"
+						onclick={(e) => openLightbox(images.map((m) => m.data), images.indexOf(media), e.currentTarget.firstElementChild as HTMLImageElement)}
+					>
+						<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
+					</button>
 				{/if}
 			{/each}
 		</div>
@@ -257,6 +265,12 @@
 		display: block;
 		max-width: 100%;
 		border-radius: 8px;
+	}
+
+	.profile-comment__zoom {
+		display: block;
+		max-width: 100%;
+		cursor: zoom-in;
 	}
 
 	.profile-comment__footer {

@@ -20,7 +20,8 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	settings: 'modal',
 	notifications: 'page',
 	login: 'modal',
-	editor: 'modal'
+	editor: 'modal',
+	lightbox: 'fullscreen'
 };
 
 export function getPostPath(post: { id: number; sourceId: string }, commentId?: number) {
@@ -32,7 +33,7 @@ export function getProfilePath(id: number) {
 	return `/u/${id}`;
 }
 
-function overlayPath(overlay: App.OverlayData): string {
+function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): string {
 	switch (overlay.type) {
 		case 'post':
 			return getPostPath({ id: overlay.data.postId, sourceId: overlay.data.sourceId }, overlay.data.commentId);
@@ -54,10 +55,32 @@ let overlayCounter = 0;
 /** Открыть оверлей поверх текущего экрана */
 export function openOverlay(overlay: App.OverlayData) {
 	const opened: App.OverlayState = { ...overlay, id: `${overlay.type}-${overlayCounter++}`, presentation: PRESENTATION[overlay.type] };
-	return goto(resolve(overlayPath(overlay) as '/'), {
+	// Просмотр картинок остаётся на текущем адресе: это шаг истории для кнопки «Назад», а не страница.
+	// page.url тут не годится: под оверлеями он остаётся адресом нижней страницы, а не поста
+	const url = overlay.type === 'lightbox' ? location.href : resolve(overlayPath(overlay) as '/');
+	return goto(url, {
 		shallow: true,
 		state: { overlays: [...(page.state.overlays ?? []), opened] }
 	});
+}
+
+// Картинка, из которой раскрываем просмотр: в историю её не положить, поэтому передаём через модуль
+let lightboxOrigin: HTMLImageElement | undefined;
+
+/** Открыть просмотр картинок; origin — миниатюра, из которой разворачиваем (и в которую сворачиваем) кадр с номером index */
+export function openLightbox(images: { uuid: string; width: number; height: number }[], index: number, origin?: HTMLImageElement) {
+	lightboxOrigin = origin;
+	return openOverlay({
+		type: 'lightbox',
+		data: { images: images.map(({ uuid, width, height }) => ({ uuid, width, height })), index }
+	});
+}
+
+/** Миниатюра для анимации, которую запомнил openLightbox; после чтения забывается */
+export function takeLightboxOrigin() {
+	const origin = lightboxOrigin;
+	lightboxOrigin = undefined;
+	return origin?.isConnected ? origin : undefined;
 }
 
 /** Закрыть верхний оверлей: возвращаемся на шаг назад по истории, как кнопка «Назад» */
