@@ -43,7 +43,8 @@
 
 	// Вкладка «Комментарии»: грузится при первом открытии, дальше подгружается по мере прокрутки
 	let tab = $state<'posts' | 'comments'>('posts');
-	let comments = $state.raw<Comment[]>([]);
+	// Не $state.raw: оценка комментария меняет его на месте (comments/votes.svelte.ts)
+	let comments = $state<Comment[]>([]);
 	let commentsCursor: CursorData | undefined;
 	let commentsLoaded = $state(false);
 	let commentsHasMore = $state(true);
