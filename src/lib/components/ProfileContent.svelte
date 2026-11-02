@@ -11,7 +11,7 @@
 	let { profileId, onLoaded }: { profileId: number; onLoaded?: (name: string) => void } = $props();
 
 	let profilePromise = $derived(api.getProfile(profileId));
-	let subscribersPromise = $derived(api.getProfileSubscribers(profileId).catch(() => []));
+	let subscribersPromise = $derived(api.getProfileSubscribers(profileId).then((page) => page.items).catch(() => []));
 	let subscriptionsPromise = $derived(api.getProfileSubscriptions(profileId).catch(() => []));
 
 	let sorting = $state<Sorting>('new');

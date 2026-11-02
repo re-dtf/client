@@ -130,6 +130,8 @@ export interface ProfileListItem {
 	id: number;
 	name: string;
 	avatarUrl?: string;
+	/** Только после входа: подписан ли вошедший пользователь */
+	isSubscribed?: boolean;
 }
 
 
@@ -306,7 +308,7 @@ export interface ApiProvider {
 	// Профили
 	getProfile?(id: number): Promise<Profile>;
 	getProfilePosts?(id: number, sorting: ProfileSorting, cursor?: CursorData): Promise<PaginatedResult<Post>>;
-	getProfileSubscribers?(id: number): Promise<ProfileListItem[]>;
+	getProfileSubscribers?(id: number, cursor?: CursorData): Promise<PaginatedResult<ProfileListItem>>;
 	getProfileSubscriptions?(id: number): Promise<ProfileListItem[]>;
 	getProfileComments?(id: number, cursor?: CursorData): Promise<PaginatedResult<Comment>>;
 

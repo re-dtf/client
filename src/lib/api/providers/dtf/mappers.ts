@@ -22,7 +22,7 @@ export function mapUser(author: any): User {
 }
 
 export function mapProfileListItem(subsite: any): ProfileListItem {
-	return { id: subsite.id, name: subsite.name || 'Аноним', avatarUrl: mapAvatarUrl(subsite, '108x108') };
+	return { id: subsite.id, name: subsite.name || 'Аноним', avatarUrl: mapAvatarUrl(subsite, '108x108'), isSubscribed: !!subsite.isSubscribed };
 }
 
 export function mapLikes(likes: any): Likes | undefined {

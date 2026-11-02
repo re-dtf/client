@@ -292,9 +292,15 @@ export const dtfApiProvider = {
 		};
 	},
 
-	async getProfileSubscribers(id: number): Promise<ProfileListItem[]> {
-		const response = await fetchWithAuth(`${API_URL}/subsite/subscribers?subsiteId=${id}`);
-		return ((await response.json()).result?.items || []).map(mapProfileListItem);
+	async getProfileSubscribers(id: number, cursor?: CursorData): Promise<PaginatedResult<ProfileListItem>> {
+		const response = await fetchWithAuth(`${API_URL}/subsite/subscribers?subsiteId=${id}${cursorQuery(cursor)}`);
+		const result = (await response.json()).result;
+
+		return {
+			items: (result?.items || []).map(mapProfileListItem),
+			lastId: result?.lastId,
+			lastSortingValue: result?.lastSortingValue
+		};
 	},
 
 	async getProfileSubscriptions(id: number): Promise<ProfileListItem[]> {
