@@ -16,6 +16,7 @@
 	import Rating from './post/Rating.svelte';
 	import Reactions from './post/Reactions.svelte';
 	import { votesOf } from './reactionVotes';
+	import UnknownBlock from './UnknownBlock.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 	import Popover from './ui/Popover.svelte';
 	import { notify } from './ui/notify.svelte';
@@ -27,7 +28,7 @@
 	let score = $derived(votesOf(comment));
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let post = $derived({ id: comment.postId, sourceId: comment.sourceId });
-	let images = $derived((comment.media ?? []).filter((media) => media.type !== 'movie'));
+	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 	let postPath = $derived(resolve(getPostPath(post) as any));
 	let commentUrl = $derived(new URL(`${postPath}#comment-${comment.sourceId}_${comment.id}`, location.href));
 
@@ -93,10 +94,10 @@
 
 	{#if comment.media?.length}
 		<div class="profile-comment__media">
-			{#each comment.media as media (media.data.uuid)}
+			{#each comment.media as media}
 				{#if media.type === 'movie'}
 					<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)}></video>
-				{:else}
+				{:else if media.type === 'image'}
 					<button
 						type="button"
 						class="profile-comment__zoom"
@@ -105,6 +106,8 @@
 					>
 						<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
 					</button>
+				{:else}
+					<UnknownBlock type={media.type} />
 				{/if}
 			{/each}
 		</div>

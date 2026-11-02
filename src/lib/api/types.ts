@@ -135,7 +135,8 @@ export interface ProfileListItem {
 
 
 export interface CommentMedia {
-	type: 'image' | 'movie';
+	/** `image` и `movie` показываются, остальные типы (link, video…) — заглушкой */
+	type: string;
 	data: {
 		uuid: string;
 		width: number;

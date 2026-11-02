@@ -7,6 +7,7 @@
 	import { getLeonardoUrl } from '$lib/api/utils';
 	import { openLightbox } from '$lib/navigation';
 	import PostCard from './PostCard.svelte';
+	import UnknownBlock from '../UnknownBlock.svelte';
 	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth } from '../media';
 
 	/*
@@ -208,7 +209,9 @@
 				<PostCard post={embedToPost(block.data.osnovaEmbed.data)} embed />
 			{/if}
 		{:else if variant === 'page'}
-			<div class="post-block post-block--unknown">Блок «{block.type}» пока не поддерживается</div>
+			<div class="post-block">
+				<UnknownBlock type={block.type} />
+			</div>
 		{/if}
 {/snippet}
 
@@ -461,12 +464,6 @@
 	.post-spoiler__label {
 		color: var(--text-primary);
 		font-weight: 500;
-	}
-
-	.post-block--unknown {
-		color: var(--text-muted);
-		font-size: 15px;
-		font-style: italic;
 	}
 
 	@media (max-width: 859px) {

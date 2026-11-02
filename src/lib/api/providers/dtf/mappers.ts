@@ -84,7 +84,7 @@ export function mapComment(item: any, postId: number): Comment {
 		isIgnored: item.isIgnored,
 		isRemoved: item.isRemoved,
 		media: item.media?.length ? item.media.map((m: any) => ({
-			type: m.type === 'movie' ? 'movie' : 'image',
+			type: m.type || 'image',
 			data: {
 				uuid: m.data?.uuid || '',
 				width: m.data?.width || 0,

@@ -48,6 +48,12 @@ describe('mapComment', () => {
 		expect(comment.media).toBeUndefined();
 	});
 
+	it('оставляет тип вложения, чтобы неизвестные показать заглушкой', () => {
+		const comment = mapComment({ id: 3, media: [{ type: 'link', data: { url: 'https://habr.com/' } }] }, 99);
+
+		expect(comment.media?.[0].type).toBe('link');
+	});
+
 	it('берёт закладку и заголовок поста из списка комментариев профиля', () => {
 		const comment = mapComment({ id: 3, isFavorited: true, entry: { id: 8, title: 'Пост' } }, 8);
 

@@ -18,6 +18,7 @@
 	import PostButton from '../post/PostButton.svelte';
 	import Rating from '../post/Rating.svelte';
 	import Reactions from '../post/Reactions.svelte';
+	import UnknownBlock from '../UnknownBlock.svelte';
 	import { COMMENT_MEDIA_MAX_HEIGHT, mediaMaxWidth } from '../media';
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
@@ -56,7 +57,7 @@
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
 	// Галерея просмотра — картинки комментария, видео в неё не входят
-	let images = $derived((comment.media ?? []).filter((media) => media.type !== 'movie'));
+	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 
 	let score = $derived(votesOf(comment));
 
@@ -224,39 +225,43 @@
 			{#if comment.media?.length}
 				<div class="comment-item__attaches comment-item__media">
 					{#each comment.media as media}
-						<figure class="media-figure">
-							<div
-								class="media-placeholder"
-								style:--media-max-w="{mediaMaxWidth(media.data.width, media.data.height, COMMENT_MEDIA_MAX_HEIGHT)}px"
-								style:--media-w={media.data.width || 16}
-								style:--media-h={media.data.height || 9}
-								style:--media-bg={media.data.color ? `#${media.data.color}` : undefined}
-							>
-								{#if media.type === 'movie'}
-									<video
-										src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })}
-										muted
-										loop
-										playsinline
-										controls={!!media.data.has_audio}
-										{@attach fromAction(lazyVideo)}
-									></video>
-								{:else}
-									<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
-									<button
-										type="button"
-										class="media-placeholder__zoom"
-										aria-label="Открыть изображение"
-										onclick={(e) =>
-											openLightbox(
-												images.map((m) => m.data),
-												images.indexOf(media),
-												e.currentTarget.previousElementSibling as HTMLImageElement
-											)}
-									></button>
-								{/if}
-							</div>
-						</figure>
+						{#if media.type === 'image' || media.type === 'movie'}
+							<figure class="media-figure">
+								<div
+									class="media-placeholder"
+									style:--media-max-w="{mediaMaxWidth(media.data.width, media.data.height, COMMENT_MEDIA_MAX_HEIGHT)}px"
+									style:--media-w={media.data.width || 16}
+									style:--media-h={media.data.height || 9}
+									style:--media-bg={media.data.color ? `#${media.data.color}` : undefined}
+								>
+									{#if media.type === 'movie'}
+										<video
+											src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })}
+											muted
+											loop
+											playsinline
+											controls={!!media.data.has_audio}
+											{@attach fromAction(lazyVideo)}
+										></video>
+									{:else}
+										<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
+										<button
+											type="button"
+											class="media-placeholder__zoom"
+											aria-label="Открыть изображение"
+											onclick={(e) =>
+												openLightbox(
+													images.map((m) => m.data),
+													images.indexOf(media),
+													e.currentTarget.previousElementSibling as HTMLImageElement
+												)}
+										></button>
+									{/if}
+								</div>
+							</figure>
+						{:else}
+							<UnknownBlock type={media.type} />
+						{/if}
 					{/each}
 				</div>
 			{/if}
