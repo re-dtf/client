@@ -1,0 +1,107 @@
+/* Theme: redtf — шапка в тех же колонках, что и страница (см. MainLayout.svelte).
+   Правой колонки нет. От 1180px блок профиля лежит поверх правого края, от 1300px ему отдана колонка.
+   Селекторы с :root, иначе их перебивают scoped-стили Header основы (та же специфичность, но грузятся позже). */
+@media (min-width: 1180px) {
+	:root[data-theme~="redtf"] .header-container {
+		grid-template-columns: var(--sidebar-left-width) 1fr 0;
+	}
+
+	:root[data-theme~="redtf"] .header-right {
+		position: absolute;
+		top: 0;
+		right: 0;
+	}
+}
+
+@media (min-width: 1300px) {
+	:root[data-theme~="redtf"] .header-container {
+		grid-template-columns: var(--sidebar-left-width) 1fr var(--sidebar-left-width);
+	}
+
+	:root[data-theme~="redtf"] .header-right {
+		position: static;
+	}
+}
+
+/* Ширина контента меняется ползунком в настройках: регистрируем переменные как длины, чтобы переход их интерполировал.
+   Переход включён, только пока открыто окно настроек, иначе ширина анимировалась бы при каждом запуске */
+@property --content-width {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 640px;
+}
+
+@property --inner-content-width {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 600px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	:root[data-theme~="redtf"]:has(.window) {
+		transition:
+			--content-width 0.25s cubic-bezier(0.2, 0, 0, 1),
+			--inner-content-width 0.25s cubic-bezier(0.2, 0, 0, 1);
+	}
+}
+
+/* Редактор: на весь экран или окном (кнопка рядом с закрытием). Переключение — плавное изменение рамки окна.
+   Кнопка и окно нужны только там, где окну есть куда помещаться: на узком экране редактор всегда на весь экран */
+:root[data-theme~="redtf"] .writing {
+	transition:
+		inset 0.4s cubic-bezier(0.2, 0, 0, 1),
+		border-radius 0.4s cubic-bezier(0.2, 0, 0, 1),
+		box-shadow 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+:root[data-theme~="redtf"] .writing__mode {
+	display: none;
+}
+
+@media (min-width: 720px) {
+	:root[data-theme~="redtf"] .writing__mode {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 8px;
+		color: #000;
+		opacity: 0.5;
+		cursor: pointer;
+	}
+
+	:root[data-theme~="redtf"] .writing__mode:hover {
+		opacity: 1;
+	}
+
+	:root[data-theme~="redtf"] .writing--window {
+		inset: 5vh max(16px, calc((100vw - var(--content-width) - 80px) / 2));
+		border-radius: 16px;
+		box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+	}
+}
+
+/* Раскладка. --page-gutter — поля области контента, --text-gap — минимальное поле у колонки текста внутри белых блоков
+   поста и комментариев. На узком экране блоки идут от края до края, как у DTF (на ≤639px поле текста задают сами блоки) */
+:root[data-theme~="redtf"] {
+	--page-gutter: 0px;
+	--text-gap: 0px;
+}
+
+@media (min-width: 640px) {
+	:root[data-theme~="redtf"] {
+		--text-gap: 20px;
+	}
+}
+
+@media (min-width: 860px) {
+	:root[data-theme~="redtf"] {
+		--page-gutter: 20px;
+	}
+
+	/* Кнопка «Создать» стоит у правого края колонки, поэтому поля у шапки те же, что у страницы */
+	[data-theme~="redtf"] .header-center {
+		padding-inline: var(--page-gutter);
+	}
+}
