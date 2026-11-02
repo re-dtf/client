@@ -21,7 +21,8 @@
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
-	import { loadThemeStyles } from '$lib/themes/registry';
+	import { loadThemeStyles, themeSettingsSchema } from '$lib/themes/registry';
+	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	
 	let { children } = $props();
 	let showWelcome = $state(false);
@@ -95,6 +96,18 @@
 		return () => (outdated = true);
 	});
 	
+	// Ползунки темы выставляют CSS-переменные корня (инлайн-стиль сильнее стилей темы)
+	$effect(() => {
+		const values = activeThemeSettings().value;
+		const vars: Record<string, string> = {};
+		for (const field of themeSettingsSchema(activeTheme.id)) {
+			if (field.type === 'slider') Object.assign(vars, field.cssVars(Number(values[field.key] ?? field.default)));
+		}
+		const style = document.documentElement.style;
+		for (const [name, value] of Object.entries(vars)) style.setProperty(name, value);
+		return () => Object.keys(vars).forEach((name) => style.removeProperty(name));
+	});
+
 	onMount(() => {
 		cleanupHangingBio(true);
 		const stopTracking = startTracking(() => statsContext);

@@ -1,6 +1,6 @@
 import { persistedState } from '$lib/storage/persisted.svelte';
 import { activeTheme } from './index.svelte';
-import { themeSettingsSchema } from './registry';
+import { themeSettingsSchema, themes } from './registry';
 import type { SettingValue } from './types';
 
 type Values = Record<string, SettingValue>;
@@ -22,3 +22,6 @@ export function getThemeSettings(themeId: string) {
 export function activeThemeSettings() {
 	return getThemeSettings(activeTheme.id);
 }
+
+// Хранилища создаются заранее, вне эффектов: состояние, созданное внутри эффекта, этим эффектом не отслеживается
+for (const theme of themes) getThemeSettings(theme.id);

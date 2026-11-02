@@ -73,6 +73,17 @@
 		padding: var(--modal-padding, 20px);
 		overflow-y: var(--modal-overflow-y, visible);
 		box-sizing: border-box;
+		transition:
+			background-color 0.45s cubic-bezier(0.2, 0, 0, 1),
+			backdrop-filter 0.45s cubic-bezier(0.2, 0, 0, 1);
+	}
+
+	/* Окно настроек гасит затемнение, пока зажат ползунок (SettingsSlider), чтобы видеть страницу под ним */
+	.modal:has(:global([data-slider-drag])) {
+		background-color: transparent;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+		scrollbar-color: transparent transparent;
 	}
 
 	.wait {

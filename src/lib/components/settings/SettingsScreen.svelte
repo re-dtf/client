@@ -405,4 +405,33 @@
 			box-shadow: none;
 		}
 	}
+
+	/* Пока зажат ползунок (SettingsSlider), окно растворяется: фон окна гаснет (затемнение подложки убирает ModalShell),
+	   всё вокруг группы с ползунком скрывается, сама группа остаётся целой. Скрываются только соседи на пути к группе:
+	   у вложенных элементов прозрачность иначе перемножалась бы */
+	.window {
+		--fade: 0.45s cubic-bezier(0.2, 0, 0, 1);
+		transition:
+			background-color var(--fade),
+			box-shadow var(--fade);
+	}
+
+	:global(:is(.window, .window *):has(.slider):not(.group, .group *) > :not(:has(.slider), .slider)) {
+		transition: opacity var(--fade);
+	}
+
+	.window:global([data-slider-drag]) {
+		background-color: transparent;
+		box-shadow: none;
+	}
+
+	/* Полоса прокрутки страницы лежит на пути к ползунку, поэтому не гаснет сама: прячем её цветом, ширина не меняется */
+	:global(.window[data-slider-drag] .scroller) {
+		scrollbar-color: transparent transparent;
+	}
+
+	:global(.window[data-slider-drag]:has(.slider) > :not(:has(.slider), .slider), .window[data-slider-drag] :has(.slider):not(.group, .group *) > :not(:has(.slider), .slider)) {
+		opacity: 0;
+		pointer-events: none;
+	}
 </style>

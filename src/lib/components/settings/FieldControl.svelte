@@ -2,6 +2,7 @@
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsSwitch from './SettingsSwitch.svelte';
+	import SettingsSlider from './SettingsSlider.svelte';
 	import type { SettingField, SettingValue } from '$lib/themes/types';
 
 	/*
@@ -44,6 +45,12 @@
 					<option value={option.value}>{option.title}</option>
 				{/each}
 			</select>
+		</SettingsRow>
+	</SettingsGroup>
+{:else if field.type === 'slider'}
+	<SettingsGroup>
+		<SettingsRow title={field.title} subtitle={field.description}>
+			<SettingsSlider steps={field.steps} value={Number(value)} unit={field.unit} label={field.title} onchange={onchange} />
 		</SettingsRow>
 	</SettingsGroup>
 {:else}
