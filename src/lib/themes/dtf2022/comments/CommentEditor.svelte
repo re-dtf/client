@@ -5,17 +5,27 @@
 	let {
 		text = $bindable(''),
 		replying = false,
-		oncancel
+		editing = false,
+		sending = false,
+		error = '',
+		oncancel,
+		onsubmit
 	}: {
 		/** Черновик живёт у родителя — переживает переезд редактора между комментариями */
 		text?: string;
 		/** Ответ на комментарий: редактор стоит внутри него, есть «Отмена» */
 		replying?: boolean;
+		/** Правка своего комментария: другая подпись кнопки */
+		editing?: boolean;
+		sending?: boolean;
+		error?: string;
 		oncancel?: () => void;
+		onsubmit?: () => void;
 	} = $props();
 
 	let focused = $state(false);
 	let isEmpty = $derived(!text.trim());
+	let submitLabel = $derived(editing ? 'Сохранить' : replying ? 'Ответить' : 'Отправить');
 	let placeholder = $derived(replying ? 'Написать ответ...' : 'Написать комментарий...');
 
 	// При открытии ответа сразу ставим курсор в поле
@@ -48,6 +58,10 @@
 					></div>
 				</div>
 
+				{#if error}
+					<p class="comment-editor-box__error" role="alert">{error}</p>
+				{/if}
+
 				<div class="comment-editor-box__footer">
 					<!-- ponytail: вложений и донатов в API клиента пока нет -->
 					<div class="comment-editor-box__attaches">
@@ -74,9 +88,8 @@
 						{/if}
 					</div>
 
-					<!-- ponytail: отправки комментариев в API клиента пока нет — кнопка выключена, как в макете -->
 					<div class="comment-editor-box__submit">
-						<Button variant="blue" disabled label={replying ? 'Ответить' : 'Отправить'} />
+						<Button variant="blue" disabled={isEmpty || sending} label={submitLabel} onclick={onsubmit} />
 					</div>
 				</div>
 			</div>
@@ -192,6 +205,13 @@
 
 	.comment-editor-box__input:empty {
 		display: block;
+	}
+
+	.comment-editor-box__error {
+		margin: 8px 0 0;
+		color: var(--color-negative);
+		font-size: 14px;
+		line-height: 20px;
 	}
 
 	.comment-editor-box__footer {

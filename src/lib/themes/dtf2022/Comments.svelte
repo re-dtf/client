@@ -1,12 +1,15 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
+	import { api } from '$lib/api/index.svelte';
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
+	import { ensureLogin } from './actions.svelte';
 	import { formatNumber, plural } from './format';
 	import Popover from './ui/Popover.svelte';
 	import Preloader from './ui/Preloader.svelte';
 	import CommentEditor from './comments/CommentEditor.svelte';
 	import CommentItem from './comments/CommentItem.svelte';
-	import { flattenComments } from './comments/flatten';
+	import { commentKey, flattenComments } from './comments/flatten';
 
 	let {
 		postId,
@@ -26,7 +29,11 @@
 	let rows = $derived(flattenComments(logic.comments, logic.maxVisualDepth, collapsed));
 
 	let replyTo = $state<string | null>(null);
+	/** Редактор под комментарием правит его, а не отвечает */
+	let editMode = $state(false);
 	let draft = $state('');
+	let sending = $state(false);
+	let sendError = $state('');
 	let sortingOpen = $state(false);
 	/** Подсветка ветки: линия line у подряд идущих комментариев from..to */
 	let highlight = $state<{ line: number; from: number; to: number } | null>(null);
@@ -40,6 +47,56 @@
 		logic.sorting = value;
 		collapsed.clear();
 		logic.loadComments(true);
+	}
+
+	function reply(key: string) {
+		if (editMode) draft = '';
+		replyTo = key;
+		editMode = false;
+		sendError = '';
+	}
+
+	function edit(key: string, content: string) {
+		replyTo = key;
+		editMode = true;
+		draft = content;
+		sendError = '';
+	}
+
+	function cancel() {
+		if (editMode) draft = '';
+		replyTo = null;
+		editMode = false;
+		sendError = '';
+	}
+
+	/** Новый комментарий, ответ или правка; после отправки показываем результат */
+	async function submit() {
+		const text = draft.trim();
+		if (!text || sending || sourceId !== 'dtf' || !ensureLogin()) return;
+
+		sending = true;
+		sendError = '';
+		try {
+			const target = replyTo ? logic.allCommentsMap.get(replyTo) : undefined;
+			let key = replyTo ?? '';
+			if (editMode && target) {
+				logic.updateComment(await api.editComment(target.id, postId, text));
+			} else {
+				const created = await api.addComment(postId, text, target?.id);
+				logic.addComment(created);
+				key = commentKey(created);
+			}
+			draft = '';
+			replyTo = null;
+			editMode = false;
+			await tick();
+			document.getElementById(`comment-${key}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+		} catch (e) {
+			sendError = (e as Error).message;
+		} finally {
+			sending = false;
+		}
 	}
 
 	function highlightBranch(index: number, line: number | null) {
@@ -64,7 +121,7 @@
 </script>
 
 {#snippet editor()}
-	<CommentEditor bind:text={draft} replying oncancel={() => (replyTo = null)} />
+	<CommentEditor bind:text={draft} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
 {/snippet}
 
 <section class="comments-section" id="comments" aria-label="Комментарии">
@@ -97,7 +154,7 @@
 
 		<div class="comments-reply-area">
 			{#if replyTo}
-				<button type="button" class="comment-fake-form" onclick={() => (replyTo = null)}>
+				<button type="button" class="comment-fake-form" onclick={cancel}>
 					<span class="comment-fake-form__text">Написать комментарий...</span>
 					<span class="comment-fake-form__buttons" aria-hidden="true">
 						<span class="comment-fake-form__button">
@@ -112,7 +169,7 @@
 					</span>
 				</button>
 			{:else}
-				<CommentEditor bind:text={draft} />
+				<CommentEditor bind:text={draft} {sending} error={sendError} onsubmit={submit} />
 			{/if}
 		</div>
 
@@ -128,7 +185,8 @@
 					{row}
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 					replying={replyTo === row.key}
-					onreply={() => (replyTo = row.key)}
+					onreply={() => reply(row.key)}
+					onedit={() => edit(row.key, row.comment.content)}
 					onlinehover={(line) => highlightBranch(index, line)}
 					onlineclick={collapseBranch}
 					onexpand={() => collapsed.delete(row.key)}

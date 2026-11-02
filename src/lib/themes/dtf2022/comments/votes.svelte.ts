@@ -1,46 +1,41 @@
 import type { Comment } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
-import { authStorage } from '$lib/storage/auth.svelte';
-import { openOverlay } from '$lib/navigation';
+import { ensureLogin } from '../actions.svelte';
+import { DISLIKE_REACTION, LIKE_REACTION, applyReaction, nextReactionId } from '../reactionVotes';
+import { notify } from '../ui/notify.svelte';
 
 /**
- * Поставить или снять реакцию на комментарий. Счётчики меняются сразу,
- * при ошибке откатываются. Без входа в DTF — открываем окно входа.
- * Лайк в виде «лайк/дизлайк» и «рейтинг» — это реакция ❤️ (id 1).
+ * Поставить или снять реакцию на комментарий. Счётчики меняются сразу, при ошибке откатываются.
+ * Без входа в DTF — открываем окно входа. Комментарий лежит в $state, поэтому правим его на месте.
  */
-export async function toggleCommentReaction(comment: Comment, reactionId: number) {
-	if (comment.sourceId === 'dtf' && !authStorage.isAuthenticated) {
-		openOverlay({ type: 'login' });
-		return;
-	}
+export function toggleCommentReaction(comment: Comment, reactionId: number): boolean {
+	if (comment.sourceId === 'dtf' && !ensureLogin()) return false;
 
-	const reactions = (comment.reactions ??= { counters: [], reactionId: 0 });
-	const prevReactions = $state.snapshot(reactions);
-	const prevLikes = $state.snapshot(comment.likes);
+	const prev = $state.snapshot(comment.reactions);
+	const next = nextReactionId(prev, reactionId);
+	comment.reactions = applyReaction(prev, next);
 
-	const bump = (id: number, delta: number) => {
-		const counter = reactions.counters.find((c) => c.id === id);
-		if (counter) counter.count += delta;
-		else if (delta > 0) reactions.counters.push({ id, count: delta });
-	};
+	api.reactToComment(comment.id, next, comment.sourceId).catch((e) => {
+		comment.reactions = prev;
+		notify.error(e.message);
+	});
+	return true;
+}
 
-	const hadReaction = reactions.reactionId !== 0;
-	const removing = reactions.reactionId === reactionId;
-	if (hadReaction) bump(reactions.reactionId, -1);
-	if (!removing) bump(reactionId, 1);
-	reactions.reactionId = removing ? 0 : reactionId;
+/** Голос «за» или «против» — это выбранные в reactionVotes две реакции */
+export const voteComment = (comment: Comment, sign: 1 | -1) => toggleCommentReaction(comment, sign > 0 ? LIKE_REACTION : DISLIKE_REACTION);
 
-	// В комментариях likes.count — сумма всех реакций
-	if (comment.likes) {
-		comment.likes.count += removing ? -1 : hadReaction ? 0 : 1;
-		comment.likes.myVote = removing ? 0 : 1;
-	}
+export async function toggleCommentFavorite(comment: Comment) {
+	if (!ensureLogin()) return;
+
+	const was = !!comment.isFavorited;
+	comment.isFavorited = !was;
 
 	try {
-		await api.reactToComment(comment.id, reactions.reactionId, comment.sourceId);
-	} catch (e) {
-		comment.reactions = prevReactions;
-		comment.likes = prevLikes;
-		console.warn('[dtf2022] Не удалось поставить реакцию:', e);
+		await api.setFavorite(comment.id, 'comment', !was);
+		notify.success(was ? 'Комментарий удалён из закладок' : 'Комментарий добавлен в закладки');
+	} catch {
+		comment.isFavorited = was;
+		notify.error(was ? 'Не удалось удалить из закладок' : 'Не удалось добавить в закладки');
 	}
 }

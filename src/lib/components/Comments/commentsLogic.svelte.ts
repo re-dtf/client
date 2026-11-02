@@ -1,6 +1,6 @@
 import { api } from '$lib/api/index.svelte';
 import type { Comment, CommentTreeItem } from '$lib/api/types';
-import { buildTree } from './commentUtils';
+import { buildTree, formatDate } from './commentUtils';
 import { untrack } from 'svelte';
 import { PanoramaEngine } from './panoramaEngine.svelte';
 
@@ -91,6 +91,41 @@ export class CommentsLogic {
 
 	hidePreview = () => {
 		this.previewVisible = false;
+	}
+
+	/** Путь от корня до комментария по реактивному дереву (правки по нему сразу видны) */
+	private pathTo(key: string, nodes: CommentTreeItem[] = this.comments, path: CommentTreeItem[] = []): CommentTreeItem[] | undefined {
+		for (const node of nodes) {
+			const next = [...path, node];
+			if (`${node.sourceId}_${node.id}` === key) return next;
+			const found = this.pathTo(key, node.children, next);
+			if (found) return found;
+		}
+	}
+
+	/** Вставляет только что отправленный комментарий в дерево, не пересобирая его: локальные правки остальных не теряются */
+	addComment(comment: Comment) {
+		this.flatComments = [...this.flatComments, comment];
+		const item: CommentTreeItem = { ...comment, children: [], _formattedDate: formatDate(comment.createdAt), _totalReplies: 0 };
+		const path = comment.replyTo ? this.pathTo(`${comment.sourceId}_${comment.replyTo}`) : undefined;
+
+		if (!path) {
+			this.comments.push(item);
+			return;
+		}
+		path[path.length - 1].children.push(item);
+		for (const node of path) node._totalReplies = (node._totalReplies ?? 0) + 1;
+	}
+
+	/** Текст комментария после правки */
+	updateComment(comment: Comment) {
+		this.flatComments = this.flatComments.map((c) => (c.sourceId === comment.sourceId && c.id === comment.id ? comment : c));
+		const path = this.pathTo(`${comment.sourceId}_${comment.id}`);
+		if (path) {
+			const node = path[path.length - 1];
+			node.content = comment.content;
+			node.media = comment.media;
+		}
 	}
 
 	async loadComments(reset = false) {

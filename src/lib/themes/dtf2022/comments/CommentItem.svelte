@@ -3,17 +3,22 @@
 	import { fromAction } from 'svelte/attachments';
 	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 	import { getPostPath, getProfilePath, openProfile } from '$lib/navigation';
+	import { authStorage } from '$lib/storage/auth.svelte';
+	import { votesOf } from '../reactionVotes';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatFullDate, formatTime, plural } from '../format';
+	import Popover from '../ui/Popover.svelte';
+	import { notify } from '../ui/notify.svelte';
 	import PostButton from '../post/PostButton.svelte';
 	import Rating from '../post/Rating.svelte';
 	import Reactions from '../post/Reactions.svelte';
 	import { COMMENT_MEDIA_MAX_HEIGHT, mediaMaxWidth } from '../media';
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
-	import { toggleCommentReaction } from './votes.svelte';
+	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
 
 	// Заглушка аватара удалённого комментария из исходной вёрстки
 	const REMOVED_AVATAR = 'https://leonardo.osnova.io/04ee6149-5c89-5a20-846d-be172c424736/-/scale_crop/64x64/-/format/webp/';
@@ -23,6 +28,7 @@
 		highlightedLine = -1,
 		replying = false,
 		onreply,
+		onedit,
 		onlinehover,
 		onlineclick,
 		onexpand,
@@ -33,6 +39,8 @@
 		highlightedLine?: number;
 		replying?: boolean;
 		onreply: () => void;
+		/** Открыть редактор с текстом этого комментария */
+		onedit: () => void;
 		onlinehover: (line: number | null) => void;
 		onlineclick: (owner: string) => void;
 		onexpand: () => void;
@@ -45,10 +53,35 @@
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
 
-	// Голос «за» — это лайк; голос «против» принять некому (false — без анимации клика)
-	function rate(vote: 1 | -1) {
-		if (vote < 0) return false;
-		toggleCommentReaction(comment, 1);
+	let score = $derived(votesOf(comment));
+
+	// Голос «за» и «против» — две реакции (см. reactionVotes); false — голос не принят, анимации клика не будет
+	const rate = (vote: 1 | -1) => voteComment(comment, vote);
+
+	// Меню комментария: что можно править, сервер говорит при открытии
+	let menuOpen = $state(false);
+	let canEdit = $state(false);
+	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, закладка
+	let menuItems = $derived([
+		...(canEdit ? [{ value: 'edit' as const, label: 'Редактировать', icon: 'v_pen' }] : []),
+		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
+		{
+			value: 'favorite' as const,
+			label: comment.isFavorited ? 'Убрать из закладок' : 'Добавить в закладки',
+			icon: comment.isFavorited ? 'v_bookmark_solid' : 'v_bookmark'
+		}
+	]);
+
+	function toggleMenu() {
+		menuOpen = !menuOpen;
+		if (!menuOpen || !authStorage.isAuthenticated) return;
+		api.getCommentControls(comment.id).then((controls) => (canEdit = controls.edit)).catch(() => (canEdit = false));
+	}
+
+	function selectMenuItem(item: 'edit' | 'copy' | 'favorite') {
+		if (item === 'edit') onedit();
+		else if (item === 'copy') copyLink();
+		else toggleCommentFavorite(comment);
 	}
 
 	function scrollToParent(e: MouseEvent) {
@@ -56,10 +89,15 @@
 		if (row.parent) document.getElementById(`comment-${commentKey(row.parent)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	}
 
-	function copyLink() {
+	async function copyLink() {
 		const url = new URL(resolve(getPostPath({ id: comment.postId, sourceId: comment.sourceId }) as any), location.href);
 		url.hash = `comment-${row.key}`;
-		navigator.clipboard?.writeText(url.href).catch(() => {});
+		try {
+			await navigator.clipboard.writeText(url.href);
+			notify.success('Ссылка скопирована');
+		} catch {
+			notify.error('Не удалось скопировать ссылку');
+		}
 	}
 </script>
 
@@ -206,29 +244,31 @@
 				<PostButton
 					kind="like"
 					title="Лайк"
-					value={comment.likes?.count || undefined}
-					active={comment.likes?.myVote === 1}
-					onclick={() => toggleCommentReaction(comment, 1)}
+					value={score.up || undefined}
+					active={score.myVote === 1}
+					onclick={() => voteComment(comment, 1)}
 				/>
 			{/if}
 
 			<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
 
-			<!-- ponytail: меню комментария пока нет -->
-			<button type="button" class="comment-item__action comment-item__icon-action" title="Больше">
-				<svg class="icon" width="16" height="20" aria-hidden="true">
-					<use href="/icons.svg#v_etc"></use>
-				</svg>
-			</button>
+			{#if comment.sourceId === 'dtf'}
+				<Popover bind:open={menuOpen} items={menuItems} onselect={selectMenuItem} width="max-content" align="left" label="Действия с комментарием">
+					<button type="button" class="comment-item__action comment-item__icon-action" title="Больше" aria-expanded={menuOpen} onclick={toggleMenu}>
+						<svg class="icon" width="16" height="20" aria-hidden="true">
+							<use href="/icons.svg#v_etc"></use>
+						</svg>
+					</button>
+				</Popover>
+			{/if}
 
 			<!-- Стрелки стоят в конце строки действий; на широких экранах поднимаются в строку автора -->
 			{#if votes === 'rating'}
-				<!-- ponytail: в API клиента есть только лайк (реакция ❤️), «против» пока ничего не делает -->
 				<div class="comment-item__vote">
-					<Rating compact value={comment.likes?.count ?? 0} myVote={comment.likes?.myVote} onvote={rate} />
+					<Rating compact value={score.up - score.down} myVote={score.myVote} onvote={rate} />
 				</div>
 			{:else if votes === 'likes'}
-				<PostButton kind="dislike" title="Дизлайк" right />
+				<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => voteComment(comment, -1)} />
 			{/if}
 
 			<div class="comment-item__break"></div>
