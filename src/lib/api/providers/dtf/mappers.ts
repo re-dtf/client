@@ -17,7 +17,8 @@ export function mapUser(author: any): User {
 		name: author?.name || 'Аноним',
 		avatarUrl: mapAvatarUrl(author),
 		description: author?.description || undefined,
-		isPlus: !!author?.isPlus
+		isPlus: !!author?.isPlus,
+		isDonationsEnabled: author?.isDonationsEnabled || undefined
 	};
 }
 

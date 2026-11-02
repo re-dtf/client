@@ -40,6 +40,8 @@
 	let media = $state<CommentMedia[]>([]);
 	let donation = $state(0);
 	let paymentLink = $state('');
+	/** Автор целевого комментария принимает донаты */
+	let canDonate = $derived(!editMode && !!replyTo && !!(logic.allCommentsMap.get(replyTo)?.author.isDonationsEnabled));
 	/** Подписка на новые комментарии поста (колокольчик): начальное состояние берём из поста */
 	// svelte-ignore state_referenced_locally
 	let subscribedToComments = $state(subscribed);
@@ -64,6 +66,7 @@
 		if (editMode) clearDraft();
 		replyTo = key;
 		editMode = false;
+		donation = 0;
 		sendError = '';
 	}
 
@@ -179,7 +182,7 @@
 </script>
 
 {#snippet editor()}
-	<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
+	<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {canDonate} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
 {/snippet}
 
 <section class="comments-section" id="comments" aria-label="Комментарии">
@@ -232,7 +235,7 @@
 					</span>
 				</button>
 			{:else}
-				<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {sending} error={sendError} onsubmit={submit} />
+				<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {canDonate} {sending} error={sendError} onsubmit={submit} />
 			{/if}
 		</div>
 

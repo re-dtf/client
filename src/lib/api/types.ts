@@ -80,6 +80,7 @@ export interface User {
 	avatarUrl?: string;
 	description?: string;
 	isPlus?: boolean;
+	isDonationsEnabled?: boolean;
 }
 
 export interface Subsite {
