@@ -5,7 +5,7 @@
 	import type { ThemeComponents } from '$lib/themes/contract';
 	import { closeOverlay } from '$lib/navigation';
 	import { assetsReady } from '$lib/ready';
-	import { ease, play } from '$lib/motion';
+	import { backdropShow, modalShow, modalHide } from './modalMotion';
 
 	/*
 	 * Подложка и окно модального оверлея. Подложка появляется сразу, а окно показывается
@@ -31,24 +31,10 @@
 			if (body) await assetsReady(body);
 			ready = true;
 			await tick();
-			// body — display: contents, у него нет рамки, поэтому анимируем само окно
-			for (const child of body?.children ?? []) play(child, activeTheme.motion?.modalIn);
+			if (body) modalShow(body);
 		})();
 		return () => clearTimeout(timer);
 	});
-
-	// Закрытие: Svelte держит подложку, пока тема проигрывает уход; без анимации убирает сразу.
-	// Svelte вызывает функцию перехода не один раз, а уход должен стартовать однажды
-	const leaving = new WeakSet<Element>();
-	function leave(node: HTMLElement) {
-		const anim = activeTheme.motion?.modalOut;
-		if (!anim) return { duration: 0 };
-		if (!leaving.has(node)) {
-			leaving.add(node);
-			play(node, anim, 'forwards');
-		}
-		return { duration: anim.duration };
-	}
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -56,8 +42,8 @@
 <div
 	class="modal"
 	style:z-index={100 + index}
-	style:animation-timing-function={ease.out}
-	out:leave|global
+	out:modalHide|global
+	{@attach backdropShow}
 	onclick={(e) => {
 		if (e.target === e.currentTarget) closeOverlay();
 	}}
@@ -87,16 +73,6 @@
 		padding: var(--modal-padding, 20px);
 		overflow-y: var(--modal-overflow-y, visible);
 		box-sizing: border-box;
-		/* Затемнение появляется сразу и плавно: это отклик на нажатие, а не украшение, поэтому есть у всех тем */
-		animation: backdrop-in var(--backdrop-fade, 200ms);
-	}
-
-	@keyframes backdrop-in {
-		from {
-			background-color: transparent;
-			backdrop-filter: none;
-			-webkit-backdrop-filter: none;
-		}
 	}
 
 	.wait {

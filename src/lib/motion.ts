@@ -51,10 +51,25 @@ export const fluent: ThemeMotion = {
 };
 
 /**
+ * Затемнение за окном: отклик на нажатие, поэтому играет у всех тем, а не только у тех, что задали motion.
+ * Единственный кадр — начальный, конечным станет обычный стиль подложки.
+ */
+export const backdropIn: Anim = {
+	keyframes: [{ backgroundColor: 'transparent', backdropFilter: 'none' }],
+	duration: 200,
+	easing: ease.out
+};
+
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Поведение программной прокрутки: плавная, если пользователь не просил уменьшить движение */
+export const scrollBehavior = (): ScrollBehavior => (reducedMotion() ? 'auto' : 'smooth');
+
+/**
  * Проиграть анимацию на элементе. Без анимации или при «уменьшить движение» в системе не делает ничего.
  * fill: 'forwards' для ухода, чтобы элемент не мелькнул прежним видом перед удалением.
  */
 export function play(el: Element, anim?: Anim, fill: FillMode = 'none') {
-	if (!anim || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+	if (!anim || reducedMotion()) return;
 	el.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill });
 }

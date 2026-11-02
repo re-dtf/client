@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition';
+	import Dialog from '$lib/components/Dialog.svelte';
 	import { CATALOG_URL } from '$lib/api/sources/builtins';
 
 	let {
@@ -43,94 +43,63 @@
 	}
 </script>
 
-<svelte:window onkeydown={(e) => { if (e.key === 'Escape') onClose(); }} />
-
-<div 
-	class="modal-overlay" 
-	transition:fade={{duration: 200}} 
-	onclick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-	role="presentation"
->
-	<div class="modal-content">
-		<div class="header">
-			<h2>Каталог источников</h2>
-			<button class="close-btn" onclick={onClose} aria-label="Закрыть">&times;</button>
-		</div>
-		
-		{#await catalogPromise}
-			<div class="loading">Загрузка каталога...</div>
-		{:then catalog}
-			<div class="catalog-list">
-				{#if !catalog?.sources || catalog.sources.length === 0}
-					<div class="empty">Каталог пуст</div>
-				{:else}
-					{#each catalog.sources as source (source.id)}
-						<div class="catalog-item">
-							{#if source.icon}
-								<img src={source.icon} alt="" class="source-icon" />
-							{/if}
-							<div class="info">
-								<div class="title-row">
-									<h3>{source.name}</h3>
-									{#if source.verified}
-										<span class="verified-badge" title="Проверен командой reDTF">✓ Проверен</span>
-									{/if}
-								</div>
-								<p class="desc">{source.description}</p>
-								<div class="meta">
-									<span class="author">Автор: {source.author}</span>
-									{#if source.tags && source.tags.length > 0}
-										<div class="tags">
-											{#each source.tags as tag}
-												<span class="tag">#{tag}</span>
-											{/each}
-										</div>
-									{/if}
-								</div>
-							</div>
-							<button class="btn primary install-btn" onclick={() => handleInstall(source)}>
-								Установить
-							</button>
-						</div>
-					{/each}
-				{/if}
-			</div>
-			<div class="footer-meta">
-				Обновлено: {new Date(catalog.lastUpdated).toLocaleDateString()}
-			</div>
-		{:catch error}
-			<div class="error">
-				<p>Ошибка загрузки каталога</p>
-				<p class="error-msg">{error.message}</p>
-				<button class="btn secondary" onclick={() => catalogPromise = fetchCatalog()}>Повторить</button>
-			</div>
-		{/await}
+<Dialog label="Каталог источников" width="600px" {onClose}>
+	<div class="header">
+		<h2>Каталог источников</h2>
+		<button class="close-btn" onclick={onClose} aria-label="Закрыть">&times;</button>
 	</div>
-</div>
+	
+	{#await catalogPromise}
+		<div class="loading">Загрузка каталога...</div>
+	{:then catalog}
+		<div class="catalog-list">
+			{#if !catalog?.sources || catalog.sources.length === 0}
+				<div class="empty">Каталог пуст</div>
+			{:else}
+				{#each catalog.sources as source (source.id)}
+					<div class="catalog-item">
+						{#if source.icon}
+							<img src={source.icon} alt="" class="source-icon" />
+						{/if}
+						<div class="info">
+							<div class="title-row">
+								<h3>{source.name}</h3>
+								{#if source.verified}
+									<span class="verified-badge" title="Проверен командой reDTF">✓ Проверен</span>
+								{/if}
+							</div>
+							<p class="desc">{source.description}</p>
+							<div class="meta">
+								<span class="author">Автор: {source.author}</span>
+								{#if source.tags && source.tags.length > 0}
+									<div class="tags">
+										{#each source.tags as tag}
+											<span class="tag">#{tag}</span>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						</div>
+						<button class="btn primary install-btn" onclick={() => handleInstall(source)}>
+							Установить
+						</button>
+					</div>
+				{/each}
+			{/if}
+		</div>
+		<div class="footer-meta">
+			Обновлено: {new Date(catalog.lastUpdated).toLocaleDateString()}
+		</div>
+	{:catch error}
+		<div class="error">
+			<p>Ошибка загрузки каталога</p>
+			<p class="error-msg">{error.message}</p>
+			<button class="btn secondary" onclick={() => catalogPromise = fetchCatalog()}>Повторить</button>
+		</div>
+	{/await}
+</Dialog>
 
 <style>
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 10000;
-	}
-	.modal-content {
-		background: white;
-		border-radius: 12px;
-		padding: 24px;
-		width: 100%;
-		max-width: 600px;
-		max-height: 90vh;
-		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-		gap: 20px;
-		box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-	}
 	.header {
 		display: flex;
 		justify-content: space-between;
@@ -270,30 +239,5 @@
 		background: #fbe9e7;
 		padding: 8px;
 		border-radius: 4px;
-	}
-
-	.btn {
-		padding: 8px 16px;
-		border-radius: 6px;
-		font-size: 14px;
-		font-weight: 500;
-		cursor: pointer;
-		border: 1px solid transparent;
-		transition: all 0.2s;
-	}
-	.btn.primary {
-		background: #1976d2;
-		color: white;
-	}
-	.btn.primary:hover {
-		background: #1565c0;
-	}
-	.btn.secondary {
-		background: white;
-		border-color: #ccc;
-		color: #333;
-	}
-	.btn.secondary:hover {
-		background: #f0f0f0;
 	}
 </style>
