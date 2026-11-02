@@ -28,8 +28,19 @@ export interface ToggleField extends FieldBase {
 	default: boolean;
 }
 
-export type SettingField = ChoiceField | ToggleField;
-export type SettingValue = string | boolean;
+/** Ползунок с делениями: выбирается одно из чисел `steps` */
+export interface SliderField extends FieldBase {
+	type: 'slider';
+	steps: number[];
+	default: number;
+	/** Подпись к значению, например `px` */
+	unit?: string;
+	/** CSS-переменные корня, которые выставляются по значению */
+	cssVars: (value: number) => Record<string, string>;
+}
+
+export type SettingField = ChoiceField | ToggleField | SliderField;
+export type SettingValue = string | boolean | number;
 
 export interface ThemeManifest {
 	/** Совпадает с именем папки темы */
