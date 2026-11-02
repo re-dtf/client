@@ -2,6 +2,8 @@
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
+	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
+	import { votesOf } from '../reactionVotes';
 	import { themeSettings } from '../themeSettings.svelte';
 	import PostHeader from './PostHeader.svelte';
 	import PostBlocks from './PostBlocks.svelte';
@@ -10,7 +12,7 @@
 	import Reactions from './Reactions.svelte';
 
 	let {
-		post,
+		post: source,
 		embed = false,
 		subscribe = !embed
 	}: {
@@ -21,6 +23,8 @@
 		subscribe?: boolean;
 	} = $props();
 
+	let post = $derived(withActions(source));
+	let score = $derived(votesOf(post));
 	let blocks = $derived(post.blocks.filter((b) => b.cover));
 	let votes = $derived(themeSettings.votes);
 	// Стрелочная оценка — осень 2022: иконки футера крупнее (22px)
@@ -42,14 +46,14 @@
 		{#if !embed}
 			{#if votes === 'reactions'}
 				<div class="post-block">
-					<Reactions reactions={post.reactions} />
+					<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />
 				</div>
 			{/if}
 
 			<div class={['post-footer post-block', { 'post-footer--arrows': arrows }]}>
 				<div class="post-footer__controls">
 					{#if votes === 'likes'}
-						<PostButton kind="like" title="Лайк" value={post.likes?.count || undefined} active={post.likes?.myVote === 1} />
+						<PostButton kind="like" title="Лайк" value={score.up || undefined} active={score.myVote === 1} onclick={() => votePost(post, 1)} />
 					{/if}
 					<PostButton
 						kind="comments"
@@ -61,18 +65,18 @@
 					/>
 					<!-- Осенью 2022 вместо репоста — «Поделиться», и стоит он после закладки -->
 					{#if arrows}
-						<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} />
-						<PostButton kind="share" title="Поделиться" {iconSize} />
+						<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} onclick={() => toggleFavoritePost(post)} />
+						<PostButton kind="share" title="Поделиться" {iconSize} onclick={() => sharePost(post)} />
 					{:else}
 						<PostButton kind="repost" title="Сделать репост" />
-						<PostButton kind="bookmark" title="В закладки" active={post.isFavorited} />
+						<PostButton kind="bookmark" title="В закладки" active={post.isFavorited} onclick={() => toggleFavoritePost(post)} />
 					{/if}
 				</div>
 
 				{#if votes === 'likes'}
-					<PostButton kind="dislike" title="Дизлайк" right value={post.likes?.dislikes} active={post.likes?.myVote === -1} />
+					<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => votePost(post, -1)} />
 				{:else if votes === 'rating'}
-					<Rating value={post.likes?.count ?? 0} myVote={post.likes?.myVote} />
+					<Rating value={score.up - score.down} myVote={score.myVote} onvote={(sign) => votePost(post, sign)} />
 				{/if}
 			</div>
 		{/if}

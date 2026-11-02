@@ -2,6 +2,8 @@
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
+	import { currentUser } from '$lib/api/currentUser.svelte';
+	import { subscriptions } from '../actions.svelte';
 	import { formatFullDate, formatTime } from '../format';
 
 	let {
@@ -18,7 +20,9 @@
 
 	// В личном блоге подсайт — это сам автор, второй раз имя не показываем
 	let isPersonalBlog = $derived(!!post.subsite && post.subsite.id === post.author.id);
-	let showSubscribe = $derived(subscribe && !!post.subsite && !post.subsite.isSubscribed);
+	let showSubscribe = $derived(
+		subscribe && !!post.subsite && post.subsite.id !== currentUser.value?.id && !subscriptions.isSubscribed(post.subsite.id, post.subsite.isSubscribed)
+	);
 </script>
 
 <div class={['post-header', { 'post-header--card': variant === 'card' }]}>
@@ -84,9 +88,8 @@
 	{#if showSubscribe}
 		<div class="spacer"></div>
 
-		<!-- ponytail: подписки в API клиента пока нет -->
 		<div class="post-header__item post-header__subscribe">
-			<button class="subscribe-button">
+			<button class="subscribe-button" onclick={() => post.subsite && subscriptions.toggle(post.subsite.id, post.subsite.isSubscribed)}>
 				<span class="subscribe-button__icon">
 					<svg height="20" width="20" class="icon" aria-hidden="true">
 						<use href="/icons.svg#v_follow"></use>

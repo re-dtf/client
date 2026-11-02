@@ -16,8 +16,16 @@
 		compact?: boolean;
 	} = $props();
 
-	// ponytail: реакции без картинки в config/reactions.ts пропускаем
+	// Реакции без картинки в config/reactions.ts пропускаем
 	let visible = $derived(reactions?.counters.filter((c) => c.count > 0 && REACTIONS[c.id]) ?? []);
+
+	let picking = $state(false);
+	let root = $state<HTMLElement>();
+
+	function pick(id: number) {
+		picking = false;
+		onreact?.(id);
+	}
 
 	/** Колесо мыши листает реакции по горизонтали — но только если есть куда листать */
 	const horizontalWheel: Attachment<HTMLElement> = (node) => {
@@ -31,7 +39,12 @@
 	};
 </script>
 
-<div class={['post-reactions', { 'post-reactions--compact': compact }]}>
+<svelte:window
+	onclick={(e) => picking && !root?.contains(e.target as Node) && (picking = false)}
+	onkeydown={(e) => e.key === 'Escape' && (picking = false)}
+/>
+
+<div class={['post-reactions', { 'post-reactions--compact': compact }]} bind:this={root}>
 	<div class="post-reactions__scroll" {@attach horizontalWheel}>
 		{#each visible as reaction (reaction.id)}
 			{@const isActive = reactions?.reactionId === reaction.id}
@@ -45,13 +58,30 @@
 				<span class="post-reaction__count">{formatNumber(reaction.count)}</span>
 			</button>
 		{/each}
-		<!-- ponytail: выбора реакций пока нет -->
-		<button class="post-reaction post-reaction--add" title="Добавить реакцию" aria-label="Добавить реакцию">
-			<svg height="16" width="16" class="icon" aria-hidden="true">
-				<use href="/icons.svg#v_plus"></use>
-			</svg>
-		</button>
+		{#if onreact}
+			<button
+				class="post-reaction post-reaction--add"
+				title="Добавить реакцию"
+				aria-label="Добавить реакцию"
+				aria-expanded={picking}
+				onclick={() => (picking = !picking)}
+			>
+				<svg height="16" width="16" class="icon" aria-hidden="true">
+					<use href="/icons.svg#v_plus"></use>
+				</svg>
+			</button>
+		{/if}
 	</div>
+
+	{#if picking && onreact}
+		<div class="post-reactions__picker" role="menu">
+			{#each Object.entries(REACTIONS) as [id, reaction] (id)}
+				<button class="post-reactions__pick" role="menuitem" aria-label="Реакция {id}" onclick={() => pick(Number(id))}>
+					<img src={reaction.url} width="24" height="24" alt="" />
+				</button>
+			{/each}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -147,6 +177,34 @@
 
 	.post-reaction--active .post-reaction__count {
 		color: var(--color-blue);
+	}
+
+	/* Панель выбора под рядом реакций; вне прокручиваемого ряда, иначе её обрежет overflow */
+	.post-reactions__picker {
+		position: absolute;
+		top: calc(100% + 4px);
+		left: 0;
+		z-index: 10;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		width: max-content;
+		max-width: min(320px, 100%);
+		padding: 8px;
+		border-radius: 8px;
+		background-color: #fff;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+	}
+
+	.post-reactions__pick {
+		display: flex;
+		padding: 4px;
+		border-radius: 6px;
+		cursor: pointer;
+	}
+
+	.post-reactions__pick:hover {
+		background-color: rgba(0, 0, 0, 0.05);
 	}
 
 	.post-reaction--add {

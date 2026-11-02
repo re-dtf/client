@@ -2,7 +2,9 @@
 	import type { User } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
+	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { getProfilePath, openProfile } from '$lib/navigation';
+	import { subscriptions } from '../actions.svelte';
 	import { formatRating } from '../format';
 	import Button from '../ui/Button.svelte';
 
@@ -12,6 +14,33 @@
 	let profilePromise = $derived(api.getProfile(author.id));
 	let profilePath = $derived(resolve(getProfilePath(author.id) as any));
 </script>
+
+{#snippet actions(wasSubscribed: boolean, wasNotified: boolean, loading = false)}
+	{@const subscribed = subscriptions.isSubscribed(author.id, wasSubscribed)}
+	<div class="author-subscribe">
+		<div class="author-subscribe__subscribe">
+			<Button
+				variant={subscribed ? 'default' : 'blue'}
+				icon="v_follow"
+				label={subscribed ? 'Вы подписаны' : 'Подписаться'}
+				fullWidth
+				disabled={loading}
+				onclick={() => subscriptions.toggle(author.id, wasSubscribed)}
+			/>
+		</div>
+		<!-- Колокольчик виден только после подписки -->
+		{#if subscribed}
+			{@const notified = subscriptions.isNotified(author.id, wasNotified)}
+			<Button
+				icon={notified ? 'bell_solid' : 'v_bell'}
+				title={notified ? 'Не уведомлять о новых постах' : 'Уведомлять о новых постах'}
+				aria-label="Уведомления о новых постах"
+				aria-pressed={notified}
+				onclick={() => subscriptions.toggleNotifications(author.id, wasNotified)}
+			/>
+		{/if}
+	</div>
+{/snippet}
 
 <div class="author-card">
 	<div class="author-card__info">
@@ -50,14 +79,17 @@
 		</div>
 	</div>
 
-	<div class="author-card__actions">
-		<!-- ponytail: подписки в API клиента пока нет; колокольчик в макете виден только после подписки -->
-		<div class="author-subscribe">
-			<div class="author-subscribe__subscribe">
-				<Button variant="blue" icon="v_follow" label="Подписаться" fullWidth />
-			</div>
+	{#if author.id !== currentUser.value?.id}
+		<div class="author-card__actions">
+			{#await profilePromise}
+				{@render actions(false, false, true)}
+			{:then profile}
+				{@render actions(!!profile.isSubscribed, !!profile.isSubscribedToNewPosts)}
+			{:catch}
+				{@render actions(false, false)}
+			{/await}
 		</div>
-	</div>
+	{/if}
 </div>
 
 <style>
