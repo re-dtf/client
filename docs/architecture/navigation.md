@@ -11,6 +11,7 @@ type OverlayData =
 	| { type: 'post'; data: { postId: number; sourceId: string } }
 	| { type: 'profile'; data: { profileId: number } }
 	| { type: 'settings' }
+	| { type: 'notifications' }
 	| { type: 'login' }
 	| { type: 'editor'; data?: { postId?: number | null } };
 
@@ -19,7 +20,7 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' }
 
 Способ показа (`presentation`) определяется типом:
 
-- **`page`** (пост, профиль) — занимает место страницы. Лента под ним скрыта (`display: none`), но не размонтируется. Если открыто несколько, видим только верхний.
+- **`page`** (пост, профиль, уведомления) — занимает место страницы. Лента под ним скрыта (`display: none`), но не размонтируется. Если открыто несколько, видим только верхний.
 - **`modal`** (настройки, вход, редактор) — окно поверх всего с подложкой. Клик по подложке закрывает его.
 
 Корневой `+layout.svelte` рисует стек: для каждого оверлея выбирает компонент по `type` (сниппет `overlayContent`), оборачивает по способу показа и запоминает прокрутку нижнего слоя.
@@ -58,6 +59,7 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' }
 | `/post/[id]?source=…` | пост (`PostContent`) |
 | `/u/[id]` | профиль (`ProfileContent`) |
 | `/settings` | экран настроек |
+| `/notifications` | список уведомлений (`NotificationsContent`) |
 | `/login` | вход |
 | `/write` | сначала главная, затем открывается редактор |
 

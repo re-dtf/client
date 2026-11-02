@@ -37,13 +37,13 @@ export const notifications = {
 		}
 	},
 
-	/** Отметить всё прочитанным: сразу у себя, на сервере — следом */
-	markAllRead() {
-		const ids = items.filter((n) => !n.isRead).map((n) => n.id);
-		if (ids.length === 0) return;
+	/** Отметить прочитанными: сразу у себя, на сервере — следом. Без аргументов — все */
+	markRead(ids = items.filter((n) => !n.isRead).map((n) => n.id)) {
+		const unread = ids.filter((id) => items.some((n) => n.id === id && !n.isRead));
+		if (unread.length === 0) return;
 
-		items = items.map((n) => ({ ...n, isRead: true }));
-		api.markNotificationsRead(ids).catch((e) => console.warn('[notifications] Не удалось отметить прочитанными:', e));
+		items = items.map((n) => (unread.includes(n.id) ? { ...n, isRead: true } : n));
+		api.markNotificationsRead(unread).catch((e) => console.warn('[notifications] Не удалось отметить прочитанными:', e));
 	},
 
 	clear() {

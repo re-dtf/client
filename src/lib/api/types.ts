@@ -230,11 +230,27 @@ export interface CommentControls {
 	edit: boolean;
 }
 
+/** Кусок текста уведомления: DTF присылает его с ссылками и выделением */
+export interface NotificationPart {
+	text: string;
+	bold?: boolean;
+	href?: string;
+}
+
 export interface Notification {
 	id: number;
 	/** Статус `1` у DTF — не прочитано */
 	isRead: boolean;
 	text: string;
+	/** Тот же текст, разобранный из `html`: ссылки на пост и автора отдельно */
+	parts: NotificationPart[];
+	/** Битовая маска вида у DTF: 2 — реакция, 4 — ответ, 8 — блокировка, 32 — новый комментарий, 8192 — новый пост */
+	type: number;
+	/** Имя значка и цвет, как их выбрал DTF */
+	icon?: string;
+	color?: 'blue' | 'red' | 'green' | 'yellow';
+	/** Текст комментария, о котором уведомление (приходит у ответов); его показывает «Развернуть» */
+	commentText?: string;
 	url?: string;
 	createdAt: string;
 	avatarUrl?: string;

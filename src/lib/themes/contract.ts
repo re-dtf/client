@@ -7,7 +7,7 @@ import type { Period } from '$lib/feed.svelte';
  * Каждый лежит в корне папки темы: `<тема>/<Имя>.svelte`.
  *
  * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
- * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, LoginModal.
+ * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, LoginModal.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
 export interface ThemeComponents {
@@ -36,6 +36,8 @@ export interface ThemeComponents {
 		onSortingChange: (sorting: ProfileSorting) => void;
 		loadMore: () => void;
 	};
+	/** Страница уведомлений (оверлей notifications) */
+	Notifications: {};
 	LoginModal: {};
 	EditorScreen: { session: any };
 	Spinner: { inline?: boolean };

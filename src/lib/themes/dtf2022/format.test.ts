@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDay, formatTime, plural, formatRating } from './format';
+import { formatDay, formatNotificationTime, formatTime, plural, formatRating } from './format';
 import { parseCommentText } from './comments/commentText';
 import { flattenComments } from './comments/flatten';
 import { isWideMedia, mediaMaxWidth } from './media';
@@ -14,6 +14,15 @@ describe('format', () => {
 		expect(formatTime('2026-02-26T21:15:00', false, now)).toBe('26 фев');
 		expect(formatTime('2026-02-26T21:15:00', true, now)).toBe('26 фев в 21:15');
 		expect(formatTime('2022-12-30T10:00:00', false, now)).toBe('30.12.2022');
+	});
+
+	it('время в уведомлениях', () => {
+		const ago = (ms: number) => new Date(now - ms).toISOString();
+		expect(formatNotificationTime(ago(12 * 60_000), now)).toBe('12 минут назад');
+		expect(formatNotificationTime(ago(3 * 3600_000 + 60_000), now)).toBe('3 часа назад');
+		expect(formatNotificationTime('2026-10-16T06:38:00', now)).toBe('сегодня в 06:38');
+		expect(formatNotificationTime('2026-10-15T21:10:00', now)).toBe('вчера в 21:10');
+		expect(formatNotificationTime('2026-02-26T21:15:00', now)).toBe('26 фев в 21:15');
 	});
 
 	it('день в панели периодов', () => {

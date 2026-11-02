@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, Likes, Notification, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
+import type { Comment, CurrentUser, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 
 /*
@@ -106,11 +106,46 @@ export function mapComment(item: any, postId: number): Comment {
 	};
 }
 
+const HTML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' };
+const decodeEntities = (s: string) => s.replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, name) => HTML_ENTITIES[name]);
+
+/** Из html уведомления остаются только текст, `<b>` и `<a href>`; ссылки — только https */
+export function parseNotificationHtml(html: string): NotificationPart[] {
+	const parts: NotificationPart[] = [];
+	let bold = false;
+	let href: string | undefined;
+
+	for (const token of html.split(/(<[^>]*>)/)) {
+		if (!token) continue;
+		if (token[0] !== '<') {
+			parts.push({ text: decodeEntities(token), bold: bold || undefined, href });
+		} else if (/^<b[\s>]/i.test(token)) {
+			bold = true;
+		} else if (/^<\/b>/i.test(token)) {
+			bold = false;
+		} else if (/^<a[\s>]/i.test(token)) {
+			const url = /href="([^"]*)"/i.exec(token)?.[1];
+			href = url?.startsWith('https://') ? decodeEntities(url) : undefined;
+		} else if (/^<\/a>/i.test(token)) {
+			href = undefined;
+		}
+	}
+	return parts;
+}
+
 export function mapNotification(item: any): Notification {
+	const text = item.text || '';
+	const parts = item.html ? parseNotificationHtml(item.html) : [];
+
 	return {
 		id: item.id,
 		isRead: item.status !== 1,
-		text: item.text || '',
+		text,
+		parts: parts.length > 0 ? parts : [{ text }],
+		type: item.type || 0,
+		icon: item.icon || undefined,
+		color: item.color || undefined,
+		commentText: item.comment_text || undefined,
 		url: item.url,
 		createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),
 		avatarUrl: item.users?.[0]?.avatar_url

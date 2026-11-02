@@ -252,7 +252,8 @@ export const dtfApiProvider = {
 
 	async getNotifications(): Promise<Notification[]> {
 		requireAuth();
-		const response = await fetchWithAuth(`${apiV('2.1')}/subsite/me/updates`);
+		// html=true добавляет текст со ссылками на пост и автора, как у сайта
+		const response = await fetchWithAuth(`${apiV('2.1')}/subsite/me/updates?html=true&is_read=1`);
 		return ((await resultOf(response, 'Не удалось получить уведомления')) || []).map(mapNotification);
 	},
 

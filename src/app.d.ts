@@ -14,6 +14,7 @@ declare global {
 			| { type: 'post'; data: { postId: number; sourceId: string; commentId?: number } }
 			| { type: 'profile'; data: { profileId: number } }
 			| { type: 'settings' }
+			| { type: 'notifications' }
 			| { type: 'login' }
 			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } };
 

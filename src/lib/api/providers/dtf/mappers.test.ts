@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapLikes, mapNotification } from './mappers';
+import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapLikes, mapNotification, parseNotificationHtml } from './mappers';
 
 describe('mapLikes', () => {
 	it('нет данных — нет лайков', () => {
@@ -68,5 +68,21 @@ describe('mapCurrentUser', () => {
 	it('оставляет био как есть', () => {
 		expect(mapCurrentUser({ id: 1, name: 'Ник', description: 'о себе' })).toMatchObject({ id: 1, name: 'Ник', description: 'о себе' });
 		expect(mapCurrentUser({ id: 1 }).name).toBe('Аноним');
+	});
+});
+
+describe('parseNotificationHtml', () => {
+	it('оставляет текст, выделение и ссылки только https', () => {
+		const parts = parseNotificationHtml('<a href="https://dtf.ru/id1"><b>Ник &amp; Ко</b></a> ответил на <a href="javascript:x">пост</a>');
+
+		expect(parts).toEqual([
+			{ text: 'Ник & Ко', bold: true, href: 'https://dtf.ru/id1' },
+			{ text: ' ответил на ', bold: undefined, href: undefined },
+			{ text: 'пост', bold: undefined, href: undefined }
+		]);
+	});
+
+	it('без html берётся простой текст', () => {
+		expect(mapNotification({ id: 1, text: 'Ответили' }).parts).toEqual([{ text: 'Ответили' }]);
 	});
 });

@@ -61,3 +61,25 @@ export function formatDate(iso: string): string {
 export function formatFullDate(iso: string): string {
 	return new Date(iso).toLocaleString('ru-RU');
 }
+
+/**
+ * Время в списке уведомлений: «12 минут назад», «3 часа назад», затем «сегодня в 06:38»,
+ * «вчера в 21:10», «26 фев в 21:15». Порог в 4 часа выбран по скриншотам старого дизайна.
+ */
+export function formatNotificationTime(iso: string, now = Date.now()): string {
+	const date = new Date(iso);
+	const minutes = Math.max(0, Math.floor((now - date.getTime()) / 60000));
+	const hours = Math.floor(minutes / 60);
+
+	if (minutes < 60) return `${Math.max(1, minutes)} ${plural(Math.max(1, minutes), ['минуту', 'минуты', 'минут'])} назад`;
+	if (hours < 4) return `${hours} ${plural(hours, ['час', 'часа', 'часов'])} назад`;
+
+	const today = new Date(now);
+	const dayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+	const daysAgo = Math.round((dayStart(today) - dayStart(date)) / 86400000);
+	const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+	if (daysAgo === 0) return `сегодня в ${time}`;
+	if (daysAgo === 1) return `вчера в ${time}`;
+	return formatTime(iso, true, now);
+}

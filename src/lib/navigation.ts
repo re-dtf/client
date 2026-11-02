@@ -18,6 +18,7 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	post: 'page',
 	profile: 'page',
 	settings: 'modal',
+	notifications: 'page',
 	login: 'modal',
 	editor: 'modal'
 };
@@ -39,6 +40,8 @@ function overlayPath(overlay: App.OverlayData): string {
 			return getProfilePath(overlay.data.profileId);
 		case 'settings':
 			return '/settings';
+		case 'notifications':
+			return '/notifications';
 		case 'login':
 			return '/login';
 		case 'editor':
@@ -77,6 +80,11 @@ function openFromLink(e: MouseEvent, overlay: App.OverlayData) {
 /** Открыть пост поверх ленты (лента сохраняет прокрутку) */
 export function openPost(e: MouseEvent, post: { id: number; sourceId: string }) {
 	openFromLink(e, { type: 'post', data: { postId: post.id, sourceId: post.sourceId } });
+}
+
+/** Открыть страницу уведомлений */
+export function openNotifications(e: MouseEvent) {
+	openFromLink(e, { type: 'notifications' });
 }
 
 /** Открыть профиль пользователя или подсайта поверх текущего экрана */

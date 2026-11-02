@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { openFeed, openOverlay } from '$lib/navigation';
+	import { openFeed, openNotifications, openOverlay } from '$lib/navigation';
 	import { notifications } from '$lib/api/notifications.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 
@@ -31,8 +31,8 @@
 			</button>
 		</div>
 		<div class="mobile-bar__link-wrapper">
-			<!-- Панели уведомлений на мобильном нет: полный список открывается на DTF, как «Все уведомления» в шапке -->
-			<a href="https://dtf.ru/notifications" target="_blank" rel="noreferrer" class="mobile-bar__link mobile-bar__notifications" aria-label="Уведомления">
+			<!-- На мобильном вместо попапа — страница уведомлений -->
+			<a href={resolve('/notifications')} class="mobile-bar__link mobile-bar__notifications" aria-label="Уведомления" onclick={openNotifications}>
 				<svg height="28" width="28" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_bell"></use>
 				</svg>

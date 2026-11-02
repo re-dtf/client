@@ -4,6 +4,7 @@
 	import ProfileContent from '$lib/components/ProfileContent.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
+	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
@@ -96,6 +97,8 @@
 		<ProfileContent {...overlay.data} />
 	{:else if overlay.type === 'settings'}
 		<SettingsOverlay />
+	{:else if overlay.type === 'notifications'}
+		<NotificationsContent />
 	{:else if overlay.type === 'login'}
 		<LoginOverlay />
 	{:else if overlay.type === 'editor'}
