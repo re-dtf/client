@@ -59,10 +59,11 @@ export const fluent: ThemeMotion = {
 
 /**
  * Затемнение за окном: отклик на нажатие, поэтому играет у всех тем, а не только у тех, что задали motion.
- * Единственный кадр — начальный, конечным станет обычный стиль подложки.
+ * Первый кадр — начальный, пустой последний берёт обычный стиль подложки. Один кадр стал бы конечным,
+ * и подложка гасла бы до прозрачной, а потом снова темнела.
  */
 export const backdropIn: Anim = {
-	keyframes: [{ backgroundColor: 'transparent', backdropFilter: 'none' }],
+	keyframes: [{ backgroundColor: 'transparent', backdropFilter: 'none' }, {}],
 	duration: 200,
 	easing: ease.out
 };
