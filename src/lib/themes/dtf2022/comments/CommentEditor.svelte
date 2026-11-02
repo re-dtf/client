@@ -9,12 +9,14 @@
 	import DonateAttacher from './DonateAttacher.svelte';
 	import { formatDonation } from './donation';
 	import GifPicker from './GifPicker.svelte';
+	import { extractImageFiles } from './clipboard';
 
 	let {
 		text = $bindable(''),
 		media = $bindable([]),
 		donation = $bindable(0),
 		paymentLink = '',
+		canDonate = false,
 		replying = false,
 		editing = false,
 		sending = false,
@@ -30,6 +32,8 @@
 		donation?: number;
 		/** Ссылка на оплату после «Отправить» с донатом */
 		paymentLink?: string;
+		/** Автор комментария принимает донаты: показывать ли кнопку ₽ */
+		canDonate?: boolean;
 		/** Ответ на комментарий: редактор стоит внутри него, есть «Отмена» */
 		replying?: boolean;
 		/** Правка своего комментария: другая подпись кнопки */
@@ -51,22 +55,41 @@
 		return { type: type === 'movie' ? 'movie' : 'image', data: { uuid, width, height, size, type, color } };
 	}
 
-	let uploading = $state(false);
+	let uploadCount = $state(0);
+	let uploading = $derived(uploadCount > 0);
 	let fileInput = $state<HTMLInputElement>();
 
-	async function upload(e: Event & { currentTarget: HTMLInputElement }) {
-		const file = e.currentTarget.files?.[0];
-		e.currentTarget.value = '';
-		if (!file) return;
-
-		uploading = true;
-		try {
-			media = [...media, mediaOf(await api.uploadMedia(file))];
-		} catch (err) {
-			notify.error((err as Error).message);
-		} finally {
-			uploading = false;
+	async function uploadFiles(files: FileList | File[]) {
+		const list = Array.from(files);
+		if (list.length === 0) return;
+		uploadCount += list.length;
+		for (const file of list) {
+			try {
+				media = [...media, mediaOf(await api.uploadMedia(file))];
+			} catch (err) {
+				notify.error((err as Error).message);
+			} finally {
+				uploadCount--;
+			}
 		}
+	}
+
+	function upload(e: Event & { currentTarget: HTMLInputElement }) {
+		if (e.currentTarget.files?.length) {
+			void uploadFiles(e.currentTarget.files);
+		}
+		e.currentTarget.value = '';
+	}
+
+	function handlePaste(e: ClipboardEvent) {
+		const files = extractImageFiles(e.clipboardData);
+		if (files.length === 0) return;
+
+		// Чистую картинку (скриншот, скопированный файл) в текст не пускаем; если есть подпись — оставляем
+		if (!e.clipboardData?.getData('text/plain')) {
+			e.preventDefault();
+		}
+		void uploadFiles(files);
 	}
 
 	let gifsOpen = $state(false);
@@ -88,7 +111,7 @@
 	</div>
 
 	<div class="comment-editor-container__content">
-		<div class={['comment-editor', { 'comment-editor--focused': focused }]}>
+		<div class={['comment-editor', { 'comment-editor--focused': focused }]} onpaste={handlePaste}>
 			<div class={['comment-editor-box', { 'comment-editor-box--empty': isEmpty }]}>
 				<div class="comment-editor-box__placeholder" aria-hidden="true">{placeholder}</div>
 				<div class="comment-editor-box__content">
@@ -141,7 +164,7 @@
 
 				<div class="comment-editor-box__footer">
 						<div class="comment-editor-box__attaches">
-						<input bind:this={fileInput} type="file" accept="image/*" hidden onchange={upload} />
+						<input bind:this={fileInput} type="file" accept="image/*" multiple hidden onchange={upload} />
 						<button type="button" class="comment-editor-box__attach-btn comment-editor-box__attach-btn--image" aria-label="Прикрепить картинку" disabled={uploading} onclick={() => fileInput?.click()}>
 							<svg class="icon" width="20" height="20" aria-hidden="true">
 								<use href="/icons.svg#v_image"></use>
@@ -152,7 +175,7 @@
 								<use href="/icons.svg#v_gif"></use>
 							</svg>
 						</button>
-						{#if !editing}
+						{#if !editing && canDonate}
 							<DonateAttacher attached={donation > 0} onattach={(amount) => (donation = amount)} />
 						{/if}
 					</div>
@@ -164,7 +187,7 @@
 					</div>
 
 					<div class="comment-editor-box__submit">
-						<Button variant="blue" disabled={isEmpty || sending} label={submitLabel} onclick={onsubmit} />
+						<Button variant="blue" disabled={isEmpty || sending || uploading} label={submitLabel} onclick={onsubmit} />
 					</div>
 				</div>
 			</div>
