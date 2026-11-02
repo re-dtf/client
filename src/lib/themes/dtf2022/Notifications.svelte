@@ -3,7 +3,9 @@
 	import { notifications } from '$lib/api/notifications.svelte';
 	import NotificationsPanel from './NotificationsPanel.svelte';
 
-	onMount(() => notifications.load());
+	onMount(() => {
+		notifications.load().then(() => notifications.markSeen());
+	});
 </script>
 
 <div class="notifications-page">

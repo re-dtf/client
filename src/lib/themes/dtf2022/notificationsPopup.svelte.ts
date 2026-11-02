@@ -8,11 +8,11 @@ export const notificationsPopup = {
 		return open;
 	},
 
-	/** При открытии обновляем список; прочитанным уведомления становятся по клику или кнопкой «Пометить все» */
+	/** При открытии обновляем список; число на колокольчике сбрасывается сразу, подсветка в списке снимается по клику или кнопкой «Пометить все» */
 	set(value: boolean) {
 		if (value === open) return;
 		open = value;
-		if (value) notifications.load();
+		if (value) notifications.load().then(() => open && notifications.markSeen());
 	},
 
 	toggle() {

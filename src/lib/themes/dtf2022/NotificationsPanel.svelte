@@ -37,7 +37,7 @@
 <div class={['notifications', page && 'notifications--page']}>
 <header class="notifications__header">
 	<span class="notifications__title">Уведомления</span>
-	{#if notifications.unread > 0}
+	{#if notifications.highlighted}
 		<button type="button" class="notifications__mark-all" onclick={() => notifications.markRead()}>Пометить все как прочитанные</button>
 	{/if}
 </header>
