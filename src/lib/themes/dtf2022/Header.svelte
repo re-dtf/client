@@ -5,11 +5,10 @@
 	import { clickOnKey } from './a11y';
 	import AccountMenu from './AccountMenu.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
+	import { notifications } from '$lib/api/notifications.svelte';
+	import { formatTime } from './format';
 	import Preloader from './ui/Preloader.svelte';
 	import { sidebar } from './sidebar.svelte';
-
-	// ponytail: счётчик появится вместе с API уведомлений
-	const unreadCount = 0;
 
 	let isNotificationsOpen = $state(false);
 	let notificationsNode = $state<HTMLElement>();
@@ -20,8 +19,10 @@
 	$effect(() => {
 		if (authStorage.isAuthenticated) {
 			currentUser.load();
+			notifications.load();
 		} else {
 			currentUser.clear();
+			notifications.clear();
 			isUserMenuOpen = false;
 		}
 	});
@@ -31,13 +32,21 @@
 		return { duration: 200, css: (t: number, u: number) => `opacity: ${t}; transform: translateY(${-5 * u}px)` };
 	}
 
+	/** Панель уведомлений: при открытии обновляем список, при закрытии отмечаем увиденное прочитанным */
+	function setNotificationsOpen(open: boolean) {
+		if (open === isNotificationsOpen) return;
+		isNotificationsOpen = open;
+		if (open) notifications.load();
+		else notifications.markAllRead();
+	}
+
 	function openLogin() {
 		openOverlay({ type: 'login' });
 	}
 
 	function closeOnOutsideClick(e: MouseEvent) {
 		if (isNotificationsOpen && !notificationsNode?.contains(e.target as Node)) {
-			isNotificationsOpen = false;
+			setNotificationsOpen(false);
 		}
 		if (isUserMenuOpen && !userNode?.contains(e.target as Node)) {
 			isUserMenuOpen = false;
@@ -48,7 +57,10 @@
 <svelte:window
 	onclick={closeOnOutsideClick}
 	onkeydown={(e) => {
-		if (e.key === 'Escape') isNotificationsOpen = isUserMenuOpen = false;
+		if (e.key === 'Escape') {
+			setNotificationsOpen(false);
+			isUserMenuOpen = false;
+		}
 	}}
 />
 
@@ -90,14 +102,14 @@
 					aria-expanded={isNotificationsOpen}
 					role="button"
 					tabindex="0"
-					onclick={() => (isNotificationsOpen = !isNotificationsOpen)}
+					onclick={() => setNotificationsOpen(!isNotificationsOpen)}
 					onkeydown={clickOnKey}
 				>
 					<svg class="icon" width="28" height="28" aria-hidden="true">
 						<use href="/icons.svg#v_bell"></use>
 					</svg>
-					{#if unreadCount > 0}
-						<span class="header-notifications__badge">{unreadCount}</span>
+					{#if notifications.unread > 0}
+						<span class="header-notifications__badge">{notifications.unread}</span>
 					{/if}
 				</div>
 
@@ -105,9 +117,29 @@
 					<header class="notifications__header">
 						<span class="notifications__title">Уведомления</span>
 					</header>
-					<div class="notifications__loader">
-						<Preloader />
-					</div>
+					{#if !authStorage.isAuthenticated}
+						<p class="notifications__status">Войдите, чтобы видеть уведомления</p>
+					{:else if notifications.loading && notifications.items.length === 0}
+						<div class="notifications__loader">
+							<Preloader />
+						</div>
+					{:else if notifications.error}
+						<p class="notifications__status">{notifications.error}</p>
+					{:else if notifications.items.length === 0}
+						<p class="notifications__status">Уведомлений нет</p>
+					{:else}
+						<ul class="notifications__list">
+							{#each notifications.items as item (item.id)}
+								<li>
+									<a class={['notifications__item', { 'notifications__item--unread': !item.isRead }]} href={item.url} target="_blank" rel="noreferrer">
+										<span class="notifications__avatar" style:background-image={item.avatarUrl ? `url(${item.avatarUrl})` : undefined}></span>
+										<span class="notifications__text">{item.text}</span>
+										<time class="notifications__time" datetime={item.createdAt}>{formatTime(item.createdAt)}</time>
+									</a>
+								</li>
+							{/each}
+						</ul>
+					{/if}
 					<footer class="notifications__footer">
 						<a href="https://dtf.ru/notifications" target="_blank" rel="noreferrer" class="notifications__footer-link">
 							Все уведомления
@@ -299,6 +331,58 @@
 		display: flex;
 		justify-content: center;
 		padding: 13px 0;
+	}
+
+	.notifications__status {
+		margin: 0;
+		padding: 20px 13px;
+		text-align: center;
+		color: var(--text-muted);
+	}
+
+	.notifications__list {
+		max-height: 420px;
+		margin: 0;
+		padding: 0;
+		overflow-y: auto;
+		list-style: none;
+	}
+
+	.notifications__item {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		padding: 10px 13px;
+		color: inherit;
+		line-height: 18px;
+	}
+
+	.notifications__item--unread {
+		background-color: #f5f9ff;
+	}
+
+	.notifications__item:hover {
+		background-color: #f2f2f2;
+	}
+
+	.notifications__avatar {
+		flex-shrink: 0;
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: #e6e6e6 no-repeat 50% 50% / cover;
+	}
+
+	.notifications__text {
+		flex: 1;
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.notifications__time {
+		flex-shrink: 0;
+		color: var(--text-muted);
+		font-size: 12px;
 	}
 
 	.notifications__footer {

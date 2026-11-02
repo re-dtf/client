@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { openFeed, openOverlay } from '$lib/navigation';
+	import { notifications } from '$lib/api/notifications.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 
 	function openAccount() {
@@ -21,7 +22,7 @@
 				</svg>
 			</a>
 		</div>
-		<!-- ponytail: мессенджера и уведомлений в API клиента пока нет -->
+		<!-- TODO: мессенджер у DTF по подписке, на аккаунте без неё его запросы не снять -->
 		<div class="mobile-bar__link-wrapper">
 			<button class="mobile-bar__link" aria-label="Сообщения">
 				<svg height="28" width="28" class="icon" aria-hidden="true">
@@ -30,11 +31,15 @@
 			</button>
 		</div>
 		<div class="mobile-bar__link-wrapper">
-			<button class="mobile-bar__link" aria-label="Уведомления">
+			<!-- Панели уведомлений на мобильном нет: полный список открывается на DTF, как «Все уведомления» в шапке -->
+			<a href="https://dtf.ru/notifications" target="_blank" rel="noreferrer" class="mobile-bar__link mobile-bar__notifications" aria-label="Уведомления">
 				<svg height="28" width="28" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_bell"></use>
 				</svg>
-			</button>
+				{#if notifications.unread > 0}
+					<span class="mobile-bar__badge">{notifications.unread}</span>
+				{/if}
+			</a>
 		</div>
 		<div>
 			<button class="mobile-bar__link" aria-label={authStorage.isAuthenticated ? 'Настройки' : 'Войти'} onclick={openAccount}>
@@ -81,6 +86,23 @@
 		border-radius: 50%;
 		color: inherit;
 		cursor: pointer;
+	}
+
+	.mobile-bar__notifications {
+		position: relative;
+	}
+
+	.mobile-bar__badge {
+		position: absolute;
+		left: 50%;
+		top: 18%;
+		min-width: 12px;
+		padding: 3px 5px;
+		border-radius: 4px;
+		background-color: #e62e3b;
+		color: #fff;
+		font-size: 12px;
+		line-height: 1em;
 	}
 
 	@media (max-width: 719px) {
