@@ -34,3 +34,15 @@ a {
     text-decoration: none;
     color: inherit;
 }
+
+/* Затемнение за модальным окном: отклик на нажатие, поэтому есть у всех тем.
+   Остальное движение задаёт тема данными, см. src/lib/motion.ts */
+:root {
+    --backdrop-fade: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --backdrop-fade: 0ms;
+    }
+}

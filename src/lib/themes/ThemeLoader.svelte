@@ -25,6 +25,12 @@
 		}
 		return promise;
 	}
+
+	/** Загрузить компонент заранее: следующий ThemeLoader нарисует его сразу, без спиннера */
+	export function preloadThemeComponent(chain: string[], name: string): Promise<unknown> {
+		const path = findPath(chain, name);
+		return path ? load(path) : Promise.resolve();
+	}
 </script>
 
 <script lang="ts" generics="N extends keyof ThemeComponents">

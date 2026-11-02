@@ -7,10 +7,11 @@
 	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
+	import ModalShell from '$lib/components/overlays/ModalShell.svelte';
 	import { page } from '$app/state';
 	import { onMount, tick } from 'svelte';
 	import { dev } from '$app/env';
-	import { closeOverlay } from '$lib/navigation';
+	import type { ThemeComponents } from '$lib/themes/contract';
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	import { startTracking, type TickContext } from '$lib/storage/stats.svelte';
 	
@@ -20,6 +21,20 @@
 	
 	let { children } = $props();
 	let isFirstVisit = $state(false);
+
+	// Компонент темы, который окно должно загрузить до показа (иначе оно мелькает спиннером)
+	const MODAL_COMPONENT: Partial<Record<App.OverlayData['type'], keyof ThemeComponents>> = {
+		login: 'LoginModal',
+		editor: 'EditorScreen'
+	};
+
+	// Закрытие страницы-оверлея. Svelte не уничтожает элемент, пока идёт переход, поэтому короткий
+	// переход переносит размонтирование (тысячи узлов поста) на кадр позже показа ленты.
+	// Анимации ухода у страниц нет: лента под ними показывается сразу и встала бы рядом.
+	function deferDestroy(node: HTMLElement) {
+		node.style.display = 'none';
+		return { duration: 1 };
+	}
 	
 	let overlays = $derived(page.state.overlays || []);
 
@@ -138,7 +153,7 @@
 
 		{#each overlays as overlay, index (overlay.id)}
 			{#if overlay.presentation === 'page'}
-				<div class="overlay-wrapper"style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'}>
+				<div class="overlay-wrapper" style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'} out:deferDestroy|global>
 					{@render overlayContent(overlay)}
 				</div>
 			{/if}
@@ -147,17 +162,9 @@
 
 	{#each overlays as overlay, index (overlay.id)}
 		{#if overlay.presentation === 'modal'}
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="overlay-wrapper is-modal"
-				style:z-index={100 + index}
-				onclick={(e) => {
-					if (e.target === e.currentTarget) closeOverlay();
-				}}
-			>
+			<ModalShell {index} preload={MODAL_COMPONENT[overlay.type]}>
 				{@render overlayContent(overlay)}
-			</div>
+			</ModalShell>
 		{:else if overlay.presentation === 'fullscreen'}
 			{@render overlayContent(overlay)}
 		{/if}
@@ -178,21 +185,6 @@
 <ThemeLoader componentName="ReloadPrompt" />
 
 <style>
-	/* Темы настраивают фон модалок через CSS-переменные (см. dtf2022/theme.css) */
-	.overlay-wrapper.is-modal {
-		position: fixed;
-		inset: 0;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		background: var(--modal-backdrop, rgba(0, 0, 0, 0.4));
-		backdrop-filter: var(--modal-backdrop-filter, blur(4px));
-		-webkit-backdrop-filter: var(--modal-backdrop-filter, blur(4px));
-		padding: var(--modal-padding, 20px);
-		overflow-y: var(--modal-overflow-y, visible);
-		box-sizing: border-box;
-	}
-
 	.app {
 		min-height: 100vh;
 	}
