@@ -46,8 +46,10 @@
 	const format = (n: number) => String(n).replace('-', '−');
 
 	function vote(sign: 1 | -1) {
+		// Читаем до onvote: он меняет myVote синхронно, и снятый голос выглядел бы как новый
+		const unvote = myVote === sign;
 		const accepted = onvote?.(sign) !== false;
-		if (accepted && onvote && !arrow && myVote !== sign) arrow = { vote: sign, load: ARROWS[String(sign) as '1' | '-1'] };
+		if (accepted && onvote && !arrow && !unvote) arrow = { vote: sign, load: ARROWS[String(sign) as '1' | '-1'] };
 	}
 
 	function fade(_: Element) {
