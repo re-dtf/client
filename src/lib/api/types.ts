@@ -147,6 +147,12 @@ export interface CommentMedia {
 	};
 }
 
+/** Гиф для вложения: превью для выбора и готовое вложение */
+export interface GifResult {
+	previewUrl: string;
+	media: CommentMedia;
+}
+
 export interface Comment {
 	id: number;
 	sourceId: string;
@@ -253,9 +259,16 @@ export interface ApiProvider {
 	reactToPost?(postId: number, reactionId: number): Promise<Reactions>;
 	/** Отвечает, сколько теперь в закладках у объекта */
 	setFavorite?(id: number, kind: 'post' | 'comment', favorite: boolean): Promise<number>;
-	addComment?(postId: number, text: string, replyTo?: number): Promise<Comment>;
-	editComment?(commentId: number, postId: number, text: string): Promise<Comment>;
+	addComment?(postId: number, text: string, replyTo?: number, media?: CommentMedia[]): Promise<Comment>;
+	editComment?(commentId: number, postId: number, text: string, media?: CommentMedia[]): Promise<Comment>;
+	/** Включает или выключает уведомления о новых комментариях поста; отвечает новым состоянием */
+	toggleCommentsSubscription?(postId: number): Promise<boolean>;
+	getFavoriteGifs?(): Promise<GifResult[]>;
+	searchGifs?(query: string, cursor?: string): Promise<{ items: GifResult[]; cursor?: string }>;
 	getCommentControls?(commentId: number): Promise<CommentControls>;
+	complain?(kind: 'post' | 'comment', id: number, reasonId: number): Promise<void>;
+	/** Комментарий с донатом появляется после оплаты; отвечает ссылкой на оплату */
+	createDonation?(postId: number, text: string, replyTo: number | undefined, media: CommentMedia[], amount: number): Promise<string>;
 
 	// Подписки
 	setSubscription?(subsiteId: number, subscribed: boolean): Promise<void>;

@@ -2,11 +2,13 @@ import type {
 	ApiProvider,
 	Comment,
 	CommentControls,
+	CommentMedia,
 	CommentPermission,
 	CurrentUser,
 	CursorData,
 	DtfEditorEntry,
 	GetPostsOptions,
+	GifResult,
 	Notification,
 	PaginatedResult,
 	Post,
@@ -18,6 +20,7 @@ import type {
 	SubsiteItem,
 	UploadResult
 } from '../../types';
+import { getLeonardoUrl } from '../../utils';
 import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchWithAuth, requireAuth } from './client';
 import { login, loginByToken } from './auth';
 import { mapComment, mapCurrentUser, mapEntryToPost, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
@@ -39,6 +42,11 @@ async function resultOf(response: Response, fallback: string): Promise<any> {
 	const json = await response.json();
 	if (json.error) throw new Error(json.message?.text || json.message || fallback);
 	return json.result;
+}
+
+/** Вложение комментария в виде, который ждёт DTF: те же поля, что у media комментария, плюс служебные */
+function attachmentsOf(media: CommentMedia[]): string {
+	return JSON.stringify(media.map(({ type, data }) => ({ type, data: { hash: '', external_service: [], ...data } })));
 }
 
 /** Записи в ответах приходят то в `data`, то напрямую; бывают и пустые */
@@ -136,17 +144,17 @@ export const dtfApiProvider = {
 		return (await resultOf(response, 'Не удалось изменить закладки')).count ?? 0;
 	},
 
-	async addComment(postId: number, text: string, replyTo = 0): Promise<Comment> {
+	async addComment(postId: number, text: string, replyTo = 0, media: CommentMedia[] = []): Promise<Comment> {
 		requireAuth();
 		// nonce сайт придумывает сам, сервер возвращает его в ответе
-		const body = formOf({ id: postId, text, attachments: '[]', reply_to: replyTo, nonce: Math.floor(Math.random() * 1e6) });
+		const body = formOf({ id: postId, text, attachments: attachmentsOf(media), reply_to: replyTo, nonce: Math.floor(Math.random() * 1e6) });
 		const response = await fetchWithAuth(`${apiV('2.4')}/comment/add`, { method: 'POST', body });
 		return mapComment(await resultOf(response, 'Не удалось отправить комментарий'), postId);
 	},
 
-	async editComment(commentId: number, postId: number, text: string): Promise<Comment> {
+	async editComment(commentId: number, postId: number, text: string, media: CommentMedia[] = []): Promise<Comment> {
 		requireAuth();
-		const body = formOf({ comment_id: commentId, text, attachments: '[]' });
+		const body = formOf({ comment_id: commentId, text, attachments: attachmentsOf(media) });
 		const response = await fetchWithAuth(`${apiV('2.4')}/comment/edit`, { method: 'POST', body });
 		return mapComment(await resultOf(response, 'Не удалось изменить комментарий'), postId);
 	},
@@ -155,6 +163,72 @@ export const dtfApiProvider = {
 		requireAuth();
 		const response = await fetchWithAuth(`${apiV('2.1')}/comment/etcControls?commentId=${commentId}`);
 		return { edit: !!(await resultOf(response, 'Не удалось получить действия')).etcControls?.edit };
+	},
+
+	/** Это GET, но он переключает подписку: ответ говорит, что получилось */
+	async toggleCommentsSubscription(postId: number): Promise<boolean> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.4')}/content/${postId}/thread/subscribe`);
+		return !!(await resultOf(response, 'Не удалось изменить подписку на комментарии')).subscribe;
+	},
+
+	// --- Гифки для комментариев ---
+
+	async getFavoriteGifs(): Promise<GifResult[]> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.9')}/favorite-gifs?page=0&limit=24`);
+		// У избранного вложение уже готово (поле andropov)
+		return ((await resultOf(response, 'Не удалось получить избранные гифки')).items || []).map((item: any) => ({
+			previewUrl: getLeonardoUrl(item.leonardoUuid, { width: 200 }),
+			media: item.andropov
+		}));
+	},
+
+	async searchGifs(query: string, cursor = ''): Promise<{ items: GifResult[]; cursor?: string }> {
+		requireAuth();
+		const params = new URLSearchParams({ mediaFilter: 'gif,tinygif,nanogif', limit: '18', cursor, q: query });
+		const response = await fetchWithAuth(`${apiV('2.1')}/gifs/search?${params}`);
+		const result = await resultOf(response, 'Не удалось найти гифки');
+
+		return {
+			// Вложение из поиска собрано по полям выдачи, как у избранного: как сайт прикрепляет найденную гифку, не снималось
+			items: (result.items || []).map((item: any): GifResult => {
+				const gif = item.media_formats?.gif ?? {};
+				return {
+					previewUrl: gif.preview ?? item.url,
+					media: {
+						type: 'image',
+						data: { uuid: item.id, width: gif.dims?.[0] ?? 0, height: gif.dims?.[1] ?? 0, size: gif.size ?? 0, type: 'gif', duration: gif.duration, has_audio: !!item.hasaudio }
+					}
+				};
+			}),
+			cursor: result.cursor || undefined
+		};
+	},
+
+	async complain(kind: 'post' | 'comment', id: number, reasonId: number): Promise<void> {
+		requireAuth();
+		const [path, idField] = kind === 'post' ? ['content', 'content_id'] : ['comment', 'comment_id'];
+		const response = await fetchWithAuth(`${apiV('2.4')}/${path}/complaint`, { method: 'POST', body: formOf({ [idField]: id, reason_id: reasonId }) });
+		await resultOf(response, 'Не удалось отправить жалобу');
+	},
+
+	async createDonation(postId: number, text: string, replyTo = 0, media: CommentMedia[] = [], amount: number): Promise<string> {
+		requireAuth();
+		const body = formOf({
+			type: 'comment',
+			'data[id]': postId,
+			'data[text]': text,
+			'data[attachments]': attachmentsOf(media),
+			'data[reply_to]': replyTo,
+			'data[nonce]': Math.floor(Math.random() * 1e6),
+			donation: amount
+		});
+		const response = await fetchWithAuth(`${apiV('2.6')}/donations/donate`, { method: 'POST', body });
+		const link = (await resultOf(response, 'Не удалось создать платёж')).payment_link;
+		// Ссылку открывает пользователь, поэтому пускаем только https
+		if (typeof link !== 'string' || !link.startsWith('https://')) throw new Error('DTF не вернул ссылку на оплату');
+		return link;
 	},
 
 	// --- Подписки ---
