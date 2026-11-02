@@ -3,9 +3,8 @@
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { markCommentsStart, trackPostClosed, trackPostLoaded } from '$lib/storage/stats.svelte';
 	import { nextPaint } from '$lib/ready';
-	import { play } from '$lib/motion';
-	import { activeTheme } from '$lib/themes/index.svelte';
-	import { onDestroy, untrack, type Snippet } from 'svelte';
+	import { appear } from '$lib/themes/appear';
+	import { onDestroy, type Snippet } from 'svelte';
 
 	let { postId, sourceId = 'dtf', commentId, onLoaded, backButton }: {
 		postId: number;
@@ -20,9 +19,6 @@
 	let postPromise = api.getPost(postId, sourceId);
 	// Комментарии рисуются после кадра с постом: тысячи их узлов иначе задерживают и сам пост
 	const commentsTurn = postPromise.then(nextPaint, () => {});
-
-	// Пост и комментарии «прилетают» по мере прихода, если тема это умеет
-	const appear = (el: Element) => untrack(() => play(el, activeTheme.motion?.contentIn));
 
 	$effect(() => {
 		postPromise
@@ -44,13 +40,13 @@
 			<ThemeLoader componentName="Spinner" />
 		</div>
 	{:then post}
-		<div {@attach appear}>
+		<div {@attach appear('contentIn')}>
 			<ThemeLoader componentName="Post" {post} preview={false} />
 		</div>
 		<!-- Граница поста и комментариев для статистики: сколько времени пользователь в комментариях -->
 		<div {@attach (el) => markCommentsStart(post, el)}></div>
 		{#await commentsTurn then}
-			<div {@attach appear}>
+			<div {@attach appear('contentIn')}>
 				<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} focusCommentId={commentId} />
 			</div>
 		{/await}

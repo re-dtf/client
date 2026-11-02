@@ -4,7 +4,7 @@
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { feed, feedFromUrl, openFeedTab, periodFromUrl, type FeedName, type Period } from '$lib/feed.svelte';
 	import { untrack } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import { appear } from '$lib/themes/appear';
 
 	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
 	let loading = $state(true);
@@ -122,7 +122,7 @@
 	{:else if feedResult?.items.length === 0}
 		<div class="empty">Нет постов</div>
 	{:else if feedResult}
-		<div in:fade={{ duration: 400 }}>
+		<div {@attach appear('feedIn')}>
 			{#each feedResult.items as post (post.sourceId + '_' + post.id)}
 				<ThemeLoader componentName="Post" {post} />
 			{/each}

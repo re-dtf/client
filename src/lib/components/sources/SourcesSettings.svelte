@@ -7,7 +7,6 @@
 	import SourceCatalog from './SourceCatalog.svelte';
 	import type { SourceManifest } from '$lib/api/sources/types';
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
-	import { fade } from 'svelte/transition';
 
 	let showCatalog = $state(false);
 
@@ -108,7 +107,7 @@
 			<button class="btn secondary" onclick={() => showCatalog = true}>Каталог</button>
 		</div>
 		{#if addError}
-			<div class="error-msg" in:fade={{ duration: 200 }}>{addError}</div>
+			<div class="error-msg">{addError}</div>
 		{/if}
 	</div>
 
@@ -117,7 +116,7 @@
 			<div class="empty-state">Нет установленных источников</div>
 		{:else}
 			{#each sources as source (source.manifest.id)}
-				<div transition:fade={{ duration: 200 }}>
+				<div>
 					<SourceCard {source} onUpdateReady={handleUpdateReady} />
 				</div>
 			{/each}

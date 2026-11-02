@@ -18,6 +18,8 @@ export interface ThemeMotion {
 	modalOut?: Anim;
 	/** Содержимое экрана пришло: пост, комментарии */
 	contentIn?: Anim;
+	/** Пришёл список ленты */
+	feedIn?: Anim;
 }
 
 /** Кривые: QuarticEase и Fluent */
@@ -46,6 +48,11 @@ export const fluent: ThemeMotion = {
 	contentIn: {
 		keyframes: [{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'none' }],
 		duration: 520,
+		easing: ease.out
+	},
+	feedIn: {
+		keyframes: [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }],
+		duration: 480,
 		easing: ease.out
 	}
 };
