@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import type { Snippet } from 'svelte';
+	import { markCommentsStart, trackPostClosed, trackPostLoaded } from '$lib/storage/stats.svelte';
+	import { onDestroy, type Snippet } from 'svelte';
 
 	let { postId, sourceId = 'dtf', commentId, onLoaded, backButton }: {
 		postId: number;
@@ -17,8 +18,15 @@
 
 	$effect(() => {
 		postPromise
-			.then(post => onLoaded?.(post.title))
+			.then(post => {
+				trackPostLoaded(post);
+				onLoaded?.(post.title);
+			})
 			.catch(() => onLoaded?.('Ошибка'));
+	});
+
+	onDestroy(() => {
+		postPromise.then(trackPostClosed, () => {});
 	});
 </script>
 
@@ -29,6 +37,8 @@
 		</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
+		<!-- Граница поста и комментариев для статистики: сколько времени пользователь в комментариях -->
+		<div {@attach (el) => markCommentsStart(post, el)}></div>
 		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} focusCommentId={commentId} />
 		{#if backButton}
 			<div class="actions">

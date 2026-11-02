@@ -12,6 +12,7 @@
 	import { dev } from '$app/env';
 	import { closeOverlay } from '$lib/navigation';
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
+	import { startTracking, type TickContext } from '$lib/storage/stats.svelte';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -21,7 +22,20 @@
 	let isFirstVisit = $state(false);
 	
 	let overlays = $derived(page.state.overlays || []);
-	
+
+	// Для статистики: где пользователь и какой пост у него открыт (под верхним оверлеем посты не считаются)
+	let statsContext = $derived.by((): TickContext => {
+		const theme = activeTheme.id;
+		const top = overlays.findLast(o => o.presentation === 'page');
+		if (top?.type === 'post') return { area: 'post', theme, post: `${top.data.sourceId ?? 'dtf'}_${top.data.postId}` };
+		if (top) return { area: top.type === 'profile' ? 'profile' : 'other', theme };
+
+		const route = page.route.id ?? '';
+		if (route === '/') return { area: 'feed', theme };
+		if (route.startsWith('/post/')) return { area: 'post', theme, post: `${page.url.searchParams.get('source') || 'dtf'}_${page.params.id}` };
+		return { area: route.startsWith('/u/') ? 'profile' : 'other', theme };
+	});
+
 	// Determine the topmost 'page' overlay. Layers beneath it should be hidden.
 	let topmostPageOverlayIndex = $derived(overlays.findLastIndex(o => o.presentation === 'page'));
 
@@ -64,6 +78,7 @@
 	
 	onMount(() => {
 		cleanupHangingBio(true);
+		const stopTracking = startTracking(() => statsContext);
 		// Check if the user has completed the first setup
 		const firstSetupCompleted = localStorage.getItem('redtf:setup:completed');
 		if (!firstSetupCompleted) {
@@ -85,6 +100,8 @@
 				if (firstSplash) firstSplash.remove();
 			}, 300);
 		}, isFirstVisit ? 3000 : 1000);
+
+		return stopTracking;
 	});
 </script>
 

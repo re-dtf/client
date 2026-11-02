@@ -1,10 +1,11 @@
-import type { ApiProvider, Comment, CursorData, GetPostsOptions, PaginatedResult, Post } from './types';
+import type { ApiProvider, Comment, CursorData, GetPostsOptions, PaginatedResult, Post, User } from './types';
 import { dtfApiProvider } from './providers/dtf';
 import { createSourceProvider } from './providers/source';
 import { sourceRegistry } from './sources/registry.svelte';
 import { mergePosts, mergeComments } from './sources/merger';
 import { hasPermission } from './sources/permissions';
 import { authStorage } from '$lib/storage/auth.svelte';
+import { trackComment, trackFavorite, trackReaction, trackSubscription } from '$lib/storage/stats.svelte';
 
 /*
  * Единственная точка, через которую UI получает данные. Компоненты вызывают api.getPosts() и так далее
@@ -144,7 +145,8 @@ export const api = {
 		};
 	},
 
-	async reactToComment(commentId: number, reactionId: number, sourceId: string = DTF) {
+	/** `author` нужен только статистике: кому поставлена реакция */
+	async reactToComment(commentId: number, reactionId: number, sourceId: string = DTF, author?: User) {
 		if (sourceId !== DTF) {
 			const source = sourceRegistry.activeSources.find((s) => s.manifest.id === sourceId);
 			if (!source || !hasPermission(source, 'write:reactions')) {
@@ -153,16 +155,30 @@ export const api = {
 		}
 		const provider = providerFor(sourceId);
 		if (!provider.reactToComment) throw new Error(`Источник '${sourceId}' не поддерживает реакции`);
-		return provider.reactToComment(commentId, reactionId);
+		await provider.reactToComment(commentId, reactionId);
+		trackReaction('comment', reactionId, author, sourceId);
 	},
 
 	getEditorialNews: (lastId?: number) => dtfApiProvider.getEditorialNews(lastId),
 
 	// --- Действия вошедшего пользователя (только DTF) ---
 
-	reactToPost: dtfApiProvider.reactToPost,
-	setFavorite: dtfApiProvider.setFavorite,
-	addComment: dtfApiProvider.addComment,
+	/** `author` нужен только статистике: кому поставлена реакция */
+	async reactToPost(postId: number, reactionId: number, author?: User) {
+		const reactions = await dtfApiProvider.reactToPost(postId, reactionId);
+		trackReaction('post', reactionId, author);
+		return reactions;
+	},
+	async setFavorite(id: number, kind: 'post' | 'comment', favorite: boolean) {
+		const count = await dtfApiProvider.setFavorite(id, kind, favorite);
+		if (favorite) trackFavorite(kind);
+		return count;
+	},
+	async addComment(...args: Parameters<typeof dtfApiProvider.addComment>) {
+		const comment = await dtfApiProvider.addComment(...args);
+		trackComment();
+		return comment;
+	},
 	editComment: dtfApiProvider.editComment,
 	getCommentControls: dtfApiProvider.getCommentControls,
 	complain: dtfApiProvider.complain,
@@ -170,7 +186,10 @@ export const api = {
 	setCommentsSubscription: dtfApiProvider.setCommentsSubscription,
 	getFavoriteGifs: dtfApiProvider.getFavoriteGifs,
 	searchGifs: dtfApiProvider.searchGifs,
-	setSubscription: dtfApiProvider.setSubscription,
+	async setSubscription(subsiteId: number, subscribed: boolean) {
+		await dtfApiProvider.setSubscription(subsiteId, subscribed);
+		if (subscribed) trackSubscription();
+	},
 	setSubscriptionNotifications: dtfApiProvider.setSubscriptionNotifications,
 	getNotifications: dtfApiProvider.getNotifications,
 	markNotificationsRead: dtfApiProvider.markNotificationsRead,

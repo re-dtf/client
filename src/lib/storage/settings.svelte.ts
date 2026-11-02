@@ -9,6 +9,8 @@ export interface AppSettings {
 	proxyUrl: string;
 	/** Показ глубоко вложенных комментариев */
 	commentNesting: NestingMode;
+	/** Вести локальную статистику (см. stats.svelte.ts) */
+	collectStats: boolean;
 }
 
 /**
@@ -24,5 +26,6 @@ export const DEFAULT_THEME = 'dtf2022';
 export const settings = persistedState<AppSettings>('redtf:settings', {
 	theme: DEFAULT_THEME,
 	proxyUrl: '',
-	commentNesting: 'flatten'
+	commentNesting: 'flatten',
+	collectStats: true
 });

@@ -15,7 +15,7 @@ export function toggleCommentReaction(comment: Comment, reactionId: number): boo
 	const next = nextReactionId(prev, reactionId);
 	comment.reactions = applyReaction(prev, next);
 
-	api.reactToComment(comment.id, next, comment.sourceId).catch((e) => {
+	api.reactToComment(comment.id, next, comment.sourceId, comment.author).catch((e) => {
 		comment.reactions = prev;
 		notify.error(e.message);
 	});

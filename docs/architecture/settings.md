@@ -2,7 +2,7 @@
 
 Экран настроек общий для всех тем и состоит из двух вкладок:
 
-- **Общие** — то, что не зависит от темы: выбор темы, режим вложенных комментариев, прокси для входа, подключённые источники данных.
+- **Общие** — то, что не зависит от темы: выбор темы, режим вложенных комментариев, прокси для входа, подключённые источники данных, статистика.
 - **Вкладка темы** — настройки выбранной темы (например, вид оценок у `dtf2022`). Её название — название темы. Если у темы настроек нет, вкладки нет.
 
 Где живёт код:
@@ -12,6 +12,7 @@
 | `components/settings/SettingsScreen.svelte` | вкладки и выбор, что показать |
 | `components/settings/GeneralSettings.svelte` | вкладка «Общие» |
 | `components/settings/FieldControl.svelte` | один пункт настроек по описанию поля |
+| `components/settings/StatsSettings.svelte` | раздел «Статистика» во вкладке «Общие» ([storage](storage.md#статистика)) |
 | `components/SettingsOverlay.svelte`, `routes/settings/+page.svelte` | оболочки: окно поверх ленты и отдельная страница |
 | `storage/settings.svelte.ts` | значения общих настроек |
 | `themes/settings.svelte.ts` | значения настроек тем |
@@ -28,6 +29,7 @@ interface AppSettings {
 	theme: string;                  // id темы
 	proxyUrl: string;               // CORS-прокси для входа
 	commentNesting: 'flatten' | 'autopan';
+	collectStats: boolean;          // вести локальную статистику
 }
 ```
 

@@ -45,7 +45,7 @@ export function reactToPost(post: Post, reactionId: number): boolean {
 	const next = nextReactionId(current, reactionId);
 	change(post, { reactions: applyReaction(current, next) });
 
-	api.reactToPost(post.id, next)
+	api.reactToPost(post.id, next, post.author)
 		.then((reactions) => change(post, { reactions }))
 		.catch((e) => {
 			change(post, { reactions: current });

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FieldControl from './FieldControl.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
+	import StatsSettings from './StatsSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
 	import { settings, DEFAULT_PROXY_URL, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import type { NestingMode } from '$lib/storage/settings.svelte';
@@ -69,6 +70,11 @@
 
 <section class="section">
 	<SourcesSettings />
+</section>
+
+<section class="section" aria-labelledby="settings-stats">
+	<h3 class="section__title" id="settings-stats">Статистика</h3>
+	<StatsSettings />
 </section>
 
 <style>
