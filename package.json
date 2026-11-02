@@ -38,7 +38,8 @@
 		"@editorjs/list": "^2.0.9",
 		"@editorjs/quote": "^2.7.6",
 		"dompurify": "^3.4.17",
-		"lottie-web": "^5.13.0"
+		"lottie-web": "^5.13.0",
+		"photoswipe": "^5.4.4"
 	},
 	"overrides": {
 		"@vite-pwa/sveltekit": {
