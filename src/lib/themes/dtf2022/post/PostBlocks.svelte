@@ -133,7 +133,7 @@
 		{/snippet}
 		{@render placeholder(image.data, undefined, content)}
 		{#if caption}
-			<figcaption class="media-caption">{caption}</figcaption>
+			<figcaption class="media-caption">{@html sanitize(caption)}</figcaption>
 		{/if}
 	</figure>
 {/snippet}
@@ -387,6 +387,12 @@
 		margin-top: 8px;
 		font-size: 0.9em;
 		color: #666;
+	}
+
+	.media-caption :global(a) {
+		color: var(--text-link);
+		border-bottom: 1px solid #bed0ea;
+		cursor: pointer;
 	}
 
 	.post-blocks--card .media-caption,
