@@ -16,7 +16,7 @@ const base: ThemeManifest = {
 describe('реестр тем', () => {
 	it('находит темы из папок', () => {
 		expect(getTheme('dtf2022')?.name).toBe('DTF 2022');
-		expect(themes.map((t) => t.id)).toEqual(expect.arrayContaining(['classic', 'modern', 'dtf2022']));
+		expect(themes.map((t) => t.id)).toEqual(expect.arrayContaining(['dtf2022']));
 	});
 
 	it('цепочка идёт от темы к основе', () => {

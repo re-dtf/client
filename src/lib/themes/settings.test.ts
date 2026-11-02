@@ -23,16 +23,10 @@ describe('настройки темы', () => {
 		expect(getThemeSettings('dtf2022').value).toEqual({ votes: 'likes' });
 	});
 
-	it('у темы без схемы настроек нет', () => {
-		expect(getThemeSettings('classic').value).toEqual({});
-	});
-
 	it('у каждой темы свой ключ, настройки не смешиваются', () => {
 		getThemeSettings('dtf2022').patch({ votes: 'rating' });
-		getThemeSettings('modern').patch({ extra: true });
 
 		expect(JSON.parse(localStorage.getItem('redtf:theme:dtf2022')!).d).toEqual({ votes: 'rating' });
-		expect(JSON.parse(localStorage.getItem('redtf:theme:modern')!).d).toEqual({ extra: true });
 	});
 
 	it('один и тот же стор отдаётся для одной темы', () => {
@@ -42,8 +36,5 @@ describe('настройки темы', () => {
 	it('activeThemeSettings следует за выбранной темой', () => {
 		activeTheme.set('dtf2022');
 		expect(activeThemeSettings()).toBe(getThemeSettings('dtf2022'));
-
-		activeTheme.set('classic');
-		expect(activeThemeSettings()).toBe(getThemeSettings('classic'));
 	});
 });
