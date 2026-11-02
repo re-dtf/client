@@ -14,6 +14,7 @@
 		width = 143,
 		align = 'right',
 		label,
+		searchable = false,
 		children
 	}: {
 		open?: boolean;
@@ -23,10 +24,23 @@
 		width?: number | string;
 		align?: 'left' | 'right';
 		label?: string;
+		/** Строка поиска над списком (для длинных списков) */
+		searchable?: boolean;
 		children: Snippet;
 	} = $props();
 
 	let anchor = $state<HTMLElement>();
+	let query = $state('');
+	const visible = $derived.by(() => {
+		const needle = query.trim().toLowerCase();
+		return needle ? items.filter((item) => item.label.toLowerCase().includes(needle)) : items;
+	});
+
+	// Поле поиска живёт, пока список открыт: в него сразу можно печатать, а запрос не переходит на следующее открытие
+	function searchField(input: HTMLInputElement) {
+		input.focus();
+		return () => (query = '');
+	}
 
 	function select(value: T) {
 		open = false;
@@ -45,8 +59,20 @@
 
 	{#if open}
 		<div class={['popover', { 'popover--left': align === 'left' }]} style:width={typeof width === 'number' ? `${width}px` : width} role="listbox" aria-label={label}>
+			{#if searchable}
+				<input
+					class="popover__search"
+					type="search"
+					placeholder="Поиск"
+					aria-label="Поиск"
+					autocomplete="off"
+					bind:value={query}
+					onkeydown={(e) => e.key === 'Enter' && visible[0] && (e.preventDefault(), select(visible[0].value))}
+					{@attach searchField}
+				/>
+			{/if}
 			<div class="popover__content">
-				{#each items as item (item.value)}
+				{#each visible as item (item.value)}
 					<div
 						class={['popover-item', { 'popover-item--selected': item.value === selected }]}
 						role="option"
@@ -64,6 +90,8 @@
 						{/if}
 						<div class="popover-item__label">{item.label}</div>
 					</div>
+				{:else}
+					<div class="popover__empty">Ничего не найдено</div>
 				{/each}
 			</div>
 		</div>
@@ -101,8 +129,37 @@
 		left: var(--popover-left, 0);
 	}
 
+	/* Длинный список прокручивается внутри себя, а не растягивает страницу */
 	.popover__content {
+		max-height: min(320px, 50vh);
 		padding: 6px;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	.popover__search {
+		display: block;
+		width: calc(100% - 12px);
+		min-height: 36px;
+		margin: 6px 6px 0;
+		padding: 0 11px;
+		box-sizing: border-box;
+		border: 1px solid rgba(0, 0, 0, 0.03);
+		border-radius: 8px;
+		background-color: #f5f5f5;
+		color: inherit;
+		font: inherit;
+		outline: 0;
+	}
+
+	.popover__search:focus {
+		border-color: var(--color-blue);
+		background-color: #fff;
+	}
+
+	.popover__empty {
+		padding: 6px 10px;
+		color: rgba(0, 0, 0, 0.65);
 	}
 
 	.popover-item {

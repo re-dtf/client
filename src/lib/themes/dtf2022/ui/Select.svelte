@@ -5,11 +5,14 @@
 	let {
 		value = $bindable(),
 		options,
-		placeholder = ''
+		placeholder = '',
+		searchable = false
 	}: {
 		value?: T;
 		options: { value: T; label: string }[];
 		placeholder?: string;
+		/** Строка поиска в списке: для длинных списков */
+		searchable?: boolean;
 	} = $props();
 
 	let open = $state(false);
@@ -17,7 +20,7 @@
 </script>
 
 <div class="select">
-	<Popover bind:open items={options} selected={value} onselect={(next) => (value = next)} width="100%" align="left" label={placeholder}>
+	<Popover bind:open items={options} selected={value} onselect={(next) => (value = next)} width="100%" align="left" label={placeholder} {searchable}>
 		<button type="button" class={['select__field', { 'select__field--focused': open }]} aria-haspopup="listbox" aria-expanded={open} onclick={() => (open = !open)}>
 			{#if selected}
 				<span class="select__selected">{selected.label}</span>
