@@ -4,6 +4,8 @@
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
 	import { sourceStorage } from '$lib/storage/sources.svelte';
 	import BioVerification from './BioVerification.svelte';
+	import SettingsButton from '$lib/components/settings/SettingsButton.svelte';
+	import SettingsSwitch from '$lib/components/settings/SettingsSwitch.svelte';
 
 	let { source, onUpdateReady }: { 
 		source: SourceState;
@@ -55,67 +57,68 @@
 	}
 </script>
 
-<div class="source-card" class:disabled={!source.enabled}>
-	<div class="card-header">
+<article class={['card', { 'card--off': !source.enabled }]}>
+	<header class="card__header">
 		{#if manifest.icon}
-			<img src={manifest.icon} alt="Icon" class="source-icon" />
+			<img src={manifest.icon} alt="" class="card__icon" />
 		{/if}
-		<div class="header-info">
-			<h3>{manifest.name} <span class="version">v{manifest.version}</span></h3>
+		<div class="card__info">
+			<h4 class="card__name">
+				{manifest.name}
+				<span class="version">v{manifest.version}</span>
+			</h4>
 			{#if manifest.author}
-				<div class="author">
-					от 
+				<p class="card__meta">
+					от
 					{#if manifest.author.url && manifest.author.url.startsWith('http')}
-						<a href={manifest.author.url} target="_blank" rel="noopener noreferrer">{manifest.author.name}</a>
+						<a class="link" href={manifest.author.url} target="_blank" rel="noopener noreferrer">{manifest.author.name}</a>
 					{:else}
 						{manifest.author.name}
 					{/if}
-				</div>
+				</p>
 			{/if}
 		</div>
-		<div class="actions">
-			<label class="toggle-switch">
-				<input type="checkbox" checked={source.enabled} onchange={toggleEnabled} />
-				<span class="slider round"></span>
-			</label>
-		</div>
-	</div>
+		<span class={['pill', source.enabled ? 'pill--ok' : 'pill--off']}>{source.enabled ? 'Подключен' : 'Выключен'}</span>
+		<SettingsSwitch checked={source.enabled} label="Источник {manifest.name} включён" onchange={toggleEnabled} />
+	</header>
 
-	<p class="description">{manifest.description}</p>
-	
+	<p class="card__description">{manifest.description}</p>
+	<p class="card__meta">Адрес: {manifest.api.baseUrl}</p>
+
 	<div class="tags">
 		{#if source.isBuiltin}
-			<span class="tag builtin">Встроенный</span>
+			<span class="tag tag--builtin">Встроенный</span>
 		{/if}
 		{#each manifest.tags || [] as tag}
 			<span class="tag">{tag}</span>
 		{/each}
 		{#if manifest.auth && manifest.auth.type !== 'none'}
 			{#if hasToken}
-				<span class="tag auth-success">✓ Авторизован</span>
+				<span class="tag tag--ok">Авторизован</span>
 			{:else}
-				<span class="tag auth-required">⚠ Требуется вход</span>
+				<span class="tag tag--warn">Требуется вход</span>
 			{/if}
 		{/if}
 	</div>
 
-	<div class="card-footer">
-		<button class="btn secondary">Настроить</button>
-		<button class="btn secondary" onclick={handleUpdate} disabled={isUpdating}>
+	<footer class="card__footer">
+		<SettingsButton>Настроить</SettingsButton>
+		<SettingsButton onclick={handleUpdate} disabled={isUpdating}>
 			{isUpdating ? 'Поиск...' : 'Обновить'}
-		</button>
+		</SettingsButton>
 		{#if manifest.auth && manifest.auth.type !== 'none'}
 			{#if hasToken}
-				<button class="btn secondary" onclick={handleRevokeAuth}>Выйти</button>
+				<SettingsButton onclick={handleRevokeAuth}>Выйти</SettingsButton>
 			{:else}
-				<button class="btn primary" onclick={handleAuth}>Авторизоваться</button>
+				<SettingsButton variant="suggested" onclick={handleAuth}>Авторизоваться</SettingsButton>
 			{/if}
 		{/if}
 		{#if !source.isBuiltin}
-			<button class="btn danger" onclick={removeSource}>Удалить</button>
+			<span class="card__spacer"></span>
+			<SettingsButton variant="destructive" onclick={removeSource}>Удалить</SettingsButton>
 		{/if}
-	</div>
-</div>
+	</footer>
+</article>
 
 {#if showBioAuth}
 	<BioVerification 
@@ -126,200 +129,141 @@
 {/if}
 
 <style>
-	.source-card {
-		background: #fdfdfd;
-		border: 1px solid #eee;
-		border-radius: 8px;
-		padding: 16px;
-		margin-bottom: 12px;
+	.card {
+		padding: 20px;
+		border-radius: 14px;
+		background: var(--st-card);
+		box-shadow: var(--st-card-shadow);
 		transition: opacity var(--duration-base);
 	}
 
-	.source-card.disabled {
-		opacity: 0.6;
+	.card--off {
+		opacity: 0.7;
 	}
 
-	.card-header {
+	.card__header {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 14px;
 		margin-bottom: 12px;
 	}
 
-	.source-icon {
+	.card__icon {
+		flex: none;
 		width: 40px;
 		height: 40px;
-		border-radius: 6px;
+		border-radius: 8px;
 		object-fit: cover;
 	}
 
-	.header-info {
+	.card__info {
 		flex: 1;
+		min-width: 0;
 	}
 
-	.header-info h3 {
-		margin: 0;
-		font-size: 16px;
-		color: #333;
+	.card__name {
 		display: flex;
 		align-items: center;
 		gap: 8px;
+		font-size: 17px;
+		font-weight: 500;
+		line-height: 24px;
 	}
 
 	.version {
+		padding: 0 6px;
+		border-radius: 6px;
+		background: var(--st-button);
+		color: var(--st-muted);
 		font-size: 12px;
-		background: #eef2f5;
-		color: #555;
-		padding: 2px 6px;
-		border-radius: 4px;
 		font-weight: 500;
 	}
 
-	.author {
+	.card__meta {
+		overflow-wrap: anywhere;
+		color: var(--st-muted);
 		font-size: 13px;
-		color: #666;
-		margin-top: 2px;
+		line-height: 19px;
 	}
 
-	.author a {
-		color: #1976d2;
-		text-decoration: none;
+	.card__description {
+		margin-bottom: 6px;
+		font-size: 15px;
+		line-height: 22px;
 	}
 
-	.author a:hover {
+	.link {
+		color: var(--text-link, var(--st-accent));
+	}
+
+	.link:hover {
 		text-decoration: underline;
 	}
 
-	.description {
-		font-size: 14px;
-		line-height: 1.4;
-		color: #444;
-		margin: 0 0 12px 0;
+	.pill {
+		flex: none;
+		padding: 2px 10px;
+		border-radius: 12px;
+		font-size: 12px;
+		font-weight: 500;
+	}
+
+	.pill--ok {
+		background: color-mix(in srgb, var(--st-ok) 14%, transparent);
+		color: var(--st-ok);
+	}
+
+	.pill--off {
+		background: var(--st-button);
+		color: var(--st-muted);
 	}
 
 	.tags {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px;
-		margin-bottom: 16px;
+		margin: 12px 0 18px;
+	}
+
+	.tags:empty {
+		display: none;
 	}
 
 	.tag {
-		font-size: 11px;
-		background: #f0f0f0;
-		color: #555;
-		padding: 4px 8px;
-		border-radius: 4px;
+		padding: 2px 8px;
+		border-radius: 6px;
+		background: var(--st-button);
+		color: var(--st-muted);
+		font-size: 12px;
 	}
 
-	.tag.builtin {
-		background: #e3f2fd;
-		color: #1565c0;
-		font-weight: 500;
-	}
-	
-	.tag.auth-success {
-		background: #e8f5e9;
-		color: #2e7d32;
-		font-weight: 500;
-	}
-	
-	.tag.auth-required {
-		background: #fff3e0;
-		color: #e65100;
+	.tag--builtin {
+		background: color-mix(in srgb, var(--st-accent) 14%, transparent);
+		color: var(--st-accent);
 		font-weight: 500;
 	}
 
-	.card-footer {
+	.tag--ok {
+		background: color-mix(in srgb, var(--st-ok) 14%, transparent);
+		color: var(--st-ok);
+		font-weight: 500;
+	}
+
+	.tag--warn {
+		background: color-mix(in srgb, #e5a50a 20%, transparent);
+		color: #8a5a00;
+		font-weight: 500;
+	}
+
+	.card__footer {
 		display: flex;
-		gap: 8px;
-		border-top: 1px solid #f0f0f0;
-		padding-top: 12px;
+		flex-wrap: wrap;
+		gap: 10px;
+		padding-top: 18px;
+		border-top: 1px solid var(--st-separator);
 	}
 
-	.btn {
-		padding: 6px 12px;
-		border-radius: 4px;
-		font-size: 13px;
-		cursor: pointer;
-		border: 1px solid transparent;
-		background: transparent;
-		transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
-	}
-
-	.btn.primary {
-		background: #1976d2;
-		color: white;
-	}
-
-	.btn.primary:hover {
-		background: #1565c0;
-	}
-
-	.btn.secondary {
-		border-color: #ddd;
-		color: #333;
-		background: #fafafa;
-	}
-
-	.btn.secondary:hover {
-		background: #f0f0f0;
-	}
-
-	.btn.danger {
-		color: #d32f2f;
-		margin-left: auto;
-	}
-
-	.btn.danger:hover {
-		background: #ffebee;
-	}
-
-	/* Toggle Switch */
-	.toggle-switch {
-		position: relative;
-		display: inline-block;
-		width: 40px;
-		height: 22px;
-	}
-	.toggle-switch input {
-		opacity: 0;
-		width: 0;
-		height: 0;
-	}
-	.slider {
-		position: absolute;
-		cursor: pointer;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: #ccc;
-		transition: background-color var(--duration-slow);
-	}
-	.slider:before {
-		position: absolute;
-		content: "";
-		height: 16px;
-		width: 16px;
-		left: 3px;
-		bottom: 3px;
-		background-color: white;
-		transition: transform var(--duration-slow);
-	}
-	input:checked + .slider {
-		background-color: #4caf50;
-	}
-	input:focus + .slider {
-		box-shadow: 0 0 1px #4caf50;
-	}
-	input:checked + .slider:before {
-		transform: translateX(18px);
-	}
-	.slider.round {
-		border-radius: 22px;
-	}
-	.slider.round:before {
-		border-radius: 50%;
+	.card__spacer {
+		flex: 1;
 	}
 </style>
