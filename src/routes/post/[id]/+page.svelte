@@ -5,7 +5,10 @@
 
 	let id = $derived(Number(page.params.id));
 	let sourceId = $derived(page.url.searchParams.get('source') || 'dtf');
-	let commentId = $derived(Number(page.url.searchParams.get('comment')) || undefined);
+	// Ссылка «Скопировать» ведёт на #comment-<источник>_<id>, ссылки dtf.ru — на ?comment=<id>
+	let commentId = $derived(
+		Number(page.url.searchParams.get('comment')) || Number(/^#comment-\w+_(\d+)$/.exec(page.url.hash)?.[1]) || undefined
+	);
 	let pageTitle = $state('Загрузка... - reDTF');
 </script>
 
