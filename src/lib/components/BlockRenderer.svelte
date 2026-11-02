@@ -76,7 +76,7 @@
 		text-decoration: none;
 		color: inherit;
 		background: var(--block-bg, #fafafa);
-		transition: background 0.2s;
+		transition: background var(--duration-base);
 	}
 	.embed-card:hover {
 		background: var(--block-hover-bg, #f0f0f0);

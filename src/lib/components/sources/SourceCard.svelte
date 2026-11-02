@@ -132,7 +132,7 @@
 		border-radius: 8px;
 		padding: 16px;
 		margin-bottom: 12px;
-		transition: opacity 0.2s;
+		transition: opacity var(--duration-base);
 	}
 
 	.source-card.disabled {
@@ -244,7 +244,7 @@
 		cursor: pointer;
 		border: 1px solid transparent;
 		background: transparent;
-		transition: all 0.2s;
+		transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
 	}
 
 	.btn.primary {
@@ -295,7 +295,7 @@
 		right: 0;
 		bottom: 0;
 		background-color: #ccc;
-		transition: .4s;
+		transition: background-color var(--duration-slow);
 	}
 	.slider:before {
 		position: absolute;
@@ -305,7 +305,7 @@
 		left: 3px;
 		bottom: 3px;
 		background-color: white;
-		transition: .4s;
+		transition: transform var(--duration-slow);
 	}
 	input:checked + .slider {
 		background-color: #4caf50;

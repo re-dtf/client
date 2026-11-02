@@ -57,7 +57,7 @@
 		background-position: center;
 		filter: blur(50px);
 		transform: scale(1.2);
-		transition: opacity 0.5s ease;
+		transition: opacity var(--duration-slow) ease;
 		z-index: 1;
 	}
 
@@ -73,7 +73,7 @@
 		background-size: 200% 100%;
 		animation: shimmer 3s infinite ease-in-out;
 		z-index: 2;
-		transition: opacity 0.5s ease;
+		transition: opacity var(--duration-slow) ease;
 	}
 
 	.full-image {
@@ -84,7 +84,7 @@
 		height: 100%;
 		object-fit: cover;
 		opacity: 0;
-		transition: opacity 0.5s ease;
+		transition: opacity var(--duration-slow) ease;
 		z-index: 3;
 	}
 

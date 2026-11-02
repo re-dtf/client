@@ -23,7 +23,7 @@
 		font-size: 14px;
 		padding: 8px 16px;
 		font-weight: 500;
-		transition: background 0.2s;
+		transition: background var(--duration-base);
 	}
 	.back-link:hover {
 		background: #e4e5e7;

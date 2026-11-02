@@ -201,7 +201,7 @@
 		font-weight: 500;
 		cursor: pointer;
 		border: 1px solid transparent;
-		transition: all 0.2s;
+		transition: background-color var(--duration-base), border-color var(--duration-base), opacity var(--duration-base);
 	}
 
 	.btn:disabled {

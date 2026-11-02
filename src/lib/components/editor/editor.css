@@ -62,7 +62,7 @@
 	font-size: 14px;
 	font-weight: 500;
 	color: var(--dtf-editor-text);
-	transition: all 0.2s ease;
+	transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
 	box-sizing: border-box;
 }
 
@@ -165,7 +165,7 @@
 	border-radius: 4px;
 	cursor: pointer;
 	color: var(--dtf-editor-text-secondary);
-	transition: background 0.2s ease;
+	transition: background var(--duration-base);
 }
 
 .dtf-quiz-tool-add-btn:hover {

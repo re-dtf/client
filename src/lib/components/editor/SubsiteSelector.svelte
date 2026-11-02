@@ -136,7 +136,7 @@
 		margin-left: auto;
 		font-size: 10px;
 		color: #888;
-		transition: transform 0.2s;
+		transition: transform var(--duration-base);
 	}
 
 	.arrow.open {

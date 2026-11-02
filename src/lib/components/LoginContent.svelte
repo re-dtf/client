@@ -182,7 +182,7 @@
 		cursor: pointer;
 		color: #666;
 		border-bottom: 2px solid transparent;
-		transition: all 0.2s;
+		transition: background-color var(--duration-base), color var(--duration-base), border-bottom-color var(--duration-base);
 	}
 
 	.tab:hover {
@@ -234,7 +234,7 @@
 		font-size: 16px;
 		font-weight: bold;
 		cursor: pointer;
-		transition: background 0.2s;
+		transition: background var(--duration-base);
 		margin-top: 10px;
 	}
 
