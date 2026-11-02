@@ -1,4 +1,4 @@
-<script lang="ts" generics="T extends string">
+<script lang="ts" generics="T extends string | number">
 	import type { Snippet } from 'svelte';
 	import { clickOnKey } from '../a11y';
 
@@ -17,10 +17,10 @@
 		children
 	}: {
 		open?: boolean;
-		items: { value: T; label: string }[];
+		items: { value: T; label: string; icon?: string }[];
 		selected?: T;
 		onselect: (value: T) => void;
-		width?: number;
+		width?: number | string;
 		align?: 'left' | 'right';
 		label?: string;
 		children: Snippet;
@@ -44,7 +44,7 @@
 	{@render children()}
 
 	{#if open}
-		<div class={['popover', { 'popover--left': align === 'left' }]} style:width="{width}px" role="listbox" aria-label={label}>
+		<div class={['popover', { 'popover--left': align === 'left' }]} style:width={typeof width === 'number' ? `${width}px` : width} role="listbox" aria-label={label}>
 			<div class="popover__content">
 				{#each items as item (item.value)}
 					<div
@@ -55,6 +55,13 @@
 						onclick={() => select(item.value)}
 						onkeydown={clickOnKey}
 					>
+						{#if item.icon}
+							<div class={['popover-item__icon', { 'popover-item__icon--active': item.icon === 'v_bookmark_solid' }]}>
+								<svg class="icon" width="20" height="20" aria-hidden="true">
+									<use href="/icons.svg#{item.icon}"></use>
+								</svg>
+							</div>
+						{/if}
 						<div class="popover-item__label">{item.label}</div>
 					</div>
 				{/each}
@@ -67,6 +74,7 @@
 	.popover-anchor {
 		position: relative;
 		display: flex;
+		width: var(--popover-anchor-width, auto);
 	}
 
 	.popover {
@@ -76,7 +84,7 @@
 		top: calc(100% + var(--popover-gap, 8px));
 		right: 0;
 		z-index: 17;
-		max-width: 400px;
+		max-width: var(--popover-max-width, 400px);
 		overflow: hidden;
 		border-radius: 8px;
 		background-color: #fff;
@@ -125,6 +133,21 @@
 	.popover-item--selected:hover,
 	.popover-item--selected:focus-visible {
 		--color-background: #d8e7fc;
+	}
+
+	.popover-item__icon {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		margin-right: 10px;
+	}
+
+	/* Добавленная закладка в меню синяя */
+	.popover-item__icon--active {
+		color: var(--color-blue);
 	}
 
 	.popover-item__label {

@@ -4,6 +4,7 @@
 	import SidebarRight from './SidebarRight.svelte';
 	import MobileBar from './MobileBar.svelte';
 	import { sidebar } from './sidebar.svelte';
+	import Toasts from './ui/Toasts.svelte';
 
 	let { children }: { children?: Snippet } = $props();
 </script>
@@ -19,6 +20,8 @@
 </div>
 
 <MobileBar />
+
+<Toasts />
 
 <style>
 	/* Контент в пространстве между сайдбарами */
