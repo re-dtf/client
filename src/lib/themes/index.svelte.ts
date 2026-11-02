@@ -1,5 +1,6 @@
 import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 import { getTheme, themeChain } from './registry';
+import type { ThemeManifest } from './types';
 
 export { themes } from './registry';
 
@@ -12,6 +13,10 @@ export const activeTheme = {
 	/** Тема и её основы: ['my-fork', 'dtf2022'] */
 	get chain(): string[] {
 		return themeChain(activeTheme.id);
+	},
+	/** Анимации самой темы (не основы): форк dtf2022 сам решает, анимировать ли */
+	get motion(): ThemeManifest['motion'] {
+		return getTheme(activeTheme.id)?.motion;
 	},
 	set(id: string) {
 		settings.patch({ theme: id });

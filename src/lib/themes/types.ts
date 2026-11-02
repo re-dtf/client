@@ -1,3 +1,5 @@
+import type { ThemeMotion } from '$lib/motion';
+
 /** Описание темы. Лежит в `<тема>/theme.ts`, реестр находит его сам (см. registry.ts). */
 
 interface FieldBase {
@@ -39,6 +41,11 @@ export interface ThemeManifest {
 	 * так что исправления основы попадают в форк сами.
 	 */
 	extends?: string;
+	/**
+	 * Анимации темы (docs/architecture/motion.md), например `fluent` из `$lib/motion`. Не указаны —
+	 * тема не анимирует ничего, кроме затемнения за окном. Форк не наследует поле: dtf2022 остаётся без анимаций.
+	 */
+	motion?: ThemeMotion;
 	/** Настройки, которые тема показывает на своей вкладке в настройках */
 	settings?: SettingField[];
 }
