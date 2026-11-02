@@ -35,14 +35,15 @@ a {
     color: inherit;
 }
 
-/* Затемнение за модальным окном: отклик на нажатие, поэтому есть у всех тем.
-   Остальное движение задаёт тема данными, см. src/lib/motion.ts */
-:root {
-    --backdrop-fade: 200ms;
-}
-
+/* «Уменьшить движение» в системе: переходы и CSS-прокрутка отключаются у всех тем.
+   Анимации-индикаторы (спиннеры) остаются: без них не видно, что идёт загрузка.
+   Программная анимация и прокрутка учитывают настройку сами, см. src/lib/motion.ts */
 @media (prefers-reduced-motion: reduce) {
-    :root {
-        --backdrop-fade: 0ms;
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
+        scroll-behavior: auto !important;
     }
 }

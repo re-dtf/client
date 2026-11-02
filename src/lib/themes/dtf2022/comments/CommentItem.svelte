@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scrollBehavior } from '$lib/motion';
 	import type { Snippet } from 'svelte';
 	import { fromAction } from 'svelte/attachments';
 	import { resolve } from '$app/paths';
@@ -95,7 +96,7 @@
 
 	function scrollToParent(e: MouseEvent) {
 		e.preventDefault();
-		if (row.parent) document.getElementById(`comment-${commentKey(row.parent)}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		if (row.parent) document.getElementById(`comment-${commentKey(row.parent)}`)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
 	}
 
 	async function copyLink() {

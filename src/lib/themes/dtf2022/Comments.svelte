@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scrollBehavior } from '$lib/motion';
 	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { CommentMedia } from '$lib/api/types';
@@ -117,7 +118,7 @@
 			replyTo = null;
 			editMode = false;
 			await tick();
-			document.getElementById(`comment-${key}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			document.getElementById(`comment-${key}`)?.scrollIntoView({ block: 'nearest', behavior: scrollBehavior() });
 		} catch (e) {
 			sendError = (e as Error).message;
 		} finally {

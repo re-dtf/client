@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { scrollBehavior } from '$lib/motion';
 	import type { Post } from '$lib/api/types';
 	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
 	import { votesOf } from '../reactionVotes';
@@ -31,7 +32,7 @@
 
 	function scrollToComments(e: MouseEvent) {
 		e.preventDefault();
-		document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth' });
+		document.getElementById('comments')?.scrollIntoView({ behavior: scrollBehavior() });
 	}
 </script>
 

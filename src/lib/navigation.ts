@@ -3,6 +3,7 @@ import { resolve } from '$app/paths';
 import { page } from '$app/state';
 import { parseDtfUrl } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
+import { scrollBehavior } from './motion';
 
 /*
  * Навигация внутри приложения. Посты, профили, настройки, вход и редактор открываются
@@ -148,7 +149,7 @@ export function openFeed(e: MouseEvent) {
 
 	if (page.route.id === '/') {
 		e.preventDefault();
-		window.scrollTo({ top: 0, behavior: 'smooth' });
+		window.scrollTo({ top: 0, behavior: scrollBehavior() });
 		feed.refresh();
 	}
 }
