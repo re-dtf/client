@@ -49,7 +49,7 @@
 		display: flex;
 		box-sizing: border-box;
 		width: 100%;
-		max-width: 640px;
+		max-width: var(--content-width);
 		/* верхний отступ ленты (padding страницы у DTF) */
 		margin-top: 16px;
 		padding: 4px 0 12px 8px;

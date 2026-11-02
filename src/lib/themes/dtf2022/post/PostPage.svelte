@@ -111,12 +111,12 @@
 	/* У DTF колонка текста 600px, на очень широких экранах (≥1560px, как и у комментариев) — 640px */
 	.post-container {
 		width: 100%;
-		max-width: 600px;
+		max-width: var(--inner-content-width);
 	}
 
 	@media (min-width: 1560px) {
 		.post-container {
-			max-width: 640px;
+			max-width: var(--content-width);
 		}
 	}
 

@@ -688,7 +688,7 @@
 	@media (max-width: 999px) {
 		.profile-section {
 			gap: 20px;
-			max-width: 640px;
+			max-width: var(--content-width);
 			margin: 0 auto;
 		}
 

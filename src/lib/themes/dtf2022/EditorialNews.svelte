@@ -70,7 +70,7 @@
 		flex-direction: column;
 		gap: 12px;
 		width: 100%;
-		max-width: 640px;
+		max-width: var(--content-width);
 		padding: 20px;
 		border-radius: 8px;
 		background: var(--bg-card);

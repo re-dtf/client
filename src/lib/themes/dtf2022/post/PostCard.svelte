@@ -90,7 +90,7 @@
 	/* Отступы между карточками ленты (в исходной вёрстке — gap у .feed-list) */
 	.feed-item {
 		width: 100%;
-		max-width: 640px;
+		max-width: var(--content-width);
 		margin: 28px auto 0;
 		content-visibility: auto;
 		contain-intrinsic-size: auto 500px;

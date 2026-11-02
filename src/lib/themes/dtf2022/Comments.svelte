@@ -405,7 +405,7 @@
 		}
 
 		.comments-wrapper {
-			width: 600px;
+			width: var(--inner-content-width);
 		}
 	}
 
@@ -417,7 +417,7 @@
 
 	@media (min-width: 1560px) {
 		.comments-wrapper {
-			width: 640px;
+			width: var(--content-width);
 		}
 	}
 

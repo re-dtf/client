@@ -181,7 +181,7 @@
 		flex-wrap: wrap;
 		gap: 12px 20px;
 		width: 100%;
-		max-width: 640px;
+		max-width: var(--content-width);
 		margin: 0 auto;
 		padding: 16px 16px 0;
 		box-sizing: border-box;
@@ -249,7 +249,7 @@
 
 	.writing__body {
 		width: 100%;
-		max-width: 640px;
+		max-width: var(--content-width);
 		margin: 0 auto;
 		padding: 16px 16px 120px;
 		box-sizing: border-box;
