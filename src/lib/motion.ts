@@ -68,7 +68,7 @@ export const backdropIn: Anim = {
 	easing: ease.out
 };
 
-const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Поведение программной прокрутки: плавная, если пользователь не просил уменьшить движение */
 export const scrollBehavior = (): ScrollBehavior => (reducedMotion() ? 'auto' : 'smooth');

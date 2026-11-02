@@ -1,7 +1,11 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
+	import { flip } from 'svelte/animate';
+	import { cubicOut } from 'svelte/easing';
+	import { fade, fly } from 'svelte/transition';
 	import type { Reactions } from '$lib/api/types';
 	import { REACTIONS } from '$lib/config/reactions';
+	import { reducedMotion } from '$lib/motion';
 	import { formatNumber } from '../format';
 
 	let {
@@ -21,6 +25,9 @@
 
 	let picking = $state(false);
 	let root = $state<HTMLElement>();
+
+	/** Длительность перехода; при «уменьшить движение» в системе анимации нет */
+	const ms = (n: number) => (reducedMotion() ? 0 : n);
 
 	function pick(id: number) {
 		picking = false;
@@ -50,17 +57,31 @@
 			{@const isActive = reactions?.reactionId === reaction.id}
 			<button
 				class={['post-reaction', { 'post-reaction--active': isActive }]}
-				title="Реакция"
+				title={REACTIONS[reaction.id].name}
 				aria-pressed={isActive}
 				onclick={() => onreact?.(reaction.id)}
+				animate:flip={{ duration: ms(200) }}
+				in:fade={{ duration: ms(200) }}
+				out:fade={{ duration: ms(140) }}
 			>
-				<img src={REACTIONS[reaction.id].url} width="20" height="20" alt="" class="post-reaction__icon" />
-				<span class="post-reaction__count">{formatNumber(reaction.count)}</span>
+				<img
+					src={REACTIONS[reaction.id].url}
+					width="20"
+					height="20"
+					alt=""
+					class="post-reaction__icon"
+				/>
+				<!-- Число сменилось: новое выезжает снизу при добавлении реакции и сверху при снятии -->
+				{#key reaction.count}
+					<span class="post-reaction__count" in:fly={{ y: isActive ? 8 : -8, duration: ms(180), easing: cubicOut }}>
+						{formatNumber(reaction.count)}
+					</span>
+				{/key}
 			</button>
 		{/each}
 		{#if onreact}
 			<button
-				class="post-reaction post-reaction--add"
+				class={['post-reaction', 'post-reaction--add', { 'post-reaction--open': picking }]}
 				title="Добавить реакцию"
 				aria-label="Добавить реакцию"
 				aria-expanded={picking}
@@ -74,9 +95,20 @@
 	</div>
 
 	{#if picking && onreact}
-		<div class="post-reactions__picker" role="menu">
+		<div
+			class="post-reactions__picker"
+			role="menu"
+			in:fade={{ duration: ms(150) }}
+			out:fade={{ duration: ms(100) }}
+		>
 			{#each Object.entries(REACTIONS) as [id, reaction] (id)}
-				<button class="post-reactions__pick" role="menuitem" aria-label={reaction.name} title={reaction.name} onclick={() => pick(Number(id))}>
+				<button
+					class={['post-reactions__pick', { 'post-reactions__pick--active': reactions?.reactionId === Number(id) }]}
+					role="menuitem"
+					aria-label={reaction.name}
+					title={reaction.name}
+					onclick={() => pick(Number(id))}
+				>
 					<img src={reaction.url} width="24" height="24" alt="" />
 				</button>
 			{/each}
@@ -89,6 +121,7 @@
 		position: relative;
 		margin-top: 10px;
 		margin-bottom: 4px;
+		--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
 	/* Вариант для комментария: свой ряд, но плотнее, чем у поста */
@@ -98,16 +131,15 @@
 		margin-bottom: 2px;
 	}
 
-	/* Кнопки устроены как кнопки оценки темы (PostButton, Rating): иконка и число, круг подсветки вокруг иконки */
 	.post-reactions__scroll {
 		display: flex;
 		align-items: center;
-		gap: 20px;
+		gap: 8px;
 		overflow-x: auto;
 		white-space: nowrap;
-		/* место под круг подсветки, иначе его обрежет overflow */
-		padding: 2px 5px;
-		margin: 0 -5px;
+		/* место под рост таблетки при наведении и нажатии, иначе её обрежет overflow */
+		padding: 3px 4px;
+		margin: -1px -4px;
 		scrollbar-width: none;
 		user-select: none;
 	}
@@ -116,47 +148,38 @@
 		display: none;
 	}
 
+	/* Реакция — таблетка: иконка и число на светлой подложке; поставленная подсвечена синим с контуром */
 	.post-reaction {
-		position: relative;
 		display: inline-flex;
 		align-items: center;
 		flex-shrink: 0;
-		gap: 10px;
+		gap: 6px;
 		height: 28px;
+		padding: 0 11px 0 7px;
+		border-radius: 14px;
+		background-color: rgba(0, 0, 0, 0.05);
+		box-shadow: inset 0 0 0 1px transparent;
 		color: var(--text-muted);
 		font-size: 15px;
 		cursor: pointer;
+		transition:
+			background-color 0.15s,
+			box-shadow 0.15s;
 	}
 
-	.post-reaction::before {
-		content: '';
-		position: absolute;
-		top: 50%;
-		left: -5px;
-		width: 30px;
-		height: 30px;
-		margin-top: -15px;
-		border-radius: 50%;
-		background-color: transparent;
-		transition: background-color 0.1s;
+	@media (hover: hover) {
+		.post-reaction:hover {
+			background-color: rgba(0, 0, 0, 0.09);
+		}
+
+		.post-reaction--active:hover {
+			background-color: rgba(70, 131, 217, 0.24);
+		}
 	}
 
-	.post-reaction:hover::before {
-		background-color: rgba(0, 0, 0, 0.05);
-	}
-
-	.post-reaction--active::before {
+	.post-reaction--active {
 		background-color: rgba(70, 131, 217, 0.14);
-	}
-
-	.post-reaction--active:hover::before {
-		background-color: rgba(70, 131, 217, 0.22);
-	}
-
-	.post-reaction__icon,
-	.post-reaction__count,
-	.post-reaction .icon {
-		position: relative;
+		box-shadow: inset 0 0 0 1px rgba(70, 131, 217, 0.5);
 	}
 
 	.post-reaction__icon {
@@ -171,12 +194,32 @@
 		font-weight: 500;
 		line-height: 22px;
 		/* Измерено по canvas: центр цифр Roboto 15px лежит на 0.5px выше центра иконки (она в кадре по центру) */
+		position: relative;
 		top: 0.5px;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.post-reaction--active .post-reaction__count {
 		color: var(--color-blue);
+	}
+
+	/* Кнопка «добавить»: круглая, плюс поворачивается в крестик, пока открыта панель */
+	.post-reaction--add {
+		justify-content: center;
+		width: 28px;
+		padding: 0;
+	}
+
+	.post-reaction--add .icon {
+		transition: transform 0.25s var(--ease-spring);
+	}
+
+	.post-reaction--open .icon {
+		transform: rotate(135deg);
+	}
+
+	.post-reaction--open {
+		background-color: rgba(0, 0, 0, 0.09);
 	}
 
 	/* Панель выбора под рядом реакций; вне прокручиваемого ряда, иначе её обрежет overflow */
@@ -191,7 +234,7 @@
 		width: max-content;
 		max-width: min(320px, 100%);
 		padding: 8px;
-		border-radius: 8px;
+		border-radius: 16px;
 		background-color: #fff;
 		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
 	}
@@ -199,16 +242,18 @@
 	.post-reactions__pick {
 		display: flex;
 		padding: 4px;
-		border-radius: 6px;
+		border-radius: 50%;
 		cursor: pointer;
+		transition: background-color 0.15s;
 	}
 
-	.post-reactions__pick:hover {
-		background-color: rgba(0, 0, 0, 0.05);
+	.post-reactions__pick--active {
+		background-color: rgba(70, 131, 217, 0.14);
 	}
 
-	.post-reaction--add {
-		justify-content: center;
-		width: 20px;
+	@media (hover: hover) {
+		.post-reactions__pick:hover {
+			background-color: rgba(0, 0, 0, 0.07);
+		}
 	}
 </style>
