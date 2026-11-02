@@ -13,11 +13,12 @@
 </div>
 
 <style>
+	/* Колонка растягивается на всю высоту контента между сайдбарами */
 	.notifications-page {
+		width: 100%;
 		max-width: 640px;
-		margin: 0 auto;
+		flex-grow: 1;
 		background: #fff;
 		color: #000;
-		min-height: 200px;
 	}
 </style>
