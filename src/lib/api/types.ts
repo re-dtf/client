@@ -114,6 +114,9 @@ export interface Profile {
 	rating?: number;
 	subscribersCount?: number;
 	subscriptionsCount?: number;
+	/** Только после входа: подписан ли вошедший пользователь и включён ли колокольчик */
+	isSubscribed?: boolean;
+	isSubscribedToNewPosts?: boolean;
 	createdAt?: string;
 	url?: string;
 }
@@ -160,8 +163,11 @@ export interface Comment {
 	reactions?: Reactions;
 	likes?: Likes;
 	isPinned?: boolean;
+	isFavorited?: boolean;
 	isReplaced?: boolean;
 	originalSourceId?: string;
+	/** Заголовок поста: приходит в списке комментариев профиля */
+	postTitle?: string;
 }
 
 export interface CommentTreeItem extends Comment {
@@ -211,6 +217,21 @@ export interface CurrentUser {
 
 export type CommentPermission = 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers';
 
+/** Что пользователь может сделать с комментарием */
+export interface CommentControls {
+	edit: boolean;
+}
+
+export interface Notification {
+	id: number;
+	/** Статус `1` у DTF — не прочитано */
+	isRead: boolean;
+	text: string;
+	url?: string;
+	createdAt: string;
+	avatarUrl?: string;
+}
+
 /**
  * Что умеет источник данных. Обязательное есть у всех источников, остальное — по возможностям:
  * если метода нет, источник этого не умеет. Источники из манифестов умеют только чтение
@@ -228,6 +249,21 @@ export interface ApiProvider {
 	getReplacedComments?(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	getEditorialNews?(lastId?: number): Promise<PaginatedResult<Post>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
+	/** reactionId 0 снимает свою реакцию; отвечает актуальными реакциями */
+	reactToPost?(postId: number, reactionId: number): Promise<Reactions>;
+	/** Отвечает, сколько теперь в закладках у объекта */
+	setFavorite?(id: number, kind: 'post' | 'comment', favorite: boolean): Promise<number>;
+	addComment?(postId: number, text: string, replyTo?: number): Promise<Comment>;
+	editComment?(commentId: number, postId: number, text: string): Promise<Comment>;
+	getCommentControls?(commentId: number): Promise<CommentControls>;
+
+	// Подписки
+	setSubscription?(subsiteId: number, subscribed: boolean): Promise<void>;
+	setSubscriptionNotifications?(subsiteId: number, enabled: boolean): Promise<void>;
+
+	// Уведомления
+	getNotifications?(): Promise<Notification[]>;
+	markNotificationsRead?(ids: number[]): Promise<void>;
 
 	// Вход
 	login?(email: string, password: string): Promise<Session>;
@@ -240,6 +276,7 @@ export interface ApiProvider {
 	getProfilePosts?(id: number, sorting: ProfileSorting, cursor?: CursorData): Promise<PaginatedResult<Post>>;
 	getProfileSubscribers?(id: number): Promise<ProfileListItem[]>;
 	getProfileSubscriptions?(id: number): Promise<ProfileListItem[]>;
+	getProfileComments?(id: number, cursor?: CursorData): Promise<PaginatedResult<Comment>>;
 
 	// Редактор
 	saveDraft?(entry: DtfEditorEntry): Promise<DtfEditorEntry>;

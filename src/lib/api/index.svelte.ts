@@ -158,12 +158,25 @@ export const api = {
 
 	getEditorialNews: (lastId?: number) => dtfApiProvider.getEditorialNews(lastId),
 
+	// --- Действия вошедшего пользователя (только DTF) ---
+
+	reactToPost: dtfApiProvider.reactToPost,
+	setFavorite: dtfApiProvider.setFavorite,
+	addComment: dtfApiProvider.addComment,
+	editComment: dtfApiProvider.editComment,
+	getCommentControls: dtfApiProvider.getCommentControls,
+	setSubscription: dtfApiProvider.setSubscription,
+	setSubscriptionNotifications: dtfApiProvider.setSubscriptionNotifications,
+	getNotifications: dtfApiProvider.getNotifications,
+	markNotificationsRead: dtfApiProvider.markNotificationsRead,
+
 	// --- Профили (пока только DTF) ---
 
 	getProfile: (id: number) => dtfApiProvider.getProfile(id),
 	getProfilePosts: dtfApiProvider.getProfilePosts,
 	getProfileSubscribers: dtfApiProvider.getProfileSubscribers,
 	getProfileSubscriptions: dtfApiProvider.getProfileSubscriptions,
+	getProfileComments: dtfApiProvider.getProfileComments,
 
 	// --- Редактор (только DTF) ---
 

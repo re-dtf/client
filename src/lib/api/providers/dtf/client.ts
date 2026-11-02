@@ -8,6 +8,9 @@ export const COMMENTS_API_URL = 'https://api.dtf.ru/v2.10';
 export const AUTH_URL = 'https://api.dtf.ru/v3.4';
 export const UPLOAD_URL = 'https://upload.dtf.ru/v2.8';
 
+/** Адрес API другой версии: у каждого метода DTF своя (`apiV('2.4')` для `comment/add`) */
+export const apiV = (version: string) => `https://api.dtf.ru/v${version}`;
+
 /** Адрес прокси без хвостового слэша; пустая строка — прокси не задан. Вход и обновление токена идут только через него (CORS). */
 export function getProxyUrl(): string {
 	return untrack(() => settings.value.proxyUrl).replace(/\/$/, '');

@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, Likes, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
+import type { Comment, CurrentUser, Likes, Notification, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 
 /*
@@ -99,7 +99,20 @@ export function mapComment(item: any, postId: number): Comment {
 		donation: item.donation || undefined,
 		reactions: mapReactions(item.reactions),
 		likes: mapLikes(item.likes),
-		isPinned: !!item.isPinned
+		isPinned: !!item.isPinned,
+		isFavorited: !!item.isFavorited,
+		postTitle: item.entry?.title
+	};
+}
+
+export function mapNotification(item: any): Notification {
+	return {
+		id: item.id,
+		isRead: item.status !== 1,
+		text: item.text || '',
+		url: item.url,
+		createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),
+		avatarUrl: item.users?.[0]?.avatar_url
 	};
 }
 
@@ -116,6 +129,8 @@ export function mapProfile(subsite: any): Profile {
 		rating: subsite.rating ?? undefined,
 		subscribersCount: subsite.counters?.subscribers,
 		subscriptionsCount: subsite.counters?.subscriptions,
+		isSubscribed: subsite.isSubscribed,
+		isSubscribedToNewPosts: subsite.isSubscribedToNewPosts,
 		createdAt: subsite.created ? new Date(subsite.created * 1000).toISOString() : undefined,
 		url: subsite.url
 	};

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapLikes } from './mappers';
+import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapLikes, mapNotification } from './mappers';
 
 describe('mapLikes', () => {
 	it('нет данных — нет лайков', () => {
@@ -46,6 +46,21 @@ describe('mapComment', () => {
 		expect(comment).toMatchObject({ id: 3, sourceId: 'dtf', postId: 99, content: 'привет' });
 		expect(comment.createdAt).toBe(new Date(1700000000 * 1000).toISOString());
 		expect(comment.media).toBeUndefined();
+	});
+
+	it('берёт закладку и заголовок поста из списка комментариев профиля', () => {
+		const comment = mapComment({ id: 3, isFavorited: true, entry: { id: 8, title: 'Пост' } }, 8);
+
+		expect(comment).toMatchObject({ isFavorited: true, postTitle: 'Пост' });
+	});
+});
+
+describe('mapNotification', () => {
+	it('статус 1 — не прочитано, аватар берётся у первого пользователя', () => {
+		const unread = mapNotification({ id: 1, status: 1, text: 'Ответили', date: 1700000000, users: [{ avatar_url: 'https://x/a.png' }] });
+
+		expect(unread).toMatchObject({ id: 1, isRead: false, text: 'Ответили', avatarUrl: 'https://x/a.png' });
+		expect(mapNotification({ id: 2, status: 2 }).isRead).toBe(true);
 	});
 });
 

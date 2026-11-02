@@ -1,27 +1,44 @@
 import type {
 	ApiProvider,
 	Comment,
+	CommentControls,
 	CommentPermission,
 	CurrentUser,
 	CursorData,
 	DtfEditorEntry,
 	GetPostsOptions,
+	Notification,
 	PaginatedResult,
 	Post,
 	PostHistoryVersion,
 	Profile,
 	ProfileListItem,
 	ProfileSorting,
+	Reactions,
 	SubsiteItem,
 	UploadResult
 } from '../../types';
-import { API_URL, COMMENTS_API_URL, UPLOAD_URL, fetchWithAuth, requireAuth } from './client';
+import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchWithAuth, requireAuth } from './client';
 import { login, loginByToken } from './auth';
-import { mapComment, mapCurrentUser, mapEntryToPost, mapProfile, mapProfileListItem } from './mappers';
+import { mapComment, mapCurrentUser, mapEntryToPost, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
 
 /** Курсор для следующей страницы в запросе к API */
 function cursorQuery(cursor?: CursorData): string {
 	return cursor ? `&lastId=${cursor.lastId}&lastSortingValue=${cursor.lastSortingValue}` : '';
+}
+
+/** Форма запроса из полей; DTF принимает записи только как multipart */
+function formOf(fields: Record<string, string | number | boolean>): FormData {
+	const formData = new FormData();
+	for (const [name, value] of Object.entries(fields)) formData.append(name, String(value));
+	return formData;
+}
+
+/** Часть методов отвечает 200 с `error` в теле */
+async function resultOf(response: Response, fallback: string): Promise<any> {
+	const json = await response.json();
+	if (json.error) throw new Error(json.message?.text || json.message || fallback);
+	return json.result;
 }
 
 /** Записи в ответах приходят то в `data`, то напрямую; бывают и пустые */
@@ -106,6 +123,67 @@ export const dtfApiProvider = {
 		await fetchWithAuth(`${COMMENTS_API_URL}/comment/${commentId}/react`, { method: 'POST', body: formData });
 	},
 
+	async reactToPost(postId: number, reactionId: number): Promise<Reactions> {
+		requireAuth();
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/content/${postId}/react`, { method: 'POST', body: formOf({ type: reactionId }) });
+		return mapReactions(await resultOf(response, 'Не удалось поставить реакцию')) ?? { counters: [], reactionId: 0 };
+	},
+
+	async setFavorite(id: number, kind: 'post' | 'comment', favorite: boolean): Promise<number> {
+		requireAuth();
+		const body = formOf({ id, type: kind === 'post' ? 1 : 2 });
+		const response = await fetchWithAuth(`${apiV('2.1')}/${favorite ? 'favorite' : 'unfavorite'}`, { method: 'POST', body });
+		return (await resultOf(response, 'Не удалось изменить закладки')).count ?? 0;
+	},
+
+	async addComment(postId: number, text: string, replyTo = 0): Promise<Comment> {
+		requireAuth();
+		// nonce сайт придумывает сам, сервер возвращает его в ответе
+		const body = formOf({ id: postId, text, attachments: '[]', reply_to: replyTo, nonce: Math.floor(Math.random() * 1e6) });
+		const response = await fetchWithAuth(`${apiV('2.4')}/comment/add`, { method: 'POST', body });
+		return mapComment(await resultOf(response, 'Не удалось отправить комментарий'), postId);
+	},
+
+	async editComment(commentId: number, postId: number, text: string): Promise<Comment> {
+		requireAuth();
+		const body = formOf({ comment_id: commentId, text, attachments: '[]' });
+		const response = await fetchWithAuth(`${apiV('2.4')}/comment/edit`, { method: 'POST', body });
+		return mapComment(await resultOf(response, 'Не удалось изменить комментарий'), postId);
+	},
+
+	async getCommentControls(commentId: number): Promise<CommentControls> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/comment/etcControls?commentId=${commentId}`);
+		return { edit: !!(await resultOf(response, 'Не удалось получить действия')).etcControls?.edit };
+	},
+
+	// --- Подписки ---
+
+	async setSubscription(subsiteId: number, subscribed: boolean): Promise<void> {
+		requireAuth();
+		const body = formOf({ id: subsiteId, action: subscribed ? 'subscribe' : 'unsubscribe', isSubscribedToNotifications: false });
+		await resultOf(await fetchWithAuth(`${apiV('2.1')}/subsite/subscription`, { method: 'POST', body }), 'Не удалось изменить подписку');
+	},
+
+	async setSubscriptionNotifications(subsiteId: number, enabled: boolean): Promise<void> {
+		requireAuth();
+		const action = enabled ? 'subscribe' : 'unsubscribe';
+		await fetchWithAuth(`${apiV('2.1')}/subsite/notifications/subsite/${action}/${subsiteId}`, { method: 'POST' });
+	},
+
+	// --- Уведомления ---
+
+	async getNotifications(): Promise<Notification[]> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/subsite/me/updates`);
+		return ((await resultOf(response, 'Не удалось получить уведомления')) || []).map(mapNotification);
+	},
+
+	async markNotificationsRead(ids: number[]): Promise<void> {
+		requireAuth();
+		await fetchWithAuth(`${apiV('2.1')}/subsite/notifications/markAsRead`, { method: 'POST', body: formOf({ notificationIds: JSON.stringify(ids) }) });
+	},
+
 	/** Новости редакции порциями (как «Показать ещё» у DTF): курсор — id последней новости, первая порция — без него */
 	async getEditorialNews(lastId = 0): Promise<PaginatedResult<Post>> {
 		const response = await fetchWithAuth(`${API_URL}/news?lastId=${lastId}`);
@@ -144,6 +222,17 @@ export const dtfApiProvider = {
 	async getProfileSubscriptions(id: number): Promise<ProfileListItem[]> {
 		const response = await fetchWithAuth(`${API_URL}/subsite/subscriptions?subsiteId=${id}`);
 		return ((await response.json()).result?.items || []).map(mapProfileListItem);
+	},
+
+	async getProfileComments(id: number, cursor?: CursorData): Promise<PaginatedResult<Comment>> {
+		const response = await fetchWithAuth(`${apiV('2.5')}/comments?subsiteId=${id}&sorting=new&page=0${cursorQuery(cursor)}`);
+		const result = (await response.json()).result;
+
+		return {
+			items: (result?.items || []).map((item: any) => mapComment(item, item.entry?.id ?? 0)),
+			lastId: result?.lastId,
+			lastSortingValue: result?.lastSortingValue
+		};
 	},
 
 	// --- Редактор ---
