@@ -23,6 +23,7 @@
 | `src/lib/navigation.ts`, `src/lib/feed.svelte.ts` | открытие и закрытие оверлеев, лента в адресе | [navigation](docs/architecture/navigation.md) |
 | `src/lib/themes/` | реестр тем, `ThemeLoader`, контракт компонентов, сами темы | [themes](docs/architecture/themes.md) |
 | `src/lib/components/` | общие компоненты (рендер блоков, комментарии, редактор, экран настроек) | [settings](docs/architecture/settings.md) |
+| `src/lib/components/overlays/ModalShell.svelte`, `src/lib/ready.ts` | окна: подложка, загрузка до показа, спиннер; `motion.ts` — анимации темы данными | [motion](docs/architecture/motion.md) |
 | `src/lib/storage/` | всё, что хранится в localStorage | [storage](docs/architecture/storage.md) |
 | `src/lib/api/` | фасад `api`, провайдеры, подключаемые источники | [api](docs/architecture/api.md), [data-sources](docs/architecture/data-sources/README.md) |
 | `docs/` | документация, решения (ADR), заготовки пользовательских доков | [docs/README.md](docs/README.md) |
@@ -53,6 +54,17 @@
 - Новый метод API → [docs/guides/add-an-api-method.md](docs/guides/add-an-api-method.md)
 - Новый подключаемый источник данных → [docs/architecture/data-sources](docs/architecture/data-sources/README.md)
 - Архитектурное решение, которое нельзя будет понять по коду → короткая запись в [decisions](decisions/README.md)
+
+## Документация
+
+Страницы в `docs/` универсальные: они описывают устройство и порядок действий, а не текущее состояние проекта. В них **не пишите**:
+
+- конкретные числа и замеры (миллисекунды, размеры DOM, «раньше было, теперь стало»);
+- имена внутренних функций и констант, которые легко переименуют;
+- упоминания отдельных тем (`dtf2022` и др.), если страница не про них: в примерах берите нейтральные имена;
+- списки «что сделано и что не сделано»: это состояние, оно устаревает. Решения и их причины — в [decisions](decisions/README.md).
+
+Пишите принципы, контракты и шаги. Ссылку на файл-образец давайте только там, где без неё не понять, как сделать.
 
 ## Подводные камни
 

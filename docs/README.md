@@ -6,7 +6,7 @@
 
 | Раздел | О чём |
 | --- | --- |
-| [architecture/](architecture/README.md) | как устроено приложение: обзор, хранилище, темы, настройки, навигация, API |
+| [architecture/](architecture/README.md) | как устроено приложение: обзор, хранилище, темы, настройки, навигация, отклик и анимации, API |
 | [architecture/data-sources/](architecture/data-sources/README.md) | подключаемые источники данных: манифесты, разрешения, авторизация |
 | [guides/](guides/README.md) | пошаговые инструкции: добавить тему, настройку, оверлей, метод API |
 | [../decisions/](../decisions/README.md) | почему сделано так: записи об архитектурных решениях (ADR) |
@@ -21,6 +21,7 @@
 
 - Хочу понять устройство целиком → [architecture/README.md](architecture/README.md).
 - Хочу добавить тему или сделать форк существующей → [guides/add-a-theme.md](guides/add-a-theme.md).
+- Хочу добавить анимацию или понять, как окна реагируют на нажатие → [architecture/motion.md](architecture/motion.md).
 - Хочу понять, где что хранится → [architecture/storage.md](architecture/storage.md).
 - Хочу подключить сторонний источник данных → [architecture/data-sources/README.md](architecture/data-sources/README.md).
 

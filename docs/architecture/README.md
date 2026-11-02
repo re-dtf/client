@@ -56,6 +56,8 @@ src/
   lib/
     navigation.ts               openOverlay, closeOverlay, openPost, openProfile, openFeed
     feed.svelte.ts              ленты, текущая лента, обновление
+    motion.ts                   анимации темы (ThemeMotion), кривые, play
+    ready.ts                    ожидание картинок окна и отрисовки кадра
     api/
       index.svelte.ts           фасад
       types.ts                  модель данных и интерфейс ApiProvider
@@ -88,6 +90,7 @@ docs/                           документация
 - [themes.md](themes.md) — реестр, контракт, стили, форки
 - [settings.md](settings.md) — общие настройки и настройки темы
 - [navigation.md](navigation.md) — оверлеи, лента в адресе, прямые ссылки
+- [motion.md](motion.md) — отклик на нажатия, подложка и спиннер окон, анимации темы
 - [api.md](api.md) — фасад, провайдеры, ошибки, текущий пользователь
 - [data-sources/](data-sources/README.md) — подключаемые источники
 - [../../decisions/](../../decisions/README.md) — почему так сделано

@@ -28,6 +28,7 @@ export default defineTheme({
 	name: 'DTF 2022',              // название в настройках
 	description: '…',
 	extends: undefined,            // id темы-основы, если это форк
+	motion: undefined,             // анимации темы (например fluent из $lib/motion), см. motion.md; не наследуется
 	settings: [/* поля настроек, см. settings.md */]
 });
 ```

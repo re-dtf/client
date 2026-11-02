@@ -37,3 +37,4 @@
 | [0003](0003-theme-inheritance-instead-of-submodules.md) | Наследование тем (`extends`) вместо сабмодулей | принято |
 | [0004](0004-overlays-via-shallow-routing.md) | Оверлеи на shallow routing и один модуль навигации | принято |
 | [0005](0005-theme-settings-as-schema.md) | Настройки темы описываются схемой | принято |
+| [0006](0006-motion-as-theme-data.md) | Отклик в ядре, движение данными темы | принято |
