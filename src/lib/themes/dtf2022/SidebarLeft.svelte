@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { feed, openFeedTab, type FeedName } from '$lib/feed.svelte';
-	import { openFeed, openOverlay } from '$lib/navigation';
+	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import { sidebar } from './sidebar.svelte';
 
@@ -11,13 +11,13 @@
 		{ id: 'my', label: 'Подписки', icon: 'ui_sidebar_subscriptions' }
 	];
 
-	// ponytail: темы пока статичные — в API нет ленты подсайта
+	// Темы DTF: открываются как профиль подсайта, ленту отдаёт timeline. id узнаны по /subsite?uri=<адрес>
 	const subsites = [
-		{ label: 'Игры', image: 'e5348320-b11a-9419-fb85-f7b63e2de194' },
-		{ label: 'Кино и сериалы', image: '5d198df0-3ba4-6837-b9c3-ac8c04fb9181' },
-		{ label: 'Индустрия', image: 'f488fca4-88d6-c978-d052-4d49a3a62a44' },
-		{ label: 'Gamedev', image: '9e71f64c-f452-321b-e24b-901bd6b01757' },
-		{ label: 'Жизнь', image: '968a91e7-3a3c-5c79-a0cb-2b3df974a697' }
+		{ id: 64953, label: 'Игры', image: 'e5348320-b11a-9419-fb85-f7b63e2de194' },
+		{ id: 64957, label: 'Кино и сериалы', image: '5d198df0-3ba4-6837-b9c3-ac8c04fb9181' },
+		{ id: 87855, label: 'Индустрия', image: 'f488fca4-88d6-c978-d052-4d49a3a62a44' },
+		{ id: 64954, label: 'Gamedev', image: '9e71f64c-f452-321b-e24b-901bd6b01757' },
+		{ id: 128871, label: 'Жизнь', image: '968a91e7-3a3c-5c79-a0cb-2b3df974a697' }
 	];
 
 	let node = $state<HTMLElement>();
@@ -91,7 +91,7 @@
 
 			<nav class="subsites-switcher" aria-label="Темы">
 				{#each subsites as subsite (subsite.label)}
-					<button class="switch-button">
+					<a class="switch-button" href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)}>
 						<img
 							height="24"
 							width="24"
@@ -100,7 +100,7 @@
 							src="https://leonardo.osnova.io/{subsite.image}/-/scale_crop/64x64/-/format/webp/"
 						/>
 						<span class="label">{subsite.label}</span>
-					</button>
+					</a>
 				{/each}
 			</nav>
 		</div>
@@ -109,7 +109,7 @@
 			<div class="sidebar-footer">
 				<div class="sidebar-footer__links">
 					<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
-					<!-- span — для этих пунктов пока нет страниц -->
+					<!-- span: для этих пунктов в re:DTF пока нет страниц -->
 					<span>О проекте</span>
 					<a href="https://github.com/re-dtf" target="_blank" rel="noreferrer">Наш Github</a>
 					<span>Поддержать развитие</span>
@@ -174,6 +174,7 @@
 	}
 
 	.switch-button {
+		color: inherit;
 		display: flex;
 		align-items: center;
 		height: 44px;
