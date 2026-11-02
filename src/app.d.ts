@@ -15,7 +15,7 @@ declare global {
 			| { type: 'profile'; data: { profileId: number } }
 			| { type: 'settings' }
 			| { type: 'login' }
-			| { type: 'editor'; data?: { postId?: number | null } };
+			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } };
 
 		/** Оверлей в стеке: то, что открыли, плюс служебные поля */
 		type OverlayState = OverlayData & {

@@ -163,6 +163,7 @@ export function editorJsToDtf(editorData: OutputData, originalEntry?: Partial<Dt
 		is_enabled_comments: originalEntry?.is_enabled_comments ?? true,
 		is_enabled_likes: originalEntry?.is_enabled_likes ?? true,
 		is_enabled_ad: originalEntry?.is_enabled_ad ?? true,
+		...(originalEntry?.repostId ? { repostId: originalEntry.repostId, repostData: null } : {}),
 		entry: {
 			blocks
 		}

@@ -3,9 +3,9 @@
 	import { createEditorSession } from '../editor/session.svelte.js';
 	import { untrack } from 'svelte';
 
-	let { postId = null } = $props<{ postId?: number | null }>();
+	let { postId = null, repostId }: { postId?: number | null; repostId?: number } = $props();
 	
-	const session = createEditorSession(untrack(() => postId));
+	const session = createEditorSession(untrack(() => postId), untrack(() => repostId));
 </script>
 
 <ThemeLoader componentName="EditorScreen" {session} />

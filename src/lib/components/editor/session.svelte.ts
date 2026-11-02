@@ -5,7 +5,11 @@ import type { SubsiteItem, PostHistoryVersion } from '$lib/api/types';
 import { editorJsToDtf, dtfToEditorJs } from './mapper';
 import type { OutputData } from '@editorjs/editorjs';
 
-export function createEditorSession(initialPostId: number | null = null) {
+/**
+ * `repostId` — id поста, на который пишется ответ (репост у DTF теперь ответ): уходит в запись при сохранении,
+ * у такой записи может не быть ни заголовка, ни блоков.
+ */
+export function createEditorSession(initialPostId: number | null = null, repostId?: number) {
 	let postId = $state(initialPostId);
 	let initialData: OutputData | undefined = $state(undefined);
 	let subsites: SubsiteItem[] = $state([]);
@@ -78,7 +82,7 @@ export function createEditorSession(initialPostId: number | null = null) {
 		try {
 			const data = await editorInstance.save();
 			
-			if (title.trim() === '' && (!data.blocks || data.blocks.length === 0)) {
+			if (!repostId && title.trim() === '' && (!data.blocks || data.blocks.length === 0)) {
 				if (isPublishing) saveMessage = 'Ошибка: Содержимое поста пусто';
 				return;
 			}
@@ -91,7 +95,8 @@ export function createEditorSession(initialPostId: number | null = null) {
 				title,
 				subsite_id: selectedSubsiteId,
 				is_adult: isAdult,
-				is_published: isPublishing
+				is_published: isPublishing,
+				repostId
 			});
 			
 			const result = await api.saveDraft(dtfEntry);
@@ -193,6 +198,7 @@ export function createEditorSession(initialPostId: number | null = null) {
 
 	return {
 		get postId() { return postId; },
+		get repostId() { return repostId; },
 		get initialData() { return initialData; },
 		get subsites() { return subsites; },
 		get selectedSubsiteId() { return selectedSubsiteId; },
