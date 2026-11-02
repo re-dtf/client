@@ -109,7 +109,7 @@
 			<div class="sidebar-footer">
 				<div class="sidebar-footer__links">
 					<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
-					<!-- ponytail: span — для этих пунктов пока нет страниц -->
+					<!-- span — для этих пунктов пока нет страниц -->
 					<span>О проекте</span>
 					<a href="https://github.com/re-dtf" target="_blank" rel="noreferrer">Наш Github</a>
 					<span>Поддержать развитие</span>

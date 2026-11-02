@@ -73,7 +73,7 @@
 
 <div class={['comment-item', { 'comment-item--reply': row.level > 1 }]} style:--level={row.level} id="comment-{row.key}">
 	<!--
-		ponytail: линии — div, а не button: у кнопки Chrome центрирует содержимое по вертикали
+		линии — div, а не button: у кнопки Chrome центрирует содержимое по вертикали
 		и дуга ::before съехала бы. Это дублирующее действие мышью, поэтому без фокуса.
 	-->
 	<div class="comment-item__threads" aria-hidden="true">

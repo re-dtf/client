@@ -7,7 +7,7 @@
 	let { user, onclose }: { user: CurrentUser | null; onclose: () => void } = $props();
 
 	// Пункты меню DTF на десктопе (default-view.vue → itemGroupsDesktop).
-	// ponytail: «Создать сообщество» не добавлен — в re:DTF нет создания сообществ
+	// «Создать сообщество» не добавлен — в re:DTF нет создания сообществ
 	const ITEMS: { icon: string; label: string; url?: string; action?: () => void }[] = [
 		{ icon: 'v_pen', label: 'Черновики', url: 'https://dtf.ru/u/me/drafts' },
 		{ icon: 'v_rouble', label: 'Донаты', url: 'https://dtf.ru/u/me/donates' },

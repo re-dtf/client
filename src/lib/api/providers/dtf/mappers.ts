@@ -63,7 +63,7 @@ export function mapEntryToPost(entry: any): Post {
 		likes: mapLikes(entry.likes),
 		reactions: mapReactions(entry.reactions),
 		favoritesCount: entry.counters?.favorites,
-		// ponytail: hitsCount/views сейчас приходят нулями, просмотры лежат в counters.total
+		// hitsCount/views сейчас приходят нулями, просмотры лежат в counters.total
 		viewsCount: entry.hitsCount || entry.counters?.views || entry.counters?.total || undefined,
 		isPinned: !!entry.isPinned,
 		isFavorited: !!entry.isFavorited

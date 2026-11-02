@@ -1,6 +1,6 @@
 /**
  * keydown для div[role="button"]: Enter/Space ведут себя как клик.
- * ponytail: div вместо <button> там, где так в исходной вёрстке, — у кнопки другие
+ * div вместо <button> там, где так в исходной вёрстке, — у кнопки другие
  * дефолты шрифта и вертикального выравнивания, и картинка поплыла бы.
  */
 export function clickOnKey(e: KeyboardEvent) {
