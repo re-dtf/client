@@ -108,6 +108,8 @@ export class CommentsLogic {
 		this.flatComments = [...this.flatComments, comment];
 		const item: CommentTreeItem = { ...comment, children: [], _formattedDate: formatDate(comment.createdAt), _totalReplies: 0 };
 		const path = comment.replyTo ? this.pathTo(`${comment.sourceId}_${comment.replyTo}`) : undefined;
+		// Без записи в карту новый комментарий нельзя ни найти для ответа, ни отредактировать
+		this.allCommentsMap.set(`${comment.sourceId}_${comment.id}`, item);
 
 		if (!path) {
 			this.comments.push(item);

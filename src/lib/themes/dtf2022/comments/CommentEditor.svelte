@@ -94,7 +94,7 @@
 				<div class="comment-editor-box__content">
 					<div
 						class="comment-editor-box__input"
-						contenteditable="true"
+						contenteditable="plaintext-only"
 						role="textbox"
 						aria-multiline="true"
 						aria-label={placeholder}
@@ -279,6 +279,8 @@
 		width: 100%;
 		padding-bottom: 3px;
 		overflow-wrap: break-word;
+		/* Enter в plaintext-only даёт «\n» в textContent; без pre-wrap перенос не виден */
+		white-space: pre-wrap;
 		outline: 0;
 	}
 

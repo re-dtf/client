@@ -98,7 +98,9 @@
 		try {
 			const target = replyTo ? logic.allCommentsMap.get(replyTo) : undefined;
 			let key = replyTo ?? '';
-			if (editMode && target) {
+			if (editMode) {
+				// Правка без найденного комментария не должна превращаться в новый корневой
+				if (!target) throw new Error('Не удалось найти комментарий для правки');
 				logic.updateComment(await api.editComment(target.id, postId, text, media));
 			} else if (donation > 0) {
 				// С донатом комментарий появится после оплаты, поэтому в список его не вставляем
