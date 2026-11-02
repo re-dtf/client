@@ -452,10 +452,14 @@
 		display: block;
 	}
 
-	/* На десктопе иконки-действия скрыты */
+	/* На десктопе иконки-ссылки (к родителю, скопировать) скрыты; «⋯» — обычное действие и видно всегда */
 	@media (hover: hover) and (pointer: fine) {
-		.comment-item__icon-action {
+		.comment-item__icon-action:not(.comment-item__action) {
 			display: none;
+		}
+
+		.comment-item:hover .comment-item__icon-action {
+			display: flex;
 		}
 	}
 
