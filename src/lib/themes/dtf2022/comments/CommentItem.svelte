@@ -6,7 +6,10 @@
 	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 	import { getPostPath, getProfilePath, openProfile } from '$lib/navigation';
+	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
+	import { ensureLogin } from '../actions.svelte';
+	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import { votesOf } from '../reactionVotes';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatFullDate, formatTime, plural } from '../format';
@@ -61,16 +64,18 @@
 	// Меню комментария: что можно править, сервер говорит при открытии
 	let menuOpen = $state(false);
 	let canEdit = $state(false);
-	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, закладка
+	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, жалоба, закладка
 	let menuItems = $derived([
 		...(canEdit ? [{ value: 'edit' as const, label: 'Редактировать', icon: 'v_pen' }] : []),
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
+		...(comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : []),
 		{
 			value: 'favorite' as const,
 			label: comment.isFavorited ? 'Убрать из закладок' : 'Добавить в закладки',
 			icon: comment.isFavorited ? 'v_bookmark_solid' : 'v_bookmark'
 		}
 	]);
+	let complaining = $state(false);
 
 	function toggleMenu() {
 		menuOpen = !menuOpen;
@@ -78,9 +83,10 @@
 		api.getCommentControls(comment.id).then((controls) => (canEdit = controls.edit)).catch(() => (canEdit = false));
 	}
 
-	function selectMenuItem(item: 'edit' | 'copy' | 'favorite') {
+	function selectMenuItem(item: 'edit' | 'copy' | 'favorite' | 'complain') {
 		if (item === 'edit') onedit();
 		else if (item === 'copy') copyLink();
+		else if (item === 'complain') complaining = ensureLogin();
 		else toggleCommentFavorite(comment);
 	}
 
@@ -108,6 +114,10 @@
 		</button>
 	{/if}
 {/snippet}
+
+{#if complaining}
+	<ComplaintDialog onsubmit={(reasonId) => api.complain('comment', comment.id, reasonId)} onclose={() => (complaining = false)} />
+{/if}
 
 <div class={['comment-item', { 'comment-item--reply': row.level > 1 }]} style:--level={row.level} id="comment-{row.key}">
 	<!--

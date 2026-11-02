@@ -3,7 +3,10 @@
 	import { resolve } from '$app/paths';
 	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
 	import { currentUser } from '$lib/api/currentUser.svelte';
-	import { subscriptions } from '../actions.svelte';
+	import { api } from '$lib/api/index.svelte';
+	import { ensureLogin, subscriptions } from '../actions.svelte';
+	import ComplaintDialog from '../ComplaintDialog.svelte';
+	import Popover from '../ui/Popover.svelte';
 	import { formatFullDate, formatTime } from '../format';
 
 	let {
@@ -23,7 +26,16 @@
 	let showSubscribe = $derived(
 		subscribe && !!post.subsite && post.subsite.id !== currentUser.value?.id && !subscriptions.isSubscribed(post.subsite.id, post.subsite.isSubscribed)
 	);
+
+	// Меню «⋯»: пока в нём только жалоба, на свой пост её нет
+	let menuOpen = $state(false);
+	let complaining = $state(false);
+	let showMenu = $derived(post.sourceId === 'dtf' && post.author.id !== currentUser.value?.id);
 </script>
+
+{#if complaining}
+	<ComplaintDialog onsubmit={(reasonId) => api.complain('post', post.id, reasonId)} onclose={() => (complaining = false)} />
+{/if}
 
 <div class={['post-header', { 'post-header--card': variant === 'card' }]}>
 	<div class="post-header__info">
@@ -99,6 +111,26 @@
 			</button>
 		</div>
 	{/if}
+
+	{#if showMenu}
+		{#if !showSubscribe}<div class="spacer"></div>{/if}
+
+		<div class="post-header__item post-header__etc">
+			<Popover
+				bind:open={menuOpen}
+				items={[{ value: 'complain', label: 'Пожаловаться', icon: 'v_flag' }]}
+				onselect={() => (complaining = ensureLogin())}
+				width="max-content"
+				label="Действия с постом"
+			>
+				<button type="button" class="post-header__etc-button" title="Больше" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
+					<svg class="icon" width="16" height="20" aria-hidden="true">
+						<use href="/icons.svg#v_etc"></use>
+					</svg>
+				</button>
+			</Popover>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -138,6 +170,25 @@
 
 	.spacer {
 		flex: 1;
+	}
+
+	/* Как .etc_control у DTF: серая, при наведении чёрная */
+	.post-header__etc {
+		display: flex;
+		align-items: center;
+		margin-left: 14px;
+	}
+
+	.post-header__etc-button {
+		display: flex;
+		align-items: center;
+		color: #595959;
+		cursor: pointer;
+	}
+
+	.post-header__etc-button:hover,
+	.post-header__etc-button[aria-expanded='true'] {
+		color: #000;
 	}
 
 	/* Подсайт */
