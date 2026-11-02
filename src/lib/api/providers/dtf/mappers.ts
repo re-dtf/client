@@ -153,12 +153,14 @@ export function mapNotification(item: any): Notification {
 }
 
 export function mapProfile(subsite: any): Profile {
+	const avatar = subsite.avatar?.data;
 	return {
 		id: subsite.id,
 		sourceId: 'dtf',
 		name: subsite.name || 'Аноним',
 		description: subsite.description || undefined,
 		avatarUrl: mapAvatarUrl(subsite, '200x200'),
+		avatarMedia: avatar?.uuid && avatar.width && avatar.height ? { uuid: avatar.uuid, width: avatar.width, height: avatar.height } : undefined,
 		coverUrl: subsite.cover?.data?.uuid ? getLeonardoUrl(subsite.cover.data.uuid, { width: 1920 }) : undefined,
 		coverY: subsite.coverY ?? undefined,
 		isPlus: !!subsite.isPlus,

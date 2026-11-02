@@ -2,7 +2,7 @@
 	import type { Comment, CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { resolve } from '$app/paths';
-	import { getProfilePath, isNewTabClick, openProfile } from '$lib/navigation';
+	import { getProfilePath, isNewTabClick, openLightbox, openProfile } from '$lib/navigation';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
@@ -135,7 +135,14 @@
 		></div>
 
 		<div class="profile-head__avatar">
-			<div class="profile-avatar" style:background-image={profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined}></div>
+			<button
+				type="button"
+				class="profile-avatar"
+				style:background-image={profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined}
+				aria-label="Открыть аватарку"
+				disabled={!profile.avatarMedia}
+				onclick={() => profile.avatarMedia && openLightbox([profile.avatarMedia], 0)}
+			></button>
 		</div>
 
 		<div class="profile-head__title">
@@ -320,11 +327,17 @@
 		z-index: 1;
 		flex-shrink: 0;
 		width: var(--size);
+		padding: 0;
+		border: 0;
 		overflow: hidden;
 		border-radius: 6px;
 		background: #dedede no-repeat 50% 50% / cover;
 		box-shadow: 0 0 0 var(--border-width) #fff, inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 		cursor: zoom-in;
+	}
+
+	.profile-avatar:disabled {
+		cursor: default;
 	}
 
 	.profile-avatar::before {

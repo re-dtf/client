@@ -109,6 +109,8 @@ export interface Profile {
 	name: string;
 	description?: string;
 	avatarUrl?: string;
+	/** Исходная аватарка для просмотра на весь экран; нет, если пришла только готовая ссылка */
+	avatarMedia?: { uuid: string; width: number; height: number };
 	coverUrl?: string;
 	/** Вертикальная позиция обложки, % */
 	coverY?: number;
