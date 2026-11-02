@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
+	import type { CommentMedia } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import { ensureLogin } from './actions.svelte';
@@ -32,6 +33,9 @@
 	/** Редактор под комментарием правит его, а не отвечает */
 	let editMode = $state(false);
 	let draft = $state('');
+	let media = $state<CommentMedia[]>([]);
+	let donation = $state(0);
+	let paymentLink = $state('');
 	let sending = $state(false);
 	let sendError = $state('');
 	let sortingOpen = $state(false);
@@ -50,21 +54,28 @@
 	}
 
 	function reply(key: string) {
-		if (editMode) draft = '';
+		if (editMode) clearDraft();
 		replyTo = key;
 		editMode = false;
 		sendError = '';
 	}
 
-	function edit(key: string, content: string) {
+	function clearDraft() {
+		draft = '';
+		media = [];
+		donation = 0;
+	}
+
+	function edit(key: string, content: string, attached: CommentMedia[] = []) {
 		replyTo = key;
 		editMode = true;
 		draft = content;
+		media = [...attached];
 		sendError = '';
 	}
 
 	function cancel() {
-		if (editMode) draft = '';
+		if (editMode) clearDraft();
 		replyTo = null;
 		editMode = false;
 		sendError = '';
@@ -73,21 +84,28 @@
 	/** Новый комментарий, ответ или правка; после отправки показываем результат */
 	async function submit() {
 		const text = draft.trim();
-		if (!text || sending || sourceId !== 'dtf' || !ensureLogin()) return;
+		if ((!text && media.length === 0) || sending || sourceId !== 'dtf' || !ensureLogin()) return;
 
 		sending = true;
 		sendError = '';
+		paymentLink = '';
 		try {
 			const target = replyTo ? logic.allCommentsMap.get(replyTo) : undefined;
 			let key = replyTo ?? '';
 			if (editMode && target) {
-				logic.updateComment(await api.editComment(target.id, postId, text));
+				logic.updateComment(await api.editComment(target.id, postId, text, media));
+			} else if (donation > 0) {
+				// С донатом комментарий появится после оплаты, поэтому в список его не вставляем
+				paymentLink = await api.createDonation(postId, text, target?.id, media, donation);
+				clearDraft();
+				replyTo = null;
+				return;
 			} else {
-				const created = await api.addComment(postId, text, target?.id);
+				const created = await api.addComment(postId, text, target?.id, media);
 				logic.addComment(created);
 				key = commentKey(created);
 			}
-			draft = '';
+			clearDraft();
 			replyTo = null;
 			editMode = false;
 			await tick();
@@ -121,7 +139,7 @@
 </script>
 
 {#snippet editor()}
-	<CommentEditor bind:text={draft} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
+	<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
 {/snippet}
 
 <section class="comments-section" id="comments" aria-label="Комментарии">
@@ -169,7 +187,7 @@
 					</span>
 				</button>
 			{:else}
-				<CommentEditor bind:text={draft} {sending} error={sendError} onsubmit={submit} />
+				<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {sending} error={sendError} onsubmit={submit} />
 			{/if}
 		</div>
 
@@ -186,7 +204,7 @@
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 					replying={replyTo === row.key}
 					onreply={() => reply(row.key)}
-					onedit={() => edit(row.key, row.comment.content)}
+					onedit={() => edit(row.key, row.comment.content, row.comment.media)}
 					onlinehover={(line) => highlightBranch(index, line)}
 					onlineclick={collapseBranch}
 					onexpand={() => collapsed.delete(row.key)}

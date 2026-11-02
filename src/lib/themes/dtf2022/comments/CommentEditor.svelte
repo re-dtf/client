@@ -1,9 +1,20 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
+	import type { CommentMedia, GifResult, UploadResult } from '$lib/api/types';
+	import { api } from '$lib/api/index.svelte';
+	import { getLeonardoUrl } from '$lib/api/utils';
 	import Button from '../ui/Button.svelte';
+	import Preloader from '../ui/Preloader.svelte';
+	import { notify } from '../ui/notify.svelte';
+	import DonateAttacher from './DonateAttacher.svelte';
+	import { formatDonation } from './donation';
+	import GifPicker from './GifPicker.svelte';
 
 	let {
 		text = $bindable(''),
+		media = $bindable([]),
+		donation = $bindable(0),
+		paymentLink = '',
 		replying = false,
 		editing = false,
 		sending = false,
@@ -13,6 +24,12 @@
 	}: {
 		/** Черновик живёт у родителя — переживает переезд редактора между комментариями */
 		text?: string;
+		/** Вложения: картинки и гифки */
+		media?: CommentMedia[];
+		/** Сумма доната, ₽; больше нуля — комментарий появится после оплаты */
+		donation?: number;
+		/** Ссылка на оплату после «Отправить» с донатом */
+		paymentLink?: string;
 		/** Ответ на комментарий: редактор стоит внутри него, есть «Отмена» */
 		replying?: boolean;
 		/** Правка своего комментария: другая подпись кнопки */
@@ -24,9 +41,40 @@
 	} = $props();
 
 	let focused = $state(false);
-	let isEmpty = $derived(!text.trim());
-	let submitLabel = $derived(editing ? 'Сохранить' : replying ? 'Ответить' : 'Отправить');
+	let isEmpty = $derived(!text.trim() && media.length === 0);
+	let submitLabel = $derived(editing ? 'Сохранить' : donation > 0 ? `Оплатить ${formatDonation(donation)}` : replying ? 'Ответить' : 'Отправить');
 	let placeholder = $derived(replying ? 'Написать ответ...' : 'Написать комментарий...');
+
+	/** Вложение из ответа загрузчика: те же поля, что у media комментария */
+	function mediaOf(upload: UploadResult): CommentMedia {
+		const { uuid, width = 0, height = 0, size = 0, type = '', color } = upload;
+		return { type: type === 'movie' ? 'movie' : 'image', data: { uuid, width, height, size, type, color } };
+	}
+
+	let uploading = $state(false);
+	let fileInput = $state<HTMLInputElement>();
+
+	async function upload(e: Event & { currentTarget: HTMLInputElement }) {
+		const file = e.currentTarget.files?.[0];
+		e.currentTarget.value = '';
+		if (!file) return;
+
+		uploading = true;
+		try {
+			media = [...media, mediaOf(await api.uploadMedia(file))];
+		} catch (err) {
+			notify.error((err as Error).message);
+		} finally {
+			uploading = false;
+		}
+	}
+
+	let gifsOpen = $state(false);
+
+	function addGif(gif: GifResult) {
+		media = [...media, gif.media];
+		gifsOpen = false;
+	}
 
 	// При открытии ответа сразу ставим курсор в поле
 	const focusOnReply: Attachment<HTMLElement> = (node) => {
@@ -58,28 +106,55 @@
 					></div>
 				</div>
 
+				{#if donation > 0}
+					<div class="donate-attachment">
+						<div class="donate-attachment__sum">{formatDonation(donation)}</div>
+						<button type="button" class="donate-attachment__remove" aria-label="Убрать донат" onclick={() => (donation = 0)}>
+							<svg class="icon" width="16" height="16" aria-hidden="true">
+								<use href="/icons.svg#v_close"></use>
+							</svg>
+						</button>
+					</div>
+				{/if}
+
+				{#if media.length > 0 || uploading}
+					<div class="comment-editor-box__media">
+						{#each media as item, index (item.data.uuid + index)}
+							<div class="comment-editor-box__media-item">
+								<img src={getLeonardoUrl(item.data.uuid, { width: 160 })} alt="" />
+								<button type="button" class="comment-editor-box__media-remove" aria-label="Убрать вложение" onclick={() => (media = media.filter((_, i) => i !== index))}>×</button>
+							</div>
+						{/each}
+						{#if uploading}<Preloader />{/if}
+					</div>
+				{/if}
+
+				{#if paymentLink}
+					<p class="comment-editor-box__payment">
+						Комментарий появится после оплаты: <a href={paymentLink} target="_blank" rel="noopener noreferrer">перейти к оплате</a>
+					</p>
+				{/if}
+
 				{#if error}
 					<p class="comment-editor-box__error" role="alert">{error}</p>
 				{/if}
 
 				<div class="comment-editor-box__footer">
-					<!-- ponytail: вложений и донатов в API клиента пока нет -->
-					<div class="comment-editor-box__attaches">
-						<button type="button" class="comment-editor-box__attach-btn" aria-label="Прикрепить картинку">
+						<div class="comment-editor-box__attaches">
+						<input bind:this={fileInput} type="file" accept="image/*" hidden onchange={upload} />
+						<button type="button" class="comment-editor-box__attach-btn comment-editor-box__attach-btn--image" aria-label="Прикрепить картинку" disabled={uploading} onclick={() => fileInput?.click()}>
 							<svg class="icon" width="20" height="20" aria-hidden="true">
 								<use href="/icons.svg#v_image"></use>
 							</svg>
 						</button>
-						<button type="button" class="comment-editor-box__attach-btn" aria-label="Прикрепить GIF">
+						<button type="button" class="comment-editor-box__attach-btn comment-editor-box__attach-btn--gif" aria-label="Прикрепить GIF" aria-expanded={gifsOpen} onclick={() => (gifsOpen = true)}>
 							<svg class="icon" width="20" height="20" aria-hidden="true">
 								<use href="/icons.svg#v_gif"></use>
 							</svg>
 						</button>
-						<button type="button" class="comment-editor-box__attach-btn comment-editor-box__attach-btn--donate" aria-label="Донат">
-							<svg class="icon" width="20" height="20" aria-hidden="true">
-								<use href="/icons.svg#v_rouble"></use>
-							</svg>
-						</button>
+						{#if !editing}
+							<DonateAttacher attached={donation > 0} onattach={(amount) => (donation = amount)} />
+						{/if}
 					</div>
 
 					<div class="comment-editor-box__custom-buttons">
@@ -96,6 +171,10 @@
 		</div>
 	</div>
 </div>
+
+{#if gifsOpen}
+	<GifPicker onpick={addGif} onclose={() => (gifsOpen = false)} />
+{/if}
 
 <style>
 	.comment-editor-container {
@@ -207,6 +286,43 @@
 		display: block;
 	}
 
+	.comment-editor-box__media {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-top: 8px;
+	}
+
+	.comment-editor-box__media-item {
+		position: relative;
+		height: 72px;
+	}
+
+	.comment-editor-box__media-item img {
+		display: block;
+		height: 100%;
+		border-radius: 6px;
+	}
+
+	.comment-editor-box__media-remove {
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background-color: rgba(0, 0, 0, 0.6);
+		color: #fff;
+		line-height: 20px;
+		cursor: pointer;
+	}
+
+	.comment-editor-box__payment {
+		margin: 8px 0 0;
+		font-size: 14px;
+		line-height: 20px;
+	}
+
 	.comment-editor-box__error {
 		margin: 8px 0 0;
 		color: var(--color-negative);
@@ -243,13 +359,50 @@
 		cursor: pointer;
 	}
 
-	/*
-	 * в исходной вёрстке картинка и GIF должны были быть зелёной и фиолетовой
-	 * (.icon--v_image / .icon--v_gif), но классы иконок не совпадали и цвета не применялись.
-	 * Перенесено фактическое поведение: цветной только рубль.
-	 */
-	.comment-editor-box__attach-btn--donate {
-		color: #447;
+	/* Цвета иконок вложений — как у DTF */
+	.comment-editor-box__attach-btn--image {
+		color: #2ea83a;
+	}
+
+	.comment-editor-box__attach-btn--gif {
+		color: #6f77c3;
+	}
+
+	@media (hover: hover) {
+		.comment-editor-box__attach-btn:hover {
+			background-color: #f2f2f2;
+		}
+	}
+
+	/* Прикреплённый донат: фиолетовая плашка с суммой над панелью */
+	.donate-attachment {
+		display: flex;
+		align-items: center;
+		width: fit-content;
+		height: 24px;
+		margin-top: 8px;
+		padding-left: 12px;
+		padding-right: 6px;
+		border-radius: 5px;
+		background: #447;
+		box-shadow: 0 1px 2px rgba(68, 68, 119, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+	}
+
+	.donate-attachment__sum {
+		color: #fff;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 18px;
+	}
+
+	.donate-attachment__remove {
+		margin-left: 5px;
+		color: rgba(255, 255, 255, 0.5);
+		cursor: pointer;
+	}
+
+	.donate-attachment__remove .icon {
+		display: block;
 	}
 
 	.comment-editor-box__custom-buttons {
