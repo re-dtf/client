@@ -3,9 +3,11 @@
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import type { Snippet } from 'svelte';
 
-	let { postId, sourceId = 'dtf', onLoaded, backButton }: {
+	let { postId, sourceId = 'dtf', commentId, onLoaded, backButton }: {
 		postId: number;
 		sourceId?: string;
+		/** Комментарий, к которому прокрутить (из уведомления) */
+		commentId?: number;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	} = $props();
@@ -27,7 +29,7 @@
 		</div>
 	{:then post}
 		<ThemeLoader componentName="Post" {post} preview={false} />
-		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} />
+		<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} focusCommentId={commentId} />
 		{#if backButton}
 			<div class="actions">
 				{@render backButton()}

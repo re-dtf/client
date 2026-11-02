@@ -23,7 +23,7 @@ export interface ThemeComponents {
 		switchPeriod: (period: Period) => void;
 	};
 	Post: { post: Post; preview?: boolean };
-	Comments: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean };
+	Comments: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number };
 	Profile: {
 		profile: Profile;
 		posts: Post[];

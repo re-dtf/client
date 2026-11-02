@@ -2,14 +2,14 @@
 	import PostContent from '$lib/components/PostContent.svelte';
 	import { closeOverlay } from '$lib/navigation';
 
-	let { postId, sourceId = 'dtf' }: { postId: number, sourceId?: string } = $props();
+	let { postId, sourceId = 'dtf', commentId }: { postId: number, sourceId?: string, commentId?: number } = $props();
 
 	function goBack() {
 		closeOverlay();
 	}
 </script>
 
-<PostContent {postId} {sourceId}>
+<PostContent {postId} {sourceId} {commentId}>
 	{#snippet backButton()}
 		<button class="back-link" onclick={goBack}>← Вернуться в ленту</button>
 	{/snippet}

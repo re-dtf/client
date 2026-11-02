@@ -1,6 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
+import { parseDtfUrl } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
 
 /*
@@ -21,8 +22,9 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	editor: 'modal'
 };
 
-export function getPostPath(post: { id: number; sourceId: string }) {
-	return post.sourceId !== 'dtf' ? `/post/${post.id}?source=${post.sourceId}` : `/post/${post.id}`;
+export function getPostPath(post: { id: number; sourceId: string }, commentId?: number) {
+	if (post.sourceId !== 'dtf') return `/post/${post.id}?source=${post.sourceId}`;
+	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}`;
 }
 
 export function getProfilePath(id: number) {
@@ -32,7 +34,7 @@ export function getProfilePath(id: number) {
 function overlayPath(overlay: App.OverlayData): string {
 	switch (overlay.type) {
 		case 'post':
-			return getPostPath({ id: overlay.data.postId, sourceId: overlay.data.sourceId });
+			return getPostPath({ id: overlay.data.postId, sourceId: overlay.data.sourceId }, overlay.data.commentId);
 		case 'profile':
 			return getProfilePath(overlay.data.profileId);
 		case 'settings':
@@ -80,6 +82,20 @@ export function openPost(e: MouseEvent, post: { id: number; sourceId: string }) 
 /** Открыть профиль пользователя или подсайта поверх текущего экрана */
 export function openProfile(e: MouseEvent, id: number) {
 	openFromLink(e, { type: 'profile', data: { profileId: id } });
+}
+
+/**
+ * Клик по ссылке на dtf.ru: пост и профиль открываем у себя, остальное оставляем браузеру.
+ * Возвращает true, если открыли у себя.
+ */
+export function openDtfLink(e: MouseEvent, href: string): boolean {
+	const target = parseDtfUrl(href);
+	if (!target || isNewTabClick(e)) return false;
+
+	e.preventDefault();
+	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId } });
+	else openOverlay({ type: 'profile', data: { profileId: target.profileId } });
+	return true;
 }
 
 /**

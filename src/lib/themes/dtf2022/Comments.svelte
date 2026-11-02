@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { CommentMedia } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
@@ -17,8 +17,9 @@
 		postId,
 		sourceId = 'dtf',
 		commentsCount = 0,
-		subscribed = false
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean } = $props();
+		subscribed = false,
+		focusCommentId
+	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number } = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -134,6 +135,24 @@
 			notify.error((e as Error).message);
 		}
 	}
+
+	/** Комментарий из уведомления: догружаем страницы, пока он не найдётся, затем прокручиваем и подсвечиваем */
+	let focused = false;
+	$effect(() => {
+		if (!focusCommentId || focused) return;
+
+		const key = commentKey({ sourceId, id: focusCommentId });
+		if (logic.allCommentsMap.has(key)) {
+			focused = true;
+			tick().then(() => {
+				const node = document.getElementById(`comment-${key}`);
+				node?.scrollIntoView({ block: 'center' });
+				node?.animate([{ backgroundColor: '#f5fcff' }, { backgroundColor: 'transparent' }], { duration: 2000 });
+			});
+		} else if (!logic.loading && logic.hasMore) {
+			untrack(() => logic.loadComments());
+		}
+	});
 
 	function highlightBranch(index: number, line: number | null) {
 		if (line === null) {

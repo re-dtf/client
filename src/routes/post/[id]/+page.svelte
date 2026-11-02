@@ -5,6 +5,7 @@
 
 	let id = $derived(Number(page.params.id));
 	let sourceId = $derived(page.url.searchParams.get('source') || 'dtf');
+	let commentId = $derived(Number(page.url.searchParams.get('comment')) || undefined);
 	let pageTitle = $state('Загрузка... - reDTF');
 </script>
 
@@ -12,7 +13,7 @@
 	<title>{pageTitle}</title>
 </svelte:head>
 
-<PostContent postId={id} {sourceId} onLoaded={(title) => pageTitle = `${title} - reDTF`}>
+<PostContent postId={id} {sourceId} {commentId} onLoaded={(title) => pageTitle = `${title} - reDTF`}>
 	{#snippet backButton()}
 		<a href={resolve('/')} class="back-link">← Вернуться в ленту</a>
 	{/snippet}

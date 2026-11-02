@@ -11,7 +11,7 @@ declare global {
 		 * в src/lib/navigation.ts (адрес и способ показа) и в src/routes/+layout.svelte (компонент).
 		 */
 		type OverlayData =
-			| { type: 'post'; data: { postId: number; sourceId: string } }
+			| { type: 'post'; data: { postId: number; sourceId: string; commentId?: number } }
 			| { type: 'profile'; data: { profileId: number } }
 			| { type: 'settings' }
 			| { type: 'login' }
