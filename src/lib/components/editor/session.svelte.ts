@@ -30,7 +30,7 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 	let saveTimer: ReturnType<typeof setTimeout> | null = null;
 	let maxWaitTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const DEBOUNCE_MS = 2000;
+	const DEBOUNCE_MS = 10000;
 	const MAX_WAIT_MS = 120000;
 	let isFirstRender = true;
 
