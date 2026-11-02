@@ -1,10 +1,12 @@
 <script lang="ts">
-	import type { Attachment } from 'svelte/attachments';
-	import type { Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
+	import type { Comment, CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
+	import { api } from '$lib/api/index.svelte';
 	import { resolve } from '$app/paths';
 	import { getProfilePath, openProfile } from '$lib/navigation';
+	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
+	import ProfileComment from './ProfileComment.svelte';
 	import Preloader from './ui/Preloader.svelte';
 
 	let {
@@ -36,15 +38,40 @@
 		{ value: 'new', label: 'Свежее' }
 	];
 
-	// ponytail: комментарии и подробности профиля пока открываются на самом DTF
+	// Подробности профиля (дата, подписчики, подписки) пока открываются на самом DTF
 	let externalUrl = $derived(profile.url ?? `https://dtf.ru/id${profile.id}`);
 
-	/** Подгрузка постов, когда низ ленты подъезжает к экрану */
-	const loadOnVisible: Attachment<HTMLElement> = (node) => {
-		const observer = new IntersectionObserver((entries) => entries[0].isIntersecting && loadMore(), { rootMargin: '1000px' });
-		observer.observe(node);
-		return () => observer.disconnect();
-	};
+	// Вкладка «Комментарии»: грузится при первом открытии, дальше подгружается по мере прокрутки
+	let tab = $state<'posts' | 'comments'>('posts');
+	let comments = $state.raw<Comment[]>([]);
+	let commentsCursor: CursorData | undefined;
+	let commentsLoaded = $state(false);
+	let commentsHasMore = $state(true);
+	let loadingComments = $state(false);
+	let commentsError = $state<string | null>(null);
+
+	async function loadComments() {
+		if (loadingComments || !commentsHasMore) return;
+		loadingComments = true;
+		commentsError = null;
+		try {
+			const result = await api.getProfileComments(profile.id, commentsCursor);
+			comments = [...comments, ...result.items];
+			commentsHasMore = result.items.length > 0 && result.lastId !== undefined;
+			commentsCursor = commentsHasMore ? { lastId: result.lastId!, lastSortingValue: result.lastSortingValue ?? 0 } : undefined;
+		} catch (e) {
+			commentsError = (e as Error).message;
+			commentsHasMore = false;
+		} finally {
+			loadingComments = false;
+			commentsLoaded = true;
+		}
+	}
+
+	function openTab(next: 'posts' | 'comments') {
+		tab = next;
+		if (next === 'comments' && !commentsLoaded) loadComments();
+	}
 </script>
 
 {#snippet sidebarBlock(title: string, count: number | undefined, promise: Promise<ProfileListItem[]>, grid: boolean, limit: number, showAll: string, showAllUrl: string)}
@@ -141,12 +168,12 @@
 		<nav class="profile-head__tabs profile-tabs" aria-label="Разделы профиля">
 			<div class="profile-tabs__scroll">
 				<div class="profile-tabs__content">
-					<span class="profile-tabs__item profile-tabs__item--active" aria-current="page">
+					<button type="button" class={['profile-tabs__item', { 'profile-tabs__item--active': tab === 'posts' }]} aria-current={tab === 'posts' ? 'page' : undefined} onclick={() => openTab('posts')}>
 						<span class="profile-tabs__label">Статьи</span>
-					</span>
-					<a href="{externalUrl}/comments" target="_blank" rel="noreferrer" class="profile-tabs__item">
+					</button>
+					<button type="button" class={['profile-tabs__item', { 'profile-tabs__item--active': tab === 'comments' }]} aria-current={tab === 'comments' ? 'page' : undefined} onclick={() => openTab('comments')}>
 						<span class="profile-tabs__label">Комментарии</span>
-					</a>
+					</button>
 					<a href="{externalUrl}/details" target="_blank" rel="noreferrer" class="profile-tabs__item profile-tabs__details">
 						<span class="profile-tabs__label">Подробнее</span>
 					</a>
@@ -156,34 +183,54 @@
 	</div>
 
 	<div class="profile-feed">
-		<div class="profile-feed-sorting">
-			{#each SORTINGS as item (item.value)}
-				<button
-					class={['profile-feed-sorting__button', { 'profile-feed-sorting__button--active': sorting === item.value }]}
-					aria-pressed={sorting === item.value}
-					onclick={() => onSortingChange(item.value)}
-				>
-					{item.label}
-				</button>
-			{/each}
-		</div>
-
-		<div class="profile-feed__posts">
-			{#each posts as post (post.sourceId + '_' + post.id)}
-				<PostCard {post} subscribe={false} />
-			{/each}
-		</div>
-
-		{#if postsError}
-			<p class="profile-feed__status">{postsError}</p>
-		{:else if !loadingPosts && posts.length === 0}
-			<p class="profile-feed__status">Постов пока нет</p>
-		{/if}
-
-		{#if hasMore}
-			<div class="profile-feed__more" {@attach loadOnVisible}>
-				{#if loadingPosts}<Preloader />{/if}
+		{#if tab === 'posts'}
+			<div class="profile-feed-sorting">
+				{#each SORTINGS as item (item.value)}
+					<button
+						class={['profile-feed-sorting__button', { 'profile-feed-sorting__button--active': sorting === item.value }]}
+						aria-pressed={sorting === item.value}
+						onclick={() => onSortingChange(item.value)}
+					>
+						{item.label}
+					</button>
+				{/each}
 			</div>
+
+			<div class="profile-feed__posts">
+				{#each posts as post (post.sourceId + '_' + post.id)}
+					<PostCard {post} subscribe={false} />
+				{/each}
+			</div>
+
+			{#if postsError}
+				<p class="profile-feed__status">{postsError}</p>
+			{:else if !loadingPosts && posts.length === 0}
+				<p class="profile-feed__status">Постов пока нет</p>
+			{/if}
+
+			{#if hasMore}
+				<div class="profile-feed__more" {@attach loadOnVisible(loadMore)}>
+					{#if loadingPosts}<Preloader />{/if}
+				</div>
+			{/if}
+		{:else}
+			<div class="profile-comments">
+				{#each comments as comment (comment.id)}
+					<ProfileComment {comment} />
+				{/each}
+			</div>
+
+			{#if commentsError}
+				<p class="profile-feed__status">{commentsError}</p>
+			{:else if commentsLoaded && !loadingComments && comments.length === 0}
+				<p class="profile-feed__status">Комментариев пока нет</p>
+			{/if}
+
+			{#if commentsHasMore}
+				<div class="profile-feed__more" {@attach loadOnVisible(loadComments)}>
+					{#if loadingComments}<Preloader />{/if}
+				</div>
+			{/if}
 		{/if}
 	</div>
 
@@ -379,6 +426,9 @@
 
 	.profile-tabs__item {
 		flex-shrink: 0;
+		border: 0;
+		background: none;
+		font: inherit;
 		padding: 0 var(--tab-offset);
 		color: #4d4d4d;
 		cursor: pointer;
@@ -418,6 +468,11 @@
 		.profile-tabs__item:hover {
 			color: var(--color-blue);
 		}
+	}
+
+	/* Вкладка «Комментарии» */
+	.profile-comments {
+		margin-top: 20px;
 	}
 
 	/* Лента профиля */
