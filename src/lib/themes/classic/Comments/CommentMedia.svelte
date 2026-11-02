@@ -4,7 +4,7 @@
 	import LazyImage from '$lib/components/LazyImage.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 
-	let { media } = $props<{ media: CommentMedia[] }>();
+	let { media }: { media: CommentMedia[] } = $props();
 </script>
 
 {#if media?.length}

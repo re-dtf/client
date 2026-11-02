@@ -7,7 +7,7 @@
 		base64preview,
 		color,
 		wrapperClass = ''
-	} = $props<{
+	}: {
 		src: string;
 		alt?: string;
 		width?: number;
@@ -15,7 +15,7 @@
 		base64preview?: string;
 		color?: string;
 		wrapperClass?: string;
-	}>();
+	} = $props();
 
 	let loaded = $state(false);
 

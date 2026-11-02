@@ -2,12 +2,12 @@
 	import { fade } from 'svelte/transition';
 	import type { CommentTreeItem } from '$lib/api/types';
 
-	let { visible, comment, x, y } = $props<{
+	let { visible, comment, x, y }: {
 		visible: boolean;
 		comment: CommentTreeItem | null;
 		x: number;
 		y: number;
-	}>();
+	} = $props();
 
 	const TOOLTIP_WIDTH = 320;
 	const TOOLTIP_HEIGHT = 100;

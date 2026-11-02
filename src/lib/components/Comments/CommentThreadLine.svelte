@@ -6,12 +6,12 @@
 		onShowPreview,
 		onHidePreview,
 		onToggleCollapse
-	} = $props<{
+	}: {
 		comment: CommentTreeItem;
 		onShowPreview?: (comment: CommentTreeItem, x: number, y: number) => void;
 		onHidePreview?: () => void;
 		onToggleCollapse: () => void;
-	}>();
+	} = $props();
 
 	let touchTimer: ReturnType<typeof setTimeout> | undefined;
 	

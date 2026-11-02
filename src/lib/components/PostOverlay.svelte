@@ -2,7 +2,7 @@
 	import PostContent from '$lib/components/PostContent.svelte';
 	import { closeOverlay } from '$lib/navigation';
 
-	let { postId, sourceId = 'dtf' } = $props<{ postId: number, sourceId?: string }>();
+	let { postId, sourceId = 'dtf' }: { postId: number, sourceId?: string } = $props();
 
 	function goBack() {
 		closeOverlay();

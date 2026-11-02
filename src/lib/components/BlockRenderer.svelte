@@ -5,7 +5,7 @@
 	import LazyImage from './LazyImage.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 
-	let { blocks } = $props<{ blocks: Block[] }>();
+	let { blocks }: { blocks: Block[] } = $props();
 </script>
 
 {#each blocks as block}

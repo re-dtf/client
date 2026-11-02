@@ -15,7 +15,7 @@
 		panObserver,
 		cardComponent: CardComponent,
 		forceExpand = false
-	} = $props<{
+	}: {
 		comment: CommentTreeItem;
 		depth?: number;
 		maxVisualDepth?: number;
@@ -26,7 +26,7 @@
 		panObserver?: IntersectionObserver | undefined;
 		cardComponent: import('svelte').Component<any>;
 		forceExpand?: boolean;
-	}>();
+	} = $props();
 
 	let visualDepth = $derived(
 		nestingMode === 'flatten' ? Math.min(depth, maxVisualDepth) : depth

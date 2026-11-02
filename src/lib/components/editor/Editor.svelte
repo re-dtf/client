@@ -9,12 +9,12 @@
 		placeholder = 'Напишите что-нибудь...', 
 		onChange = () => {},
 		editorInstance = $bindable(null)
-	} = $props<{
+	}: {
 		initialData?: OutputData;
 		placeholder?: string;
 		onChange?: () => void;
 		editorInstance?: any;
-	}>();
+	} = $props();
 
 	let editorElement: HTMLElement;
 

@@ -3,7 +3,7 @@
 	import SubsiteSelector from '$lib/components/editor/SubsiteSelector.svelte';
 	import { onMount, onDestroy } from 'svelte';
 
-	let { session } = $props<{ session: any }>();
+	let { session }: { session: any } = $props();
 
 	onMount(() => {
 		session.init();

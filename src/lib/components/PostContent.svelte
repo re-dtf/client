@@ -3,12 +3,12 @@
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import type { Snippet } from 'svelte';
 
-	let { postId, sourceId = 'dtf', onLoaded, backButton } = $props<{
+	let { postId, sourceId = 'dtf', onLoaded, backButton }: {
 		postId: number;
 		sourceId?: string;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
-	}>();
+	} = $props();
 
 	// svelte-ignore state_referenced_locally
 	let postPromise = api.getPost(postId, sourceId);

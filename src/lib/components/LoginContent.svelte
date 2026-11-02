@@ -5,7 +5,7 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 
-	let { backButton } = $props<{ backButton?: Snippet }>();
+	let { backButton }: { backButton?: Snippet } = $props();
 
 	let loginMethod: 'email' | 'token' = $state('email');
 

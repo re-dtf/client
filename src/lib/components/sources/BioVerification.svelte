@@ -5,11 +5,11 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
-	let { source, onComplete, onCancel } = $props<{
+	let { source, onComplete, onCancel }: {
 		source: SourceState;
 		onComplete: () => void;
 		onCancel: () => void;
-	}>();
+	} = $props();
 
 	let step = $state<'initial' | 'challenge' | 'verifying' | 'success' | 'error'>('initial');
 	let errorMsg = $state('');

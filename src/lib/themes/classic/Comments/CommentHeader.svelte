@@ -2,7 +2,7 @@
 	import type { CommentTreeItem } from '$lib/api/types';
 	import SourceBadge from '$lib/components/SourceBadge.svelte';
 
-	let { comment } = $props<{ comment: CommentTreeItem }>();
+	let { comment }: { comment: CommentTreeItem } = $props();
 </script>
 
 <div class="comment-header">

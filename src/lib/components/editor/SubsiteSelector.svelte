@@ -5,10 +5,10 @@
 	let {
 		subsites = [],
 		selectedId = $bindable(0),
-	} = $props<{
+	}: {
 		subsites: SubsiteItem[];
 		selectedId: number;
-	}>();
+	} = $props();
 
 	let isOpen = $state(false);
 

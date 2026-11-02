@@ -28,7 +28,7 @@
 
 <script lang="ts">
 	import { formatNumber } from '../format';
-	import { lottie, preloadLottie, type LottieLoader } from './lottie';
+	import { lottie, preloadLottie } from './lottie';
 
 	/*
 	 * Снаружи настраивается CSS-переменными: --post-button-size (круг подсветки),

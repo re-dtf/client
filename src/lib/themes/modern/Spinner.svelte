@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { inline = false } = $props<{ inline?: boolean }>();
+	let { inline = false }: { inline?: boolean } = $props();
 </script>
 
 <div class={['spinner-container', { inline }]}>

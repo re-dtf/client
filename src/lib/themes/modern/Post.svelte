@@ -5,11 +5,11 @@
 	import { resolve } from '$app/paths';
 	import { openPost } from '$lib/navigation';
 
-	let { post, preview = true } = $props<{ post: Post, preview?: boolean }>();
+	let { post, preview = true }: { post: Post, preview?: boolean } = $props();
 
 	let displayBlocks = $derived(preview ? post.blocks.filter((b: any) => b.cover) : post.blocks);
 
-	let postUrl = $derived(post.sourceId !== 'dtf' ? `/post/${post.id}?source=${post.sourceId}` : `/post/${post.id}`);
+	let postUrl = $derived(resolve('/post/[id]', { id: String(post.id) }) + (post.sourceId !== 'dtf' ? `?source=${post.sourceId}` : ''));
 </script>
 
 <div class="modern-post">
@@ -29,7 +29,7 @@
 			</div>
 			<h3 class="title">
 				{#if preview}
-					<a href={resolve(postUrl)} onclick={(e) => openPost(e, post)}>{post.title}</a>
+					<a href={postUrl} onclick={(e) => openPost(e, post)}>{post.title}</a>
 				{:else}
 					{post.title}
 				{/if}
@@ -38,7 +38,7 @@
 				<BlockRenderer blocks={displayBlocks} />
 				{#if preview && post.blocks.length > displayBlocks.length}
 					<div class="read-more">
-						<a href={resolve(postUrl)} onclick={(e) => openPost(e, post)}>Читать далее...</a>
+						<a href={postUrl} onclick={(e) => openPost(e, post)}>Читать далее...</a>
 					</div>
 				{/if}
 			</div>

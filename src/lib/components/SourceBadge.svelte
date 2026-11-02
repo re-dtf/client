@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
 
-	let { sourceId } = $props<{ sourceId?: string }>();
+	let { sourceId }: { sourceId?: string } = $props();
 
 	let source = $derived(
 		sourceId && sourceId !== 'dtf'

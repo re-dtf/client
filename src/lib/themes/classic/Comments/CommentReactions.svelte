@@ -4,7 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import { REACTIONS } from '$lib/config/reactions';
 
-	let { comment } = $props<{ comment: CommentTreeItem }>();
+	let { comment }: { comment: CommentTreeItem } = $props();
 
 	let reactionError = $state<string | null>(null);
 
@@ -26,7 +26,7 @@
 				targetReactionId = 0;
 			} else {
 				if (comment.reactions.reactionId) {
-					const old = comment.reactions.counters.find((c: any) => c.id === comment.reactions.reactionId);
+					const old = comment.reactions.counters.find((c: any) => c.id === prevReactionId);
 					if (old) old.count--;
 				}
 				comment.reactions.reactionId = reactionId;

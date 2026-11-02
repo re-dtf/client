@@ -1,9 +1,9 @@
 <script lang="ts">
-	let { commentsCount, sorting, onSortingChange } = $props<{
+	let { commentsCount, sorting, onSortingChange }: {
 		commentsCount: number;
 		sorting: string;
 		onSortingChange: (event: Event) => void;
-	}>();
+	} = $props();
 </script>
 
 <div class="header">

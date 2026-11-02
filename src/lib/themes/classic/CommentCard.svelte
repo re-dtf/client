@@ -5,11 +5,11 @@
 	import CommentMedia from './Comments/CommentMedia.svelte';
 	import CommentBreadcrumb from './Comments/CommentBreadcrumb.svelte';
 
-	let { comment, showBreadcrumb, parentComment } = $props<{
+	let { comment, showBreadcrumb, parentComment }: {
 		comment: CommentTreeItem;
 		showBreadcrumb: boolean;
 		parentComment: CommentTreeItem | null;
-	}>();
+	} = $props();
 </script>
 
 {#if showBreadcrumb && parentComment}
@@ -25,7 +25,7 @@
 		{@html comment.content}
 	</div>
 
-	<CommentMedia media={comment.media} />
+	<CommentMedia media={comment.media ?? []} />
 
 	<CommentReactions {comment} />
 {/if}

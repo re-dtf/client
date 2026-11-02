@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { CommentTreeItem } from '$lib/api/types';
 
-	let { parentComment } = $props<{ 
+	let { parentComment }: { 
 		parentComment: CommentTreeItem;
-	}>();
+	} = $props();
 
 	function scrollToParent() {
 		const el = document.getElementById(`comment-${parentComment.sourceId}_${parentComment.id}`);

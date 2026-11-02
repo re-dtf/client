@@ -5,10 +5,10 @@
 	import { sourceStorage } from '$lib/storage/sources.svelte';
 	import BioVerification from './BioVerification.svelte';
 
-	let { source, onUpdateReady } = $props<{ 
+	let { source, onUpdateReady }: { 
 		source: SourceState;
 		onUpdateReady?: (sourceId: string, result: ManifestUpdateResult) => void;
-	}>();
+	} = $props();
 
 	let manifest = $derived(source.manifest);
 	let hasToken = $derived(!!sourceStorage.getToken(source.manifest.id));

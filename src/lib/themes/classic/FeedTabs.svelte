@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { currentFeed, switchFeed } = $props<{ currentFeed: string, switchFeed: (feed: 'popular' | 'new' | 'my') => void }>();
+	let { currentFeed, switchFeed }: { currentFeed: string, switchFeed: (feed: 'popular' | 'new' | 'my') => void } = $props();
 </script>
 
 <div class="feed-tabs">

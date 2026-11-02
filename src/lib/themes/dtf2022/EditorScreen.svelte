@@ -1,3 +1,3 @@
 <script lang="ts">
-	let { session } = $props<{ session?: any }>();
+	let { session }: { session?: any } = $props();
 </script>
