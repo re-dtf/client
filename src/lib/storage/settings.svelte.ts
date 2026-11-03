@@ -11,6 +11,8 @@ export interface AppSettings {
 	commentNesting: NestingMode;
 	/** Вести локальную статистику (см. stats.svelte.ts) */
 	collectStats: boolean;
+	/** Тактильный виброотклик (для поддерживаемых устройств) */
+	haptics: boolean;
 }
 
 /**
@@ -27,5 +29,6 @@ export const settings = persistedState<AppSettings>('redtf:settings', {
 	theme: DEFAULT_THEME,
 	proxyUrl: '',
 	commentNesting: 'flatten',
-	collectStats: true
+	collectStats: true,
+	haptics: true
 });

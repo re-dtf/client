@@ -3,8 +3,20 @@
 	import { openFeed, openNotifications, openOverlay } from '$lib/navigation';
 	import { notifications } from '$lib/api/notifications.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
+	import { haptics } from '$lib/haptics';
+
+	function handleFeed(e: MouseEvent) {
+		haptics.tick();
+		openFeed(e);
+	}
+
+	function handleNotifications(e: MouseEvent) {
+		haptics.tick();
+		openNotifications(e);
+	}
 
 	function openAccount() {
+		haptics.tick();
 		if (authStorage.isAuthenticated) {
 			openOverlay({ type: 'settings' });
 		} else {
@@ -16,7 +28,7 @@
 <nav class="mobile-bar-container" aria-label="Навигация">
 	<div class="mobile-bar">
 		<div class="mobile-bar__link-wrapper">
-			<a href={resolve('/')} class="mobile-bar__link" aria-label="Главная" onclick={openFeed}>
+			<a href={resolve('/')} class="mobile-bar__link" aria-label="Главная" onclick={handleFeed}>
 				<svg height="28" width="28" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_home"></use>
 				</svg>
@@ -24,7 +36,7 @@
 		</div>
 		<!-- TODO: мессенджер у DTF по подписке, на аккаунте без неё его запросы не снять -->
 		<div class="mobile-bar__link-wrapper">
-			<button class="mobile-bar__link" aria-label="Сообщения">
+			<button class="mobile-bar__link" aria-label="Сообщения" onclick={() => haptics.tick()}>
 				<svg height="28" width="28" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_messenger"></use>
 				</svg>
@@ -32,7 +44,7 @@
 		</div>
 		<div class="mobile-bar__link-wrapper">
 			<!-- На мобильном вместо попапа — страница уведомлений -->
-			<a href={resolve('/notifications')} class="mobile-bar__link mobile-bar__notifications" aria-label="Уведомления" onclick={openNotifications}>
+			<a href={resolve('/notifications')} class="mobile-bar__link mobile-bar__notifications" aria-label="Уведомления" onclick={handleNotifications}>
 				<svg height="28" width="28" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_bell"></use>
 				</svg>

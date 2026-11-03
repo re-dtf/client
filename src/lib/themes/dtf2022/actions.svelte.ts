@@ -6,6 +6,7 @@ import { authStorage } from '$lib/storage/auth.svelte';
 import { applyReaction, nextReactionId } from '$lib/reactions';
 import { voteReaction } from '$lib/storage/reactions.svelte';
 import { notify } from './ui/notify.svelte';
+import { haptics } from '$lib/haptics';
 
 /** Действия вошедшего пользователя: без входа открывают окно входа и возвращают false */
 export function ensureLogin(): boolean {
@@ -42,6 +43,7 @@ function change(post: Post, own: PostChanges) {
 export function reactToPost(post: Post, reactionId: number): boolean {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return false;
 
+	haptics.click();
 	const current = withActions(post).reactions;
 	const next = nextReactionId(current, reactionId);
 	change(post, { reactions: applyReaction(current, next) });
@@ -61,6 +63,7 @@ export const votePost = (post: Post, sign: 1 | -1) => reactToPost(post, voteReac
 export function toggleFavoritePost(post: Post) {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return;
 
+	haptics.click();
 	const { isFavorited, favoritesCount } = withActions(post);
 	change(post, { isFavorited: !isFavorited, favoritesCount: Math.max(0, (favoritesCount ?? 0) + (isFavorited ? -1 : 1)) });
 

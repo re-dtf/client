@@ -2,6 +2,7 @@ import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
 import { scrollBehavior } from './motion';
+import { haptics } from './haptics';
 
 /** Ленты на главной. Выбранная лента лежит в адресе: /?feed=new */
 export const FEEDS = ['popular', 'new', 'my'] as const;
@@ -61,6 +62,7 @@ export const feed = {
 		return refreshCount;
 	},
 	refresh() {
+		haptics.double();
 		refreshCount++;
 	},
 	/** Запрос на сброс скролла ленты к началу (при явном клике по табам в шапке/меню) */
@@ -79,6 +81,7 @@ export const feed = {
  * Нажатие на ту ленту, что уже открыта, обновляет её, как клик по логотипу.
  */
 export function openFeedTab(name: FeedName, period: Period = DEFAULT_PERIOD) {
+	haptics.tick();
 	const onFeed = page.route.id === '/' && !page.state.overlays?.length;
 	if (onFeed && feedFromUrl() === name && periodFromUrl() === period) {
 		window.scrollTo({ top: 0, behavior: scrollBehavior() });

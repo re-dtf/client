@@ -1,3 +1,5 @@
+import { haptics } from '$lib/haptics';
+
 /** Уведомления об успехе и ошибке — как $notify у DTF: плашка справа сверху, пропадает через 3 секунды */
 export type ToastType = 'success' | 'error';
 
@@ -16,6 +18,8 @@ export const toasts = {
 	},
 	/** Новые сверху, как у оригинала */
 	add(type: ToastType, message: string) {
+		if (type === 'error') haptics.error();
+		else if (type === 'success') haptics.double();
 		items = [{ id: nextId++, type, message }, ...items];
 	},
 	remove(id: number) {

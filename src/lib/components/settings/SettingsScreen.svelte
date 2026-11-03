@@ -14,7 +14,8 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import type { NestingMode } from '$lib/storage/settings.svelte';
-	import type { ChoiceField } from '$lib/themes/types';
+	import type { ChoiceField, ToggleField } from '$lib/themes/types';
+	import { haptics } from '$lib/haptics';
 
 	/*
 	 * Окно настроек в духе Adwaita: слева разделы, справа выбранная страница.
@@ -29,6 +30,14 @@
 		title: 'Выбор темы',
 		default: DEFAULT_THEME,
 		options: themes.map((theme) => ({ value: theme.id, title: theme.name, description: theme.description }))
+	};
+
+	const hapticsField: ToggleField = {
+		key: 'haptics',
+		type: 'toggle',
+		title: 'Тактильный отклик (вибрация)',
+		description: 'Вибрация при лайках, реакциях и переключении вкладок (для Android)',
+		default: true
 	};
 
 	const nestingField: ChoiceField = {
@@ -142,6 +151,15 @@
 					<ProxySettings />
 				{:else if current.id === 'themes'}
 					<FieldControl field={themeField} value={activeTheme.id} onchange={(value) => activeTheme.set(String(value))} />
+					<FieldControl
+						field={hapticsField}
+						value={settings.value.haptics}
+						onchange={(value) => {
+							const enabled = Boolean(value);
+							settings.patch({ haptics: enabled });
+							if (enabled) haptics.click();
+						}}
+					/>
 				{:else if current.id === 'theme'}
 					{#each themeFields as field (field.key)}
 						<FieldControl

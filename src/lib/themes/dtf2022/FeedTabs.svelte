@@ -2,6 +2,7 @@
 	import { PERIODS, type Period } from '$lib/feed.svelte';
 	import { formatDay } from './format';
 	import Popover from './ui/Popover.svelte';
+	import { haptics } from '$lib/haptics';
 
 	// Вкладки ленты у dtf2022 живут в сайдбаре и мобильной панели, здесь только выбор периода «Популярного»
 	let {
@@ -29,7 +30,18 @@
 
 {#if currentFeed === 'popular'}
 	<div class="sorting-filters">
-		<Popover bind:open {items} selected={period} onselect={switchPeriod} width={180} align="left" label="Период">
+		<Popover
+			bind:open
+			{items}
+			selected={period}
+			onselect={(p) => {
+				haptics.tick();
+				switchPeriod(p);
+			}}
+			width={180}
+			align="left"
+			label="Период"
+		>
 			<button type="button" class="sorting-filters__button" aria-expanded={open} onclick={() => (open = !open)}>
 				<span>{LABELS[period]}</span>
 				<span class="sorting-filters__toggler">
