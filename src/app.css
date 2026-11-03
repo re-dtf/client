@@ -62,6 +62,22 @@ button, nav, .header, .tabs, .mobile-bar, .icon {
 	-webkit-user-select: none;
 }
 
+/* Отключение верхнего бара в мобильной версии */
+@media (max-width: 719px) {
+	:root[data-disable-mobile-top-bar="true"],
+	:root[data-theme][data-disable-mobile-top-bar="true"] {
+		--header-height: 0px;
+	}
+
+	:root[data-disable-mobile-top-bar="true"] .header {
+		display: none;
+	}
+
+	:root[data-disable-mobile-top-bar="true"] .page-content {
+		padding-top: env(safe-area-inset-top, 0px);
+	}
+}
+
 
 /* Длительности переходов общих компонентов; тема может переопределить в theme.css */
 :root {

@@ -40,6 +40,8 @@ interface AppSettings {
 	proxyUrl: string;               // CORS-прокси для входа
 	commentNesting: 'flatten' | 'autopan';
 	collectStats: boolean;          // вести локальную статистику
+	haptics: boolean;               // тактильный отклик
+	disableMobileTopBar: boolean;   // отключать верхний бар в мобильной версии
 }
 ```
 

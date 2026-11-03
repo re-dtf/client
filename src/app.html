@@ -16,6 +16,8 @@
 			try {
 				const saved = JSON.parse(localStorage.getItem('redtf:setup:completed'));
 				if (saved?.v === 1 && saved.d === true) document.documentElement.dataset.splash = 'off';
+				const st = JSON.parse(localStorage.getItem('redtf:settings'));
+				if (st?.d?.disableMobileTopBar) document.documentElement.dataset.disableMobileTopBar = 'true';
 			} catch {}
 		</script>
 	</head>

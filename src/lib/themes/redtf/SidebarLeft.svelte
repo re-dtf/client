@@ -324,7 +324,8 @@
 		.panel-header {
 			display: flex;
 			flex-shrink: 0;
-			height: var(--header-height);
+			height: var(--header-height, 60px);
+			min-height: 60px;
 		}
 
 		.sidebar-write {

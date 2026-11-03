@@ -10,6 +10,7 @@
 	import NotificationsPanel from './NotificationsPanel.svelte';
 	import { notificationsPopup } from './notificationsPopup.svelte';
 	import { sidebar } from './sidebar.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
 
 	let isUserMenuOpen = $state(false);
 	let userNode = $state<HTMLElement>();
@@ -55,7 +56,7 @@
 	}}
 />
 
-<header class="header">
+<header class={['header', { 'header--hidden-mobile': settings.value.disableMobileTopBar }]}>
 	<div class="header-container">
 		<div class="header-left">
 			<div
@@ -406,6 +407,10 @@
 	}
 
 	@media (max-width: 719px) {
+		.header--hidden-mobile {
+			display: none;
+		}
+
 		.header-menu,
 		.header-logo {
 			padding-left: 16px;

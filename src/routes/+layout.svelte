@@ -19,6 +19,7 @@
 	import type { ThemeComponents } from '$lib/themes/contract';
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	import { startTracking, type TickContext } from '$lib/storage/stats.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -259,6 +260,15 @@
 		return () => {
 			Object.keys(vars).forEach((name) => style.removeProperty(name));
 			delete document.documentElement.dataset.transparency;
+		};
+	});
+
+	// Отключение верхнего бара в мобильной версии выставляет data-атрибут корня
+	$effect(() => {
+		const disabled = Boolean(settings.value.disableMobileTopBar);
+		document.documentElement.dataset.disableMobileTopBar = String(disabled);
+		return () => {
+			delete document.documentElement.dataset.disableMobileTopBar;
 		};
 	});
 

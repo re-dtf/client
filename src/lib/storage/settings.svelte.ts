@@ -16,6 +16,8 @@ export interface AppSettings {
 	collectStats: boolean;
 	/** Тактильный виброотклик (для поддерживаемых устройств) */
 	haptics: boolean;
+	/** Отключать верхний бар в мобильной версии */
+	disableMobileTopBar: boolean;
 }
 
 /**
@@ -34,7 +36,8 @@ export const settings = persistedState<AppSettings>('redtf:settings', {
 	commentNesting: 'flatten',
 	commentVirtualization: 'auto',
 	collectStats: true,
-	haptics: true
+	haptics: true,
+	disableMobileTopBar: false
 });
 
 /**

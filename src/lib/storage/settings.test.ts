@@ -28,10 +28,23 @@ describe('settings & shouldVirtualizeComments', () => {
 			theme: 'dtf2022',
 			proxyUrl: '',
 			commentNesting: 'flatten',
-			commentVirtualization: 'auto',
 			collectStats: true,
-			haptics: true
+			haptics: true,
+			disableMobileTopBar: false,
+			commentVirtualization: 'auto',
 		};
+	});
+
+	it('disableMobileTopBar по умолчанию выключен (false)', () => {
+		expect(settings.value.disableMobileTopBar).toBe(false);
+	});
+
+	it('patch обновляет значение disableMobileTopBar и сохраняет в localStorage', () => {
+		settings.patch({ disableMobileTopBar: true });
+		expect(settings.value.disableMobileTopBar).toBe(true);
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.disableMobileTopBar).toBe(true);
 	});
 
 	it('по умолчанию commentVirtualization равен "auto"', () => {

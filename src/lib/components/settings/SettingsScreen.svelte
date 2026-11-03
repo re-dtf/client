@@ -40,6 +40,14 @@
 		default: true
 	};
 
+	const disableMobileTopBarField: ToggleField = {
+		key: 'disableMobileTopBar',
+		type: 'toggle',
+		title: 'Отключить верхний бар в мобильной версии',
+		description: 'Скрывать шапку с логотипом на смартфонах для экономии места',
+		default: false
+	};
+
 	const nestingField: ChoiceField = {
 		key: 'commentNesting',
 		type: 'radio',
@@ -172,6 +180,11 @@
 							settings.patch({ haptics: enabled });
 							if (enabled) haptics.click();
 						}}
+					/>
+					<FieldControl
+						field={disableMobileTopBarField}
+						value={settings.value.disableMobileTopBar}
+						onchange={(value) => settings.patch({ disableMobileTopBar: Boolean(value) })}
 					/>
 				{:else if current.id === 'theme'}
 					{#each themeFields as field (field.key)}
