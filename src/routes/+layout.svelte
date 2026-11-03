@@ -59,7 +59,9 @@
 		if (!anim || reducedMotion() || !screen || !from?.height) return deferDestroy(node);
 
 		// Слой ограничен экраном (длинная страница с размытием иначе рендерилась бы целиком): прокруткой внутри него показываем ту же часть
-		const top = Math.max(from.top, 0);
+		const headerEl = document.querySelector('header.header') ?? document.querySelector('header');
+		const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+		const top = Math.max(from.top, headerBottom);
 		Object.assign(screen.style, { position: 'fixed', top: `${top}px`, left: `${from.left}px`, width: `${from.width}px`, height: `${innerHeight - top}px`, overflow: 'hidden', margin: '0', zIndex: '90', pointerEvents: 'none' });
 		screen.scrollTop = top - from.top;
 		screen.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill: 'forwards' });

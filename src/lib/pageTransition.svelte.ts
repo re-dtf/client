@@ -106,7 +106,10 @@ export function markOrigin(e: MouseEvent) {
 
 /** Временно зафиксировать экран по размерам окна */
 export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
-	const top = Math.max(rect.top, 0);
+	const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
+	const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+	const top = Math.max(rect.top, headerBottom);
+	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 	const prev = {
 		position: screen.style.position,
 		top: screen.style.top,
@@ -128,7 +131,7 @@ export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
 		top: `${top}px`,
 		left: `${rect.left}px`,
 		width: `${rect.width}px`,
-		height: `${innerHeight - top}px`,
+		height: `${winHeight - top}px`,
 		overflow: 'hidden',
 		margin: '0',
 		zIndex: '10',
@@ -160,8 +163,14 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 	const rect = screenEl.getBoundingClientRect();
 	unfreezeOutgoing = freeze(screenEl, rect);
 
+	const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
+	const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+	const top = Math.max(rect.top, headerBottom);
+	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+	const visibleHeight = Math.max(100, winHeight - top);
+
 	// Оптический центр масштабирования по оси глубины Z
-	screenEl.style.transformOrigin = '50% 40%';
+	screenEl.style.transformOrigin = `50% ${Math.round(visibleHeight * 0.4)}px`;
 
 	// 1. Фаза Recede: уход вглубь
 	const motion = activeTheme.motion ?? fluent;
@@ -287,9 +296,15 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 			}
 		}
 
+		const incomingRect = incomingScreen.getBoundingClientRect();
+		const visibleTop = Math.max(0, incomingRect.top);
+		const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+		const visibleHeight = Math.max(100, winHeight - visibleTop);
+		const originY = Math.round(visibleHeight * 0.4);
+
 		incomingScreen.style.zIndex = '30';
 		incomingScreen.style.position = 'relative';
-		incomingScreen.style.transformOrigin = '50% 40%';
+		incomingScreen.style.transformOrigin = `50% ${originY}px`;
 
 		let keyframes: Keyframe[] = motion.approach.keyframes.map((kf) => ({ ...kf }));
 		if (hadHoldBlur) {
