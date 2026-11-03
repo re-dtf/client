@@ -91,10 +91,69 @@
 	let previousScrollId = '__feed__';
 	let previousDepth = 0;
 
+	// Отложенное восстановление прокрутки для слоёв, чьё содержимое подгружается асинхронно
+	let pendingScroll: { layer: string; target: number } | undefined;
+	let scrollObserver: ResizeObserver | undefined;
+	let cancelPendingTimeout: ReturnType<typeof setTimeout> | undefined;
+
+	function stopPendingScroll() {
+		pendingScroll = undefined;
+		scrollObserver?.disconnect();
+		scrollObserver = undefined;
+		if (cancelPendingTimeout) {
+			clearTimeout(cancelPendingTimeout);
+			cancelPendingTimeout = undefined;
+		}
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('wheel', onUserScroll);
+			window.removeEventListener('touchmove', onUserScroll);
+			window.removeEventListener('keydown', onKeyDown);
+		}
+	}
+
+	function onUserScroll() {
+		stopPendingScroll();
+	}
+
+	function onKeyDown(e: KeyboardEvent) {
+		if (['PageUp', 'PageDown', 'Space', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.code)) {
+			stopPendingScroll();
+		}
+	}
+
+	function startPendingScroll(layer: string, target: number) {
+		stopPendingScroll();
+		if (target <= 0 || typeof ResizeObserver === 'undefined' || typeof document === 'undefined') return;
+
+		pendingScroll = { layer, target };
+
+		// Пользователь крутит колесо, свайпает или нажимает клавиши прокрутки — отменяем, чтобы не бороться с жестами
+		window.addEventListener('wheel', onUserScroll, { passive: true, once: true });
+		window.addEventListener('touchmove', onUserScroll, { passive: true, once: true });
+		window.addEventListener('keydown', onKeyDown, { passive: true, once: true });
+
+		cancelPendingTimeout = setTimeout(stopPendingScroll, 10_000);
+
+		scrollObserver = new ResizeObserver(() => {
+			if (!pendingScroll || pendingScroll.layer !== activeScrollId) {
+				stopPendingScroll();
+				return;
+			}
+			window.scrollTo({ top: pendingScroll.target, left: 0, behavior: 'instant' });
+			if (Math.abs(window.scrollY - pendingScroll.target) <= 1) {
+				stopPendingScroll();
+			}
+		});
+
+		scrollObserver.observe(document.body);
+		if (document.documentElement) scrollObserver.observe(document.documentElement);
+	}
+
 	$effect.pre(() => {
 		// Save scroll of the outgoing layer before DOM hides it
 		if (activeScrollId !== previousScrollId) {
-			scrollPositions.set(previousScrollId, window.scrollY);
+			const scroll = pendingScroll?.layer === previousScrollId ? pendingScroll.target : window.scrollY;
+			scrollPositions.set(previousScrollId, scroll);
 			const outgoing = document.querySelector(`[data-layer="${previousScrollId}"]`)?.firstElementChild;
 			leaving = outgoing ? { layer: previousScrollId, rect: outgoing.getBoundingClientRect() } : undefined;
 		}
@@ -110,21 +169,24 @@
 			const layer = activeScrollId;
 			const closing = overlays.length < previousDepth;
 			previousScrollId = layer;
+			stopPendingScroll();
 			// Сразу, до первой отрисовки слоя: иначе на кадр виден верх страницы. После tick позиция ставится ещё раз —
 			// SvelteKit при возврате по истории прокручивает сам и может перебить
 			window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
 			tick().then(() => {
 				window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
 
+				// Асинхронный контент (пост, комментарии, профиль) на первом кадре короче экрана и скролл сбивается браузером —
+				// доводим его по мере роста страницы
+				if (savedScroll > 0 && Math.abs(window.scrollY - savedScroll) > 1) {
+					startPendingScroll(layer, savedScroll);
+				}
+
 				// Слои сменяются мгновенно, поэтому новый проявляется, а не выскакивает.
 				// На проскролленной ленте сдвиг многотысячепиксельного слоя рвёт кадры — берём pageIn (только прозрачность)
 				const anim = closing && savedScroll < 300 ? (activeTheme.motion?.pageBack ?? activeTheme.motion?.pageIn) : activeTheme.motion?.pageIn;
 				const target = document.querySelector(`[data-layer="${layer}"]`);
 				if (target) playChildren(target, anim);
-
-
-
-
 			});
 		}
 		previousDepth = overlays.length;
@@ -179,13 +241,13 @@
 
 		return () => {
 			stopTracking();
+			stopPendingScroll();
 			(window.cancelIdleCallback ?? clearTimeout)(idle);
 		};
 	});
 </script>
 
 <svelte:body style:overflow={hasModalActive || showWelcome ? 'hidden' : 'auto'} />
-
 
 {#snippet overlayContent(overlay: App.OverlayState)}
 	{#if overlay.type === 'post'}
