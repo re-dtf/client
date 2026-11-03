@@ -7,6 +7,7 @@
 	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
+	import { preloadLightbox } from '$lib/navigation';
 	import ModalShell from '$lib/components/overlays/ModalShell.svelte';
 	import Welcome from '$lib/components/Welcome.svelte';
 	import { dotsAtRest, hideSplash, holdSplash, introDone, showWelcomeBackdrop } from '$lib/splash';
@@ -237,6 +238,7 @@
 		// Пока пользователь смотрит ленту, догружаем то, что откроется следующим: пост не должен начинаться со спиннера компонента
 		const idle = (window.requestIdleCallback ?? setTimeout)(() => {
 			for (const name of ['Post', 'Comments', 'Profile', 'Notifications'] as const) preloadThemeComponent(activeTheme.chain, name);
+			preloadLightbox();
 		});
 
 		return () => {

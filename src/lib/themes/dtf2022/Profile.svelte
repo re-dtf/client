@@ -2,7 +2,7 @@
 	import type { Comment, CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { resolve } from '$app/paths';
-	import { getProfilePath, isNewTabClick, openLightbox, openProfile } from '$lib/navigation';
+	import { getProfilePath, isNewTabClick, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
@@ -140,7 +140,7 @@
 				class="profile-avatar"
 				style:background-image={profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined}
 				aria-label="Открыть аватарку"
-				disabled={!profile.avatarMedia}
+				disabled={!profile.avatarMedia} onpointerenter={() => profile.avatarMedia && preloadLightbox()}
 				onclick={() => profile.avatarMedia && openLightbox([profile.avatarMedia], 0)}
 			></button>
 		</div>

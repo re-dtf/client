@@ -6,7 +6,7 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import type { Comment } from '$lib/api/types';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openLightbox, openPost, openProfile } from '$lib/navigation';
+	import { getPostPath, getProfilePath, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
 	import { ensureLogin } from './actions.svelte';
 	import { parseCommentText } from './comments/commentText';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './comments/votes.svelte';
@@ -102,6 +102,7 @@
 						type="button"
 						class="profile-comment__zoom"
 						aria-label="Открыть изображение"
+						onpointerenter={preloadLightbox}
 						onclick={(e) => openLightbox(images.map((m) => m.data), images.indexOf(media), e.currentTarget.firstElementChild as HTMLImageElement)}
 					>
 						<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />

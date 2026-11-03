@@ -67,13 +67,25 @@ export function openOverlay(overlay: App.OverlayData) {
 
 // Картинка, из которой раскрываем просмотр: в историю её не положить, поэтому передаём через модуль
 let lightboxOrigin: HTMLImageElement | undefined;
+let lightboxOpening = false;
+let pswpPromise: Promise<[typeof import('photoswipe'), unknown]> | undefined;
+
+/** Загрузить PhotoSwipe и стили заранее, чтобы при клике просмотр открывался сразу */
+export function preloadLightbox() {
+	if (typeof window === 'undefined') return;
+	return (pswpPromise ??= Promise.all([import('photoswipe'), import('photoswipe/style.css')]));
+}
 
 /** Открыть просмотр картинок; origin — миниатюра, из которой разворачиваем (и в которую сворачиваем) кадр с номером index */
 export function openLightbox(images: { uuid: string; width: number; height: number }[], index: number, origin?: HTMLImageElement) {
+	if (lightboxOpening || page.state.overlays?.some((o) => o.type === 'lightbox')) return;
+	lightboxOpening = true;
 	lightboxOrigin = origin;
 	return openOverlay({
 		type: 'lightbox',
 		data: { images: images.map(({ uuid, width, height }) => ({ uuid, width, height })), index }
+	}).finally(() => {
+		lightboxOpening = false;
 	});
 }
 

@@ -5,7 +5,7 @@
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { openLightbox } from '$lib/navigation';
+	import { openLightbox, preloadLightbox } from '$lib/navigation';
 	import PostCard from './PostCard.svelte';
 	import UnknownBlock from '../UnknownBlock.svelte';
 	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth } from '../media';
@@ -121,6 +121,7 @@
 					<button
 						class="media-placeholder__zoom"
 						aria-label="Открыть изображение"
+						onpointerenter={preloadLightbox}
 						onclick={(e) =>
 							openLightbox(
 								gallery.map((g) => g.data),
