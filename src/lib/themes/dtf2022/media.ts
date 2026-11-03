@@ -19,3 +19,10 @@ export function mediaMaxWidth(width: number, height: number, maxHeight = Infinit
 export function isWideMedia(width: number, height: number): boolean {
 	return !height || width > height;
 }
+
+/** data-uri превью для CSS-переменной --media-preview */
+export function mediaPreviewUrl(base64?: string): string | undefined {
+	if (!base64) return undefined;
+	const src = base64.startsWith('data:') ? base64 : `data:image/jpeg;base64,${base64}`;
+	return `url("${src}")`;
+}

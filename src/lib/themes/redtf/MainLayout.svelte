@@ -4,27 +4,25 @@
 	import MobileBar from '../dtf2022/MobileBar.svelte';
 	import { sidebar } from '../dtf2022/sidebar.svelte';
 	import Toasts from '../dtf2022/ui/Toasts.svelte';
-	import { play } from '$lib/motion';
-	import { activeTheme } from '../index.svelte';
 
 	let { children }: { children?: Snippet } = $props();
 
 	/**
 	 * Картинки и видео постов догружаются позже текста. Событие load не всплывает, поэтому слушаем в фазе перехвата:
-	 * загрузившееся медиа проявляется поверх цветной заглушки, а не выскакивает рывком.
+	 * загрузившееся медиа помечается классом, и CSS запускает плавное проявление (обратное растворение).
 	 */
 	function mediaFade(main: HTMLElement) {
-		// Картинка из кэша тоже шлёт load, но она появляется сразу: проявлять есть смысл, только если её только что скачали
-		const justLoaded = (src: string) => {
-			const entry = performance.getEntriesByName(src).at(-1) as PerformanceResourceTiming | undefined;
-			return !!entry && performance.now() - entry.responseEnd < 800;
-		};
 		const fade = (e: Event) => {
 			const el = e.target;
-			if (!(el instanceof HTMLImageElement || el instanceof HTMLVideoElement) || !el.closest('.media-placeholder')) return;
-			if (el instanceof HTMLImageElement && !justLoaded(el.currentSrc)) return;
-			play(el, activeTheme.motion?.mediaIn);
+			if (!(el instanceof HTMLImageElement || el instanceof HTMLVideoElement)) return;
+			const placeholder = el.closest('.media-placeholder');
+			if (!placeholder) return;
+			placeholder.classList.add('media-placeholder--loaded');
 		};
+		// Отмечаем уже готовые картинки (например, из кэша памяти)
+		for (const img of main.querySelectorAll<HTMLImageElement>('.media-placeholder img')) {
+			if (img.complete && img.naturalWidth > 0) img.closest('.media-placeholder')?.classList.add('media-placeholder--loaded');
+		}
 		main.addEventListener('load', fade, true);
 		main.addEventListener('loadeddata', fade, true);
 		return () => {
@@ -64,6 +62,7 @@
 			grid-template-columns: var(--sidebar-left-width) minmax(0, 1fr) var(--sidebar-left-width);
 		}
 	}
+
 
 	.layout > :global(.sidebar-left) {
 		grid-column: 1;

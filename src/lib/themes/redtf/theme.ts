@@ -26,7 +26,15 @@ const motion: ThemeMotion = {
 		easing: ease.standard
 	},
 	pageBack: { keyframes: [{ opacity: 0, transform: 'translateY(36px)' }, { opacity: 1, transform: 'none' }], duration: 560, easing: ease.out },
-	mediaIn: { keyframes: [{ opacity: 0 }, { opacity: 1 }], duration: 400, easing: ease.out },
+	// Картинка или видео в посте догрузились: обратное растворение из размытия, как pageOut наоборот
+	mediaIn: {
+		keyframes: [
+			{ opacity: 0, filter: 'blur(12px)', transform: 'scale(1.04)' },
+			{ opacity: 1, filter: 'blur(0px)', transform: 'none' }
+		],
+		duration: 460,
+		easing: ease.out
+	},
 	feedIn: { keyframes: [{ opacity: 0, transform: 'translateY(32px) scale(0.99)' }, { opacity: 1, transform: 'none' }], duration: 650, easing: ease.out },
 };
 

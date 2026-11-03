@@ -151,6 +151,71 @@
 /* Цветные заглушки картинок и видео: доминантный цвет разбавлен светлым, чтобы тёмные блоки не вспыхивали перед появлением медиа */
 :root[data-theme~="redtf"] .media-placeholder {
 	background: color-mix(in srgb, var(--media-bg, #ccc) 55%, #e6e6e6);
+	position: relative;
+}
+
+/* Base64 preview для медиа: размытая миниатюра до загрузки основного изображения */
+:root[data-theme~="redtf"] .media-placeholder[style*="--media-preview"]::before {
+	content: '';
+	position: absolute;
+	inset: -14px;
+	background: var(--media-preview) center / cover no-repeat;
+	filter: blur(16px);
+	pointer-events: none;
+	opacity: 1;
+	z-index: 1;
+	transition: opacity 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+/* До загрузки картинка скрыта и размыта; при загрузке плавно проявляется из размытия («обратное растворение») */
+:root[data-theme~="redtf"] .media-placeholder[style*="--media-preview"] :is(img, video) {
+	opacity: 0;
+	filter: blur(14px);
+	transform: scale(1.04);
+	z-index: 2;
+	transition:
+		opacity 0.6s cubic-bezier(0.165, 0.84, 0.44, 1),
+		filter 0.6s cubic-bezier(0.165, 0.84, 0.44, 1),
+		transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+	will-change: opacity, filter, transform;
+}
+
+:root[data-theme~="redtf"] .media-placeholder--loaded[style*="--media-preview"] :is(img, video) {
+	opacity: 1;
+	filter: blur(0px);
+	transform: none;
+}
+
+:root[data-theme~="redtf"] .media-placeholder--loaded::before {
+	opacity: 0;
+}
+
+/* Картинки и видео без base64preview: мягкое появление поверх цветной заглушки */
+:root[data-theme~="redtf"] .media-placeholder:not([style*="--media-preview"]) :is(img, video) {
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+:root[data-theme~="redtf"] .media-placeholder--loaded:not([style*="--media-preview"]) :is(img, video) {
+	opacity: 1;
+}
+
+/* Кнопка зума всегда поверх изображения и превью */
+:root[data-theme~="redtf"] .media-placeholder__zoom {
+	z-index: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root[data-theme~="redtf"] .media-placeholder :is(img, video),
+	:root[data-theme~="redtf"] .media-placeholder::before {
+		transition: none !important;
+		filter: none !important;
+		transform: none !important;
+		opacity: 1 !important;
+	}
+	:root[data-theme~="redtf"] .media-placeholder--loaded::before {
+		opacity: 0 !important;
+	}
 }
 
 /* Заглушка комментариев встаёт на место их белой подложки: она шире ленты и без скруглений */

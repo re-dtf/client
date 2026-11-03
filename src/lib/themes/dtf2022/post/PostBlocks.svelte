@@ -8,7 +8,7 @@
 	import { openLightbox, preloadLightbox } from '$lib/navigation';
 	import PostCard from './PostCard.svelte';
 	import UnknownBlock from '../UnknownBlock.svelte';
-	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth } from '../media';
+	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth, mediaPreviewUrl } from '../media';
 
 	/*
 	 * Блоки редактора DTF. Каждый блок — .post-block.post-block--{тип}.
@@ -99,6 +99,7 @@
 			style:--media-w={data?.width || 16}
 			style:--media-h={data?.height || 9}
 			style:--media-bg={data?.color ? `#${data.color}` : undefined}
+			style:--media-preview={mediaPreviewUrl(data?.base64preview)}
 		>
 			{@render content()}
 		</div>

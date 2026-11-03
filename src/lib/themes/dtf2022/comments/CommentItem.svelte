@@ -20,7 +20,7 @@
 	import Rating from '../post/Rating.svelte';
 	import Reactions from '../post/Reactions.svelte';
 	import UnknownBlock from '../UnknownBlock.svelte';
-	import { COMMENT_MEDIA_MAX_HEIGHT, mediaMaxWidth } from '../media';
+	import { COMMENT_MEDIA_MAX_HEIGHT, mediaMaxWidth, mediaPreviewUrl } from '../media';
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
@@ -241,6 +241,7 @@
 									style:--media-w={media.data.width || 16}
 									style:--media-h={media.data.height || 9}
 									style:--media-bg={media.data.color ? `#${media.data.color}` : undefined}
+									style:--media-preview={mediaPreviewUrl(media.data.base64preview)}
 								>
 									{#if media.type === 'movie'}
 										<video
