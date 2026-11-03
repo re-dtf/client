@@ -12,9 +12,17 @@
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/logo-192.png" />
 
 		%sveltekit.head%
+		<script>
+			try {
+				const saved = JSON.parse(localStorage.getItem('redtf:setup:completed'));
+				if (saved?.v === 1 && saved.d === true) document.documentElement.dataset.splash = 'off';
+			} catch {}
+		</script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<style>
+			html[data-splash='off'] #splash { display: none; }
+
 			/*
 			 * Заставка до загрузки приложения. Атрибуты ставит $lib/splash.ts: data-state нет — логотип по центру
 			 * на белом, welcome — логотип уехал наверх, фон стал размытым; data-leaving — всё растворяется

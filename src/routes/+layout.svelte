@@ -113,15 +113,19 @@
 		const stopTracking = startTracking(() => statsContext);
 
 		// Заставка из app.html: тем, кто здесь впервые, она переходит в приветствие, остальным просто растворяется
-		(async () => {
-			await introDone();
-			// Под заставкой должна быть готовая лента, а не спиннеры; точки логотипа пока прыгают как индикатор загрузки
-			if (page.route.id === '/') await holdSplash(pageReady());
-			if (setupCompleted.value) return hideSplash();
-			await dotsAtRest();
-			showWelcomeBackdrop();
-			showWelcome = true;
-		})();
+		// Заставка нужна только при первом входе для приветствия; при повторных входах сразу убираем её из DOM
+		if (setupCompleted.value) {
+			document.getElementById('splash')?.remove();
+		} else {
+			(async () => {
+				await introDone();
+				// Под заставкой должна быть готовая лента, а не спиннеры; точки логотипа пока прыгают как индикатор загрузки
+				if (page.route.id === '/') await holdSplash(pageReady());
+				await dotsAtRest();
+				showWelcomeBackdrop();
+				showWelcome = true;
+			})();
+		}
 
 		return stopTracking;
 	});
