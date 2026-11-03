@@ -14,5 +14,9 @@ export const themeSettings = {
 	/** Сторона стрелок оценки: в футере поста и в строке действий комментария */
 	get arrowsSide(): 'left' | 'right' {
 		return activeThemeSettings().value.arrowsSide as 'left' | 'right';
+	},
+	/** Порядок стрелок оценки: 'down-up' (вниз / вверх) или 'up-down' (вверх / вниз) */
+	get arrowsOrder(): 'down-up' | 'up-down' {
+		return (activeThemeSettings().value.arrowsOrder as 'down-up' | 'up-down') ?? 'down-up';
 	}
 };

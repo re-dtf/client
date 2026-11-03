@@ -27,6 +27,17 @@ export default defineTheme({
 				{ value: 'right', title: 'Справа' },
 				{ value: 'left', title: 'Слева' }
 			]
+		},
+		{
+			key: 'arrowsOrder',
+			type: 'radio',
+			title: 'Порядок стрелок',
+			description: 'В каком порядке стоят стрелки. Действует только на «Стрелки · осень 2022».',
+			default: 'down-up',
+			options: [
+				{ value: 'down-up', title: 'Вниз / вверх', description: 'Стрелка вниз слева, вверх — справа' },
+				{ value: 'up-down', title: 'Вверх / вниз', description: 'Стрелка вверх слева, вниз — справа' }
+			]
 		}
 	]
 });

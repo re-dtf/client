@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cubicOut } from 'svelte/easing';
+	import { themeSettings } from '../themeSettings.svelte';
 	import { lottie, preloadLottie, type LottieLoader } from './lottie';
 
 	// Lottie-анимации стрелок из оригинала (vue-chunk.vote, осень 2022)
@@ -21,6 +22,8 @@
 		/** Вернуть false, если голос не принят — тогда анимации клика не будет */
 		onvote?: (vote: 1 | -1) => boolean | void;
 	} = $props();
+
+	let reversed = $derived(themeSettings.arrowsOrder === 'up-down');
 
 	$effect(() => preloadLottie(...Object.values(ARROWS)));
 
@@ -82,7 +85,7 @@
 	role="group"
 	aria-label="Оценка"
 >
-	{@render button(-1)}
+	{@render button(reversed ? 1 : -1)}
 
 	<span class="vote__value" aria-live="polite">
 		<span class={['vote__actual-value', { 'vote__actual-value--hidden': valueChanging }]}>{format(value)}</span>
@@ -92,7 +95,7 @@
 		{/if}
 	</span>
 
-	{@render button(1)}
+	{@render button(reversed ? -1 : 1)}
 </div>
 
 {#snippet button(sign: 1 | -1)}
