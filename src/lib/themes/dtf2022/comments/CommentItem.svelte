@@ -24,6 +24,7 @@
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
+	import { shouldVirtualizeComments } from '$lib/storage/settings.svelte';
 
 	// Заглушка аватара удалённого комментария из исходной вёрстки
 	const REMOVED_AVATAR = 'https://leonardo.osnova.io/04ee6149-5c89-5a20-846d-be172c424736/-/scale_crop/64x64/-/format/webp/';
@@ -122,6 +123,7 @@
 			notify.error('Не удалось скопировать ссылку');
 		}
 	}
+	let virtualize = $derived(shouldVirtualizeComments());
 </script>
 
 {#snippet vote()}
@@ -143,7 +145,7 @@
 {/if}
 
 <div
-	class={['comment-item', { 'comment-item--reply': row.level > 1 }]}
+	class={['comment-item', { 'comment-item--reply': row.level > 1, 'comment-item--virtual': virtualize }]}
 	style:--level={row.level}
 	id="comment-{row.key}"
 	data-depth={row.level - 1}
@@ -363,6 +365,11 @@
 		line-height: 1.5em;
 		/* при прокрутке к комментарию не прятать его под липкой шапкой */
 		scroll-margin-top: calc(var(--header-height) + 8px);
+	}
+
+	.comment-item--virtual {
+		content-visibility: auto;
+		contain-intrinsic-size: auto none auto 72px;
 	}
 
 	.comment-item--reply {

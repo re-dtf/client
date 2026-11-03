@@ -100,9 +100,14 @@
 	let pendingScroll: { layer: string; target: number } | undefined;
 	let scrollObserver: ResizeObserver | undefined;
 	let cancelPendingTimeout: ReturnType<typeof setTimeout> | undefined;
+	let pendingScrollRaf: number | undefined;
 
 	function stopPendingScroll() {
 		pendingScroll = undefined;
+		if (pendingScrollRaf !== undefined) {
+			cancelAnimationFrame(pendingScrollRaf);
+			pendingScrollRaf = undefined;
+		}
 		scrollObserver?.disconnect();
 		scrollObserver = undefined;
 		if (cancelPendingTimeout) {
@@ -144,14 +149,19 @@
 				stopPendingScroll();
 				return;
 			}
-			window.scrollTo({ top: pendingScroll.target, left: 0, behavior: 'instant' });
-			if (Math.abs(window.scrollY - pendingScroll.target) <= 1) {
-				stopPendingScroll();
-			}
+			if (pendingScrollRaf !== undefined) return;
+			pendingScrollRaf = requestAnimationFrame(() => {
+				pendingScrollRaf = undefined;
+				if (!pendingScroll || pendingScroll.layer !== activeScrollId) return;
+				window.scrollTo({ top: pendingScroll.target, left: 0, behavior: 'instant' });
+				if (Math.abs(window.scrollY - pendingScroll.target) <= 1) {
+					stopPendingScroll();
+				}
+			});
 		});
 
-		scrollObserver.observe(document.body);
 		if (document.documentElement) scrollObserver.observe(document.documentElement);
+		else if (document.body) scrollObserver.observe(document.body);
 	}
 
 	$effect.pre(() => {
@@ -187,9 +197,13 @@
 			stopPendingScroll();
 			// Сразу, до первой отрисовки слоя: иначе на кадр виден верх страницы. После tick позиция ставится ещё раз —
 			// SvelteKit при возврате по истории прокручивает сам и может перебить
-			window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
-			tick().then(() => {
+			if (Math.abs(window.scrollY - savedScroll) > 1) {
 				window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
+			}
+			tick().then(() => {
+				if (Math.abs(window.scrollY - savedScroll) > 1) {
+					window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
+				}
 
 				// Асинхронный контент (пост, комментарии, профиль) на первом кадре короче экрана и скролл сбивается браузером —
 				// доводим его по мере роста страницы
@@ -351,7 +365,7 @@
 
 {#if dev}
 	<div class="debug-panel">
-		<div class="debug-title">Overlay Stack ({overlays.length}) — Development Mode</div>
+		<div class="debug-title">Overlay Stack ({overlays.length})</div>
 		<div class="debug-item {overlays.length === 0 ? 'active' : ''}">0: feed</div>
 		{#each overlays as overlay, i}
 			<div class="debug-item {i === overlays.length - 1 ? 'active' : ''}">

@@ -13,6 +13,7 @@ export class PanoramaEngine {
 	private lastScrollY = -1;
 	private lastObservedWidth = -1;
 	private resizeObserver: ResizeObserver | undefined;
+	private cachedIndentPx = 21;
 	
 	// Object pool for GC optimization
 	private visibleComments: Array<{ weight: number, minDepth: number, maxDepth: number }> = [];
@@ -24,6 +25,8 @@ export class PanoramaEngine {
 
 	mount(viewport: HTMLElement) {
 		this.viewportElement = viewport;
+		const gap = parseFloat(getComputedStyle(viewport).getPropertyValue('--gap-branch'));
+		if (gap) this.cachedIndentPx = gap;
 
 		this.panObserver = new IntersectionObserver((entries) => {
 			for (const entry of entries) {
@@ -42,6 +45,8 @@ export class PanoramaEngine {
 
 			const mainWidth = Math.max(200, width - 64);
 			this.viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
+			const g = parseFloat(getComputedStyle(this.viewportElement).getPropertyValue('--gap-branch'));
+			if (g) this.cachedIndentPx = g;
 
 			if (settings.value.commentNesting === 'autopan' && !this.isPanning) {
 				const prevTarget = this.targetScrollLeft;
@@ -93,7 +98,10 @@ export class PanoramaEngine {
 			const radius = window.innerHeight * 0.4; // Weight falls off towards screen edges
 			
 			let visibleCount = 0;
-			let indentPx = 21;
+			const viewportWidth = this.viewportElement.clientWidth;
+			const indentPx = this.cachedIndentPx;
+			const keepVisiblePx = 48;
+			const paddingRight = 32;
 			
 			// Continuously blend depths of all comments visible in the viewport
 			for (const item of this.panVisibleItems) {
@@ -120,12 +128,6 @@ export class PanoramaEngine {
 					
 					const depth = parseInt(item.getAttribute('data-depth') || '0', 10);
 					
-					const viewportWidth = this.viewportElement.clientWidth;
-					const gap = parseFloat(getComputedStyle(item).getPropertyValue('--gap-branch'));
-					if (gap) indentPx = gap;
-					const keepVisiblePx = 48;
-					const paddingRight = 32;
-					
 					let minDepth = depth + (rect.width + keepVisiblePx + paddingRight - viewportWidth) / indentPx;
 					const maxDepth = depth;
 					
@@ -144,8 +146,6 @@ export class PanoramaEngine {
 			}
 
 			if (visibleCount > 0) {
-				const keepVisiblePx = 48; 
-				
 				// Use a single pass weighted average. The rAF loop acts as the iterative solver over time.
 				let currentT = (this.targetScrollLeft + keepVisiblePx) / indentPx;
 				let sumW = 0;

@@ -37,16 +37,15 @@ export async function assetsReady(root: HTMLElement, timeout = 4000) {
 	const pending: Promise<unknown>[] = [document.fonts.ready];
 	const backgrounds = new Set<string>();
 
-	for (const el of [root, ...root.querySelectorAll<HTMLElement>('*')]) {
-		if (el instanceof HTMLImageElement) {
-			// Ленивая картинка далеко внизу не загрузится, пока до неё не доскроллят: ждать её до таймаута незачем
-			const far = el.loading === 'lazy' && el.getBoundingClientRect().top > innerHeight + 800;
-			if (!el.complete && !far) pending.push(el.decode().catch(() => {}));
-		} else {
-			// Пропускаем текстовые и строчные теги, чтобы не вызывать getComputedStyle на сотнях узлов
-			if (!/^(SPAN|P|B|I|EM|STRONG|A|SVG|PATH|CODE|PRE|TIME|SMALL)$/.test(el.tagName)) {
-				bgUrls(getComputedStyle(el).backgroundImage).forEach((url) => backgrounds.add(url));
-			}
+	for (const img of root.querySelectorAll<HTMLImageElement>('img')) {
+		// Ленивая картинка далеко внизу не загрузится, пока до неё не доскроллят: ждать её до таймаута незачем
+		const far = img.loading === 'lazy' && img.getBoundingClientRect().top > innerHeight + 800;
+		if (!img.complete && !far) pending.push(img.decode().catch(() => {}));
+	}
+
+	for (const el of [root, ...root.querySelectorAll<HTMLElement>('[style*="background"]')]) {
+		if (el.style?.backgroundImage) {
+			bgUrls(el.style.backgroundImage).forEach((url) => backgrounds.add(url));
 		}
 	}
 	backgrounds.forEach((url) => pending.push(loadImage(url)));

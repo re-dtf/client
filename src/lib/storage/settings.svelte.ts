@@ -1,6 +1,7 @@
 import { persistedState } from './persisted.svelte';
 
 export type NestingMode = 'flatten' | 'autopan';
+export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
 
 export interface AppSettings {
 	/** id активной темы (см. $lib/themes) */
@@ -9,6 +10,8 @@ export interface AppSettings {
 	proxyUrl: string;
 	/** Показ глубоко вложенных комментариев */
 	commentNesting: NestingMode;
+	/** Виртуализация отрисовки комментариев (content-visibility: auto) */
+	commentVirtualization: CommentVirtualization;
 	/** Вести локальную статистику (см. stats.svelte.ts) */
 	collectStats: boolean;
 	/** Тактильный виброотклик (для поддерживаемых устройств) */
@@ -29,6 +32,21 @@ export const settings = persistedState<AppSettings>('redtf:settings', {
 	theme: DEFAULT_THEME,
 	proxyUrl: '',
 	commentNesting: 'flatten',
+	commentVirtualization: 'auto',
 	collectStats: true,
 	haptics: true
 });
+
+/**
+ * Проверяет, включена ли виртуализация комментариев (content-visibility: auto).
+ * В режиме 'auto' включена для Chromium и WebKit, но отключена для Firefox (Gecko),
+ * где есть баг с пропуском отрисовки при скролле длинных grid-списков.
+ */
+export function shouldVirtualizeComments(mode: CommentVirtualization = settings.value.commentVirtualization): boolean {
+	if (mode === 'enabled') return true;
+	if (mode === 'disabled') return false;
+	if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+	const isFirefox = /firefox|fxios/i.test(navigator.userAgent);
+	if (isFirefox) return false;
+	return 'contentVisibility' in document.documentElement.style;
+}

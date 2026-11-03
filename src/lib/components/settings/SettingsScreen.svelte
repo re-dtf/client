@@ -13,7 +13,7 @@
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
-	import type { NestingMode } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization } from '$lib/storage/settings.svelte';
 	import type { ChoiceField, ToggleField } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
 
@@ -49,6 +49,19 @@
 		options: [
 			{ value: 'flatten', title: 'Сглаживание (рекомендуется)', description: 'Глубокие ветки сглаживаются с навигацией к родителю' },
 			{ value: 'autopan', title: 'Авто-панорама', description: 'Без лимита вложенности, камера следит за глубиной' }
+		]
+	};
+
+	const virtualizationField: ChoiceField = {
+		key: 'commentVirtualization',
+		type: 'radio',
+		title: 'Виртуализация комментариев',
+		description: 'Оптимизирует отрисовку длинных веток (content-visibility). В Firefox может приводить к пропуску отображения.',
+		default: 'auto',
+		options: [
+			{ value: 'auto', title: 'Авто (рекомендуется)', description: 'Включено в Chromium и Safari, отключено в Firefox' },
+			{ value: 'enabled', title: 'Всегда включено', description: 'Максимальная скорость рендера' },
+			{ value: 'disabled', title: 'Отключено', description: 'Полная отрисовка всех комментариев' }
 		]
 	};
 
@@ -173,6 +186,11 @@
 						field={nestingField}
 						value={settings.value.commentNesting}
 						onchange={(value) => settings.patch({ commentNesting: value as NestingMode })}
+					/>
+					<FieldControl
+						field={virtualizationField}
+						value={settings.value.commentVirtualization}
+						onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
 					/>
 				{:else if current.id === 'reactions'}
 					<ReactionsSettings />
