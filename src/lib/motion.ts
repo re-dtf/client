@@ -75,22 +75,27 @@ export const ease = {
 	accelerate: 'cubic-bezier(0.9, 0.1, 1, 0.2)',
 	standard: 'cubic-bezier(0.8, 0, 0.2, 1)',
 	emphasizedDecelerate: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
-	emphasizedAccelerate: 'cubic-bezier(0.3, 0, 0.8, 0.15)'
+	emphasizedAccelerate: 'cubic-bezier(0.3, 0, 0.8, 0.15)',
+	smooth: 'cubic-bezier(0.2, 0, 0, 1)'
 };
 
 /** Готовый набор в духе Fluent: плавные «прилёты» с замедлением */
 export const fluent: ThemeMotion = {
-	// Fluent-кривая decelerate тратит почти всё движение в первую четверть времени и выглядит как рывок,
-	// поэтому появление идёт по QuarticEase Out: она дольше «досматривается»
 	modalIn: {
-		keyframes: [{ opacity: 0, transform: 'translateY(48px) scale(0.94)' }, { opacity: 1, transform: 'none' }],
-		duration: 450,
-		easing: ease.out
+		keyframes: [
+			{ opacity: 0, transform: 'scale(1.025)', filter: 'blur(4px)' },
+			{ opacity: 1, transform: 'none', filter: 'blur(0px)' }
+		],
+		duration: 340,
+		easing: ease.smooth
 	},
 	modalOut: {
-		keyframes: [{ opacity: 1 }, { opacity: 0 }],
-		duration: 200,
-		easing: ease.accelerate
+		keyframes: [
+			{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
+			{ opacity: 0, transform: 'scale(1.025)', filter: 'blur(4px)' }
+		],
+		duration: 240,
+		easing: ease.smooth
 	},
 	contentIn: {
 		keyframes: [{ opacity: 0, transform: 'translateY(40px)' }, { opacity: 1, transform: 'none' }],
@@ -151,12 +156,24 @@ export const fluent: ThemeMotion = {
  * и подложка гасла бы до прозрачной, а потом снова темнела.
  */
 export const backdropIn: Anim = {
-	keyframes: [{ backgroundColor: 'transparent', backdropFilter: 'none' }, {}],
-	duration: 200,
-	easing: ease.out
+	keyframes: [{ backgroundColor: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none' }, {}],
+	duration: 280,
+	easing: ease.smooth
 };
 
-export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+/**
+ * Плавное растворение затемнения при закрытии окна в унисон с уходом самого окна.
+ */
+export const backdropOut: Anim = {
+	keyframes: [{}, { backgroundColor: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none' }],
+	duration: 240,
+	easing: ease.smooth
+};
+
+export const reducedMotion = () =>
+	typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false;
 
 /** Поведение программной прокрутки: плавная, если пользователь не просил уменьшить движение */
 export const scrollBehavior = (): ScrollBehavior => (reducedMotion() ? 'auto' : 'smooth');
@@ -195,9 +212,17 @@ export function play(el: Element, anim?: Anim, fill: FillMode = 'none') {
  */
 export function playChildren(parent: Element, anim?: Anim, fill: FillMode = 'none') {
 	if (!anim || reducedMotion()) return;
+	const isContents = (el: Element) =>
+		typeof getComputedStyle === 'function' && getComputedStyle(el).display === 'contents';
+
 	for (const child of parent.children) {
-		for (const el of getComputedStyle(child).display === 'contents' ? child.children : [child]) {
-			play(el, anim, fill);
+		const targets = isContents(child) ? Array.from(child.children) : [child];
+		for (const el of targets) {
+			if (isContents(el)) {
+				playChildren(el, anim, fill);
+			} else {
+				play(el, anim, fill);
+			}
 		}
 	}
 }

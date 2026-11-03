@@ -20,6 +20,20 @@ function getMotion(): ThemeMotion {
 	const blur = isTransparencyEnabled();
 	return {
 		...fluent,
+		modalIn: blur
+			? fluent.modalIn
+			: {
+					keyframes: [{ opacity: 0, transform: 'scale(1.02)' }, { opacity: 1, transform: 'none' }],
+					duration: 280,
+					easing: ease.smooth
+			  },
+		modalOut: blur
+			? fluent.modalOut
+			: {
+					keyframes: [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(1.02)' }],
+					duration: 200,
+					easing: ease.smooth
+			  },
 		grow: { duration: 600, easing: ease.out },
 		placeholderOut: 220,
 		// Страница не смещается и не масштабируется (на краях картинок проступают полосы фона): проявляется на месте из размытия

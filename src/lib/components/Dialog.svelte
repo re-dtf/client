@@ -43,6 +43,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 16px;
+		overflow-x: hidden;
 		background: rgba(0, 0, 0, 0.5);
 	}
 

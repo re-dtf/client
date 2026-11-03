@@ -71,6 +71,7 @@
 		backdrop-filter: var(--modal-backdrop-filter, blur(4px));
 		-webkit-backdrop-filter: var(--modal-backdrop-filter, blur(4px));
 		padding: var(--modal-padding, 20px);
+		overflow-x: hidden;
 		overflow-y: var(--modal-overflow-y, visible);
 		box-sizing: border-box;
 		transition:
