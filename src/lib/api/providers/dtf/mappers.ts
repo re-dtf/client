@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
+import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 
 /*
@@ -24,6 +24,17 @@ export function mapUser(author: any): User {
 
 export function mapProfileListItem(subsite: any): ProfileListItem {
 	return { id: subsite.id, name: subsite.name || 'Аноним', avatarUrl: mapAvatarUrl(subsite, '108x108'), isSubscribed: !!subsite.isSubscribed };
+}
+
+export function mapIgnoredSubsite(subsite: any): IgnoredSubsite {
+	return {
+		id: subsite.id,
+		name: subsite.name || 'Аноним',
+		description: subsite.description || undefined,
+		avatarUrl: mapAvatarUrl(subsite, '108x108'),
+		// type: 1 — пользователь, 2 — тема
+		isCommunity: subsite.type === 2
+	};
 }
 
 export function mapLikes(likes: any): Likes | undefined {
@@ -163,6 +174,7 @@ export function mapProfile(subsite: any): Profile {
 		avatarUrl: mapAvatarUrl(subsite, '200x200'),
 		avatarMedia: avatar?.uuid && avatar.width && avatar.height ? { uuid: avatar.uuid, width: avatar.width, height: avatar.height } : undefined,
 		coverUrl: subsite.cover?.data?.uuid ? getLeonardoUrl(subsite.cover.data.uuid, { width: 1920 }) : undefined,
+		coverRaw: subsite.cover?.data?.uuid ? subsite.cover : undefined,
 		coverY: subsite.coverY ?? undefined,
 		isPlus: !!subsite.isPlus,
 		rating: subsite.rating ?? undefined,

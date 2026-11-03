@@ -56,6 +56,16 @@ export const api = {
 
 	getMe: () => dtfApiProvider.getMe(),
 	updateBio: (description: string, userId: number) => dtfApiProvider.updateBio(description, userId),
+	getAccountSettings: dtfApiProvider.getAccountSettings,
+	updateAccountSettings: dtfApiProvider.updateAccountSettings,
+	setProfileImage: dtfApiProvider.setProfileImage,
+	setProfileCoverPosition: dtfApiProvider.setProfileCoverPosition,
+	removeProfileCover: dtfApiProvider.removeProfileCover,
+	getNotificationSettings: dtfApiProvider.getNotificationSettings,
+	setNotificationSettings: dtfApiProvider.setNotificationSettings,
+	getIgnoredSubsites: dtfApiProvider.getIgnoredSubsites,
+	setSubsiteIgnored: dtfApiProvider.setSubsiteIgnored,
+	setPostIgnored: dtfApiProvider.setPostIgnored,
 
 	// --- Чтение (DTF и подключённые источники) ---
 

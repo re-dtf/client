@@ -113,6 +113,8 @@ export interface Profile {
 	/** Исходная аватарка для просмотра на весь экран; нет, если пришла только готовая ссылка */
 	avatarMedia?: { uuid: string; width: number; height: number };
 	coverUrl?: string;
+	/** Обложка как её отдаёт DTF: нужна, чтобы сохранить новую позицию, не загружая файл заново */
+	coverRaw?: unknown;
 	/** Вертикальная позиция обложки, % */
 	coverY?: number;
 	isPlus?: boolean;
@@ -229,6 +231,44 @@ export interface CurrentUser {
 	description?: string;
 }
 
+/** Настройки аккаунта DTF: блог (имя, био) и ленты. Значения те же, что принимает `subsite/update` */
+export interface AccountSettings {
+	id: number;
+	name: string;
+	description: string;
+	/** Кто может комментировать профиль; меняется только вместе с блогом, поэтому возвращаем как пришло */
+	commentingPermissions: string;
+	defaultFeed: string;
+	myFeedSorting: string;
+	isBlurNsfw: boolean;
+	hideViewedPostsFromFeeds: boolean;
+}
+
+/** Пользователь или тема из чёрного списка */
+export interface IgnoredSubsite {
+	id: number;
+	name: string;
+	description?: string;
+	avatarUrl?: string;
+	/** Тема (сообщество), а не пользователь */
+	isCommunity: boolean;
+}
+
+/** Откуда скрывают пост: сайт шлёт это вместе с запросом (адрес ленты и идентификатор показа) */
+export interface PostIgnoreSource {
+	location?: string;
+	previousPage?: string;
+	fromFeed?: string;
+	hitId?: string;
+}
+
+/** Группа уведомлений DTF (письма, колокольчик, push) */
+export interface NotificationChannel {
+	key: string;
+	title: string;
+	items: { key: string; title: string; enabled: boolean }[];
+}
+
 export type CommentPermission = 'everyone' | 'nobody' | 'only_plus' | 'only_subscribers';
 
 /** Что пользователь может сделать с комментарием */
@@ -307,6 +347,16 @@ export interface ApiProvider {
 	loginByToken?(token: string): Promise<Session>;
 	getMe?(): Promise<CurrentUser>;
 	updateBio?(description: string, userId: number): Promise<void>;
+	getAccountSettings?(): Promise<AccountSettings>;
+	updateAccountSettings?(userId: number, patch: Partial<AccountSettings>): Promise<void>;
+	setProfileImage?(userId: number, kind: 'avatar' | 'cover', file: File): Promise<void>;
+	setProfileCoverPosition?(userId: number, cover: unknown, coverY: number): Promise<void>;
+	removeProfileCover?(userId: number): Promise<void>;
+	getNotificationSettings?(): Promise<NotificationChannel[]>;
+	setNotificationSettings?(values: Record<string, boolean>): Promise<NotificationChannel[]>;
+	getIgnoredSubsites?(): Promise<IgnoredSubsite[]>;
+	setSubsiteIgnored?(subsiteId: number, ignored: boolean): Promise<void>;
+	setPostIgnored?(postId: number, ignored: boolean, source?: PostIgnoreSource): Promise<void>;
 
 	// Профили
 	getProfile?(id: number): Promise<Profile>;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapLikes, mapNotification, parseNotificationHtml } from './mappers';
+import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, parseNotificationHtml } from './mappers';
 
 describe('mapLikes', () => {
 	it('нет данных — нет лайков', () => {
@@ -100,5 +100,12 @@ describe('parseNotificationHtml', () => {
 
 	it('без html берётся простой текст', () => {
 		expect(mapNotification({ id: 1, text: 'Ответили' }).parts).toEqual([{ text: 'Ответили' }]);
+	});
+});
+
+describe('mapIgnoredSubsite', () => {
+	it('отличает тему от пользователя по type', () => {
+		expect(mapIgnoredSubsite({ id: 1, name: 'Кино', type: 2, avatar: { data: { uuid: 'abc' } } })).toMatchObject({ id: 1, isCommunity: true });
+		expect(mapIgnoredSubsite({ id: 2, type: 1 })).toMatchObject({ name: 'Аноним', isCommunity: false });
 	});
 });

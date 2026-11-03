@@ -1,4 +1,5 @@
 import type {
+	AccountSettings,
 	ApiProvider,
 	Comment,
 	CommentControls,
@@ -9,10 +10,13 @@ import type {
 	DtfEditorEntry,
 	GetPostsOptions,
 	GifResult,
+	IgnoredSubsite,
 	Notification,
+	NotificationChannel,
 	PaginatedResult,
 	Post,
 	PostHistoryVersion,
+	PostIgnoreSource,
 	Profile,
 	ProfileListItem,
 	ProfileSorting,
@@ -23,7 +27,30 @@ import type {
 import { getLeonardoUrl } from '../../utils';
 import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchWithAuth, requireAuth } from './client';
 import { login, loginByToken } from './auth';
-import { mapComment, mapCurrentUser, mapEntryToPost, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
+import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
+
+/** Загружает файл в хранилище DTF; возвращает запись как есть (`{ type, data }`): в таком виде её принимают поля вроде avatar и cover */
+async function uploadItem(file: File): Promise<any> {
+	const formData = new FormData();
+	formData.append('files', file);
+
+	const response = await fetchWithAuth(`${UPLOAD_URL}/uploader/upload`, { method: 'POST', body: formData });
+	const json = await response.json();
+	if (json.error) throw new Error(json.message?.text || 'Не удалось загрузить файл');
+
+	const item = json.result?.[0];
+	if (!item?.data?.uuid) throw new Error('Некорректный ответ при загрузке файла');
+	return item;
+}
+
+/** Изменение профиля. Сайт шлёт блог (name, description…), ленты, avatar и cover отдельными запросами */
+async function postSubsiteUpdate(userId: number, fields: Record<string, string>): Promise<void> {
+	const formData = new FormData();
+	formData.append('subsiteId', userId.toString());
+	for (const [key, value] of Object.entries(fields)) formData.append(key, value);
+
+	await fetchWithAuth(`${apiV('2.1')}/subsite/update`, { method: 'POST', body: formData });
+}
 
 /** Курсор для следующей страницы в запросе к API */
 function cursorQuery(cursor?: CursorData): string {
@@ -87,6 +114,91 @@ export const dtfApiProvider = {
 		if (currentSubsite.commentingPermissions) formData.append('commentingPermissions', currentSubsite.commentingPermissions);
 
 		await fetchWithAuth(`${API_URL}/subsite/update`, { method: 'POST', body: formData });
+	},
+
+	async getAccountSettings(): Promise<AccountSettings> {
+		requireAuth();
+		const response = await fetchWithAuth(`${API_URL}/subsite/me?markdown=false`);
+		const me = (await response.json()).result ?? {};
+
+		return {
+			id: me.id,
+			name: me.name ?? '',
+			description: me.description ?? '',
+			commentingPermissions: me.commentingPermissions ?? 'everybody',
+			defaultFeed: me.defaultFeed ?? 'popular',
+			myFeedSorting: me.myFeedSorting ?? 'new',
+			isBlurNsfw: !!me.isBlurNsfw,
+			hideViewedPostsFromFeeds: !!me.hideViewedPostsFromFeeds
+		};
+	},
+
+	/** Поля блога (name, description, commentingPermissions) и лент передавайте группами, как сайт */
+	async updateAccountSettings(userId: number, patch: Partial<AccountSettings>): Promise<void> {
+		requireAuth();
+		await postSubsiteUpdate(userId, Object.fromEntries(Object.entries(patch).map(([key, value]) => [key, String(value)])));
+	},
+
+	async setProfileImage(userId: number, kind: 'avatar' | 'cover', file: File): Promise<void> {
+		requireAuth();
+		const item = await uploadItem(file);
+		// Новая обложка встаёт в позицию 0, как у сайта
+		await postSubsiteUpdate(userId, kind === 'cover' ? { cover: JSON.stringify(item), cover_y: '0' } : { avatar: JSON.stringify(item) });
+	},
+
+	/** Позиция обложки уходит вместе с самой обложкой (`cover` — как её отдал профиль) */
+	async setProfileCoverPosition(userId: number, cover: unknown, coverY: number): Promise<void> {
+		requireAuth();
+		await postSubsiteUpdate(userId, { cover: JSON.stringify(cover), cover_y: String(coverY) });
+	},
+
+	/** Сайт убирает обложку так: `cover` равен строке «null», позиция сбрасывается в 0 */
+	async removeProfileCover(userId: number): Promise<void> {
+		requireAuth();
+		await postSubsiteUpdate(userId, { cover: 'null', cover_y: '0' });
+	},
+
+	async getIgnoredSubsites(): Promise<IgnoredSubsite[]> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/ignores/subsites`);
+		return ((await response.json()).result ?? []).map(mapIgnoredSubsite);
+	},
+
+	/** Чёрный список: скрыть пользователя или тему (`ignored`) либо вернуть. Поле success в ответе ненадёжно (у темы при скрытии бывает false), поэтому смотрим только на код ответа */
+	async setSubsiteIgnored(subsiteId: number, ignored: boolean): Promise<void> {
+		requireAuth();
+		const formData = new FormData();
+		formData.append('id', subsiteId.toString());
+		formData.append('action', ignored ? 'mute' : 'unmute');
+
+		await fetchWithAuth(`${apiV('2.1')}/subsite/mute`, { method: 'POST', body: formData });
+	},
+
+	/** Скрыть пост. Сайт добавляет откуда нажали (`location`, `previousPage`, `fromFeed`, `hitId`); без них и возврат поста (`unmute`) в HAR не сняты */
+	async setPostIgnored(postId: number, ignored: boolean, source: PostIgnoreSource = {}): Promise<void> {
+		requireAuth();
+		const formData = new FormData();
+		formData.append('id', postId.toString());
+		formData.append('action', ignored ? 'mute' : 'unmute');
+		for (const [key, value] of Object.entries(source)) if (value) formData.append(key, value);
+
+		await fetchWithAuth(`${apiV('2.4')}/content/mute`, { method: 'POST', body: formData });
+	},
+
+	async getNotificationSettings(): Promise<NotificationChannel[]> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/user/notifications/settings`);
+		return (await response.json()).result?.channels ?? [];
+	},
+
+	/** Меняет пункты (один или сразу все, как «включить все» на сайте); ответ — все настройки уведомлений с новыми значениями */
+	async setNotificationSettings(values: Record<string, boolean>): Promise<NotificationChannel[]> {
+		requireAuth();
+		const formData = new FormData();
+		for (const [key, enabled] of Object.entries(values)) formData.append(`settings[${key}]`, String(enabled));
+
+		const response = await fetchWithAuth(`${apiV('2.1')}/user/notifications/settings`, { method: 'POST', body: formData });
+		return (await response.json()).result?.channels ?? [];
 	},
 
 	// --- Чтение ---
@@ -336,16 +448,8 @@ export const dtfApiProvider = {
 	async uploadMedia(file: File): Promise<UploadResult> {
 		requireAuth();
 
-		const formData = new FormData();
-		formData.append('files', file);
-
-		const response = await fetchWithAuth(`${UPLOAD_URL}/uploader/upload`, { method: 'POST', body: formData });
-		const json = await response.json();
-		if (json.error) throw new Error(json.message?.text || 'Не удалось загрузить файл');
-
-		const resultItem = json.result?.[0];
-		const uploaded = resultItem?.data;
-		if (!uploaded?.uuid) throw new Error('Некорректный ответ при загрузке файла');
+		const resultItem = await uploadItem(file);
+		const uploaded = resultItem.data;
 
 		return {
 			uuid: uploaded.uuid,
