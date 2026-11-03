@@ -54,11 +54,13 @@ function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): s
 	}
 }
 
-let overlayCounter = 0;
+function nextOverlayId(type: string): string {
+	return `${type}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+}
 
 /** Открыть оверлей поверх текущего экрана */
 export function openOverlay(overlay: App.OverlayData) {
-	const opened: App.OverlayState = { ...overlay, id: `${overlay.type}-${overlayCounter++}`, presentation: PRESENTATION[overlay.type] };
+	const opened: App.OverlayState = { ...overlay, id: nextOverlayId(overlay.type), presentation: PRESENTATION[overlay.type] };
 	// Просмотр картинок остаётся на текущем адресе: это шаг истории для кнопки «Назад», а не страница.
 	// page.url тут не годится: под оверлеями он остаётся адресом нижней страницы, а не поста
 	const url = overlay.type === 'lightbox' ? location.href : resolve(overlayPath(overlay) as '/');
