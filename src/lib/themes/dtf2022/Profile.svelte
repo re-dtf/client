@@ -1,14 +1,18 @@
 <script lang="ts">
 	import type { Comment, CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
+	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { resolve } from '$app/paths';
-	import { getProfilePath, isNewTabClick, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
+	import { getProfilePath, isNewTabClick, openLightbox, openOverlay, openProfile, preloadLightbox } from '$lib/navigation';
+	import { subscriptions } from './actions.svelte';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
 	import ProfileComment from './ProfileComment.svelte';
 	import ProfileDetails, { type DetailsPage } from './ProfileDetails.svelte';
+	import Button from './ui/Button.svelte';
 	import Preloader from './ui/Preloader.svelte';
+	import { notify } from './ui/notify.svelte';
 
 	let {
 		profile,
@@ -20,7 +24,8 @@
 		subscribersPromise,
 		subscriptionsPromise,
 		onSortingChange,
-		loadMore
+		loadMore,
+		onProfileUpdate
 	}: {
 		profile: Profile;
 		posts: Post[];
@@ -32,6 +37,7 @@
 		subscriptionsPromise: Promise<ProfileListItem[]>;
 		onSortingChange: (sorting: Sorting) => void;
 		loadMore: () => void;
+		onProfileUpdate?: (profile: Profile) => void;
 	} = $props();
 
 	const SORTINGS: { value: Sorting; label: string }[] = [
@@ -41,6 +47,83 @@
 
 	// Ссылки на подробности ведут на DTF для «открыть в новой вкладке»; обычный клик открывает вкладку у нас
 	let externalUrl = $derived(profile.url ?? `https://dtf.ru/id${profile.id}`);
+
+	let isMe = $derived(profile.id === currentUser.value?.id);
+	// Без входа DTF присылает isSubscribed не про зрителя, поэтому верим флагам только после входа
+	let wasSubscribed = $derived(!!currentUser.value && !!profile.isSubscribed);
+	let wasNotified = $derived(!!currentUser.value && !!profile.isSubscribedToNewPosts);
+	let subscribed = $derived(subscriptions.isSubscribed(profile.id, wasSubscribed));
+	let notified = $derived(subscriptions.isNotified(profile.id, wasNotified));
+
+	/** Настройки аккаунта открываются окном re:DTF; Ctrl/Cmd-клик по ссылке открывает отдельную страницу настроек */
+	function openAccountSettings(e?: MouseEvent) {
+		if (e && isNewTabClick(e)) return;
+		e?.preventDefault();
+		openOverlay({ type: 'settings', data: { page: 'account' } });
+	}
+
+	// Свой профиль: смена аватарки и обложки (как у DTF: файл, «Настроить» двигает обложку по вертикали)
+	let busy = $state(false);
+	let editingCover = $state(false);
+	let coverY = $state(0);
+	let coverInput = $state<HTMLInputElement>();
+	let avatarInput = $state<HTMLInputElement>();
+	let coverDrag: { startY: number; startValue: number; height: number } | undefined;
+
+	/** Выполняет изменение и перечитывает профиль; при ошибке показывает тост */
+	async function changeImages(task: () => Promise<void>, failure: string) {
+		busy = true;
+		try {
+			await task();
+			onProfileUpdate?.(await api.getProfile(profile.id));
+			currentUser.refresh();
+		} catch (e) {
+			notify.error(`${failure} (${(e as Error).message})`);
+		} finally {
+			busy = false;
+		}
+	}
+
+	function pickImage(kind: 'avatar' | 'cover') {
+		return (e: Event & { currentTarget: HTMLInputElement }) => {
+			const file = e.currentTarget.files?.[0];
+			e.currentTarget.value = '';
+			if (!file) return;
+			if (kind === 'avatar' && !/^image\/(png|jpeg)$/.test(file.type)) {
+				notify.error('Неверный формат изображения. Попробуйте загрузить картинку в .jpg или .png');
+				return;
+			}
+			changeImages(() => api.setProfileImage(profile.id, kind, file), kind === 'cover' ? 'Не удалось загрузить обложку' : 'Не удалось загрузить фотографию');
+		};
+	}
+
+	function startCoverEdit() {
+		coverY = profile.coverY ?? 50;
+		editingCover = true;
+	}
+
+	async function saveCoverPosition() {
+		await changeImages(() => api.setProfileCoverPosition(profile.id, profile.coverRaw, coverY), 'Не удалось сохранить позицию');
+		editingCover = false;
+	}
+
+	function removeCover() {
+		changeImages(() => api.removeProfileCover(profile.id), 'Не удалось удалить обложку');
+	}
+
+	function dragStart(e: PointerEvent) {
+		// Нажатие на кнопку («Сохранить», «Закрыть») — не перетаскивание: захват указателя съел бы её клик
+		if (!editingCover || (e.target as Element).closest('button')) return;
+		const layer = e.currentTarget as HTMLElement;
+		layer.setPointerCapture(e.pointerId);
+		coverDrag = { startY: e.clientY, startValue: coverY, height: layer.getBoundingClientRect().height };
+	}
+
+	function dragMove(e: PointerEvent) {
+		if (!coverDrag) return;
+		const shift = Math.round(((e.clientY - coverDrag.startY) / coverDrag.height) * 100);
+		coverY = Math.min(100, Math.max(0, coverDrag.startValue - shift));
+	}
 
 	// Вкладка «Комментарии»: грузится при первом открытии, дальше подгружается по мере прокрутки
 	let tab = $state<'posts' | 'comments' | 'details'>('posts');
@@ -127,22 +210,61 @@
 {/snippet}
 
 <div class={['profile-section', { 'profile-section--details': tab === 'details' }]}>
+	{#if isMe}
+		<!-- Скрытые поля выбора файла: кнопки обложки и аватарки открывают их -->
+		<input bind:this={coverInput} type="file" accept="image/*, video/mp4, .webp" hidden onchange={pickImage('cover')} />
+		<input bind:this={avatarInput} type="file" accept="image/png, image/jpeg" hidden onchange={pickImage('avatar')} />
+
+		{#if !profile.coverUrl}
+			<div class="profile-cover-upload">
+				<Button icon="ui_image" iconSize={16} label="Добавить обложку" disabled={busy} onclick={() => coverInput?.click()} />
+			</div>
+		{/if}
+	{/if}
+
 	<div class="profile-head">
 		<div
 			class="profile-head__cover"
 			style:background-image={profile.coverUrl ? `url(${profile.coverUrl})` : undefined}
-			style:background-position="50% {profile.coverY ?? 50}%"
-		></div>
+			style:background-position="50% {editingCover ? coverY : (profile.coverY ?? 50)}%"
+		>
+			{#if isMe && profile.coverUrl}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class={['cover-manage', { 'cover-manage--edit': editingCover }]}
+					onpointerdown={dragStart}
+					onpointermove={dragMove}
+					onpointerup={() => (coverDrag = undefined)}
+					onpointercancel={() => (coverDrag = undefined)}
+				>
+					{#if editingCover}
+						<Button icon="writing-save" iconSize={16} label="Сохранить" disabled={busy} onclick={saveCoverPosition} />
+						<Button icon="ui_close" iconSize={12} label="Закрыть" disabled={busy} onclick={() => (editingCover = false)} />
+					{:else}
+						<Button icon="ui_image" iconSize={16} label="Сменить обложку" disabled={busy} onclick={() => coverInput?.click()} />
+						<Button icon="v_gear" iconSize={18} label="Настроить" disabled={busy} onclick={startCoverEdit} />
+						<Button icon="ui_close" iconSize={12} label="Удалить" disabled={busy} onclick={removeCover} />
+					{/if}
+				</div>
+			{/if}
+		</div>
 
 		<div class="profile-head__avatar" data-morph-target="avatar">
-			<button
-				type="button"
-				class="profile-avatar"
-				style:background-image={profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined}
-				aria-label="Открыть аватарку"
-				disabled={!profile.avatarMedia} onpointerenter={() => profile.avatarMedia && preloadLightbox()}
-				onclick={() => profile.avatarMedia && openLightbox([profile.avatarMedia], 0)}
-			></button>
+			<div class="profile-avatar-wrap">
+				<button
+					type="button"
+					class="profile-avatar"
+					style:background-image={profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined}
+					aria-label="Открыть аватарку"
+					disabled={!profile.avatarMedia} onpointerenter={() => profile.avatarMedia && preloadLightbox()}
+					onclick={() => profile.avatarMedia && openLightbox([profile.avatarMedia], 0)}
+				></button>
+				{#if isMe}
+					<button type="button" class="profile-avatar-change" title="Сменить фото" aria-label="Сменить фото" disabled={busy} onclick={() => avatarInput?.click()}>
+						<svg height="16" width="16" class="icon" aria-hidden="true"><use href="/icons.svg#ui_photo"></use></svg>
+					</button>
+				{/if}
+			</div>
 		</div>
 
 		<div class="profile-head__title">
@@ -158,13 +280,39 @@
 			</h1>
 		</div>
 
-		{#if profile.description}
+		{#if profile.description || isMe}
 			<div class="profile-head__description">
-				<div class="profile-description">{profile.description}</div>
+				{#if profile.description}
+					<div class="profile-description">{profile.description}</div>
+				{/if}
+				{#if isMe}
+					<a class="profile-description__edit" href={resolve('/settings')} onclick={openAccountSettings}>Изменить имя или описание</a>
+				{/if}
 			</div>
 		{/if}
 
-		<!-- сюда потом кнопку подписки вставим -->
+		<div class="profile-head__actions">
+			{#if isMe}
+				<Button icon="v_gear" iconSize={18} title="Настройки" aria-label="Настройки" onclick={() => openAccountSettings()} />
+			{:else}
+				<Button
+					variant={subscribed ? 'default' : 'blue'}
+					icon="v_follow"
+					label={subscribed ? 'Вы подписаны' : 'Подписаться'}
+					onclick={() => subscriptions.toggle(profile.id, wasSubscribed)}
+				/>
+				<!-- Колокольчик виден только после подписки -->
+				{#if subscribed}
+					<Button
+						icon={notified ? 'bell_solid' : 'v_bell'}
+						title={notified ? 'Не уведомлять о новых постах' : 'Уведомлять о новых постах'}
+						aria-label="Уведомления о новых постах"
+						aria-pressed={notified}
+						onclick={() => subscriptions.toggleNotifications(profile.id, wasNotified)}
+					/>
+				{/if}
+			{/if}
+		</div>
 
 		<div class="profile-head__stats profile-stats">
 			<div class="profile-stats__row">
@@ -321,6 +469,101 @@
 		margin-top: -88px;
 	}
 
+	/* Свой профиль: управление обложкой (по наведению) и камера на аватарке */
+	.profile-cover-upload {
+		--btn-height: 40px;
+		--btn-icon-margin-left: 12px;
+		--btn-icon-margin-right: -8px;
+		display: flex;
+		margin-bottom: -8px;
+		padding: 12px 16px;
+		border-radius: 8px;
+		background-color: #fff;
+	}
+
+	.cover-manage {
+		--btn-height: 40px;
+		--btn-icon-margin-left: 12px;
+		--btn-icon-margin-right: -8px;
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		visibility: hidden;
+		opacity: 0;
+		transform: translateY(2px);
+		transition: all 0.1s;
+		user-select: none;
+	}
+
+	.profile-head__cover:hover .cover-manage,
+	.cover-manage--edit {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+	}
+
+	.cover-manage--edit {
+		background-color: rgba(255, 255, 255, 0.3);
+		cursor: move;
+		touch-action: none;
+	}
+
+	/* На телефоне наведения нет: кнопки обложки всегда на виду, только иконки */
+	@media (hover: none) {
+		.cover-manage {
+			visibility: visible;
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	.profile-avatar-wrap {
+		position: relative;
+		z-index: 1;
+		flex-shrink: 0;
+	}
+
+	.profile-avatar-change {
+		position: absolute;
+		right: 4px;
+		bottom: 4px;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 24px;
+		padding: 0;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+		border-radius: 4px;
+		background-color: #fff;
+		box-shadow: 0 2px 1px rgba(0, 0, 0, 0.05);
+		color: rgba(0, 0, 0, 0.65);
+		cursor: pointer;
+		visibility: hidden;
+		opacity: 0;
+		transform: translateY(2px);
+		transition: all 0.1s;
+	}
+
+	.profile-avatar-wrap:hover .profile-avatar-change,
+	.profile-avatar-change:focus-visible {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+	}
+
+	@media (hover: none) {
+		.profile-avatar-change {
+			visibility: visible;
+			opacity: 1;
+			transform: none;
+		}
+	}
+
 	.profile-avatar {
 		--size: 112px;
 		--border-width: 4px;
@@ -394,6 +637,31 @@
 		overflow: hidden;
 		overflow-wrap: break-word;
 		white-space: pre-wrap;
+	}
+
+	.profile-description__edit {
+		display: block;
+		width: fit-content;
+		color: var(--text-link);
+	}
+
+	.profile-description + .profile-description__edit {
+		margin-top: 8px;
+	}
+
+	.profile-description__edit:hover {
+		color: #cd192e;
+	}
+
+	/* Кнопки действий: подписка и колокольчик у чужого профиля, шестерёнка у своего */
+	.profile-head__actions {
+		--btn-height: 40px;
+		--btn-icon-margin-left: 12px;
+		--btn-icon-margin-right: -8px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-top: 12px;
 	}
 
 	/* Статистика */
@@ -664,6 +932,11 @@
 			grid-template-columns: 1fr 300px;
 		}
 
+		.profile-cover-upload {
+			grid-column: span 2;
+			margin-bottom: -20px;
+		}
+
 		.profile-head {
 			display: grid;
 			grid-column: span 2;
@@ -681,8 +954,17 @@
 			margin-top: 20px;
 		}
 
+		/* Кнопки стоят справа в строке заголовка */
 		.profile-head__title {
+			grid-column: 1;
 			margin-right: 20px;
+		}
+
+		.profile-head__actions {
+			grid-column: 2;
+			grid-row: 3;
+			align-self: start;
+			margin-top: -4px;
 		}
 	}
 
@@ -728,6 +1010,8 @@
 
 		.profile-head__stats {
 			margin-top: 17px;
+			/* на телефоне последняя строка («Узнать подробнее») видна, и отступа под ней нет */
+			padding-bottom: 0;
 			font-size: 14px;
 			line-height: 1.43em;
 		}
@@ -759,6 +1043,14 @@
 	@media (max-width: 639px) {
 		.profile-head {
 			--border-radius: 0;
+		}
+
+		.cover-manage :global(.btn__label) {
+			display: none;
+		}
+
+		.cover-manage :global(.btn__icon) {
+			margin: 0;
 		}
 
 		.profile-head__cover::before {

@@ -101,6 +101,7 @@
 				{subscriptionsPromise}
 				onSortingChange={(value: Sorting) => (sorting = value)}
 				loadMore={() => loadPosts()}
+				onProfileUpdate={(value: Profile) => (profile = value)}
 			>
 				<!-- Фолбэк для тем без своего профиля -->
 				<div class="profile-fallback">

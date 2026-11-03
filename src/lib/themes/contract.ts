@@ -44,6 +44,8 @@ export interface ThemeComponents {
 		subscriptionsPromise: Promise<ProfileListItem[]>;
 		onSortingChange: (sorting: ProfileSorting) => void;
 		loadMore: () => void;
+		/** Профиль изменился (своя аватарка или обложка): показать новый вместо старого */
+		onProfileUpdate?: (profile: Profile) => void;
 	};
 	/** Страница уведомлений (оверлей notifications) */
 	Notifications: {};
