@@ -18,5 +18,12 @@ export const themeSettings = {
 	/** Порядок стрелок оценки: 'down-up' (вниз / вверх) или 'up-down' (вверх / вниз) */
 	get arrowsOrder(): 'down-up' | 'up-down' {
 		return (activeThemeSettings().value.arrowsOrder as 'down-up' | 'up-down') ?? 'down-up';
+	},
+	/** Использовать продвинутые эффекты прозрачности и размытия */
+	get transparencyEffects(): boolean {
+		const val = activeThemeSettings().value.transparencyEffects;
+		if (typeof val === 'boolean') return val;
+		if (typeof window === 'undefined') return true;
+		return !window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches;
 	}
 };

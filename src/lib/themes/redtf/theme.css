@@ -190,6 +190,18 @@
 	opacity: 0;
 }
 
+/* Без эффектов прозрачности и размытия: отключаем тяжелые фильтры у превью картинок */
+:root[data-theme~="redtf"][data-transparency="false"] .media-placeholder::before {
+	display: none !important;
+}
+
+:root[data-theme~="redtf"][data-transparency="false"] .media-placeholder :is(img, video) {
+	filter: none !important;
+	transform: none !important;
+	will-change: opacity !important;
+	transition: opacity 0.3s ease !important;
+}
+
 /* Картинки и видео без base64preview: мягкое появление поверх цветной заглушки */
 :root[data-theme~="redtf"] .media-placeholder:not([style*="--media-preview"]) :is(img, video) {
 	opacity: 0;

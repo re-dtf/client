@@ -229,16 +229,23 @@
 		return () => (outdated = true);
 	});
 	
-	// Ползунки темы выставляют CSS-переменные корня (инлайн-стиль сильнее стилей темы)
+	// Ползунки темы выставляют CSS-переменные корня, флаги — data-атрибуты
 	$effect(() => {
 		const values = activeThemeSettings().value;
 		const vars: Record<string, string> = {};
 		for (const field of themeSettingsSchema(activeTheme.id)) {
 			if (field.type === 'slider') Object.assign(vars, field.cssVars(Number(values[field.key] ?? field.default)));
 		}
+		const transparency = values.transparencyEffects !== undefined
+			? Boolean(values.transparencyEffects)
+			: (typeof window !== 'undefined' ? !window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches : true);
+		document.documentElement.dataset.transparency = String(transparency);
 		const style = document.documentElement.style;
 		for (const [name, value] of Object.entries(vars)) style.setProperty(name, value);
-		return () => Object.keys(vars).forEach((name) => style.removeProperty(name));
+		return () => {
+			Object.keys(vars).forEach((name) => style.removeProperty(name));
+			delete document.documentElement.dataset.transparency;
+		};
 	});
 
 	onMount(() => {
