@@ -199,10 +199,10 @@
 
 				// Если для входящего слоя запущен универсальный переход, анимацией занимается pageTransition
 				if (pageTransition.isIncoming(layer)) {
-					// Страницы без Reveal (например, уведомления): запускаем их через incomingReady напрямую
+					// Страницы без Reveal: запускаем их через incomingReady напрямую
 					const screen = document.querySelector(`[data-layer="${layer}"]`)?.firstElementChild as HTMLElement | null;
-					const isNotification = overlays.find((o) => o.id === layer)?.type === 'notifications';
-					if (screen && isNotification) {
+					const hasReveal = Boolean(screen?.querySelector('.reveal'));
+					if (screen && !hasReveal) {
 						incomingReady(layer, screen);
 					}
 					return;

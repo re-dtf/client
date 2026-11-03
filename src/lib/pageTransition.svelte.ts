@@ -15,6 +15,7 @@ export interface ClickOrigin {
 }
 
 const SLOW_DELAY = 1500; // Порог перехода в фазу Hold (живое размытие + спиннер)
+const FAIL_SAFE_TIMEOUT = 12000; // Предохранитель от вечного зависания при сбое сети
 
 let active = $state(false);
 let slow = $state(false);
@@ -23,7 +24,7 @@ let incomingId = $state<string | null>(null);
 let incomingHidden = $state(true);
 
 let currentOrigin: ClickOrigin | null = null;
-let originTimer: ReturnType<typeof setTimeout> | undefined;
+let failSafeTimer: ReturnType<typeof setTimeout> | undefined;
 
 let outgoingScreen: HTMLElement | null = null;
 let unfreezeOutgoing: (() => void) | null = null;
@@ -48,7 +49,6 @@ export function shouldTransition(): boolean {
 /** Запомнить элемент и координаты клика */
 export function markOrigin(e: MouseEvent) {
 	if (typeof window === 'undefined') return;
-	if (originTimer) clearTimeout(originTimer);
 
 	const target = e.currentTarget as HTMLElement | null;
 	const rect = target ? target.getBoundingClientRect() : new DOMRect(e.clientX, e.clientY, 0, 0);
@@ -57,11 +57,6 @@ export function markOrigin(e: MouseEvent) {
 		rect,
 		point: { x: e.clientX, y: e.clientY }
 	};
-
-	// Очистить через 2 секунды, если переход так и не начался
-	originTimer = setTimeout(() => {
-		currentOrigin = null;
-	}, 2000);
 }
 
 /** Временно зафиксировать экран по размерам окна */
@@ -118,8 +113,6 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 	outgoingScreen = screenEl;
 	hadHoldBlur = false;
 
-	const origin = currentOrigin;
-
 	const rect = screenEl.getBoundingClientRect();
 	unfreezeOutgoing = freeze(screenEl, rect);
 
@@ -131,6 +124,11 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 
 	// Оптический центр масштабирования по оси глубины Z
 	screenEl.style.transformOrigin = `50% ${Math.round(visibleHeight * 0.4)}px`;
+
+	// Предохранитель от зависания при упавшей сети
+	failSafeTimer = setTimeout(() => {
+		if (active) abortTransition();
+	}, FAIL_SAFE_TIMEOUT);
 
 	// 1. Фаза Recede: уход вглубь
 	const motion = activeTheme.motion ?? fluent;
@@ -258,6 +256,10 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 export function abortTransition() {
 	if (!active || !outgoingScreen) return;
 
+	if (failSafeTimer) {
+		clearTimeout(failSafeTimer);
+		failSafeTimer = undefined;
+	}
 	if (slowTimer) {
 		clearTimeout(slowTimer);
 		slowTimer = undefined;
@@ -282,6 +284,10 @@ export function abortTransition() {
 }
 
 function cleanup() {
+	if (failSafeTimer) {
+		clearTimeout(failSafeTimer);
+		failSafeTimer = undefined;
+	}
 	if (slowTimer) {
 		clearTimeout(slowTimer);
 		slowTimer = undefined;
