@@ -1,7 +1,10 @@
 <script lang="ts">
+	import AccountSettings from './AccountSettings.svelte';
+	import DtfSettings from './DtfSettings.svelte';
 	import FieldControl from './FieldControl.svelte';
 	import ProxySettings from './ProxySettings.svelte';
 	import HelpSettings from './HelpSettings.svelte';
+	import IgnoredSettings from './IgnoredSettings.svelte';
 	import ReactionsSettings from './ReactionsSettings.svelte';
 	import StatsSettings from './StatsSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
@@ -17,7 +20,7 @@
 	 * На узком экране это два шага: список разделов, потом страница с кнопкой «Назад».
 	 * Страница «Тема» — настройки выбранной темы (описаны в её theme.ts), у темы без настроек её нет.
 	 */
-	let { onclose }: { onclose?: () => void } = $props();
+	let { onclose, page }: { onclose?: () => void; page?: string } = $props();
 
 	const themeField: ChoiceField = {
 		key: 'theme',
@@ -43,6 +46,14 @@
 	let themeValues = $derived(activeThemeSettings());
 
 	let navigation = $derived([
+		{
+			title: 'Профиль DTF',
+			pages: [
+				{ id: 'account', title: 'Аккаунт' },
+				{ id: 'dtf', title: 'DTF' },
+				{ id: 'ignored', title: 'Чёрный список' }
+			]
+		},
 		{ title: 'Инфраструктура', pages: [{ id: 'sources', title: 'Источники данных' }] },
 		{
 			title: 'Персонализация',
@@ -57,17 +68,21 @@
 		{ title: 'Приложение', pages: [{ id: 'help', title: 'Хочу помочь' }] }
 	]);
 
-	let selected = $state('sources');
-	// На узком экране: false — список разделов, true — открытая страница
-	let opened = $state(false);
+	// Пока ничего не выбрано, показывается страница `page` (её просит тот, кто открыл настройки), иначе источники
+	let selected = $state<string>();
+	// На узком экране: false — список разделов, true — открытая страница; без выбора страница открыта, если её запросили
+	let openedByUser = $state<boolean>();
+	let opened = $derived(openedByUser ?? !!page);
 	let scroller = $state<HTMLElement>();
 
 	// Страницы темы может не быть (тему сменили на ту, где настроек нет): тогда первая страница
-	let current = $derived(navigation.flatMap((g) => g.pages).find((p) => p.id === selected) ?? navigation[0].pages[0]);
+	let current = $derived(
+		navigation.flatMap((g) => g.pages).find((p) => p.id === (selected ?? page ?? 'sources')) ?? navigation[0].pages[0]
+	);
 
 	function open(id: string) {
 		selected = id;
-		opened = true;
+		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
 	}
 </script>
@@ -102,7 +117,7 @@
 
 	<main class="content">
 		<header class="bar">
-			<button class="icon-button back" type="button" aria-label="Назад к разделам" onclick={() => (opened = false)}>
+			<button class="icon-button back" type="button" aria-label="Назад к разделам" onclick={() => (openedByUser = false)}>
 				<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 					<path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 				</svg>
@@ -112,7 +127,13 @@
 		<div class="scroller" bind:this={scroller}>
 			<div class="page">
 				<h2 class="page__title">{current.title}</h2>
-				{#if current.id === 'sources'}
+				{#if current.id === 'account'}
+					<AccountSettings />
+				{:else if current.id === 'dtf'}
+					<DtfSettings />
+				{:else if current.id === 'ignored'}
+					<IgnoredSettings />
+				{:else if current.id === 'sources'}
 					<SourcesSettings />
 					<ProxySettings />
 				{:else if current.id === 'themes'}

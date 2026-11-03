@@ -14,6 +14,7 @@
 | `components/settings/SettingsScreen.svelte` | окно: разделы слева, список страниц и выбор, что показать |
 | `components/settings/FieldControl.svelte` | один пункт настроек по описанию поля |
 | `components/settings/SettingsGroup.svelte`, `SettingsRow.svelte`, `SettingsSwitch.svelte`, `SettingsSegmented.svelte`, `SettingsButton.svelte` | примитивы оформления: группа-карточка, строка, переключатель, сегментированный выбор, кнопка |
+| `components/settings/AccountSettings.svelte`, `DtfSettings.svelte`, `IgnoredSettings.svelte`, `AccountGate.svelte` | страницы «Аккаунт» (имя и описание профиля), «DTF» (ленты и уведомления) и «Чёрный список» (скрытые пользователи и темы, с кнопкой «Убрать»). Значения лежат на сервере DTF и читаются через `api`, а не из localStorage; без входа `AccountGate` показывает приглашение войти. Почту и пароль DTF меняет только на своём сайте, туда ведёт ссылка |
 | `components/settings/ProxySettings.svelte` | прокси для входа |
 | `components/settings/HelpSettings.svelte` | страница «Хочу помочь»: поддержка и участие в разработке, адреса проекта лежат в константах файла |
 | `components/settings/StatsSettings.svelte` | страница «Статистика» ([storage](storage.md#статистика)) |
@@ -23,6 +24,8 @@
 | `storage/settings.svelte.ts` | значения общих настроек |
 | `themes/settings.svelte.ts` | значения настроек тем |
 | `themes/types.ts`, `themes/registry.ts` | описание полей и схема темы с учётом основы |
+
+Открыть окно сразу на нужной странице можно через данные оверлея: `openOverlay({ type: 'settings', data: { page: 'account' } })`.
 
 Цвета окна лежат в CSS-переменных `--st-*` на корне `SettingsScreen`, акцент, шрифт и цвет текста берутся у активной темы (`--color-blue`, `--font-family`, `--text-primary`). Примитивы читают эти переменные и работают только внутри окна. Оформление отделено от данных: смена вёрстки не затрагивает схему и сохранение.
 

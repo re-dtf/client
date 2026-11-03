@@ -26,6 +26,12 @@ export const currentUser = {
 			});
 	},
 
+	/** Перечитать после смены имени или био */
+	refresh() {
+		loading = undefined;
+		this.load();
+	},
+
 	clear() {
 		loading = undefined;
 		stored.value = null;

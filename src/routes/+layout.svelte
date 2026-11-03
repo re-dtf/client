@@ -280,7 +280,7 @@
 	{:else if overlay.type === 'profile'}
 		<ProfileContent {...overlay.data} />
 	{:else if overlay.type === 'settings'}
-		<SettingsOverlay />
+		<SettingsOverlay {...overlay.data} />
 	{:else if overlay.type === 'notifications'}
 		<NotificationsContent />
 	{:else if overlay.type === 'login'}
