@@ -20,7 +20,7 @@
 	 * На узком экране это два шага: список разделов, потом страница с кнопкой «Назад».
 	 * Страница «Тема» — настройки выбранной темы (описаны в её theme.ts), у темы без настроек её нет.
 	 */
-	let { onclose, page }: { onclose?: () => void; page?: string } = $props();
+	let { onclose, page }: { onclose: () => void; page?: string } = $props();
 
 	const themeField: ChoiceField = {
 		key: 'theme',
@@ -87,7 +87,7 @@
 	}
 </script>
 
-<div class="window" data-view={opened ? 'page' : 'list'} data-modal={onclose ? '' : undefined}>
+<div class="window" data-view={opened ? 'page' : 'list'}>
 	<div class="panes">
 	<nav class="sidebar" aria-label="Разделы настроек">
 		<h2 class="side-title">Настройки</h2>
@@ -164,13 +164,11 @@
 	</main>
 	</div>
 
-	{#if onclose}
-		<button class="icon-button close" type="button" aria-label="Закрыть настройки" onclick={onclose}>
-			<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-				<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-			</svg>
-		</button>
-	{/if}
+	<button class="icon-button close" type="button" aria-label="Закрыть настройки" onclick={onclose}>
+		<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+			<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+		</svg>
+	</button>
 </div>
 
 <style>
@@ -355,7 +353,7 @@
 		right: 18px;
 	}
 
-	/* Ширина самого окна, а не экрана: на странице /settings оно живёт в колонке темы */
+	/* Ширина самого окна, а не экрана: окно может быть уже экрана */
 	@container (max-width: 719px) {
 		.panes {
 			flex-direction: column;
@@ -413,9 +411,9 @@
 		}
 	}
 
-	/* Телефон: окно поверх ленты занимает весь экран. Отдельная страница /settings остаётся в колонке темы */
+	/* Телефон: окно поверх ленты занимает весь экран */
 	@media (max-width: 719px) {
-		.window[data-modal] {
+		.window {
 			position: fixed;
 			inset: 0;
 			width: auto;
