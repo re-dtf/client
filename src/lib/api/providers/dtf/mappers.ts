@@ -149,7 +149,7 @@ export function mapNotification(item: any): Notification {
 		commentText: item.comment_text || undefined,
 		url: item.url,
 		createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),
-		avatarUrl: item.users?.[0]?.avatar_url
+		avatarUrl: mapAvatarUrl(item.users?.[0])
 	};
 }
 

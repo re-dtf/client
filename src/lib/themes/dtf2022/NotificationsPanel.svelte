@@ -238,6 +238,7 @@
 		border-radius: 4px;
 		outline: 1px solid rgba(0, 0, 0, 0.1);
 		outline-offset: -1px;
+		object-fit: cover;
 	}
 
 	.u-notification__image .icon {

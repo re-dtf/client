@@ -68,6 +68,16 @@ describe('mapNotification', () => {
 		expect(unread).toMatchObject({ id: 1, isRead: false, text: 'Ответили', avatarUrl: 'https://x/a.png' });
 		expect(mapNotification({ id: 2, status: 2 }).isRead).toBe(true);
 	});
+
+	it('обрезает аватар первого пользователя через scale_crop при наличии uuid', () => {
+		const notification = mapNotification({
+			id: 3,
+			text: 'Ответили',
+			users: [{ avatar: { data: { uuid: 'notif-avatar-uuid' } } }]
+		});
+
+		expect(notification.avatarUrl).toContain('/notif-avatar-uuid/-/scale_crop/64x64/');
+	});
 });
 
 describe('mapCurrentUser', () => {
