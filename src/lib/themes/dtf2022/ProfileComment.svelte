@@ -108,7 +108,7 @@
 						<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />
 					</button>
 				{:else}
-					<UnknownBlock type={media.type} />
+					<UnknownBlock type={media.type} postId={comment.postId} commentId={comment.id} sourceId={comment.sourceId} />
 				{/if}
 			{/each}
 		</div>

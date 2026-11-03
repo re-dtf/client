@@ -269,7 +269,7 @@
 								</div>
 							</figure>
 						{:else}
-							<UnknownBlock type={media.type} />
+							<UnknownBlock type={media.type} postId={comment.postId} commentId={comment.id} sourceId={comment.sourceId} />
 						{/if}
 					{/each}
 				</div>

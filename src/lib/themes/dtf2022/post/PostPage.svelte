@@ -42,7 +42,7 @@
 		<PostHeader {post} variant="page" />
 
 		<div class="post-content">
-			<PostBlocks title={post.title} blocks={blocks.slice(0, leadEnd)} variant="page" />
+			<PostBlocks title={post.title} blocks={blocks.slice(0, leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} />
 
 			{#if showActions}
 				<div class={['post-actions', { 'post-actions--arrows': arrows }]}>
@@ -60,7 +60,7 @@
 				</div>
 			{/if}
 
-			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" />
+			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} />
 
 			{#if votes === 'reactions'}
 				<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />

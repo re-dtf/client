@@ -19,12 +19,16 @@
 	let {
 		blocks,
 		title,
-		variant
+		variant,
+		postId,
+		sourceId
 	}: {
 		blocks: Block[];
 		/** Заголовок поста — первым блоком */
 		title?: string;
 		variant: 'card' | 'page' | 'embed';
+		postId?: number | string;
+		sourceId?: string;
 	} = $props();
 
 	const HEADINGS = ['h2', 'h3', 'h4'];
@@ -211,7 +215,7 @@
 			{/if}
 		{:else if variant === 'page'}
 			<div class="post-block">
-				<UnknownBlock type={block.type} />
+				<UnknownBlock type={block.type} {postId} {sourceId} />
 			</div>
 		{/if}
 {/snippet}

@@ -39,7 +39,7 @@
 		<PostHeader {post} variant="card" {subscribe} />
 
 		<div class="post-content">
-			<PostBlocks title={post.title} {blocks} variant={embed ? 'embed' : 'card'} />
+			<PostBlocks title={post.title} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} />
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
 			<a class="post-link" href={postPath} aria-label={post.title} onclick={(e) => openPost(e, post)}></a>
 		</div>
