@@ -54,6 +54,7 @@ export default defineConfig({
 				description: 'Неофициальный клиент для DTF', 
 				
 				// display
+				display_override: ['window-controls-overlay', 'standalone'],
 				display: 'standalone', // Убирает адресную строку браузера, делает вид полноценного десктопного/мобильного окна
 				theme_color: '#D9F5FF', // Цвет верхней панели системы (status bar на телефоне / шапка окна на ПК)
 				background_color: '#161617', // Цвет фона экрана загрузки

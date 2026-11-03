@@ -39,6 +39,30 @@ a {
 	color: inherit;
 }
 
+/* Стили для нативных ощущений от PWA */
+
+/* 1. Убираем синюю/серую вспышку при нажатии на любые элементы */
+* {
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* 2. Запрещаем системный pull-to-refresh браузера и резиновую прокрутку страницы */
+html, body {
+	overscroll-behavior-y: contain;
+}
+
+/* 3. Убираем 300мс задержку клика на контролах */
+button, a, input, [role="button"] {
+	touch-action: manipulation;
+}
+
+/* 4. Запрещаем выделение текста на элементах интерфейса (шапки, меню, табы, кнопки) */
+button, nav, .header, .tabs, .mobile-bar, .icon {
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+
 /* Длительности переходов общих компонентов; тема может переопределить в theme.css */
 :root {
 	--duration-base: 200ms;
