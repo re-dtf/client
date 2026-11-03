@@ -93,7 +93,7 @@
 		max-width: var(--content-width);
 		margin: 28px auto 0;
 		content-visibility: auto;
-		contain-intrinsic-size: auto 500px;
+		contain-intrinsic-size: auto none auto 500px;
 	}
 
 	.feed-item--embed {
