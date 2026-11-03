@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AboutSettings from './AboutSettings.svelte';
 	import AccountSettings from './AccountSettings.svelte';
 	import DtfSettings from './DtfSettings.svelte';
 	import FieldControl from './FieldControl.svelte';
@@ -96,7 +97,7 @@
 			]
 		},
 		{ title: 'Данные', pages: [{ id: 'stats', title: 'Статистика' }] },
-		{ title: 'Приложение', pages: [{ id: 'help', title: 'Хочу помочь' }] }
+		{ title: 'Приложение', pages: [{ id: 'help', title: 'Хочу помочь' }, { id: 'about', title: 'О проекте' }] }
 	]);
 
 	// Пока ничего не выбрано, показывается страница `page` (её просит тот, кто открыл настройки), иначе источники
@@ -232,8 +233,10 @@
 					<ReactionsSettings />
 				{:else if current.id === 'stats'}
 					<StatsSettings />
-				{:else}
+				{:else if current.id === 'help'}
 					<HelpSettings />
+				{:else}
+					<AboutSettings />
 				{/if}
 			</div>
 		</div>

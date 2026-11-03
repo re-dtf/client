@@ -34,6 +34,9 @@
 		<path d="M5.8 9.6c.6.9 1.4 1.3 2.2 1.3s1.6-.4 2.2-1.3M6 6.5h.01M10 6.5h.01" />
 	{:else if name === 'stats'}
 		<path d="M3.5 13V8.5M8 13V3M12.5 13V6" stroke-width="2" />
+	{:else if name === 'about'}
+		<circle cx="8" cy="8" r="5.5" />
+		<path d="M8 7.5v3.5M8 5h.01" />
 	{:else}
 		<path d="M8 13.5S2.5 10.2 2.5 6.3A2.9 2.9 0 018 5a2.9 2.9 0 015.5 1.3C13.5 10.2 8 13.5 8 13.5z" />
 	{/if}

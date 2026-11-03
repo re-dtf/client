@@ -2,8 +2,8 @@
 	import SettingsButton from './SettingsButton.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
+	import SettingsTile from './SettingsTile.svelte';
 	import { resolve } from '$app/paths';
-	import { version } from '$app/env';
 
 	/* Страница «Хочу помочь»: сначала поддержка (донат, рассказать другу, звезда), потом участие в разработке */
 	const DONATE_RU_URL = 'https://pay.cloudtips.ru/p/2fa64784';
@@ -31,11 +31,7 @@
 </script>
 
 {#snippet icon(path: string, tint: string)}
-	<span class="tile" style:--tint={tint}>
-		<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-			<path d={path} fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-		</svg>
-	</span>
+	<SettingsTile {path} {tint} />
 {/snippet}
 
 <section class="hero">
@@ -86,10 +82,6 @@
 	</SettingsRow>
 </SettingsGroup>
 
-<footer class="app-version">
-	reDTF {version}
-</footer>
-
 <style>
 	.hero {
 		display: flex;
@@ -137,18 +129,6 @@
 		margin-top: 16px;
 	}
 
-	/* Значок строки: цветная плитка с контурной иконкой */
-	.tile {
-		display: grid;
-		flex: none;
-		place-items: center;
-		width: 40px;
-		height: 40px;
-		border-radius: 12px;
-		background: color-mix(in srgb, var(--tint) 14%, transparent);
-		color: var(--tint);
-	}
-
 	.action {
 		flex: none;
 	}
@@ -168,12 +148,5 @@
 		.action :global(.btn) {
 			width: 100%;
 		}
-	}
-
-	.app-version {
-		margin-top: 36px;
-		text-align: center;
-		font-size: 13px;
-		color: var(--st-muted);
 	}
 </style>
