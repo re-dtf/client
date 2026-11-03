@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
-	import { closeOverlay, openOverlay } from '$lib/navigation';
+	import { closeOverlay } from '$lib/navigation';
 	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
 	import { clickOnKey } from './a11y';
 	import Button from './ui/Button.svelte';
@@ -9,16 +8,12 @@
 
 	type Mode = 'selector' | 'email' | 'token' | 'proxy';
 	let mode = $state<Mode>('selector');
+	let pendingMode = $state<'email' | 'token' | null>(null);
 
 	let email = $state('');
 	let password = $state('');
 	let token = $state('');
 	let proxyUrl = $state(settings.value.proxyUrl);
-
-	function openSettings(e: MouseEvent) {
-		e.preventDefault();
-		openOverlay({ type: 'settings' });
-	}
 
 	let isLoading = $state(false);
 	let error = $state('');
@@ -28,6 +23,21 @@
 		mode = next;
 		error = '';
 		successMsg = '';
+	}
+
+	function chooseMethod(method: 'email' | 'token') {
+		if (!settings.value.proxyUrl?.trim()) {
+			pendingMode = method;
+			setMode('proxy');
+		} else {
+			pendingMode = null;
+			setMode(method);
+		}
+	}
+
+	function goBack() {
+		pendingMode = null;
+		setMode('selector');
 	}
 
 	function closeModal() {
@@ -71,15 +81,24 @@
 
 	function handleSaveProxy(e: SubmitEvent) {
 		e.preventDefault();
-		settings.patch({ proxyUrl: proxyUrl.trim() });
-		successMsg = 'Настройки прокси сохранены';
-		error = '';
+		const trimmed = proxyUrl.trim();
+		if (!trimmed) {
+			error = 'Укажите URL прокси';
+			return;
+		}
+		settings.patch({ proxyUrl: trimmed });
+		if (pendingMode) {
+			const next = pendingMode;
+			pendingMode = null;
+			setMode(next);
+		} else {
+			successMsg = 'Настройки прокси сохранены';
+			error = '';
+		}
 	}
 
 	function useDefaultProxy() {
 		proxyUrl = DEFAULT_PROXY_URL;
-		settings.patch({ proxyUrl: DEFAULT_PROXY_URL });
-		successMsg = 'Установлен встроенный прокси';
 		error = '';
 	}
 </script>
@@ -102,7 +121,7 @@
 		<div class="auth">
 			{#if mode !== 'selector'}
 				<div class="auth__controls">
-					<button class="auth__back" onclick={() => setMode('selector')}>
+					<button class="auth__back" onclick={goBack}>
 						<span class="auth__back-container">
 							<svg height="20" width="20" class="icon" aria-hidden="true">
 								<use href="/icons.svg#v_arrow_left"></use>
@@ -127,9 +146,9 @@
 
 				{#if mode === 'selector'}
 					<div class="auth__methods">
-						<Button icon="v_email" label="Почта" onclick={() => setMode('email')} />
-						<Button icon="v_lock_full" label="Токен" onclick={() => setMode('token')} />
-						<Button icon="v_gear" label="Настройки прокси" onclick={() => setMode('proxy')} />
+						<Button icon="v_email" label="Почта" onclick={() => chooseMethod('email')} />
+						<Button icon="v_lock_full" label="Токен" onclick={() => chooseMethod('token')} />
+						<Button icon="v_gear" label="Настройки прокси" onclick={() => { pendingMode = null; setMode('proxy'); }} />
 					</div>
 				{:else if mode === 'email'}
 					<form onsubmit={handleEmailLogin}>
@@ -148,21 +167,42 @@
 					</form>
 				{:else if mode === 'proxy'}
 					<form onsubmit={handleSaveProxy}>
+						<p class="auth__hint">
+							DTF блокирует запросы авторизации из браузера (CORS). Прокси необходим для входа и обновления сессии. Вы можете использовать встроенный прокси или развернуть собственный по инструкции в <a target="_blank" rel="noreferrer" href="https://github.com/re-dtf/proxy">re-dtf/proxy</a>.
+						</p>
 						<Input type="url" placeholder="Ссылка на прокси" name="proxy-url" bind:value={proxyUrl} required />
-						{#if DEFAULT_PROXY_URL}
-							<div class="auth__default-proxy">
-								<Button fullWidth label="Использовать встроенный" onclick={useDefaultProxy} />
-							</div>
-						{/if}
-						<Button type="submit" variant="blue" fullWidth label="Сохранить" />
+						<div class="auth__default-proxy">
+							{#if DEFAULT_PROXY_URL}
+								<a
+									href="#default-proxy"
+									class="auth__default-proxy-link"
+									onclick={(e) => {
+										e.preventDefault();
+										useDefaultProxy();
+									}}
+								>
+									Использовать встроенный
+								</a>
+							{:else}
+								<span
+									class="auth__default-proxy-link auth__default-proxy-link--disabled"
+									title="Встроенный прокси недоступен в этой сборке, используйте свой"
+								>
+									Встроенный прокси недоступен
+								</span>
+							{/if}
+						</div>
+						<Button
+							type="submit"
+							variant="blue"
+							fullWidth
+							label={pendingMode ? 'Продолжить' : 'Сохранить'}
+						/>
 					</form>
 				{/if}
 
 				<div class="auth__footer">
-					<a href="#proxy" onclick={(e) => { e.preventDefault(); setMode('proxy'); }}>О прокси</a>
 					<a target="_blank" rel="noreferrer" href="https://dtf.ru/?modal=auth/signup/email">Регистрация</a>
-					<!-- Без входа в настройки иначе не попасть: кнопка аккаунта в шапке ведёт сюда -->
-					<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
 				</div>
 			</div>
 		</div>
@@ -274,9 +314,37 @@
 		color: var(--text-secondary);
 	}
 
+	.auth__hint a {
+		color: #3766a9;
+		text-decoration: underline;
+	}
+
+	.auth__hint a:hover {
+		opacity: 0.8;
+	}
+
 	.auth__default-proxy {
-		margin-top: -0.5rem;
-		margin-bottom: 1rem;
+		margin-top: -6px;
+		margin-bottom: 16px;
+	}
+
+	.auth__default-proxy-link {
+		color: #3766a9;
+		font-size: 16px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.auth__default-proxy-link:hover:not(.auth__default-proxy-link--disabled) {
+		opacity: 0.8;
+	}
+
+	.auth__default-proxy-link--disabled {
+		color: #8c8c8c;
+		font-size: 15px;
+		font-weight: 400;
+		cursor: not-allowed;
+		user-select: none;
 	}
 
 	.auth__footer {
@@ -287,9 +355,9 @@
 	}
 
 	.auth__footer a {
-		color: var(--text-link);
+		color: #3766a9;
 		font-size: 16px;
-		font-weight: 700;
+		font-weight: 400;
 	}
 
 	/* Сообщения формы — в исходной вёрстке их нет */
