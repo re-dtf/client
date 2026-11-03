@@ -94,7 +94,7 @@ export class CommentsLogic {
 	}
 
 	/** Путь от корня до комментария по реактивному дереву (правки по нему сразу видны) */
-	private pathTo(key: string, nodes: CommentTreeItem[] = this.comments, path: CommentTreeItem[] = []): CommentTreeItem[] | undefined {
+	pathTo(key: string, nodes: CommentTreeItem[] = this.comments, path: CommentTreeItem[] = []): CommentTreeItem[] | undefined {
 		for (const node of nodes) {
 			const next = [...path, node];
 			if (`${node.sourceId}_${node.id}` === key) return next;

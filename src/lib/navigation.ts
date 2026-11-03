@@ -29,7 +29,7 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 };
 
 export function getPostPath(post: { id: number; sourceId: string }, commentId?: number) {
-	if (post.sourceId !== 'dtf') return `/post/${post.id}?source=${post.sourceId}`;
+	if (post.sourceId !== 'dtf') return commentId ? `/post/${post.id}?source=${post.sourceId}&comment=${commentId}` : `/post/${post.id}?source=${post.sourceId}`;
 	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}`;
 }
 
@@ -58,8 +58,59 @@ function nextOverlayId(type: string): string {
 	return `${type}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function findActivePostIndex(postId: number, sourceId: string, overlays: App.OverlayState[]): number {
+	const topPageIndex = overlays.findLastIndex((o) => o.presentation === 'page');
+	if (topPageIndex < 0) return -1;
+	const top = overlays[topPageIndex];
+	if (top.type === 'post' && top.data.postId === postId && (top.data.sourceId ?? 'dtf') === sourceId) {
+		return topPageIndex;
+	}
+	if (top.type === 'notifications' && topPageIndex > 0) {
+		const under = overlays[topPageIndex - 1];
+		if (under.type === 'post' && under.data.postId === postId && (under.data.sourceId ?? 'dtf') === sourceId) {
+			return topPageIndex - 1;
+		}
+	}
+	return -1;
+}
+
 /** Открыть оверлей поверх текущего экрана */
 export function openOverlay(overlay: App.OverlayData) {
+	if (overlay.type === 'post') {
+		const currentOverlays = page.state.overlays ?? [];
+		const sourceId = overlay.data.sourceId ?? 'dtf';
+		const activePostIndex = findActivePostIndex(overlay.data.postId, sourceId, currentOverlays);
+
+		if (activePostIndex >= 0 && currentOverlays[activePostIndex].type === 'post') {
+			const existing = currentOverlays[activePostIndex] as Extract<App.OverlayState, { type: 'post' }>;
+			const updated: App.OverlayState = {
+				...existing,
+				data: { ...existing.data, commentId: overlay.data.commentId, focusNonce: Date.now() }
+			};
+			const nextOverlays = [...currentOverlays.slice(0, activePostIndex), updated];
+			const url = resolve(overlayPath(updated) as '/');
+			return goto(url, {
+				shallow: true,
+				replace: true,
+				state: { overlays: nextOverlays }
+			});
+		}
+
+		if (
+			currentOverlays.length === 0 &&
+			page.route.id === '/post/[id]' &&
+			Number(page.params.id) === overlay.data.postId &&
+			(page.url.searchParams.get('source') || 'dtf') === sourceId
+		) {
+			const url = resolve(getPostPath({ id: overlay.data.postId, sourceId }, overlay.data.commentId) as '/');
+			return goto(url, {
+				shallow: true,
+				replace: true,
+				state: page.state
+			});
+		}
+	}
+
 	const opened: App.OverlayState = { ...overlay, id: nextOverlayId(overlay.type), presentation: PRESENTATION[overlay.type] };
 	// Просмотр картинок остаётся на текущем адресе: это шаг истории для кнопки «Назад», а не страница.
 	// page.url тут не годится: под оверлеями он остаётся адресом нижней страницы, а не поста

@@ -10,11 +10,12 @@
 	import { play, scrollBehavior } from '$lib/motion';
 	import { onDestroy, tick, type Snippet } from 'svelte';
 
-	let { postId, sourceId = 'dtf', commentId, onLoaded, backButton }: {
+	let { postId, sourceId = 'dtf', commentId, focusNonce, onLoaded, backButton }: {
 		postId: number;
 		sourceId?: string;
 		/** Комментарий, к которому прокрутить (из уведомления) */
 		commentId?: number;
+		focusNonce?: number;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	} = $props();
@@ -39,7 +40,7 @@
 	let giveUp: ReturnType<typeof setTimeout>;
 
 	function showPost() {
-		if (commentId === undefined) return;
+		if (commentId === undefined || postShown) return;
 		focusing = true;
 		postShown = true;
 		giveUp = setTimeout(commentsFocused, 15_000);
@@ -51,6 +52,8 @@
 		clearTimeout(giveUp);
 		if (!focusing) return;
 		focusing = false;
+		// Прерываем плавную прокрутку браузера к заглушке, чтобы она не конфликтовала со скроллом к комментарию
+		window.scrollTo({ top: window.scrollY, behavior: 'instant' });
 		await tick();
 		if (commentsBox) play(commentsBox, activeTheme.motion?.feedIn);
 	}
@@ -105,7 +108,7 @@
 			{/if}
 			<!-- Только прозрачность: размытие на слое с тысячами узлов дёргает кадры -->
 			<div class:comments-hidden={focusing} bind:this={commentsBox} {@attach appear('feedIn')}>
-				<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} onfocused={commentsFocused} />
+				<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} onfocused={commentsFocused} />
 			</div>
 		{/await}
 	{/if}

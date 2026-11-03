@@ -21,8 +21,9 @@
 		commentsCount = 0,
 		subscribed = false,
 		focusCommentId,
+		focusNonce,
 		onfocused
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number; onfocused?: () => void } = $props();
+	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number; focusNonce?: number; onfocused?: () => void } = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -149,23 +150,46 @@
 	}
 
 	/** Комментарий из уведомления: догружаем страницы, пока он не найдётся, затем прокручиваем и подсвечиваем */
-	let focused = false;
+	let lastFocusKey: string | undefined;
+	let refetchAttempted = false;
+
+	function scrollToTarget(key: string) {
+		tick().then(() => {
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					const node = document.getElementById(`comment-${key}`);
+					if (!node) return;
+					node.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
+					node.animate(
+						[{ backgroundColor: 'var(--color-blue-tint, #e8f3ff)' }, { backgroundColor: 'transparent' }],
+						{ duration: 2500, easing: 'ease-out' }
+					);
+				});
+			});
+		});
+	}
 	$effect(() => {
-		if (!focusCommentId || focused) return;
+		if (!focusCommentId) return;
+
+		const currentFocusKey = `${focusCommentId}_${focusNonce ?? 0}`;
+		if (currentFocusKey !== lastFocusKey) {
+			lastFocusKey = currentFocusKey;
+			refetchAttempted = false;
+		}
 		const key = commentKey({ sourceId, id: focusCommentId });
 		if (logic.allCommentsMap.has(key)) {
-			focused = true;
+			const path = logic.pathTo(key);
+			if (path) {
+				for (const item of path) collapsed.delete(commentKey(item));
+			}
 			onfocused?.();
-			tick().then(() => {
-				const node = document.getElementById(`comment-${key}`);
-				node?.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
-				node?.animate([{ backgroundColor: '#f5fcff' }, { backgroundColor: 'transparent' }], { duration: 2000 });
-			});
+			scrollToTarget(key);
 		} else if (!logic.loading && logic.hasMore && !logic.error) {
 			untrack(() => logic.loadComments());
+		} else if (!logic.loading && !refetchAttempted && !logic.error) {
+			refetchAttempted = true;
+			untrack(() => logic.loadComments(true));
 		} else if (!logic.loading) {
-			// Комментарий удалён или загрузка упала: дальше искать негде
-			focused = true;
 			onfocused?.();
 		}
 	});
