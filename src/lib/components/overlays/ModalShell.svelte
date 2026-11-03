@@ -79,12 +79,19 @@
 			backdrop-filter 0.45s cubic-bezier(0.2, 0, 0, 1);
 	}
 
-	/* Окно настроек гасит затемнение, пока зажат ползунок (SettingsSlider), чтобы видеть страницу под ним */
-	.modal:has(:global([data-slider-drag])) {
+	/* Окно настроек гасит затемнение, пока зажат ползунок (SettingsSlider) или окно скрыто кнопкой, чтобы видеть страницу под ним */
+	.modal:has(:global([data-slider-drag])),
+	.modal:has(:global([data-fade='active'])) {
 		background-color: transparent;
 		backdrop-filter: none;
 		-webkit-backdrop-filter: none;
 		scrollbar-color: transparent transparent;
+	}
+
+	.modal:has(:global([data-fade='peek'])) {
+		background-color: color-mix(in srgb, var(--modal-backdrop, rgba(0, 0, 0, 0.4)) 35%, transparent);
+		backdrop-filter: blur(1.5px);
+		-webkit-backdrop-filter: blur(1.5px);
 	}
 
 	.wait {

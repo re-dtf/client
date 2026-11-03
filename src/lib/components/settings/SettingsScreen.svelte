@@ -117,76 +117,30 @@
 		scroller?.scrollTo({ top: 0 });
 	}
 	let windowEl = $state<HTMLElement>();
-	let away = $state(false);
-	let idle = $state(false);
-	let idleTimer: ReturnType<typeof setTimeout> | undefined;
+	let faded = $state(false);
+	let peeking = $state(false);
 
-	function clearFadeTimer() {
-		if (idleTimer !== undefined) {
-			clearTimeout(idleTimer);
-			idleTimer = undefined;
-		}
+	function toggleFade() {
+		faded = !faded;
+		peeking = false;
 	}
 
-	function handlePointerMove(e: PointerEvent) {
+	function handleEyeEnter(e: PointerEvent) {
 		if (e.pointerType === 'touch') return;
-		if (windowEl?.hasAttribute('data-slider-drag')) return;
-		if (e.buttons > 0) {
-			clearFadeTimer();
-			away = false;
-			idle = false;
-			return;
-		}
-
-		const inside = Boolean(windowEl && e.target instanceof Node && windowEl.contains(e.target));
-		if (inside) {
-			if (away || idle) {
-				away = false;
-				idle = false;
-				clearFadeTimer();
-			}
-		} else {
-			away = true;
-			if (idle) idle = false;
-			clearFadeTimer();
-			idleTimer = setTimeout(() => {
-				idle = true;
-			}, 750);
-		}
+		if (!faded) peeking = true;
 	}
 
-	function handlePointerLeave(e: PointerEvent) {
+	function handleEyeLeave(e: PointerEvent) {
 		if (e.pointerType === 'touch') return;
-		if (windowEl?.hasAttribute('data-slider-drag')) return;
-		if (e.buttons > 0) return;
-		away = true;
-		if (idle) idle = false;
-		clearFadeTimer();
-		idleTimer = setTimeout(() => {
-			idle = true;
-		}, 750);
+		peeking = false;
 	}
-
-	function handlePointerEnter(e: PointerEvent) {
-		if (e.pointerType === 'touch') return;
-		away = false;
-		idle = false;
-		clearFadeTimer();
-	}
-
-	$effect(() => () => clearFadeTimer());
 </script>
 
-<svelte:window onpointermove={handlePointerMove} />
-
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="window"
 	bind:this={windowEl}
 	data-view={opened ? 'page' : 'list'}
-	data-fade={away ? (idle ? 'idle' : 'away') : undefined}
-	onpointerenter={handlePointerEnter}
-	onpointerleave={handlePointerLeave}
+	data-fade={faded ? 'active' : (peeking ? 'peek' : undefined)}
 >
 	<div class="panes">
 	<nav class="sidebar" aria-label="Разделы настроек">
@@ -286,6 +240,21 @@
 	</main>
 	</div>
 
+	<button
+		class={['icon-button', 'peek', { 'peek--active': faded }]}
+		type="button"
+		aria-label={faded ? 'Показать настройки' : 'Скрыть настройки'}
+		aria-pressed={faded}
+		onclick={toggleFade}
+		onpointerenter={handleEyeEnter}
+		onpointerleave={handleEyeLeave}
+	>
+		<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+			<path d="M1.5 8C3.5 2 12.5 2 14.5 8C12.5 14 3.5 14 1.5 8z" />
+			<circle cx="8" cy="8" r="2" />
+		</svg>
+	</button>
+
 	<button class="icon-button close" type="button" aria-label="Закрыть настройки" onclick={onclose}>
 		<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 			<path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -352,7 +321,7 @@
 		justify-content: center;
 		flex: none;
 		height: var(--st-header);
-		padding: 0 52px;
+		padding: 0 96px;
 	}
 
 	.side-title {
@@ -507,6 +476,34 @@
 		right: 12px;
 	}
 
+	.peek {
+		position: absolute;
+		top: calc((var(--st-header) - 36px) / 2);
+		right: 54px;
+		z-index: 2;
+		transition:
+			background-color var(--duration-base),
+			box-shadow var(--duration-base),
+			color var(--duration-base);
+	}
+
+	.peek--active {
+		background: #ffffff;
+		color: #1e1e1e;
+		box-shadow:
+			0 0 0 1px rgba(0, 0, 0, 0.08),
+			0 2px 8px rgba(0, 0, 0, 0.16);
+		pointer-events: auto;
+	}
+
+	.peek--active:hover {
+		background: #f6f6f7;
+	}
+
+	.peek--active:active {
+		background: #ededef;
+	}
+
 	/* Широкое окно: заголовок панели слева, как подписи групп справа, с запасом воздуха вокруг */
 	@container (min-width: 720px) {
 		.side-bar {
@@ -617,25 +614,48 @@
 			border-radius: 0;
 			box-shadow: none;
 		}
+
+		.close,
+		.peek {
+			top: calc(env(safe-area-inset-top, 0px) + (var(--st-header) - 36px) / 2);
+		}
 	}
 
 	/* Пока зажат ползунок (SettingsSlider), окно растворяется: фон окна гаснет (затемнение подложки убирает ModalShell),
 	   всё вокруг группы с ползунком скрывается, сама группа остаётся целой. Скрываются только соседи на пути к группе:
 	   у вложенных элементов прозрачность иначе перемножалась бы */
+	.panes,
+	.close {
+		transition: opacity var(--fade);
+	}
+
 	.window {
 		--fade: 0.45s cubic-bezier(0.2, 0, 0, 1);
 		transition:
-			opacity var(--fade),
 			background-color var(--fade),
 			box-shadow var(--fade);
 	}
 
-	.window[data-fade='away'] {
-		opacity: 0.9;
+	.window[data-fade='peek'] {
+		background-color: color-mix(in srgb, var(--st-bg) 35%, transparent);
+		box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.02), 0 6px 24px rgba(0, 0, 0, 0.06);
 	}
 
-	.window[data-fade='idle'] {
-		opacity: 0.15;
+	.window[data-fade='peek'] .panes,
+	.window[data-fade='peek'] .close {
+		opacity: 0.35;
+	}
+
+	.window[data-fade='active'] {
+		background-color: transparent;
+		box-shadow: none;
+		pointer-events: none;
+	}
+
+	.window[data-fade='active'] .panes,
+	.window[data-fade='active'] .close {
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	:global(:is(.window, .window *):has(.slider):not(.group, .group *) > :not(:has(.slider), .slider)) {
