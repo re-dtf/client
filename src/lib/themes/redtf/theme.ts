@@ -91,7 +91,7 @@ export default defineTheme({
 			key: 'contentWidth',
 			type: 'slider',
 			title: 'Ширина контента',
-			description: 'Ширина ленты, поста и комментариев на широких экранах.',
+			description: 'Ширина ленты, поста, профиля и комментариев на широких экранах.',
 			steps: [640, 680, 720, 740, 820, 940],
 			default: 640,
 			unit: 'px',

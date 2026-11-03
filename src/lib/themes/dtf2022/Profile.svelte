@@ -283,7 +283,8 @@
 		display: grid;
 		gap: 32px 20px;
 		width: 100%;
-		max-width: 960px;
+		max-width: calc(var(--content-width) + 320px);
+		margin: 0 auto;
 		margin-bottom: 12px;
 	}
 

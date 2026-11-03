@@ -45,11 +45,11 @@
 	}
 
 	/* У страницы профиля своя сетка (контент 640 + сайдбар 300), правой колонки у неё нет */
-	.layout:has(:global(.profile-section)) {
+	.layout:has(:global([data-layer]:not([style*="display: none"]) .profile-section)) {
 		grid-template-columns: var(--sidebar-left-width) 1fr;
 	}
 
-	.layout:has(:global(.profile-section)) > :global(.sidebar-right) {
+	.layout:has(:global([data-layer]:not([style*="display: none"]) .profile-section)) > :global(.sidebar-right) {
 		display: none;
 	}
 
@@ -64,7 +64,7 @@
 		}
 	}
 
-	.layout.layout--no-left:has(:global(.profile-section)) {
+	.layout.layout--no-left:has(:global([data-layer]:not([style*="display: none"]) .profile-section)) {
 		grid-template-columns: 1fr;
 	}
 

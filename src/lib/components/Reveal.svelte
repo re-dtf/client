@@ -108,6 +108,13 @@
 		width: 100%;
 	}
 
+	.stage {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		width: 100%;
+	}
+
 	/* Одинокий спиннер страницы: чуть ниже шапки, а не прижат к ней */
 	.bare {
 		display: flex;
