@@ -1,6 +1,7 @@
 <script lang="ts">
-	import type { CursorData, Post, ProfileSorting as Sorting } from '$lib/api/types';
+	import type { CursorData, Post, Profile, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
+	import Reveal from './Reveal.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { untrack } from 'svelte';
 
@@ -53,38 +54,56 @@
 		untrack(() => loadPosts(true));
 	});
 
+	let profile = $state.raw<Profile>();
+	let profileError = $state<string>();
+
+	// Профиль загружается один раз на оверлей, поэтому запись состояния здесь не зацикливается
 	$effect(() => {
-		profilePromise.then((profile) => onLoaded?.(profile.name)).catch(() => onLoaded?.('Ошибка'));
+		const promise = profilePromise;
+		profile = profileError = undefined;
+		promise.then(
+			(value) => {
+				if (promise !== profilePromise) return;
+				profile = value;
+				onLoaded?.(value.name);
+			},
+			(e) => {
+				if (promise !== profilePromise) return;
+				profileError = e.message;
+				onLoaded?.('Ошибка');
+			}
+		);
 	});
 </script>
 
-{#await profilePromise}
-	<ThemeLoader componentName="Spinner" />
-{:then profile}
-	<ThemeLoader
-		componentName="Profile"
-		{profile}
-		{posts}
-		{sorting}
-		{hasMore}
-		{loadingPosts}
-		{postsError}
-		{subscribersPromise}
-		{subscriptionsPromise}
-		onSortingChange={(value: Sorting) => (sorting = value)}
-		loadMore={() => loadPosts()}
-	>
-		<!-- Фолбэк для тем без своего профиля -->
-		<div class="profile-fallback">
-			<h1>{profile.name}</h1>
-			{#if profile.url}
-				<a href={profile.url} target="_blank" rel="noreferrer">Открыть профиль на DTF</a>
-			{/if}
-		</div>
-	</ThemeLoader>
-{:catch error}
-	<div class="profile-fallback">{error.message}</div>
-{/await}
+<Reveal ready={profile !== undefined || profileError !== undefined} anim="contentIn">
+	{#if profile}
+		{@const loaded = profile}
+			<ThemeLoader
+				componentName="Profile"
+				profile={loaded}
+				{posts}
+				{sorting}
+				{hasMore}
+				{loadingPosts}
+				{postsError}
+				{subscribersPromise}
+				{subscriptionsPromise}
+				onSortingChange={(value: Sorting) => (sorting = value)}
+				loadMore={() => loadPosts()}
+			>
+				<!-- Фолбэк для тем без своего профиля -->
+				<div class="profile-fallback">
+					<h1>{loaded.name}</h1>
+					{#if loaded.url}
+						<a href={loaded.url} target="_blank" rel="noreferrer">Открыть профиль на DTF</a>
+					{/if}
+				</div>
+			</ThemeLoader>
+	{:else}
+		<div class="profile-fallback">{profileError}</div>
+	{/if}
+</Reveal>
 
 <style>
 	.profile-fallback {

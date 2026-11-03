@@ -51,7 +51,7 @@
 		width: 100%;
 		max-width: var(--content-width);
 		/* верхний отступ ленты (padding страницы у DTF) */
-		margin-top: 16px;
+		margin: 16px auto 0;
 		padding: 4px 0 12px 8px;
 	}
 

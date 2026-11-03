@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Preloader from './ui/Preloader.svelte';
-	let { inline = false }: { inline?: boolean } = $props();
+	let { inline = false, block = false }: { inline?: boolean; block?: boolean } = $props();
 </script>
 
 <div class="spinner-wrapper" class:inline>

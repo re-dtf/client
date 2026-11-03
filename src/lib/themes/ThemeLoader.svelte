@@ -35,7 +35,7 @@
 
 <script lang="ts" generics="N extends keyof ThemeComponents">
 	import type { Snippet } from 'svelte';
-	import Self from './ThemeLoader.svelte';
+	import DelayedSpinner from './DelayedSpinner.svelte';
 	import { activeTheme } from './index.svelte';
 	import type { ThemeComponents } from './contract';
 
@@ -67,7 +67,7 @@
 {:else}
 	{#await load(path)}
 		{#if componentName !== 'Spinner'}
-			<Self componentName="Spinner" />
+			<DelayedSpinner />
 		{/if}
 	{:then Loaded}
 		<Loaded {...props} />

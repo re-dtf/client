@@ -1,5 +1,34 @@
-import { fluent } from '$lib/motion';
+import { ease, fluent, type ThemeMotion } from '$lib/motion';
 import { defineTheme } from '../types';
+
+// Содержимое «материализуется» из размытия, как приветствие. Размытие только у страниц: на длинной ленте слой слишком велик.
+// Страницы прикреплены к шапке и не сдвигаются
+const motion: ThemeMotion = {
+	...fluent,
+	grow: { duration: 600, easing: ease.out },
+	placeholderOut: 220,
+	// Страница не смещается и не масштабируется (на краях картинок проступают полосы фона): проявляется на месте из размытия
+	contentIn: {
+		keyframes: [{ opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)' }],
+		duration: 750,
+		easing: ease.out
+	},
+	// Только прозрачность: слой (лента или страница) выходит на экран целиком, на длинной ленте не нужно ни размытия, ни сдвига
+	pageIn: { keyframes: [{ opacity: 0 }, { opacity: 1 }], duration: 450, easing: ease.out },
+	// Уходящая страница чуть приближается, размывается и растворяется; слой под ней подплывает снизу.
+	// Сдвиг только по вертикали и без масштаба: у длинной ленты центр масштаба был бы далеко от экрана
+	pageOut: {
+		keyframes: [
+			{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
+			{ opacity: 0, transform: 'scale(1.06)', filter: 'blur(12px)' }
+		],
+		duration: 420,
+		easing: ease.standard
+	},
+	pageBack: { keyframes: [{ opacity: 0, transform: 'translateY(36px)' }, { opacity: 1, transform: 'none' }], duration: 560, easing: ease.out },
+	mediaIn: { keyframes: [{ opacity: 0 }, { opacity: 1 }], duration: 400, easing: ease.out },
+	feedIn: { keyframes: [{ opacity: 0, transform: 'translateY(32px) scale(0.99)' }, { opacity: 1, transform: 'none' }], duration: 650, easing: ease.out },
+};
 
 export default defineTheme({
 	// Форк
@@ -62,5 +91,5 @@ export default defineTheme({
 			cssVars: (width) => ({ '--content-width': `${width}px`, '--inner-content-width': `${width - 40}px` })
 		}
 	],
-	motion: fluent,
+	motion,
 });

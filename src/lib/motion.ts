@@ -3,15 +3,23 @@
  * Тема без поля motion не анимирует ничего. Подробнее: docs/architecture/motion.md.
  */
 
-/** Одна анимация: ключевые кадры Web Animations, длительность в мс и кривая CSS */
-export interface Anim {
-	keyframes: Keyframe[];
+/** Длительность в мс и кривая CSS */
+export interface Timing {
 	duration: number;
 	easing: string;
 }
 
+/** Одна анимация: ключевые кадры Web Animations и время */
+export interface Anim extends Timing {
+	keyframes: Keyframe[];
+}
+
 /** Какие анимации есть у темы; чего нет, того не анимируем */
 export interface ThemeMotion {
+	/** Блок-заглушка загрузки заменяется содержимым: высота переезжает от заглушки к содержимому (см. Reveal) */
+	grow?: Timing;
+	/** Сколько мс заглушка загрузки тает поверх растущего блока */
+	placeholderOut?: number;
 	/** Окно (вход, настройки, редактор) готово и появляется */
 	modalIn?: Anim;
 	/** Окно закрывается: проигрывается на подложке вместе с окном */
@@ -20,7 +28,18 @@ export interface ThemeMotion {
 	contentIn?: Anim;
 	/** Пришёл список ленты */
 	feedIn?: Anim;
+	/** Картинка или видео в посте догрузились: проявляются поверх цветной заглушки, а не выскакивают */
+	mediaIn?: Anim;
+	/** Страницу закрыли: она остаётся на месте поверх слоя под ней и уходит, пока тот возвращается (`pageBack`) */
+	pageOut?: Anim;
+	/** Слой под закрытой страницей (лента или прежняя страница) возвращается на экран; без неё берётся `pageIn` */
+	pageBack?: Anim;
+	/** Страницу открыли или закрыли: слой, который встал наверх (страница или лента под ней), выходит на экран */
+	pageIn?: Anim;
 }
+
+/** Поля ThemeMotion, которые являются анимациями (их проигрывает `play`) */
+export type AnimKey = 'modalIn' | 'modalOut' | 'contentIn' | 'feedIn' | 'mediaIn' | 'pageIn' | 'pageOut' | 'pageBack';
 
 /** Кривые: QuarticEase и Fluent */
 export const ease = {
@@ -74,10 +93,36 @@ export const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)'
 export const scrollBehavior = (): ScrollBehavior => (reducedMotion() ? 'auto' : 'smooth');
 
 /**
+ * Плавно изменить высоту блока с `from` до нынешней. Растёт не дальше `from` + экран: остальное ниже сгиба,
+ * его не видно, а длинную ленту иначе пришлось бы «разворачивать» на десятки тысяч пикселей.
+ */
+export function grow(el: HTMLElement, from: number, timing?: Timing) {
+	if (!timing || reducedMotion()) return;
+	const to = Math.min(el.offsetHeight, from + innerHeight);
+	if (Math.abs(to - from) < 2) return;
+	el.style.overflow = 'clip';
+	const animation = el.animate({ height: [`${from}px`, `${to}px`] }, { ...timing });
+	animation.onfinish = animation.oncancel = () => el.style.removeProperty('overflow');
+}
+
+/**
  * Проиграть анимацию на элементе. Без анимации или при «уменьшить движение» в системе не делает ничего.
  * fill: 'forwards' для ухода, чтобы элемент не мелькнул прежним видом перед удалением.
  */
 export function play(el: Element, anim?: Anim, fill: FillMode = 'none') {
 	if (!anim || reducedMotion()) return;
-	el.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill });
+	return el.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill });
+}
+
+/**
+ * Проиграть анимацию на детях элемента. Если у ребёнка `display: contents`,
+ * анимируются его непосредственные потомки (обёртка `display: contents` не имеет геометрии).
+ */
+export function playChildren(parent: Element, anim?: Anim, fill: FillMode = 'none') {
+	if (!anim || reducedMotion()) return;
+	for (const child of parent.children) {
+		for (const el of getComputedStyle(child).display === 'contents' ? child.children : [child]) {
+			play(el, anim, fill);
+		}
+	}
 }

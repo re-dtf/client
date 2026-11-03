@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
+	import type { Post } from '$lib/api/types';
+	import Reveal from './Reveal.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { markCommentsStart, trackPostClosed, trackPostLoaded } from '$lib/storage/stats.svelte';
 	import { nextPaint } from '$lib/ready';
 	import { appear } from '$lib/themes/appear';
-	import { onDestroy, type Snippet } from 'svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
+	import { play, scrollBehavior } from '$lib/motion';
+	import { onDestroy, tick, type Snippet } from 'svelte';
 
 	let { postId, sourceId = 'dtf', commentId, onLoaded, backButton }: {
 		postId: number;
@@ -20,44 +24,91 @@
 	// Комментарии рисуются после кадра с постом: тысячи их узлов иначе задерживают и сам пост
 	const commentsTurn = postPromise.then(nextPaint, () => {});
 
+	let post = $state.raw<Post>();
+	let error = $state<string>();
+	// Комментарии (тысячи узлов) строятся, когда пост уже показан и его анимация закончилась
+	let postShown = $state(false);
+
+	/*
+	 * Ссылка на комментарий. Как только пост показан, идём к месту комментариев и показываем там заглушку, а сами комментарии
+	 * строятся скрытыми, пока догружаются до нужного. Нашли (или не нашли) — показываем список, и тема прокручивает к комментарию.
+	 */
+	let focusing = $state(false);
+	let waitBox = $state<HTMLElement>();
+	let commentsBox = $state<HTMLElement>();
+	let giveUp: ReturnType<typeof setTimeout>;
+
+	function showPost() {
+		if (commentId === undefined) return;
+		focusing = true;
+		postShown = true;
+		giveUp = setTimeout(commentsFocused, 15_000);
+		// Если комментарий нашёлся раньше, чем началась прокрутка к заглушке, она уже не нужна: иначе перебьёт прокрутку к комментарию
+		commentsTurn.then(tick).then(() => focusing && waitBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() }));
+	}
+
+	async function commentsFocused() {
+		clearTimeout(giveUp);
+		if (!focusing) return;
+		focusing = false;
+		await tick();
+		if (commentsBox) play(commentsBox, activeTheme.motion?.feedIn);
+	}
+
+
 	$effect(() => {
 		postPromise
-			.then(post => {
-				trackPostLoaded(post);
-				onLoaded?.(post.title);
+			.then((loaded) => {
+				post = loaded;
+				trackPostLoaded(loaded);
+				onLoaded?.(loaded.title);
+
 			})
-			.catch(() => onLoaded?.('Ошибка'));
+			.catch((e) => {
+				error = e.message;
+				onLoaded?.('Ошибка');
+			});
 	});
 
 	onDestroy(() => {
+		clearTimeout(giveUp);
 		postPromise.then(trackPostClosed, () => {});
 	});
 </script>
 
 <div class="post-screen">
-	{#await postPromise}
-		<div class="spinner-wrapper">
-			<ThemeLoader componentName="Spinner" />
-		</div>
-	{:then post}
-		<div {@attach appear('contentIn')}>
-			<ThemeLoader componentName="Post" {post} preview={false} />
-		</div>
-		<!-- Граница поста и комментариев для статистики: сколько времени пользователь в комментариях -->
-		<div {@attach (el) => markCommentsStart(post, el)}></div>
+	<Reveal ready={post !== undefined || error !== undefined} anim="contentIn" onshow={showPost} onreveal={() => (postShown = true)}>
+		{#snippet children()}
+			{#if post}
+				{@const loaded = post}
+				<ThemeLoader componentName="Post" post={loaded} preview={false} />
+				<!-- Граница поста и комментариев для статистики: сколько времени пользователь в комментариях -->
+				<div {@attach (el) => markCommentsStart(loaded, el)}></div>
+				{#if backButton}
+					<div class="actions">
+						{@render backButton()}
+					</div>
+				{/if}
+			{:else}
+				<div class="message error">{error}</div>
+			{/if}
+		{/snippet}
+	</Reveal>
+
+	{#if post && postShown}
+		{@const loaded = post}
 		{#await commentsTurn then}
-			<div {@attach appear('contentIn')}>
-				<ThemeLoader componentName="Comments" postId={post.id} sourceId={post.sourceId} commentsCount={post.commentsCount} subscribed={post.isSubscribedToComments} focusCommentId={commentId} />
+			{#if focusing}
+				<div class="comments-wait" bind:this={waitBox}>
+					<ThemeLoader componentName="Spinner" block />
+				</div>
+			{/if}
+			<!-- Только прозрачность: размытие на слое с тысячами узлов дёргает кадры -->
+			<div class:comments-hidden={focusing} bind:this={commentsBox} {@attach appear('feedIn')}>
+				<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} onfocused={commentsFocused} />
 			</div>
 		{/await}
-		{#if backButton}
-			<div class="actions">
-				{@render backButton()}
-			</div>
-		{/if}
-	{:catch error}
-		<div class="message error">{error.message}</div>
-	{/await}
+	{/if}
 </div>
 
 <style>
@@ -67,6 +118,14 @@
 		max-width: var(--post-screen-max-width, 800px);
 		margin: 0 auto;
 		padding: var(--post-screen-padding, 20px 0);
+	}
+	/* Заглушка комментариев: стоит там, где будет список, и не уезжает под шапку при прокрутке к ней */
+	.comments-wait {
+		--placeholder-height: 60vh;
+		scroll-margin-top: var(--header-height, 60px);
+	}
+	.comments-hidden {
+		display: none;
 	}
 	.message {
 		text-align: center;

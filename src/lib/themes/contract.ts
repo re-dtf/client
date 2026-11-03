@@ -23,7 +23,16 @@ export interface ThemeComponents {
 		switchPeriod: (period: Period) => void;
 	};
 	Post: { post: Post; preview?: boolean };
-	Comments: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number };
+	Comments: {
+		postId: number;
+		sourceId?: string;
+		commentsCount?: number;
+		subscribed?: boolean;
+		/** Комментарий, к которому прокрутить (из ссылки или уведомления); комментарии догружаются, пока он не найдётся */
+		focusCommentId?: number;
+		/** Поиск `focusCommentId` закончился (нашли или не нашли): вызывается до прокрутки, чтобы экран успел показать список */
+		onfocused?: () => void;
+	};
 	Profile: {
 		profile: Profile;
 		posts: Post[];
@@ -40,6 +49,7 @@ export interface ThemeComponents {
 	Notifications: {};
 	LoginModal: {};
 	EditorScreen: { session: any };
-	Spinner: { inline?: boolean };
+	/** `inline` — маленький, в потоке; `block` — заглушка на месте содержимого экрана (если тема так умеет); без них — обычный на своём месте */
+	Spinner: { inline?: boolean; block?: boolean };
 	ReloadPrompt: {};
 }

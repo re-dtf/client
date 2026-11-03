@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
+	import ThemeLoader, { preloadThemeComponent } from '$lib/themes/ThemeLoader.svelte';
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
 	import ProfileContent from '$lib/components/ProfileContent.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
@@ -21,6 +21,8 @@
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
+	import { play, playChildren, reducedMotion } from '$lib/motion';
+	import { feed } from '$lib/feed.svelte';
 	import { loadThemeStyles, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	
@@ -41,6 +43,27 @@
 		return { duration: 1 };
 	}
 	
+	// Геометрия страницы, которую закрывают: снимается до того, как DOM поменяет слои
+	let leaving: { layer: string; rect: DOMRect } | undefined;
+
+	/**
+	 * Закрытие страницы с анимацией темы (`pageOut`): страница остаётся на месте, но «прилипает» к окну, пока тает поверх ленты,
+	 * которая проявляется под ней. Без анимации темы работает короткий `deferDestroy`.
+	 */
+	function leavePage(node: HTMLElement) {
+		const anim = activeTheme.motion?.pageOut;
+		const screen = node.firstElementChild as HTMLElement | null;
+		const from = leaving && leaving.layer === node.dataset.layer ? leaving.rect : undefined;
+		if (!anim || reducedMotion() || !screen || !from?.height) return deferDestroy(node);
+
+		// Слой ограничен экраном (длинная страница с размытием иначе рендерилась бы целиком): прокруткой внутри него показываем ту же часть
+		const top = Math.max(from.top, 0);
+		Object.assign(screen.style, { position: 'fixed', top: `${top}px`, left: `${from.left}px`, width: `${from.width}px`, height: `${innerHeight - top}px`, overflow: 'hidden', margin: '0', zIndex: '90', pointerEvents: 'none' });
+		screen.scrollTop = top - from.top;
+		screen.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill: 'forwards' });
+		return { duration: anim.duration };
+	}
+
 	let overlays = $derived(page.state.overlays || []);
 
 	// Для статистики: где пользователь и какой пост у него открыт (под верхним оверлеем посты не считаются)
@@ -66,23 +89,45 @@
 	let scrollPositions = new Map<string, number>();
 	let activeScrollId = $derived(overlays.findLast(o => o.presentation === 'page')?.id ?? '__feed__');
 	let previousScrollId = '__feed__';
+	let previousDepth = 0;
 
 	$effect.pre(() => {
 		// Save scroll of the outgoing layer before DOM hides it
 		if (activeScrollId !== previousScrollId) {
 			scrollPositions.set(previousScrollId, window.scrollY);
+			const outgoing = document.querySelector(`[data-layer="${previousScrollId}"]`)?.firstElementChild;
+			leaving = outgoing ? { layer: previousScrollId, rect: outgoing.getBoundingClientRect() } : undefined;
 		}
 	});
 
 	$effect(() => {
 		// Restore scroll of the incoming layer after DOM shows it
 		if (activeScrollId !== previousScrollId) {
+			if (activeScrollId === '__feed__' && feed.consumeScrollReset()) {
+				scrollPositions.set('__feed__', 0);
+			}
 			const savedScroll = scrollPositions.get(activeScrollId) || 0;
-			previousScrollId = activeScrollId;
+			const layer = activeScrollId;
+			const closing = overlays.length < previousDepth;
+			previousScrollId = layer;
+			// Сразу, до первой отрисовки слоя: иначе на кадр виден верх страницы. После tick позиция ставится ещё раз —
+			// SvelteKit при возврате по истории прокручивает сам и может перебить
+			window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
 			tick().then(() => {
 				window.scrollTo({ top: savedScroll, left: 0, behavior: 'instant' });
+
+				// Слои сменяются мгновенно, поэтому новый проявляется, а не выскакивает.
+				// На проскролленной ленте сдвиг многотысячепиксельного слоя рвёт кадры — берём pageIn (только прозрачность)
+				const anim = closing && savedScroll < 300 ? (activeTheme.motion?.pageBack ?? activeTheme.motion?.pageIn) : activeTheme.motion?.pageIn;
+				const target = document.querySelector(`[data-layer="${layer}"]`);
+				if (target) playChildren(target, anim);
+
+
+
+
 			});
 		}
+		previousDepth = overlays.length;
 	});
 
 	// Стили темы подключаются лениво. data-theme ставится после загрузки стилей, чтобы не было
@@ -127,7 +172,15 @@
 			})();
 		}
 
-		return stopTracking;
+		// Пока пользователь смотрит ленту, догружаем то, что откроется следующим: пост не должен начинаться со спиннера компонента
+		const idle = (window.requestIdleCallback ?? setTimeout)(() => {
+			for (const name of ['Post', 'Comments', 'Profile', 'Notifications'] as const) preloadThemeComponent(activeTheme.chain, name);
+		});
+
+		return () => {
+			stopTracking();
+			(window.cancelIdleCallback ?? clearTimeout)(idle);
+		};
 	});
 </script>
 
@@ -157,13 +210,13 @@
 
 	<ThemeLoader componentName="MainLayout">
 		<!-- display: contents — обёртки не должны ломать раскладку темы (flex/grid в MainLayout) -->
-		<div style:display={topmostPageOverlayIndex >= 0 ? 'none' : 'contents'}>
+		<div data-layer="__feed__" style:display={topmostPageOverlayIndex >= 0 ? 'none' : 'contents'}>
 			{@render children()}
 		</div>
 
 		{#each overlays as overlay, index (overlay.id)}
 			{#if overlay.presentation === 'page'}
-				<div class="overlay-wrapper" style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'} out:deferDestroy|global>
+				<div class="overlay-wrapper" data-layer={overlay.id} style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'} out:leavePage|global>
 					{@render overlayContent(overlay)}
 				</div>
 			{/if}

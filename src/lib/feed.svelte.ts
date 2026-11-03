@@ -1,6 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
+import { scrollBehavior } from './motion';
 
 /** Ленты на главной. Выбранная лента лежит в адресе: /?feed=new */
 export const FEEDS = ['popular', 'new', 'my'] as const;
@@ -32,6 +33,7 @@ export function feedPath(feed: FeedName, period: Period = DEFAULT_PERIOD): strin
 let current = $state<FeedName>(DEFAULT_FEED);
 let currentPeriod = $state<Period>(DEFAULT_PERIOD);
 let refreshCount = $state(0);
+let resetScrollPending = false;
 
 /** Лента из адреса. Пока поверх ленты открыт оверлей, в адресе его путь, а не лента, и остаётся прежняя */
 export function feedFromUrl(): FeedName {
@@ -60,10 +62,36 @@ export const feed = {
 	},
 	refresh() {
 		refreshCount++;
+	},
+	/** Запрос на сброс скролла ленты к началу (при явном клике по табам в шапке/меню) */
+	resetScroll() {
+		resetScrollPending = true;
+	},
+	consumeScrollReset() {
+		const pending = resetScrollPending;
+		resetScrollPending = false;
+		return pending;
 	}
 };
 
-/** Открыть ленту. Работает из любого места, в том числе из-под оверлея или со страницы поста */
-export function openFeedTab(name: FeedName, period?: Period) {
+/**
+ * Открыть ленту. Работает из любого места, в том числе из-под оверлея или со страницы поста.
+ * Нажатие на ту ленту, что уже открыта, обновляет её, как клик по логотипу.
+ */
+export function openFeedTab(name: FeedName, period: Period = DEFAULT_PERIOD) {
+	const onFeed = page.route.id === '/' && !page.state.overlays?.length;
+	if (onFeed && feedFromUrl() === name && periodFromUrl() === period) {
+		window.scrollTo({ top: 0, behavior: scrollBehavior() });
+		refreshCount++;
+		return Promise.resolve();
+	}
+
+	// Вкладка подсвечивается и лента начинает грузиться сразу, не дожидаясь смены адреса
+	current = name;
+	currentPeriod = period;
+	feed.resetScroll();
+	if (onFeed) {
+		window.scrollTo({ top: 0, behavior: 'instant' });
+	}
 	return goto(resolve(feedPath(name, period) as '/'), { reset: false });
 }

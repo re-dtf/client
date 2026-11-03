@@ -2,10 +2,12 @@
 	import { resolve } from '$app/paths';
 	import { api } from '$lib/api/index.svelte';
 	import type { Post } from '$lib/api/types';
+	import { feed } from '$lib/feed.svelte';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import { formatNumber } from './format';
 	import Preloader from './ui/Preloader.svelte';
+	import { untrack } from 'svelte';
 
 	// Новости — дополнение к ленте: пока грузятся или при ошибке виджета просто нет
 	let news = $state.raw<Post[]>([]);
@@ -14,12 +16,12 @@
 	let hasMore = $state(true);
 
 	// Как у DTF: порция приходит с сервера по id последней новости, «Показать ещё» запрашивает следующую
-	async function loadMore() {
+	async function loadMore(replace = false) {
 		if (loading) return;
 		loading = true;
 		try {
-			const page = await api.getEditorialNews(lastId);
-			news = [...news, ...page.items];
+			const page = await api.getEditorialNews(replace ? 0 : lastId);
+			news = replace ? page.items : [...news, ...page.items];
 			lastId = page.lastId ?? lastId;
 			hasMore = page.items.length > 0;
 		} catch (e) {
@@ -30,6 +32,15 @@
 	}
 
 	loadMore();
+
+	// Клик по логотипу или повторный клик по вкладке ленты: обновить новости
+	let handledRefresh = feed.refreshCount;
+	$effect(() => {
+		if (feed.refreshCount !== handledRefresh) {
+			handledRefresh = feed.refreshCount;
+			untrack(() => loadMore(true));
+		}
+	});
 </script>
 
 {#if news.length > 0}
@@ -52,7 +63,7 @@
 				{#if loading}
 					<Preloader />
 				{:else}
-					<div class="news-widget__load-more" role="button" tabindex="0" onclick={loadMore} onkeydown={clickOnKey}>
+					<div class="news-widget__load-more" role="button" tabindex="0" onclick={() => loadMore()} onkeydown={clickOnKey}>
 						<span>Показать ещё</span>
 						<svg height="9" width="10" class="icon" aria-hidden="true">
 							<use href="/icons.svg#v_arrow_down"></use>
@@ -71,6 +82,7 @@
 		gap: 12px;
 		width: 100%;
 		max-width: var(--content-width);
+		margin: 0 auto;
 		padding: 20px;
 		border-radius: 8px;
 		background: var(--bg-card);
@@ -104,6 +116,7 @@
 
 	@media (max-width: 639px) {
 		.news-widget {
+			margin-top: 0;
 			padding: 20px 16px;
 			border-radius: 0;
 		}

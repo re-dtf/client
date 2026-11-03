@@ -39,9 +39,14 @@ export async function assetsReady(root: HTMLElement, timeout = 4000) {
 
 	for (const el of [root, ...root.querySelectorAll<HTMLElement>('*')]) {
 		if (el instanceof HTMLImageElement) {
-			if (!el.complete) pending.push(el.decode().catch(() => {}));
+			// Ленивая картинка далеко внизу не загрузится, пока до неё не доскроллят: ждать её до таймаута незачем
+			const far = el.loading === 'lazy' && el.getBoundingClientRect().top > innerHeight + 800;
+			if (!el.complete && !far) pending.push(el.decode().catch(() => {}));
 		} else {
-			bgUrls(getComputedStyle(el).backgroundImage).forEach((url) => backgrounds.add(url));
+			// Пропускаем текстовые и строчные теги, чтобы не вызывать getComputedStyle на сотнях узлов
+			if (!/^(SPAN|P|B|I|EM|STRONG|A|SVG|PATH|CODE|PRE|TIME|SMALL)$/.test(el.tagName)) {
+				bgUrls(getComputedStyle(el).backgroundImage).forEach((url) => backgrounds.add(url));
+			}
 		}
 	}
 	backgrounds.forEach((url) => pending.push(loadImage(url)));

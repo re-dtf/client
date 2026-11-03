@@ -19,8 +19,9 @@
 		sourceId = 'dtf',
 		commentsCount = 0,
 		subscribed = false,
-		focusCommentId
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number } = $props();
+		focusCommentId,
+		onfocused
+	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number; onfocused?: () => void } = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -150,13 +151,18 @@
 		const key = commentKey({ sourceId, id: focusCommentId });
 		if (logic.allCommentsMap.has(key)) {
 			focused = true;
+			onfocused?.();
 			tick().then(() => {
 				const node = document.getElementById(`comment-${key}`);
-				node?.scrollIntoView({ block: 'center' });
+				node?.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
 				node?.animate([{ backgroundColor: '#f5fcff' }, { backgroundColor: 'transparent' }], { duration: 2000 });
 			});
-		} else if (!logic.loading && logic.hasMore) {
+		} else if (!logic.loading && logic.hasMore && !logic.error) {
 			untrack(() => logic.loadComments());
+		} else if (!logic.loading) {
+			// Комментарий удалён или загрузка упала: дальше искать негде
+			focused = true;
+			onfocused?.();
 		}
 	});
 

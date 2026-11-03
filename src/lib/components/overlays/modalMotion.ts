@@ -1,4 +1,4 @@
-import { backdropIn, play } from '$lib/motion';
+import { backdropIn, play, playChildren } from '$lib/motion';
 import { activeTheme } from '$lib/themes/index.svelte';
 
 /*
@@ -13,7 +13,7 @@ export function backdropShow(backdrop: Element) {
 
 /** Окно появляется. Обёртки display: contents анимировать нельзя, поэтому играем на их детях */
 export function modalShow(parent: Element) {
-	for (const child of parent.children) play(child, activeTheme.motion?.modalIn);
+	playChildren(parent, activeTheme.motion?.modalIn);
 }
 
 // Svelte вызывает функцию перехода не один раз, а уход должен стартовать однажды

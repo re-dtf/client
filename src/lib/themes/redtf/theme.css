@@ -105,3 +105,56 @@
 		padding-inline: var(--page-gutter);
 	}
 }
+
+/* Индикатор загрузки: тонкое кольцо вместо трёх точек. Точки рисует Preloader основы (его же берут её компоненты),
+   поэтому кольцо задаётся здесь, поверх него, а сами точки прячутся */
+:root[data-theme~="redtf"] .preloader {
+	position: relative;
+	display: block;
+	flex-shrink: 0;
+	width: 22px;
+	height: 22px;
+}
+
+:root[data-theme~="redtf"] .preloader__dot {
+	display: none;
+}
+
+:root[data-theme~="redtf"] .preloader::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: conic-gradient(from 0deg, transparent 5%, var(--color-accent));
+	mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+	animation: redtf-spin 0.8s linear infinite;
+}
+
+@keyframes redtf-spin {
+	to {
+		rotate: 360deg;
+	}
+}
+
+/* Отклик на нажатие и наведение у кнопок шапки и мобильной строки */
+:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .header-profile__toggle, .mobile-bar__link) {
+	transition:
+		opacity 0.2s ease,
+		color 0.2s ease,
+		scale 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .header-profile__toggle, .mobile-bar__link):active {
+	scale: 0.92;
+}
+
+/* Цветные заглушки картинок и видео: доминантный цвет разбавлен светлым, чтобы тёмные блоки не вспыхивали перед появлением медиа */
+:root[data-theme~="redtf"] .media-placeholder {
+	background: color-mix(in srgb, var(--media-bg, #ccc) 55%, #e6e6e6);
+}
+
+/* Заглушка комментариев встаёт на место их белой подложки: она шире ленты и без скруглений */
+:root[data-theme~="redtf"] .comments-wait {
+	--placeholder-width: 1020px;
+	--placeholder-radius: 0px;
+}

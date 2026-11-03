@@ -15,7 +15,7 @@
 	 */
 	let { index, preload, children }: { index: number; preload?: keyof ThemeComponents; children: Snippet } = $props();
 
-	const SPINNER_DELAY = 800;
+	const SPINNER_DELAY = 300;
 
 	let mounted = $state(false);
 	let ready = $state(false);
