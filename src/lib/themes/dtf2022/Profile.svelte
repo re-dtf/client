@@ -249,7 +249,7 @@
 			{/if}
 		</div>
 
-		<div class="profile-head__avatar" data-morph-target="avatar">
+		<div class="profile-head__avatar">
 			<div class="profile-avatar-wrap">
 				<button
 					type="button"

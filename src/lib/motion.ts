@@ -49,8 +49,6 @@ export interface ThemeMotion {
 	depart?: Anim;
 	/** Новый экран приближается к зрителю (Approach) */
 	approach?: Anim;
-	/** Раскрытие прямоугольника из карточки в экран (Container Transform) */
-	container?: Timing;
 }
 
 /** Поля ThemeMotion, которые являются анимациями (их проигрывает `play`) */
@@ -142,10 +140,6 @@ export const fluent: ThemeMotion = {
 			{ transform: 'scale(0.95)', opacity: 1, offset: 0.15 },
 			{ transform: 'none', opacity: 1 }
 		],
-		duration: 500,
-		easing: ease.out
-	},
-	container: {
 		duration: 500,
 		easing: ease.out
 	}

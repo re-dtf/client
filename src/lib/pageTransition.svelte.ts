@@ -12,8 +12,6 @@ import { tick } from 'svelte';
 export interface ClickOrigin {
 	rect: DOMRect;
 	point: { x: number; y: number };
-	morph?: 'card' | 'avatar';
-	avatarSrc?: string;
 }
 
 const SLOW_DELAY = 1500; // Порог перехода в фазу Hold (живое размытие + спиннер)
@@ -39,18 +37,6 @@ let currentIncomingAnim: Animation | undefined;
 let slowTimer: ReturnType<typeof setTimeout> | undefined;
 let hadHoldBlur = false;
 
-/** Рассчитать начальный clip-path для Container Transform */
-export function computeContainerClip(
-	cardRect: { top: number; left: number; right: number; bottom: number },
-	screenRect: { top: number; left: number; right: number; bottom: number }
-): string {
-	const top = Math.max(0, Math.round(cardRect.top - screenRect.top));
-	const left = Math.max(0, Math.round(cardRect.left - screenRect.left));
-	const right = Math.max(0, Math.round(screenRect.right - cardRect.right));
-	const bottom = Math.max(0, Math.round(screenRect.bottom - cardRect.bottom));
-	return `inset(${top}px ${right}px ${bottom}px ${left}px round 8px)`;
-}
-
 /** Проверить, поддерживает ли текущая тема анимацию перехода */
 export function shouldTransition(): boolean {
 	if (typeof window === 'undefined') return false;
@@ -59,43 +45,17 @@ export function shouldTransition(): boolean {
 	return Boolean(m.recede && m.approach);
 }
 
-/** Извлечь url фонового изображения или img */
-function extractAvatarUrl(el: HTMLElement): string | undefined {
-	if (el instanceof HTMLImageElement && el.src) return el.src;
-	const img = el.querySelector('img');
-	if (img?.src) return img.src;
-	const bg = el.style.backgroundImage || getComputedStyle(el).backgroundImage;
-	const match = bg.match(/url\(["']?(.*?)["']?\)/);
-	return match ? match[1] : undefined;
-}
-
 /** Запомнить элемент и координаты клика */
 export function markOrigin(e: MouseEvent) {
 	if (typeof window === 'undefined') return;
 	if (originTimer) clearTimeout(originTimer);
 
 	const target = e.currentTarget as HTMLElement | null;
-	const morphRoot = target?.closest('[data-morph-root]') as HTMLElement | null;
-	const morphAvatar = (target?.closest('[data-morph="avatar"]') ?? target?.querySelector('[data-morph="avatar"]')) as HTMLElement | null;
-
-	const el = morphAvatar ?? morphRoot ?? target;
-	const rect = el ? el.getBoundingClientRect() : new DOMRect(e.clientX, e.clientY, 0, 0);
-
-	let morph: ClickOrigin['morph'] = undefined;
-	let avatarSrc: string | undefined = undefined;
-
-	if (morphAvatar) {
-		morph = 'avatar';
-		avatarSrc = extractAvatarUrl(morphAvatar);
-	} else if (morphRoot) {
-		morph = 'card';
-	}
+	const rect = target ? target.getBoundingClientRect() : new DOMRect(e.clientX, e.clientY, 0, 0);
 
 	currentOrigin = {
 		rect,
-		point: { x: e.clientX, y: e.clientY },
-		morph,
-		avatarSrc
+		point: { x: e.clientX, y: e.clientY }
 	};
 
 	// Очистить через 2 секунды, если переход так и не начался
@@ -245,57 +205,6 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 
 	// 2. Approach для нового экрана
 	if (motion?.approach) {
-		// Связанный переход аватара: перелёт FLIP в шапку профиля (измеряем ДО наложения transform на incomingScreen)
-		if (currentOrigin?.morph === 'avatar') {
-			const originRect = currentOrigin.rect;
-			const avatarSrc = currentOrigin.avatarSrc;
-			const targetAvatar = incomingScreen.querySelector('[data-morph-target="avatar"]') as HTMLElement | null;
-
-			if (targetAvatar && originRect.width > 0) {
-				const targetRect = targetAvatar.getBoundingClientRect();
-				if (targetRect.width > 0) {
-					const fly = document.createElement('div');
-					Object.assign(fly.style, {
-						position: 'fixed',
-						top: `${originRect.top}px`,
-						left: `${originRect.left}px`,
-						width: `${originRect.width}px`,
-						height: `${originRect.height}px`,
-						borderRadius: '50%',
-						overflow: 'hidden',
-						zIndex: '95',
-						pointerEvents: 'none'
-					});
-					if (avatarSrc) {
-						fly.style.backgroundImage = `url("${avatarSrc}")`;
-						fly.style.backgroundSize = 'cover';
-						fly.style.backgroundPosition = 'center';
-					}
-					document.body.appendChild(fly);
-
-					targetAvatar.style.opacity = '0';
-					const dx = targetRect.left - originRect.left;
-					const dy = targetRect.top - originRect.top;
-					const scale = targetRect.width / originRect.width;
-
-					const flyAnim = fly.animate([
-						{ transform: 'none', opacity: 1 },
-						{ transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: 1 }
-					], {
-						duration: motion.approach.duration,
-						easing: motion.approach.easing,
-						fill: 'forwards'
-					});
-
-					const cleanFly = () => {
-						targetAvatar.style.removeProperty('opacity');
-						fly.remove();
-					};
-					promises.push(flyAnim.finished.then(cleanFly).catch(cleanFly));
-				}
-			}
-		}
-
 		const incomingRect = incomingScreen.getBoundingClientRect();
 		const visibleTop = Math.max(0, incomingRect.top);
 		const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;

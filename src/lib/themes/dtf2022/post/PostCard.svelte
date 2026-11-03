@@ -35,7 +35,7 @@
 </script>
 
 <article class={['feed-item', { 'feed-item--embed': embed }]}>
-	<div class={['post-card', { 'post-card--embed': embed }]} data-morph-root>
+	<div class={['post-card', { 'post-card--embed': embed }]}>
 		<PostHeader {post} variant="card" {subscribe} />
 
 		<div class="post-content">
