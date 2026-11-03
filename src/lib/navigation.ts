@@ -4,6 +4,7 @@ import { page } from '$app/state';
 import { parseDtfUrl } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
 import { scrollBehavior } from './motion';
+import { markOrigin } from './pageTransition.svelte';
 
 /*
  * Навигация внутри приложения. Посты, профили, настройки, вход и редактор открываются
@@ -13,6 +14,8 @@ import { scrollBehavior } from './motion';
  *
  * Всё открывается и закрывается через функции этого файла. Ссылки на оверлеи остаются
  * обычными <a href>, а клик с Ctrl/Cmd/Shift и средней кнопкой открывает их в новой вкладке.
+ *
+ * TODO: Предзагрузка на pointerdown — начинать api.getPost/getProfile по нажатию пальца/мыши за 100-200 мс до клика
  */
 
 const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentation']> = {
@@ -110,6 +113,7 @@ export function isNewTabClick(e: MouseEvent) {
 function openFromLink(e: MouseEvent, overlay: App.OverlayData) {
 	if (isNewTabClick(e)) return;
 	e.preventDefault();
+	markOrigin(e);
 	openOverlay(overlay);
 }
 
@@ -137,6 +141,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 	if (!target || isNewTabClick(e)) return false;
 
 	e.preventDefault();
+	markOrigin(e);
 	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId } });
 	else openOverlay({ type: 'profile', data: { profileId: target.profileId } });
 	return true;

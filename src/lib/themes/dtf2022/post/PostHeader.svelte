@@ -43,7 +43,7 @@
 			{@const subsite = post.subsite}
 			<div class="post-header__item post-header-subsite">
 				<a href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)}>
-					<div class="post-header-subsite__avatar">
+					<div class="post-header-subsite__avatar" data-morph="avatar">
 						{#if subsite.avatarUrl}
 							<img src={subsite.avatarUrl} alt="" />
 						{/if}

@@ -12,6 +12,8 @@ export interface Timing {
 /** Одна анимация: ключевые кадры Web Animations и время */
 export interface Anim extends Timing {
 	keyframes: Keyframe[];
+	iterations?: number;
+	direction?: PlaybackDirection;
 }
 
 /** Какие анимации есть у темы; чего нет, того не анимируем */
@@ -36,18 +38,46 @@ export interface ThemeMotion {
 	pageBack?: Anim;
 	/** Страницу открыли или закрыли: слой, который встал наверх (страница или лента под ней), выходит на экран */
 	pageIn?: Anim;
+
+	/** Экран уходит вглубь при переходе на новую страницу (Recede) */
+	recede?: Anim;
+	/** Загрузка затянулась: старый экран плавно размывается (Hold) */
+	wait?: Anim;
+	/** Размытый экран мягко «дышит», пока ждём загрузку */
+	breathe?: Anim;
+	/** Старый экран окончательно растворяется и уходит, когда новый готов (Depart) */
+	depart?: Anim;
+	/** Новый экран приближается к зрителю (Approach) */
+	approach?: Anim;
+	/** Раскрытие прямоугольника из карточки в экран (Container Transform) */
+	container?: Timing;
 }
 
 /** Поля ThemeMotion, которые являются анимациями (их проигрывает `play`) */
-export type AnimKey = 'modalIn' | 'modalOut' | 'contentIn' | 'feedIn' | 'mediaIn' | 'pageIn' | 'pageOut' | 'pageBack';
+export type AnimKey =
+	| 'modalIn'
+	| 'modalOut'
+	| 'contentIn'
+	| 'feedIn'
+	| 'mediaIn'
+	| 'pageIn'
+	| 'pageOut'
+	| 'pageBack'
+	| 'recede'
+	| 'wait'
+	| 'breathe'
+	| 'depart'
+	| 'approach';
 
-/** Кривые: QuarticEase и Fluent */
+/** Кривые: QuarticEase, Fluent и Material */
 export const ease = {
 	out: 'cubic-bezier(0.165, 0.84, 0.44, 1)',
 	inOut: 'cubic-bezier(0.77, 0, 0.175, 1)',
 	decelerate: 'cubic-bezier(0.1, 0.9, 0.2, 1)',
 	accelerate: 'cubic-bezier(0.9, 0.1, 1, 0.2)',
-	standard: 'cubic-bezier(0.8, 0, 0.2, 1)'
+	standard: 'cubic-bezier(0.8, 0, 0.2, 1)',
+	emphasizedDecelerate: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
+	emphasizedAccelerate: 'cubic-bezier(0.3, 0, 0.8, 0.15)'
 };
 
 /** Готовый набор в духе Fluent: плавные «прилёты» с замедлением */
@@ -72,6 +102,51 @@ export const fluent: ThemeMotion = {
 	feedIn: {
 		keyframes: [{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }],
 		duration: 480,
+		easing: ease.out
+	},
+	recede: {
+		keyframes: [
+			{ transform: 'none', opacity: 1 },
+			{ transform: 'scale(0.94)', opacity: 0.6 }
+		],
+		duration: 350,
+		easing: ease.out
+	},
+	wait: {
+		keyframes: [
+			{ transform: 'scale(0.9)', opacity: 0.5, filter: 'blur(18px) saturate(1.2)' }
+		],
+		duration: 1200,
+		easing: ease.emphasizedDecelerate
+	},
+	breathe: {
+		keyframes: [
+			{ transform: 'scale(0.9)', opacity: 0.5 },
+			{ transform: 'scale(0.915)', opacity: 0.42 }
+		],
+		duration: 2400,
+		easing: 'ease-in-out',
+		iterations: Infinity,
+		direction: 'alternate'
+	},
+	depart: {
+		keyframes: [
+			{ opacity: 0 }
+		],
+		duration: 280,
+		easing: ease.out
+	},
+	approach: {
+		keyframes: [
+			{ transform: 'scale(0.94)', opacity: 0 },
+			{ transform: 'scale(0.95)', opacity: 1, offset: 0.15 },
+			{ transform: 'none', opacity: 1 }
+		],
+		duration: 500,
+		easing: ease.out
+	},
+	container: {
+		duration: 500,
 		easing: ease.out
 	}
 };
@@ -111,7 +186,13 @@ export function grow(el: HTMLElement, from: number, timing?: Timing) {
  */
 export function play(el: Element, anim?: Anim, fill: FillMode = 'none') {
 	if (!anim || reducedMotion()) return;
-	return el.animate(anim.keyframes, { duration: anim.duration, easing: anim.easing, fill });
+	return el.animate(anim.keyframes, {
+		duration: anim.duration,
+		easing: anim.easing,
+		fill,
+		iterations: anim.iterations ?? 1,
+		direction: anim.direction ?? 'normal'
+	});
 }
 
 /**

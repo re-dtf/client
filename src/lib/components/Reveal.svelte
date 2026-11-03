@@ -5,6 +5,7 @@
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { assetsReady } from '$lib/ready';
 	import { grow, play, reducedMotion, type AnimKey } from '$lib/motion';
+	import { incomingReady, pageTransition } from '$lib/pageTransition.svelte';
 
 	/*
 	 * Блок, который сперва показывает заглушку загрузки темы, а когда данные пришли — содержимое.
@@ -14,6 +15,8 @@
 	 * - с `anim` (страницы поста и профиля): одинокий спиннер. Содержимое строится скрытым, и пока не отрисуются его картинки
 	 *   (ждём недолго), спиннер остаётся, иначе на экране мелькнули бы серые рамки. Потом спиннер тает, а содержимое
 	 *   появляется анимацией `anim` темы, без растягивания.
+	 * Если блок участвует в универсальном переходе страниц (pageTransition), спиннер не показывается —
+	 * старый экран уходит вглубь, а новый плавно приближается по окончании загрузки.
 	 * `onshow` вызывается, когда содержимое появилось, `onreveal` — когда закончилась и его анимация. Тяжёлое (комментарии) стройте по `onreveal`.
 	 */
 	let {
@@ -30,7 +33,11 @@
 	let box = $state<HTMLElement>();
 	let stage = $state<HTMLElement>();
 	let revealed = $state(false);
-	let visible = $derived(staged ? revealed : ready);
+
+	let layerId = $derived(box?.closest('[data-layer]')?.getAttribute('data-layer') ?? null);
+	let inTransition = $derived(layerId ? pageTransition.isIncoming(layerId) : false);
+
+	let visible = $derived(staged ? (inTransition ? ready : revealed) : ready);
 
 	let pending = untrack(() => !ready);
 	let fromHeight = 0;
@@ -58,23 +65,41 @@
 		});
 	});
 
-	// Показ скрытого содержимого после картинок. Запись состояния здесь разовая и обратно на эффект не влияет
+	// Показ скрытого содержимого после картинок
 	$effect(() => {
-		if (!staged || !ready || revealed) return;
+		if (!staged || !ready) return;
+		if (untrack(() => revealed)) return;
 		let live = true;
 		untrack(async () => {
 			await tick();
 			if (stage) await assetsReady(stage, 700);
 			if (!live) return;
+
 			revealed = true;
 			await tick();
+
+			const currentLayer = box?.closest('[data-layer]')?.getAttribute('data-layer');
+			if (currentLayer && pageTransition.isIncoming(currentLayer)) {
+				// Экран участвует в переходе: передаем управление фазе Approach на весь экран слоя
+				const layerEl = box?.closest('[data-layer]');
+				const screenEl = (layerEl?.firstElementChild as HTMLElement) ?? stage;
+				if (screenEl) await incomingReady(currentLayer, screenEl);
+				if (!live) return;
+				await tick();
+				onshow?.();
+				onreveal?.();
+				return;
+			}
+
+			// Обычный показ (без перехода между страницами)
 			onshow?.();
 			if (stage && anim) {
 				const motion = activeTheme.motion;
-				// ponytail: размытие на слое выше шести экранов рвёт кадры, такому содержимому хватает проявления (комментарии сюда не входят)
+				// ponytail: размытие на слое выше шести экранов рвёт кадры, такому содержимому хватает проявления
 				const tall = stage.offsetHeight > innerHeight * 6;
 				await play(stage, tall ? motion?.pageIn : motion?.[anim])?.finished.catch(() => {});
 			}
+			if (!live) return;
 			onreveal?.();
 		});
 		return () => (live = false);
@@ -90,13 +115,13 @@
 </script>
 
 <div class="reveal" bind:this={box}>
-	{#if !visible}
+	{#if !visible && !inTransition}
 		<div class:bare={!block} out:leave>
 			<ThemeLoader componentName="Spinner" inline={!block} {block} />
 		</div>
 	{/if}
 	{#if ready}
-		<div class={['stage', { staging: !visible }]} bind:this={stage}>
+		<div class={['stage', { staging: !visible && !inTransition }]} bind:this={stage}>
 			{@render children(visible)}
 		</div>
 	{/if}

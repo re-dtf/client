@@ -170,7 +170,7 @@
 			<div class="comment-item__break"></div>
 			{@render repliesAction()}
 		{:else}
-			<a class="comment-item__avatar" href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, comment.author.id)}>
+			<a class="comment-item__avatar" data-morph="avatar" href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, comment.author.id)}>
 				<div class="comment-item__avatar-image">
 					{#if comment.author.avatarUrl}
 						<img src={comment.author.avatarUrl} alt="" />

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CursorData, Post, Profile, ProfileSorting as Sorting } from '$lib/api/types';
+	import type { CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import Reveal from './Reveal.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
@@ -11,9 +11,14 @@
 	 */
 	let { profileId, onLoaded }: { profileId: number; onLoaded?: (name: string) => void } = $props();
 
-	let profilePromise = $derived(api.getProfile(profileId));
-	let subscribersPromise = $derived(api.getProfileSubscribers(profileId).then((page) => page.items).catch(() => []));
-	let subscriptionsPromise = $derived(api.getProfileSubscriptions(profileId).catch(() => []));
+	let lastLoadedId: number | undefined;
+	let lastSorting: Sorting | undefined;
+
+	let profile = $state.raw<Profile>();
+	let profileError = $state<string>();
+
+	let subscribersPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
+	let subscriptionsPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
 
 	let sorting = $state<Sorting>('new');
 	let posts = $state.raw<Post[]>([]);
@@ -49,34 +54,39 @@
 	}
 
 	$effect(() => {
-		profileId;
-		sorting;
-		untrack(() => loadPosts(true));
-	});
+		const currentId = profileId;
+		if (currentId === lastLoadedId) return;
+		lastLoadedId = currentId;
 
-	let profile = $state.raw<Profile>();
-	let profileError = $state<string>();
+		subscribersPromise = api.getProfileSubscribers(currentId).then((page) => page.items).catch(() => []);
+		subscriptionsPromise = api.getProfileSubscriptions(currentId).catch(() => []);
 
-	// Профиль загружается один раз на оверлей, поэтому запись состояния здесь не зацикливается
-	$effect(() => {
-		const promise = profilePromise;
 		profile = profileError = undefined;
-		promise.then(
+		api.getProfile(currentId).then(
 			(value) => {
-				if (promise !== profilePromise) return;
+				if (currentId !== lastLoadedId) return;
 				profile = value;
 				onLoaded?.(value.name);
 			},
 			(e) => {
-				if (promise !== profilePromise) return;
+				if (currentId !== lastLoadedId) return;
 				profileError = e.message;
 				onLoaded?.('Ошибка');
 			}
 		);
 	});
+
+	$effect(() => {
+		const currentId = profileId;
+		const currentSorting = sorting;
+		if (currentId === lastLoadedId && currentSorting === lastSorting) return;
+		lastSorting = currentSorting;
+		untrack(() => loadPosts(true));
+	});
 </script>
 
-<Reveal ready={profile !== undefined || profileError !== undefined} anim="contentIn">
+<div class="profile-screen">
+	<Reveal ready={profile !== undefined || profileError !== undefined} anim="contentIn">
 	{#if profile}
 		{@const loaded = profile}
 			<ThemeLoader
@@ -103,9 +113,13 @@
 	{:else}
 		<div class="profile-fallback">{profileError}</div>
 	{/if}
-</Reveal>
+	</Reveal>
+</div>
 
 <style>
+	.profile-screen {
+		width: 100%;
+	}
 	.profile-fallback {
 		padding: 40px;
 		text-align: center;

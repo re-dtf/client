@@ -36,6 +36,59 @@ const motion: ThemeMotion = {
 		easing: ease.out
 	},
 	feedIn: { keyframes: [{ opacity: 0, transform: 'translateY(32px) scale(0.99)' }, { opacity: 1, transform: 'none' }], duration: 650, easing: ease.out },
+
+	// Универсальный переход между страницами:
+	// 1. Старый экран уходит вглубь
+	recede: {
+		keyframes: [
+			{ transform: 'none', opacity: 1 },
+			{ transform: 'scale(0.94)', opacity: 0.6 }
+		],
+		duration: 350,
+		easing: ease.out
+	},
+	// 2. Если загрузка затянулась: размытие и легкое отдаление
+	wait: {
+		keyframes: [
+			{ transform: 'scale(0.9)', opacity: 0.5, filter: 'blur(18px) saturate(1.2)' }
+		],
+		duration: 1200,
+		easing: ease.emphasizedDecelerate
+	},
+	// 3. Живое «дыхание» размытого экрана
+	breathe: {
+		keyframes: [
+			{ transform: 'scale(0.9)', opacity: 0.5 },
+			{ transform: 'scale(0.915)', opacity: 0.42 }
+		],
+		duration: 2400,
+		easing: 'ease-in-out',
+		iterations: Infinity,
+		direction: 'alternate'
+	},
+	// 4. Старый экран на заднем плане спокойно тает
+	depart: {
+		keyframes: [
+			{ opacity: 0 }
+		],
+		duration: 280,
+		easing: ease.out
+	},
+	// 5. Новый экран приближается к зрителю
+	approach: {
+		keyframes: [
+			{ transform: 'scale(0.94)', opacity: 0 },
+			{ transform: 'scale(0.95)', opacity: 1, offset: 0.15 },
+			{ transform: 'none', opacity: 1 }
+		],
+		duration: 500,
+		easing: ease.out
+	},
+	// 6. Раскрытие прямоугольника из карточки в экран
+	container: {
+		duration: 500,
+		easing: ease.out
+	}
 };
 
 export default defineTheme({

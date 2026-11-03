@@ -134,7 +134,7 @@
 			style:background-position="50% {profile.coverY ?? 50}%"
 		></div>
 
-		<div class="profile-head__avatar">
+		<div class="profile-head__avatar" data-morph-target="avatar">
 			<button
 				type="button"
 				class="profile-avatar"

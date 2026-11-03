@@ -47,6 +47,7 @@
 		<a
 			href={profilePath}
 			class="author-card__avatar"
+			data-morph="avatar"
 			style:background-image={author.avatarUrl ? `url(${author.avatarUrl})` : undefined}
 			aria-label={author.name}
 			onclick={(e) => openProfile(e, author.id)}

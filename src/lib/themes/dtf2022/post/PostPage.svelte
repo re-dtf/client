@@ -37,7 +37,7 @@
 	}
 </script>
 
-<div class="post-page">
+<div class="post-page" data-morph-surface>
 	<div class="post-container">
 		<PostHeader {post} variant="page" />
 

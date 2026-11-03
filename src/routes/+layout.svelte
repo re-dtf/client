@@ -14,7 +14,7 @@
 	import { pageReady } from '$lib/ready';
 	import { setupCompleted } from '$lib/storage/setup.svelte';
 	import { page } from '$app/state';
-	import { onMount, tick } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { dev } from '$app/env';
 	import type { ThemeComponents } from '$lib/themes/contract';
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
@@ -26,6 +26,7 @@
 	import { feed } from '$lib/feed.svelte';
 	import { loadThemeStyles, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
+	import { abortTransition, incomingReady, pageTransition, shouldTransition, startTransition } from '$lib/pageTransition.svelte';
 	
 	let { children } = $props();
 	let showWelcome = $state(false);
@@ -91,6 +92,7 @@
 	let activeScrollId = $derived(overlays.findLast(o => o.presentation === 'page')?.id ?? '__feed__');
 	let previousScrollId = '__feed__';
 	let previousDepth = 0;
+	let lastTransitionedTo = '__feed__';
 
 	// Отложенное восстановление прокрутки для слоёв, чьё содержимое подгружается асинхронно
 	let pendingScroll: { layer: string; target: number } | undefined;
@@ -155,8 +157,18 @@
 		if (activeScrollId !== previousScrollId) {
 			const scroll = pendingScroll?.layer === previousScrollId ? pendingScroll.target : window.scrollY;
 			scrollPositions.set(previousScrollId, scroll);
-			const outgoing = document.querySelector(`[data-layer="${previousScrollId}"]`)?.firstElementChild;
+			const outgoing = document.querySelector(`[data-layer="${previousScrollId}"]`)?.firstElementChild as HTMLElement | null;
 			leaving = outgoing ? { layer: previousScrollId, rect: outgoing.getBoundingClientRect() } : undefined;
+
+			untrack(() => {
+				const isOpeningPage = overlays.length > previousDepth && overlays[overlays.length - 1]?.presentation === 'page';
+				if (isOpeningPage && outgoing && shouldTransition() && lastTransitionedTo !== activeScrollId) {
+					lastTransitionedTo = activeScrollId;
+					startTransition(previousScrollId, activeScrollId, outgoing);
+				} else if (overlays.length < previousDepth && pageTransition.active) {
+					abortTransition();
+				}
+			});
 		}
 	});
 
@@ -181,6 +193,17 @@
 				// доводим его по мере роста страницы
 				if (savedScroll > 0 && Math.abs(window.scrollY - savedScroll) > 1) {
 					startPendingScroll(layer, savedScroll);
+				}
+
+				// Если для входящего слоя запущен универсальный переход, анимацией занимается pageTransition
+				if (pageTransition.isIncoming(layer)) {
+					// Страницы без Reveal (например, уведомления): запускаем их через incomingReady напрямую
+					const screen = document.querySelector(`[data-layer="${layer}"]`)?.firstElementChild as HTMLElement | null;
+					const isNotification = overlays.find((o) => o.id === layer)?.type === 'notifications';
+					if (screen && isNotification) {
+						incomingReady(layer, screen);
+					}
+					return;
 				}
 
 				// Слои сменяются мгновенно, поэтому новый проявляется, а не выскакивает.
@@ -274,13 +297,22 @@
 
 	<ThemeLoader componentName="MainLayout">
 		<!-- display: contents — обёртки не должны ломать раскладку темы (flex/grid в MainLayout) -->
-		<div data-layer="__feed__" style:display={topmostPageOverlayIndex >= 0 ? 'none' : 'contents'}>
+		<div
+			data-layer="__feed__"
+			style:display={pageTransition.isOutgoing('__feed__') || topmostPageOverlayIndex < 0 ? 'contents' : 'none'}
+		>
 			{@render children()}
 		</div>
 
 		{#each overlays as overlay, index (overlay.id)}
 			{#if overlay.presentation === 'page'}
-				<div class="overlay-wrapper" data-layer={overlay.id} style:display={index < topmostPageOverlayIndex ? 'none' : 'contents'} out:leavePage|global>
+				<div
+					class="overlay-wrapper"
+					data-layer={overlay.id}
+					style:display={pageTransition.isOutgoing(overlay.id) || index >= topmostPageOverlayIndex ? 'contents' : 'none'}
+					style:visibility={pageTransition.isIncoming(overlay.id) && pageTransition.incomingHidden ? 'hidden' : 'visible'}
+					out:leavePage|global
+				>
 					{@render overlayContent(overlay)}
 				</div>
 			{/if}
@@ -296,6 +328,12 @@
 			{@render overlayContent(overlay)}
 		{/if}
 	{/each}
+
+	{#if pageTransition.slow}
+		<div class="transition-wait">
+			<ThemeLoader componentName="Spinner" inline />
+		</div>
+	{/if}
 </div>
 
 {#if showWelcome}
@@ -318,6 +356,34 @@
 <style>
 	.app {
 		min-height: 100vh;
+	}
+
+	.transition-wait {
+		position: fixed;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		z-index: 85;
+		pointer-events: none;
+		animation: transition-wait-in 0.3s cubic-bezier(0.165, 0.84, 0.44, 1) backwards;
+	}
+
+	.transition-wait :global(.spinner-wrapper) {
+		border-radius: 8px;
+		background: var(--bg-modal, #fff);
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+		padding: 16px;
+	}
+
+	@keyframes transition-wait-in {
+		from {
+			opacity: 0;
+			transform: scale(0.85);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
 	}
 
 	.debug-panel {
