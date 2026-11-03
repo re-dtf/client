@@ -351,7 +351,7 @@
 
 {#if dev}
 	<div class="debug-panel">
-		<div class="debug-title">Overlay Stack ({overlays.length})</div>
+		<div class="debug-title">Overlay Stack ({overlays.length}) — Development Mode</div>
 		<div class="debug-item {overlays.length === 0 ? 'active' : ''}">0: feed</div>
 		{#each overlays as overlay, i}
 			<div class="debug-item {i === overlays.length - 1 ? 'active' : ''}">
