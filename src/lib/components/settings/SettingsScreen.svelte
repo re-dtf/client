@@ -116,9 +116,78 @@
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
 	}
+	let windowEl = $state<HTMLElement>();
+	let away = $state(false);
+	let idle = $state(false);
+	let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearFadeTimer() {
+		if (idleTimer !== undefined) {
+			clearTimeout(idleTimer);
+			idleTimer = undefined;
+		}
+	}
+
+	function handlePointerMove(e: PointerEvent) {
+		if (e.pointerType === 'touch') return;
+		if (windowEl?.hasAttribute('data-slider-drag')) return;
+		if (e.buttons > 0) {
+			clearFadeTimer();
+			away = false;
+			idle = false;
+			return;
+		}
+
+		const inside = Boolean(windowEl && e.target instanceof Node && windowEl.contains(e.target));
+		if (inside) {
+			if (away || idle) {
+				away = false;
+				idle = false;
+				clearFadeTimer();
+			}
+		} else {
+			away = true;
+			if (idle) idle = false;
+			clearFadeTimer();
+			idleTimer = setTimeout(() => {
+				idle = true;
+			}, 750);
+		}
+	}
+
+	function handlePointerLeave(e: PointerEvent) {
+		if (e.pointerType === 'touch') return;
+		if (windowEl?.hasAttribute('data-slider-drag')) return;
+		if (e.buttons > 0) return;
+		away = true;
+		if (idle) idle = false;
+		clearFadeTimer();
+		idleTimer = setTimeout(() => {
+			idle = true;
+		}, 750);
+	}
+
+	function handlePointerEnter(e: PointerEvent) {
+		if (e.pointerType === 'touch') return;
+		away = false;
+		idle = false;
+		clearFadeTimer();
+	}
+
+	$effect(() => () => clearFadeTimer());
 </script>
 
-<div class="window" data-view={opened ? 'page' : 'list'}>
+<svelte:window onpointermove={handlePointerMove} />
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="window"
+	bind:this={windowEl}
+	data-view={opened ? 'page' : 'list'}
+	data-fade={away ? (idle ? 'idle' : 'away') : undefined}
+	onpointerenter={handlePointerEnter}
+	onpointerleave={handlePointerLeave}
+>
 	<div class="panes">
 	<nav class="sidebar" aria-label="Разделы настроек">
 		<header class="side-bar">
@@ -556,8 +625,17 @@
 	.window {
 		--fade: 0.45s cubic-bezier(0.2, 0, 0, 1);
 		transition:
+			opacity var(--fade),
 			background-color var(--fade),
 			box-shadow var(--fade);
+	}
+
+	.window[data-fade='away'] {
+		opacity: 0.9;
+	}
+
+	.window[data-fade='idle'] {
+		opacity: 0.15;
 	}
 
 	:global(:is(.window, .window *):has(.slider):not(.group, .group *) > :not(:has(.slider), .slider)) {
