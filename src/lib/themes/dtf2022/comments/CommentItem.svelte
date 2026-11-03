@@ -32,6 +32,7 @@
 		row,
 		highlightedLine = -1,
 		replying = false,
+		panObserver,
 		onreply,
 		onedit,
 		onlinehover,
@@ -43,6 +44,7 @@
 		/** Индекс подсвеченной линии ветки, -1 — нет */
 		highlightedLine?: number;
 		replying?: boolean;
+		panObserver?: IntersectionObserver;
 		onreply: () => void;
 		/** Открыть редактор с текстом этого комментария */
 		onedit: () => void;
@@ -52,6 +54,16 @@
 		/** Редактор ответа (один на все комментарии, рендерит родитель) */
 		editor: Snippet;
 	} = $props();
+
+	let itemNode = $state<HTMLElement>();
+
+	$effect(() => {
+		const node = itemNode;
+		if (panObserver && node) {
+			panObserver.observe(node);
+			return () => panObserver.unobserve(node);
+		}
+	});
 
 	let comment = $derived(row.comment);
 	let votes = $derived(themeSettings.votes);
@@ -130,7 +142,13 @@
 	<ComplaintDialog onsubmit={(reasonId) => api.complain('comment', comment.id, reasonId)} onclose={() => (complaining = false)} />
 {/if}
 
-<div class={['comment-item', { 'comment-item--reply': row.level > 1 }]} style:--level={row.level} id="comment-{row.key}">
+<div
+	class={['comment-item', { 'comment-item--reply': row.level > 1 }]}
+	style:--level={row.level}
+	id="comment-{row.key}"
+	data-depth={row.level - 1}
+	bind:this={itemNode}
+>
 	<!--
 		линии — div, а не button: у кнопки Chrome центрирует содержимое по вертикали
 		и дуга ::before съехала бы. Это дублирующее действие мышью, поэтому без фокуса.
@@ -411,8 +429,15 @@
 		align-items: center;
 		flex: 1;
 		min-width: 0;
+		width: var(--comment-main-width, auto);
+		max-width: var(--comment-main-width, 100%);
+		box-sizing: border-box;
 		padding-top: var(--content-offset-top);
 		padding-bottom: var(--content-offset-bottom);
+	}
+
+	:global(.comments-section.autopan) .comment-item {
+		width: max-content;
 	}
 
 	.comment-item__avatar,

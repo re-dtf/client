@@ -63,6 +63,7 @@ export class PanoramaEngine {
 	destroy() {
 		if (this.panObserver) this.panObserver.disconnect();
 		if (this.resizeObserver) this.resizeObserver.disconnect();
+		this.panVisibleItems.clear();
 		cancelAnimationFrame(this.panAnimationFrame);
 		window.removeEventListener('scroll', this.handleScroll);
 	}
@@ -92,6 +93,7 @@ export class PanoramaEngine {
 			const radius = window.innerHeight * 0.4; // Weight falls off towards screen edges
 			
 			let visibleCount = 0;
+			let indentPx = 21;
 			
 			// Continuously blend depths of all comments visible in the viewport
 			for (const item of this.panVisibleItems) {
@@ -100,7 +102,7 @@ export class PanoramaEngine {
 					continue;
 				}
 
-				const body = item.firstElementChild as HTMLElement; // .comment-body-container
+				const body = (item.querySelector('.comment-item__content, .comment-body-container') || item.firstElementChild || item) as HTMLElement;
 				if (!body) continue;
 
 				const rect = body.getBoundingClientRect();
@@ -119,7 +121,8 @@ export class PanoramaEngine {
 					const depth = parseInt(item.getAttribute('data-depth') || '0', 10);
 					
 					const viewportWidth = this.viewportElement.clientWidth;
-					const indentPx = 24;
+					const gap = parseFloat(getComputedStyle(item).getPropertyValue('--gap-branch'));
+					if (gap) indentPx = gap;
 					const keepVisiblePx = 48;
 					const paddingRight = 32;
 					
@@ -141,7 +144,6 @@ export class PanoramaEngine {
 			}
 
 			if (visibleCount > 0) {
-				const indentPx = 24; 
 				const keepVisiblePx = 48; 
 				
 				// Use a single pass weighted average. The rAF loop acts as the iterative solver over time.
