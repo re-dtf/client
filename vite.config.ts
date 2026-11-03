@@ -4,8 +4,25 @@ import { defineConfig } from 'vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+
+function resolveVersion(): string {
+	const raw =
+		process.env.APP_VERSION ||
+		(process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : undefined) ||
+		(() => {
+			try {
+				return execSync('git describe --tags --exact-match', { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
+			} catch {
+				return undefined;
+			}
+		})();
+	return raw ? raw.replace(/^refs\/tags\//, '').replace(/^v/, '') : pkg.version;
+}
+
+const appVersion = resolveVersion();
 
 function pwaPlugin(options?: Parameters<typeof SvelteKitPWA>[0]) {
 	const plugins = SvelteKitPWA(options);
@@ -24,7 +41,7 @@ export default defineConfig({
 	plugins: [
 		sveltekit({
 			version: {
-				name: pkg.version
+				name: appVersion
 			},
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
@@ -52,6 +69,7 @@ export default defineConfig({
 				name: 're:DTF', // Показывается при установке и на экране загрузки
 				short_name: 're:DTF', // Показывается под иконкой на рабочем столе
 				description: 'Неофициальный клиент для DTF', 
+				...({ version: appVersion } as Record<string, unknown>), 
 				
 				// display
 				display_override: ['window-controls-overlay', 'standalone'],

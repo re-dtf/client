@@ -3,6 +3,7 @@
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
 	import { resolve } from '$app/paths';
+	import { version } from '$app/env';
 
 	/* Страница «Хочу помочь»: сначала поддержка (донат, рассказать другу, звезда), потом участие в разработке */
 	const DONATE_RU_URL = 'https://pay.cloudtips.ru/p/2fa64784';
@@ -85,6 +86,10 @@
 	</SettingsRow>
 </SettingsGroup>
 
+<footer class="app-version">
+	reDTF {version}
+</footer>
+
 <style>
 	.hero {
 		display: flex;
@@ -163,5 +168,12 @@
 		.action :global(.btn) {
 			width: 100%;
 		}
+	}
+
+	.app-version {
+		margin-top: 36px;
+		text-align: center;
+		font-size: 13px;
+		color: var(--st-muted);
 	}
 </style>

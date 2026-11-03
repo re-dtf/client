@@ -37,6 +37,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          APP_VERSION: ${{ github.ref_name }}
           BASE_PATH: ${{ steps.pages.outputs.base_path == '/' && '' || steps.pages.outputs.base_path }}
           VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
 
