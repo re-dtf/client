@@ -174,7 +174,7 @@
 		display: grid;
 		grid-template-columns: 212px 1fr;
 		width: 100%;
-		max-width: var(--content-width);
+		max-width: 640px;
 		margin: auto;
 	}
 
