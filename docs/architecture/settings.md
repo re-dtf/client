@@ -14,7 +14,7 @@
 | `components/settings/SettingsScreen.svelte` | окно: разделы слева, список страниц и выбор, что показать |
 | `components/settings/SettingsIcon.svelte` | значки разделов боковой панели (по id страницы); новая страница — новая ветка в нём |
 | `components/settings/FieldControl.svelte` | один пункт настроек по описанию поля |
-| `components/settings/SettingsGroup.svelte`, `SettingsRow.svelte`, `SettingsSwitch.svelte`, `SettingsSegmented.svelte`, `SettingsButton.svelte` | примитивы оформления: группа-карточка, строка, переключатель, сегментированный выбор, кнопка |
+| `components/settings/SettingsGroup.svelte`, `SettingsRow.svelte`, `SettingsSwitch.svelte`, `SettingsSelect.svelte`, `SettingsSegmented.svelte`, `SettingsButton.svelte` | примитивы оформления: группа-карточка, строка, переключатель, выпадающий список, сегментированный выбор, кнопка |
 | `components/settings/AccountSettings.svelte`, `DtfSettings.svelte`, `IgnoredSettings.svelte`, `AccountGate.svelte` | страницы «Аккаунт» (имя и описание профиля), «DTF» (ленты и уведомления) и «Чёрный список» (скрытые пользователи и темы, с кнопкой «Убрать»). Значения лежат на сервере DTF и читаются через `api`, а не из localStorage; без входа `AccountGate` показывает приглашение войти. Почту и пароль DTF меняет только на своём сайте, туда ведёт ссылка |
 | `components/settings/ProxySettings.svelte` | прокси для входа |
 | `components/settings/HelpSettings.svelte` | страница «Хочу помочь»: поддержка и участие в разработке, адреса проекта лежат в константах файла |

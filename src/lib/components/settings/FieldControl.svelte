@@ -3,6 +3,7 @@
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsSwitch from './SettingsSwitch.svelte';
 	import SettingsSlider from './SettingsSlider.svelte';
+	import SettingsSelect from './SettingsSelect.svelte';
 	import type { SettingField, SettingValue } from '$lib/themes/types';
 
 	/*
@@ -39,12 +40,14 @@
 	</SettingsGroup>
 {:else if field.type === 'select'}
 	<SettingsGroup>
-		<SettingsRow tag="label" title={field.title} subtitle={field.description}>
-			<select class="select" {value} onchange={(e) => onchange(e.currentTarget.value)}>
-				{#each field.options as option (option.value)}
-					<option value={option.value}>{option.title}</option>
-				{/each}
-			</select>
+		<SettingsRow title={field.title} subtitle={field.description}>
+			<SettingsSelect
+				id="{uid}-{field.key}"
+				options={field.options}
+				value={String(value)}
+				label={field.title}
+				onchange={(next) => onchange(next)}
+			/>
 		</SettingsRow>
 	</SettingsGroup>
 {:else if field.type === 'slider'}
@@ -83,24 +86,5 @@
 		outline: 2px solid var(--st-accent);
 		outline-offset: 4px;
 		border-radius: 2px;
-	}
-
-	.select {
-		flex: none;
-		max-width: 50%;
-		min-height: 38px;
-		padding: 0 14px;
-		border: 0;
-		border-radius: 19px;
-		background: var(--st-button);
-		color: inherit;
-		font: inherit;
-		font-size: 14px;
-		cursor: pointer;
-	}
-
-	.select:focus-visible {
-		outline: 2px solid var(--st-accent);
-		outline-offset: 2px;
 	}
 </style>

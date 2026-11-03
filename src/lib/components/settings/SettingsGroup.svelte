@@ -22,7 +22,12 @@
 
 <style>
 	.group {
+		position: relative;
 		margin-bottom: 36px;
+	}
+
+	.group:has(:global(.select-wrap--open)) {
+		z-index: 50;
 	}
 
 	.group__title {
@@ -44,9 +49,19 @@
 	}
 
 	.group__list {
-		overflow: hidden;
+		position: relative;
 		border-radius: 14px;
 		background: var(--st-card);
 		box-shadow: var(--st-card-shadow);
+	}
+
+	.group__list > :global(*:first-child) {
+		border-top-left-radius: 14px;
+		border-top-right-radius: 14px;
+	}
+
+	.group__list > :global(*:last-child) {
+		border-bottom-left-radius: 14px;
+		border-bottom-right-radius: 14px;
 	}
 </style>
