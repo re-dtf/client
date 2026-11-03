@@ -60,7 +60,7 @@
 			title: 'Профиль DTF',
 			pages: [
 				{ id: 'account', title: 'Аккаунт' },
-				{ id: 'dtf', title: 'DTF' },
+				{ id: 'dtf', title: 'Настройки' },
 				{ id: 'ignored', title: 'Чёрный список' }
 			]
 		},
