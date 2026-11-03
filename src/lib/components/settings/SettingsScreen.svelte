@@ -6,6 +6,7 @@
 	import HelpSettings from './HelpSettings.svelte';
 	import IgnoredSettings from './IgnoredSettings.svelte';
 	import ReactionsSettings from './ReactionsSettings.svelte';
+	import SettingsIcon from './SettingsIcon.svelte';
 	import StatsSettings from './StatsSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
@@ -90,7 +91,9 @@
 <div class="window" data-view={opened ? 'page' : 'list'}>
 	<div class="panes">
 	<nav class="sidebar" aria-label="Разделы настроек">
-		<h2 class="side-title">Настройки</h2>
+		<header class="side-bar">
+			<h2 class="side-title">Настройки</h2>
+		</header>
 		<div class="nav">
 			{#each navigation as group (group.title)}
 				<section class="nav__section">
@@ -103,7 +106,8 @@
 								aria-current={page.id === current.id ? 'page' : undefined}
 								onclick={() => open(page.id)}
 							>
-								{page.title}
+								<SettingsIcon name={page.id} />
+								<span class="nav__title">{page.title}</span>
 								<svg class="nav__arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
 									<path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 								</svg>
@@ -175,8 +179,11 @@
 	/* Окно в духе libadwaita: светлое, карточки приподняты мягкими тенями, отступы широкие.
 	   Акцент, шрифт и цвет текста берутся у темы, если она их задаёт */
 	.window {
-		--st-bg: #fafafa;
-		--st-side: #f1f1f1;
+		--st-bg: #fafafb;
+		/* Цвета боковой панели libadwaita (вторая, более светлая панель) */
+		--st-side: #f3f3f5;
+		--st-side-border: rgba(0, 0, 6, 0.07);
+		--st-header: 48px;
 		--st-card: #fff;
 		--st-card-shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05);
 		--st-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 2px 6px 2px rgba(0, 0, 0, 0.03);
@@ -210,19 +217,33 @@
 		height: 100%;
 	}
 
+	/* Боковая панель libadwaita (AdwNavigationSplitView): тонированный фон, линия справа, плоский список с плашкой у выбранного */
 	.sidebar {
 		display: flex;
 		flex: none;
 		flex-direction: column;
-		width: 300px;
+		width: 260px;
 		background: var(--st-side);
+		box-shadow: inset -1px 0 var(--st-side-border);
+	}
+
+	/* Шапка как у окна GNOME: название по центру жирным. Высота общая с .bar справа */
+	.side-bar {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		height: var(--st-header);
+		padding: 0 52px;
 	}
 
 	.side-title {
-		padding: 28px 24px 20px;
-		font-size: 26px;
-		font-weight: 300;
-		line-height: 34px;
+		overflow: hidden;
+		font-size: 15px;
+		font-weight: 700;
+		line-height: 22px;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.content {
@@ -239,59 +260,74 @@
 		display: flex;
 		align-items: center;
 		flex: none;
-		height: 56px;
+		height: var(--st-header);
 		padding: 0 20px;
 	}
 
 	.nav {
 		display: flex;
 		flex-direction: column;
-		gap: 24px;
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		padding: 4px 20px 24px;
+		padding: 0 6px 12px;
 	}
 
+	/* Заголовок раздела: как подписи групп справа, приглушённый */
 	.nav__group {
-		margin: 0 4px 8px;
+		margin: 0;
+		padding: 18px 14px 6px;
 		color: var(--st-muted);
 		font-size: 13px;
-		font-weight: 500;
+		font-weight: 400;
 		line-height: 18px;
 	}
 
-	.nav__list {
-		overflow: hidden;
-		border-radius: 14px;
-		background: var(--st-card);
-		box-shadow: var(--st-card-shadow-soft);
+	.nav__section:first-child .nav__group {
+		padding-top: 4px;
 	}
 
+	.nav__list {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	/* Строка navigation-sidebar (значок и текст через 12px) со скруглением карточек правой части */
 	.nav__item {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 12px;
 		width: 100%;
-		min-height: 48px;
-		padding: 0 18px;
+		min-height: 40px;
+		padding: 0 14px;
+		border-radius: 12px;
 		color: inherit;
 		font-size: 15px;
 		text-align: left;
 		cursor: pointer;
-		transition: background-color var(--duration-base);
+		transition:
+			background-color var(--duration-base),
+			box-shadow var(--duration-base);
 	}
 
-	.nav__item:not(:first-child) {
-		border-top: 1px solid var(--st-separator);
+	.nav__title {
+		flex: 1;
+		min-width: 0;
 	}
 
 	.nav__item:hover {
-		background: var(--st-hover);
+		background: color-mix(in srgb, currentColor 7%, transparent);
 	}
 
+	.nav__item:active {
+		background: color-mix(in srgb, currentColor 16%, transparent);
+	}
+
+	/* Выбранный раздел — белая карточка на мягкой тени, как карточки справа */
 	.nav__item--active,
 	.nav__item--active:hover {
-		background: color-mix(in srgb, var(--st-accent) 12%, transparent);
+		background: var(--st-card);
+		box-shadow: var(--st-card-shadow-soft);
 		font-weight: 500;
 	}
 
@@ -349,8 +385,23 @@
 
 	.close {
 		position: absolute;
-		top: 14px;
-		right: 18px;
+		top: calc((var(--st-header) - 36px) / 2);
+		right: 12px;
+	}
+
+	/* Широкое окно: заголовок панели слева, как подписи групп справа, с запасом воздуха вокруг */
+	@container (min-width: 720px) {
+		.side-bar {
+			justify-content: flex-start;
+			padding: 22px 20px 10px;
+			height: auto;
+		}
+
+		.side-title {
+			font-size: 22px;
+			font-weight: 300;
+			line-height: 30px;
+		}
 	}
 
 	/* Ширина самого окна, а не экрана: окно может быть уже экрана */
@@ -359,23 +410,47 @@
 			flex-direction: column;
 		}
 
+		/* Узкий список — страница, как в AdwSidebar в режиме page: разделы в белых группах (boxed list) со стрелками */
 		.sidebar {
 			flex: 1;
 			width: auto;
 			min-height: 0;
-		}
-
-		.side-title {
-			padding: 24px 24px 12px;
+			background: none;
+			box-shadow: none;
 		}
 
 		.nav {
 			flex: 1;
-			padding-top: 0;
+			gap: 24px;
+			padding: 12px 20px 24px;
+		}
+
+		.nav__group,
+		.nav__section:first-child .nav__group {
+			padding: 0 4px 8px;
+		}
+
+		.nav__list {
+			display: block;
+			overflow: hidden;
+			border-radius: 12px;
+			background: var(--st-card);
+			box-shadow: var(--st-card-shadow-soft);
+		}
+
+		.nav__item {
+			min-height: 50px;
+			padding: 0 16px;
+			border-radius: 0;
+		}
+
+		.nav__item:not(:first-child) {
+			border-top: 1px solid var(--st-separator);
 		}
 
 		.nav__arrow {
 			display: block;
+			flex: none;
 			color: var(--st-muted);
 		}
 
@@ -383,6 +458,7 @@
 		.nav__item--active,
 		.nav__item--active:hover {
 			background: none;
+			box-shadow: none;
 			font-weight: 400;
 		}
 
