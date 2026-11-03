@@ -27,7 +27,7 @@ export interface AppSettings {
  */
 export const DEFAULT_PROXY_URL: string = import.meta.env.VITE_AUTH_PROXY_URL ?? '';
 
-export const DEFAULT_THEME = 'dtf2022';
+export const DEFAULT_THEME = 'redtf';
 
 /** Общие настройки приложения, не зависящие от темы. Настройки темы лежат в themeSettings. */
 export const settings = persistedState<AppSettings>('redtf:settings', {
