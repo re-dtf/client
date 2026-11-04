@@ -66,7 +66,7 @@
 	<div class="panel" onclick={closeOnNavigate}>
 		<div class="panel-header">
 			<div class="panel-burger" aria-label="Закрыть меню" role="button" tabindex="0" onclick={() => sidebar.close()} onkeydown={clickOnKey}>
-				<svg width="24" height="24" aria-hidden="true">
+				<svg class="icon" width="24" height="24" aria-hidden="true">
 					<use href="/icons.svg#v_menu"></use>
 				</svg>
 			</div>
@@ -156,6 +156,7 @@
 	}
 
 	.panel-burger {
+		color: var(--text-primary);
 		display: flex;
 		align-items: center;
 		padding-left: 20px;
@@ -200,7 +201,7 @@
 		right: 10px;
 		height: var(--item-height);
 		border-radius: 8px;
-		background: #fff;
+		background: var(--bg-card);
 		translate: 0 calc(var(--i) * var(--step));
 		transition: translate 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 	}
@@ -227,7 +228,7 @@
 	}
 
 	.switch-button:hover {
-		background: rgba(255, 255, 255, 0.5);
+		background: var(--bg-sidebar-hover);
 	}
 
 	.switch-button:active {
@@ -312,7 +313,7 @@
 			width: 100vw;
 			height: 100%;
 			z-index: 1;
-			background: rgba(0, 0, 0, 0.6);
+			background: var(--bg-tint-overlay);
 		}
 
 		.panel {

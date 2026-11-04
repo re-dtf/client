@@ -64,7 +64,7 @@
 	<div class="panel" onclick={closeOnNavigate}>
 		<div class="panel-header">
 			<div class="panel-burger" aria-label="Закрыть меню" role="button" tabindex="0" onclick={() => sidebar.close()} onkeydown={clickOnKey}>
-				<svg width="24" height="24" aria-hidden="true">
+				<svg class="icon" width="24" height="24" aria-hidden="true">
 					<use href="/icons.svg#v_menu"></use>
 				</svg>
 			</div>

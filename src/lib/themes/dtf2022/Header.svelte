@@ -68,7 +68,7 @@
 				onclick={() => sidebar.toggle()}
 				onkeydown={clickOnKey}
 			>
-				<svg width="24" height="24" aria-hidden="true">
+				<svg class="icon" width="24" height="24" aria-hidden="true">
 					<use href="/icons.svg#v_menu"></use>
 				</svg>
 			</div>

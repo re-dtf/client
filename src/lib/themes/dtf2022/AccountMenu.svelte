@@ -45,14 +45,14 @@
 				<div class="account-menu__item-wrapper">
 					{#if item.url}
 						<a class="account-menu__item" href={item.url} target="_blank" rel="noopener noreferrer" onclick={onclose}>
-							<svg class="account-menu__item-icon" width="24" height="24" aria-hidden="true">
+							<svg class="icon account-menu__item-icon" width="24" height="24" aria-hidden="true">
 								<use href="/icons.svg#{item.icon}"></use>
 							</svg>
 							<span class="account-menu__item-label">{item.label}</span>
 						</a>
 					{:else}
 						<button type="button" class="account-menu__item" onclick={() => select(item.action)}>
-							<svg class="account-menu__item-icon" width="24" height="24" aria-hidden="true">
+							<svg class="icon account-menu__item-icon" width="24" height="24" aria-hidden="true">
 								<use href="/icons.svg#{item.icon}"></use>
 							</svg>
 							<span class="account-menu__item-label">{item.label}</span>

@@ -14,7 +14,7 @@
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
-	import type { NestingMode, CommentVirtualization } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, ColorScheme } from '$lib/storage/settings.svelte';
 	import type { ChoiceField, ToggleField } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
 
@@ -24,6 +24,25 @@
 	 * Страница «Тема» — настройки выбранной темы (описаны в её theme.ts), у темы без настроек её нет.
 	 */
 	let { onclose, page }: { onclose: () => void; page?: string } = $props();
+
+	let colorSchemeDescription = $derived(
+		activeTheme.supportsDarkMode
+			? 'Цветовая схема для интерфейса приложения и тем с поддержкой тёмного режима.'
+			: `Текущая тема (${activeTheme.name}) не поддерживает тёмный режим и отображается в светлом оформлении.`
+	);
+
+	let colorSchemeField = $derived<ChoiceField>({
+		key: 'colorScheme',
+		type: 'radio',
+		title: 'Тема оформления',
+		description: colorSchemeDescription,
+		default: 'auto',
+		options: [
+			{ value: 'auto', title: 'Системная', description: 'Следовать настройкам системы' },
+			{ value: 'light', title: 'Светлая' },
+			{ value: 'dark', title: 'Тёмная' }
+		]
+	});
 
 	const themeField: ChoiceField = {
 		key: 'theme',
@@ -195,6 +214,11 @@
 					<SourcesSettings />
 					<ProxySettings />
 				{:else if current.id === 'themes'}
+					<FieldControl
+						field={colorSchemeField}
+						value={settings.value.colorScheme ?? 'auto'}
+						onchange={(value) => settings.patch({ colorScheme: value as ColorScheme })}
+					/>
 					<FieldControl field={themeField} value={activeTheme.id} onchange={(value) => activeTheme.set(String(value))} />
 					<FieldControl
 						field={hapticsField}
@@ -283,6 +307,7 @@
 		--st-button-hover: rgba(0, 0, 0, 0.09);
 		--st-field: rgba(0, 0, 0, 0.045);
 		--st-track: #d6d6d6;
+		--st-text: var(--text-primary, #1e1e1e);
 		--st-muted: var(--text-muted, #66646b);
 		--st-accent: var(--color-blue, #3584e4);
 		--st-danger: #c01c28;
@@ -296,10 +321,59 @@
 		border-radius: 18px;
 		background: var(--st-bg);
 		box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 12px 48px rgba(0, 0, 0, 0.2);
-		color: var(--text-primary, #1e1e1e);
+		color: var(--st-text);
 		font-family: var(--font-family, system-ui, sans-serif);
 		font-size: 15px;
 		line-height: 22px;
+	}
+
+	/* Тёмная тема окна настроек (Libadwaita Dark) */
+	:global(html[data-theme-mode='dark']) .window {
+		--st-bg: #242424;
+		--st-side: #303030;
+		--st-side-border: rgba(255, 255, 255, 0.08);
+		--st-card: #303030;
+		--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
+		--st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
+		--st-separator: rgba(255, 255, 255, 0.08);
+		--st-hover: rgba(255, 255, 255, 0.06);
+		--st-button: rgba(255, 255, 255, 0.08);
+		--st-button-hover: rgba(255, 255, 255, 0.12);
+		--st-field: rgba(255, 255, 255, 0.06);
+		--st-track: #4a4a4d;
+		--st-muted: #9a9996;
+		--st-text: #ffffff;
+		--st-accent: var(--color-blue, #78aeed);
+		--st-danger: #e01b24;
+		--st-ok: #2ec27e;
+		box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		color: var(--st-text);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:global(html:not([data-theme-mode='light'])) .window {
+			--st-bg: #242424;
+			--st-side: #303030;
+			--st-side-border: rgba(255, 255, 255, 0.08);
+			--st-card: #303030;
+			--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
+			--st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
+			--st-separator: rgba(255, 255, 255, 0.08);
+			--st-hover: rgba(255, 255, 255, 0.06);
+			--st-button: rgba(255, 255, 255, 0.08);
+			--st-button-hover: rgba(255, 255, 255, 0.12);
+			--st-field: rgba(255, 255, 255, 0.06);
+			--st-track: #4a4a4d;
+			--st-muted: #9a9996;
+		--st-text: #ffffff;
+			--st-accent: var(--color-blue, #78aeed);
+			--st-danger: #e01b24;
+			--st-ok: #2ec27e;
+			box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			color: var(--st-text);
+		}
 	}
 
 	.panes {
@@ -491,20 +565,20 @@
 	}
 
 	.peek--active {
-		background: #ffffff;
-		color: #1e1e1e;
+		background: var(--st-card);
+		color: var(--st-text);
 		box-shadow:
-			0 0 0 1px rgba(0, 0, 0, 0.08),
-			0 2px 8px rgba(0, 0, 0, 0.16);
+			var(--st-card-shadow);
+
 		pointer-events: auto;
 	}
 
 	.peek--active:hover {
-		background: #f6f6f7;
+		background: var(--st-button-hover);
 	}
 
 	.peek--active:active {
-		background: #ededef;
+		background: var(--st-button);
 	}
 
 	/* Широкое окно: заголовок панели слева, как подписи групп справа, с запасом воздуха вокруг */

@@ -58,7 +58,7 @@ function getSelectorString(prelude: any) {
 function extractStyleRules(content: string) {
 	const styleMatch = content.match(/<style[^>]*>([\s\S]*?)<\/style>/);
 	if (!styleMatch) return [];
-	const ast = parseCss(styleMatch[1], 0);
+	const ast = parseCss(styleMatch[1]);
 	const rules: Array<{ selector: string; property: string; value: string }> = [];
 
 	function traverse(node: any, stack: string[]) {

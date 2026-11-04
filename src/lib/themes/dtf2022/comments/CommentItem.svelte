@@ -352,7 +352,7 @@
 		--gap-details: 5px;
 		--gap-footer: 16px;
 		--gap-branch: 19px;
-		--color-branch: var(--color-branch);
+
 		--color-branch-hover: var(--color-blue);
 		--color-inline-action: var(--color-blue);
 		/* Кнопки лайка в комментарии */

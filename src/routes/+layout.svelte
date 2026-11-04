@@ -263,6 +263,44 @@
 		};
 	});
 
+	// Управление цветовой схемой приложения
+	$effect(() => {
+		const cs = settings.value.colorScheme ?? 'auto';
+		const supportsDark = activeTheme.supportsDarkMode;
+		document.documentElement.dataset.colorScheme = cs;
+
+		const updateMode = () => {
+			const isDark =
+				supportsDark &&
+				(cs === 'dark' ||
+				(cs === 'auto' &&
+					typeof window !== 'undefined' &&
+					window.matchMedia?.('(prefers-color-scheme: dark)').matches === true));
+			document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
+			const metaScheme = document.querySelector('meta[name="color-scheme"]');
+			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
+			const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+			if (metaThemeColor) metaThemeColor.setAttribute('content', isDark ? '#202022' : '#D9F5FF');
+		};
+
+		updateMode();
+
+		if (supportsDark && cs === 'auto' && typeof window !== 'undefined' && window.matchMedia) {
+			const mql = window.matchMedia('(prefers-color-scheme: dark)');
+			mql.addEventListener('change', updateMode);
+			return () => {
+				mql.removeEventListener('change', updateMode);
+				delete document.documentElement.dataset.colorScheme;
+				delete document.documentElement.dataset.themeMode;
+			};
+		}
+
+		return () => {
+			delete document.documentElement.dataset.colorScheme;
+			delete document.documentElement.dataset.themeMode;
+		};
+	});
+
 	// Отключение верхнего бара в мобильной версии выставляет data-атрибут корня
 	$effect(() => {
 		const disabled = Boolean(settings.value.disableMobileTopBar);
