@@ -29,6 +29,8 @@ describe('auth & proxy failover', () => {
 			haptics: true,
 			disableMobileTopBar: false,
 			watermark: true,
+			clientBadges: 'redtf_only',
+			mobileBadgesPosition: 'author',
 			commentVirtualization: 'auto'
 		};
 	});

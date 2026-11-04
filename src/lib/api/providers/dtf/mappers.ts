@@ -1,5 +1,6 @@
 import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
+import { extractWatermark } from '$lib/watermark';
 
 /*
  * Превращают ответы API DTF в наши типы (см. api/types.ts). Ответы приходят без схемы,
@@ -84,12 +85,15 @@ export function mapEntryToPost(entry: any): Post {
 }
 
 export function mapComment(item: any, postId: number): Comment {
+	const { text: content, isRedtf } = extractWatermark(item.text || '');
 	return {
 		id: item.id,
 		sourceId: 'dtf',
 		postId,
 		author: mapUser(item.author),
-		content: item.text || '',
+		content,
+		isRedtf: isRedtf || undefined,
+		deviceSource: item.source || undefined,
 		createdAt: new Date((item.date || Date.now() / 1000) * 1000).toISOString(),
 		replyTo: item.replyTo,
 		level: item.level,

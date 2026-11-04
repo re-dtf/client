@@ -184,6 +184,10 @@ export interface Comment {
 	originalSourceId?: string;
 	/** Заголовок поста: приходит в списке комментариев профиля */
 	postTitle?: string;
+	/** Комментарий отправлен или отредактирован через клиент reDTF */
+	isRedtf?: boolean;
+	/** Платформа/приложение по данным DTF (например, 'android-app', 'ios-app') */
+	deviceSource?: string;
 }
 
 export interface CommentTreeItem extends Comment {

@@ -19,7 +19,7 @@
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
-	import type { NestingMode, CommentVirtualization, ColorScheme } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, ColorScheme, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
 	import { isFieldVisible } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
@@ -109,6 +109,31 @@
 			{ value: 'auto', title: 'Авто (рекомендуется)', description: 'Включено в Chromium и Safari, отключено в Firefox' },
 			{ value: 'enabled', title: 'Всегда включено', description: 'Максимальная скорость рендера' },
 			{ value: 'disabled', title: 'Отключено', description: 'Полная отрисовка всех комментариев' }
+		]
+	};
+
+	const clientBadgesField: ChoiceField = {
+		key: 'clientBadges',
+		type: 'radio',
+		title: 'Бейджи клиентов',
+		description: 'Отображение меток приложений и клиентов у комментариев.',
+		default: 'redtf_only',
+		options: [
+			{ value: 'redtf_only', title: 'Только re: (по умолчанию)', description: 'Показывать только метку reDTF' },
+			{ value: 'all', title: 'Все бейджи', description: 'Показывать re: и метки официальных приложений (Android / iOS)' },
+			{ value: 'none', title: 'Отключено', description: 'Скрыть все бейджи клиентов' }
+		]
+	};
+
+	const mobileBadgesPositionField: ChoiceField = {
+		key: 'mobileBadgesPosition',
+		type: 'radio',
+		title: 'Расположение бейджей ОС',
+		description: 'Где показывать значки официальных приложений Android и iOS. Метка re: всегда остаётся у имени автора.',
+		default: 'author',
+		options: [
+			{ value: 'author', title: 'Возле ника (по умолчанию)', description: 'В строке автора рядом с именем' },
+			{ value: 'date', title: 'Возле времени отправления', description: 'Компактная мини-иконка рядом со временем комментария' }
 		]
 	};
 
@@ -603,6 +628,18 @@
 								value={settings.value.commentVirtualization}
 								onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
 							/>
+							<FieldControl
+								field={clientBadgesField}
+								value={settings.value.clientBadges}
+								onchange={(value) => settings.patch({ clientBadges: value as ClientBadgesMode })}
+							/>
+							{#if settings.value.clientBadges === 'all'}
+								<FieldControl
+									field={mobileBadgesPositionField}
+									value={settings.value.mobileBadgesPosition}
+									onchange={(value) => settings.patch({ mobileBadgesPosition: value as MobileBadgesPosition })}
+								/>
+							{/if}
 							<SettingsGroup title="Подпись reDTF">
 								<SettingsRow
 									tag="label"

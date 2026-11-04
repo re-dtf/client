@@ -21,6 +21,8 @@
 	import Popover from './ui/Popover.svelte';
 	import { notify } from './ui/notify.svelte';
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
+	import { getCommentBadge } from '$lib/clientBadge';
 
 	/** Карточка комментария на вкладке «Комментарии» профиля, как profile_comment_favorite у DTF */
 	let { comment }: { comment: Comment } = $props();
@@ -32,6 +34,9 @@
 	let isFiltered = $derived(!!filterMatch && !revealed);
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let post = $derived({ id: comment.postId, sourceId: comment.sourceId });
+	let clientBadge = $derived(getCommentBadge(comment, settings.value.clientBadges));
+	let showAuthorBadge = $derived(clientBadge && (clientBadge.type === 'redtf' || settings.value.mobileBadgesPosition === 'author'));
+	let showDateBadge = $derived(clientBadge && clientBadge.type !== 'redtf' && settings.value.mobileBadgesPosition === 'date');
 	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 	let postPath = $derived(resolve(getPostPath(post) as any));
 	let commentUrl = $derived(new URL(`${postPath}#comment-${comment.sourceId}_${comment.id}`, location.href));
@@ -79,9 +84,26 @@
 			{/if}
 			<span class="profile-comment__name">{comment.author.name}</span>
 		</a>
+		{#if showAuthorBadge && clientBadge}
+			<span class="profile-comment__badge profile-comment__badge--{clientBadge.type}" title={clientBadge.title}>
+				{#if 'icon' in clientBadge}
+					<svg class="icon icon--{clientBadge.type}" width="11" height="11" aria-hidden="true">
+						<use href="/icons.svg#{clientBadge.icon}"></use>
+					</svg>
+				{/if}
+				<span>{clientBadge.label}</span>
+			</span>
+		{/if}
 		<a class="profile-comment__date" href={postPath} onclick={(e) => openPost(e, post)}>
 			<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 		</a>
+		{#if showDateBadge && clientBadge && 'icon' in clientBadge}
+			<span class="profile-comment__time-badge" title={clientBadge.title}>
+				<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
+					<use href="/icons.svg#{clientBadge.icon}"></use>
+				</svg>
+			</span>
+		{/if}
 
 		<div class="profile-comment__vote">
 			{#if votes === 'reactions'}
@@ -229,6 +251,39 @@
 		margin: 8px 0 7px;
 	}
 
+	.profile-comment__badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		height: 16px;
+		padding: 0 4px;
+		margin-left: 6px;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		border-radius: 3px;
+		user-select: none;
+		cursor: default;
+		white-space: nowrap;
+	}
+
+	.profile-comment__badge .icon {
+		display: block;
+		flex-shrink: 0;
+	}
+
+	.profile-comment__badge--redtf {
+		font-weight: 700;
+		color: var(--color-blue);
+		background-color: rgba(70, 131, 217, 0.1);
+	}
+
+	.profile-comment__badge--android,
+	.profile-comment__badge--ios {
+		color: var(--text-muted);
+		background-color: var(--border-subtle, rgba(0, 0, 0, 0.05));
+	}
+
 	.profile-comment__user {
 		display: flex;
 		align-items: center;
@@ -261,6 +316,25 @@
 		color: var(--text-muted);
 		font-size: 12px;
 		text-transform: lowercase;
+	}
+
+	.profile-comment__time-badge {
+		display: inline-flex;
+		align-items: center;
+		margin-left: 6px;
+		color: var(--text-muted);
+		opacity: 0.55;
+		user-select: none;
+		cursor: default;
+		transition: opacity var(--duration-base, 0.15s);
+	}
+
+	.profile-comment__time-badge:hover {
+		opacity: 0.9;
+	}
+
+	.profile-comment__time-badge .icon {
+		display: block;
 	}
 
 	.profile-comment__vote {

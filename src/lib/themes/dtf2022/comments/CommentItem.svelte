@@ -24,7 +24,8 @@
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
-	import { shouldVirtualizeComments } from '$lib/storage/settings.svelte';
+	import { settings, shouldVirtualizeComments } from '$lib/storage/settings.svelte';
+	import { getCommentBadge } from '$lib/clientBadge';
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 
 	// Заглушка аватара удалённого комментария из исходной вёрстки
@@ -76,6 +77,9 @@
 	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 
 	let score = $derived(votesOf(comment));
+	let clientBadge = $derived(getCommentBadge(comment, settings.value.clientBadges));
+	let showAuthorBadge = $derived(clientBadge && (clientBadge.type === 'redtf' || settings.value.mobileBadgesPosition === 'author'));
+	let showDateBadge = $derived(clientBadge && clientBadge.type !== 'redtf' && settings.value.mobileBadgesPosition === 'date');
 	let filterMatch = $derived(matchCommentFilter(comment));
 	let revealed = $state(false);
 	let isFiltered = $derived(!!filterMatch && !revealed);
@@ -203,12 +207,29 @@
 			</div>
 
 			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)} style="opacity: 0.7;">{comment.author.name}</a>
+			{#if showAuthorBadge && clientBadge}
+				<span class="comment-item__badge comment-item__badge--{clientBadge.type}" title={clientBadge.title}>
+					{#if 'icon' in clientBadge}
+						<svg class="icon" width="11" height="11" aria-hidden="true">
+							<use href="/icons.svg#{clientBadge.icon}"></use>
+						</svg>
+					{/if}
+					<span>{clientBadge.label}</span>
+				</span>
+			{/if}
 
 			<div class="comment-item__break"></div>
 
 			<a class="comment-item__time" href="#comment-{row.key}">
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
+			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
+				<span class="comment-item__time-badge" title={clientBadge.title}>
+					<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
+						<use href="/icons.svg#{clientBadge.icon}"></use>
+					</svg>
+				</span>
+			{/if}
 
 			<div class="comment-item__text comment-item__text--filtered">
 				<span>Комментарий скрыт фильтром ({filterMatch?.rule})</span>
@@ -229,6 +250,16 @@
 			</a>
 
 			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)}>{comment.author.name}</a>
+			{#if showAuthorBadge && clientBadge}
+				<span class="comment-item__badge comment-item__badge--{clientBadge.type}" title={clientBadge.title}>
+					{#if 'icon' in clientBadge}
+						<svg class="icon" width="11" height="11" aria-hidden="true">
+							<use href="/icons.svg#{clientBadge.icon}"></use>
+						</svg>
+					{/if}
+					<span>{clientBadge.label}</span>
+				</span>
+			{/if}
 
 			{#if row.parent}
 				<a class="comment-item__icon-action" href="#comment-{commentKey(row.parent)}" title="Ответ для {row.parent.author.name}" onclick={scrollToParent}>
@@ -248,6 +279,13 @@
 			<a class="comment-item__time" href="#comment-{row.key}">
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
+			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
+				<span class="comment-item__time-badge" title={clientBadge.title}>
+					<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
+						<use href="/icons.svg#{clientBadge.icon}"></use>
+					</svg>
+				</span>
+			{/if}
 
 			{#if paragraphs.length}
 				<div class="comment-item__text">
@@ -512,6 +550,40 @@
 		white-space: nowrap;
 	}
 
+	.comment-item__badge {
+		align-self: center;
+		display: inline-flex;
+		align-items: center;
+		gap: 3px;
+		height: 16px;
+		padding: 0 4px;
+		margin-right: var(--gap-details);
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 16px;
+		border-radius: 3px;
+		user-select: none;
+		cursor: default;
+		white-space: nowrap;
+	}
+
+	.comment-item__badge .icon {
+		display: block;
+		flex-shrink: 0;
+	}
+
+	.comment-item__badge--redtf {
+		font-weight: 700;
+		color: var(--color-blue);
+		background-color: rgba(70, 131, 217, 0.1);
+	}
+
+	.comment-item__badge--android,
+	.comment-item__badge--ios {
+		color: var(--text-muted);
+		background-color: var(--border-subtle, rgba(0, 0, 0, 0.05));
+	}
+
 	.comment-item__icon-action {
 		margin-right: 6px;
 		color: var(--text-muted);
@@ -570,6 +642,7 @@
 
 		.comment-item__author,
 		.comment-item__avatar,
+		.comment-item__badge,
 		.comment-item__icon-action {
 			order: -2;
 		}
@@ -590,6 +663,29 @@
 		line-height: 16px;
 		white-space: nowrap;
 		cursor: pointer;
+	}
+
+	.comment-item__time:has(+ .comment-item__time-badge) {
+		margin-right: 4px;
+	}
+
+	.comment-item__time-badge {
+		display: inline-flex;
+		align-items: center;
+		margin-right: var(--gap-details);
+		color: var(--text-muted);
+		opacity: 0.55;
+		user-select: none;
+		cursor: default;
+		transition: opacity var(--duration-base, 0.15s);
+	}
+
+	.comment-item__time-badge:hover {
+		opacity: 0.9;
+	}
+
+	.comment-item__time-badge .icon {
+		display: block;
 	}
 
 	.comment-item__action,
