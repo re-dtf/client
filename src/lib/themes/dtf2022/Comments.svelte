@@ -146,6 +146,7 @@
 
 	/** Комментарий из уведомления: догружаем страницы, пока он не найдётся, затем прокручиваем и подсвечиваем */
 	let lastFocusKey: string | undefined;
+	let lastScrolledKey: string | undefined;
 	let refetchAttempted = false;
 
 	function scrollToTarget(key: string) {
@@ -172,8 +173,11 @@
 			refetchAttempted = false;
 		}
 
+		if (lastScrolledKey === currentFocusKey) return;
+
 		const key = commentKey({ sourceId, id: focusCommentId });
 		if (logic.allCommentsMap.has(key)) {
+			lastScrolledKey = currentFocusKey;
 			const path = logic.pathTo(key);
 			if (path) {
 				for (const item of path) collapsed.delete(commentKey(item));
@@ -181,10 +185,6 @@
 
 			onfocused?.();
 			scrollToTarget(key);
-
-
-
-
 		} else if (!logic.loading && logic.hasMore && !logic.error) {
 			untrack(() => logic.loadComments());
 		} else if (!logic.loading && !refetchAttempted && !logic.error) {
@@ -192,7 +192,7 @@
 			untrack(() => logic.loadComments(true));
 		} else if (!logic.loading) {
 			// Комментарий удалён или не найден: дальше искать негде
-
+			lastScrolledKey = currentFocusKey;
 			onfocused?.();
 		}
 	});
