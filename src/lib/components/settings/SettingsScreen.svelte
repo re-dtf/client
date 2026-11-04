@@ -412,6 +412,7 @@
 		<!-- Левая колонка (Сайдбар) -->
 		<nav class="sidebar" aria-label="Разделы настроек">
 			<header class="side-bar">
+				<h2 class="side-title">{folderTitle}</h2>
 				{#if activeFolderId}
 					<button
 						class="icon-button folder-back"
@@ -424,7 +425,6 @@
 						</svg>
 					</button>
 				{/if}
-				<h2 class="side-title">{folderTitle}</h2>
 			</header>
 
 			<div class="nav-container">
@@ -831,6 +831,7 @@
 
 	.side-title {
 		overflow: hidden;
+		min-width: 0;
 		font-size: 15px;
 		font-weight: 700;
 		line-height: 22px;
@@ -843,6 +844,7 @@
 	.folder-back {
 		position: absolute;
 		left: 12px;
+		top: calc((var(--st-header) - 32px) / 2);
 		width: 32px;
 		height: 32px;
 		animation: buttonPop 200ms var(--ease-smooth, cubic-bezier(0.2, 0, 0, 1));
@@ -1067,8 +1069,8 @@
 		display: grid;
 		flex: none;
 		place-items: center;
-		width: 36px;
-		height: 36px;
+		width: 32px;
+		height: 32px;
 		border-radius: 50%;
 		color: inherit;
 		cursor: pointer;
@@ -1129,20 +1131,26 @@
 	/* Широкое окно */
 	@container (min-width: 720px) {
 		.side-bar {
-			justify-content: flex-start;
-			padding: 22px 18px 10px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 20px 10px 10px 18px;
 			height: auto;
+			min-height: 62px;
+			box-sizing: border-box;
 		}
 
 		.folder-back {
 			position: static;
-			margin-right: 8px;
+			margin-left: auto;
+			margin-right: 0;
+			flex: none;
 		}
 
 		.side-title {
 			font-size: 22px;
 			font-weight: 300;
-			line-height: 30px;
+			line-height: 32px;
 		}
 	}
 

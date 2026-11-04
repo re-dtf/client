@@ -85,4 +85,24 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Пользовательское соглашение');
 		expect(body).toContain('Политика конфиденциальности');
 	});
+
+	it('рендерит подменю раздела со стрелкой назад справа от заголовка', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				section: 'appearance'
+			}
+		});
+
+		expect(body).toContain('Внешний вид');
+		expect(body).toContain('folder-back');
+		expect(body).toContain('aria-label="Назад к разделам"');
+
+		// Заголовок предшествует кнопке возврата в разметке шапки сайдбара
+		const titleIndex = body.indexOf('side-title');
+		const backIndex = body.indexOf('folder-back');
+		expect(titleIndex).toBeGreaterThan(-1);
+		expect(backIndex).toBeGreaterThan(-1);
+		expect(titleIndex).toBeLessThan(backIndex);
+	});
 });
