@@ -46,6 +46,9 @@ describe('settings & shouldVirtualizeComments', () => {
 			collectStats: true,
 			haptics: true,
 			disableMobileTopBar: false,
+			watermark: true,
+			clientBadges: 'redtf_only',
+			mobileBadgesPosition: 'author',
 			commentVirtualization: 'auto'
 		};
 	});
@@ -60,6 +63,42 @@ describe('settings & shouldVirtualizeComments', () => {
 
 		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
 		expect(saved.d.colorScheme).toBe('dark');
+	});
+
+	it('watermark по умолчанию включен (true)', () => {
+		expect(settings.value.watermark).toBe(true);
+	});
+
+	it('patch обновляет значение watermark', () => {
+		settings.patch({ watermark: false });
+		expect(settings.value.watermark).toBe(false);
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.watermark).toBe(false);
+	});
+
+	it('clientBadges по умолчанию "redtf_only"', () => {
+		expect(settings.value.clientBadges).toBe('redtf_only');
+	});
+
+	it('patch обновляет значение clientBadges', () => {
+		settings.patch({ clientBadges: 'all' });
+		expect(settings.value.clientBadges).toBe('all');
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.clientBadges).toBe('all');
+	});
+
+	it('mobileBadgesPosition по умолчанию "author"', () => {
+		expect(settings.value.mobileBadgesPosition).toBe('author');
+	});
+
+	it('patch обновляет значение mobileBadgesPosition', () => {
+		settings.patch({ mobileBadgesPosition: 'date' });
+		expect(settings.value.mobileBadgesPosition).toBe('date');
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.mobileBadgesPosition).toBe('date');
 	});
 
 	it('disableMobileTopBar по умолчанию выключен (false)', () => {

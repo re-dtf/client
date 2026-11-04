@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { REDTF_WATERMARK } from '$lib/watermark';
 import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, parseNotificationHtml } from './mappers';
 
 describe('mapLikes', () => {
@@ -58,6 +59,19 @@ describe('mapComment', () => {
 		const comment = mapComment({ id: 3, isFavorited: true, entry: { id: 8, title: 'Пост' } }, 8);
 
 		expect(comment).toMatchObject({ isFavorited: true, postTitle: 'Пост' });
+	});
+
+	it('распознаёт невидимый водяной знак reDTF и очищает текст', () => {
+		const rawText = 'Привет из reDTF' + REDTF_WATERMARK;
+		const comment = mapComment({ id: 10, text: rawText }, 1);
+
+		expect(comment.isRedtf).toBe(true);
+		expect(comment.content).toBe('Привет из reDTF');
+	});
+
+	it('сохраняет deviceSource из ответа API (например, android-app, ios-app)', () => {
+		const comment = mapComment({ id: 11, text: 'тест', source: 'android-app' }, 1);
+		expect(comment.deviceSource).toBe('android-app');
 	});
 });
 

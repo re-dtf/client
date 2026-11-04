@@ -9,14 +9,17 @@
 	import ProxySettings from './ProxySettings.svelte';
 	import ReactionsSettings from './ReactionsSettings.svelte';
 	import SettingsEmptyState from './SettingsEmptyState.svelte';
+	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsIcon from './SettingsIcon.svelte';
+	import SettingsRow from './SettingsRow.svelte';
+	import SettingsSwitch from './SettingsSwitch.svelte';
 	import StatsSettings from './StatsSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
-	import type { NestingMode, CommentVirtualization, ColorScheme } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, ColorScheme, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
 	import { isFieldVisible } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
@@ -106,6 +109,31 @@
 			{ value: 'auto', title: 'Авто (рекомендуется)', description: 'Включено в Chromium и Safari, отключено в Firefox' },
 			{ value: 'enabled', title: 'Всегда включено', description: 'Максимальная скорость рендера' },
 			{ value: 'disabled', title: 'Отключено', description: 'Полная отрисовка всех комментариев' }
+		]
+	};
+
+	const clientBadgesField: ChoiceField = {
+		key: 'clientBadges',
+		type: 'radio',
+		title: 'Бейджи клиентов',
+		description: 'Отображение меток приложений и клиентов у комментариев.',
+		default: 'redtf_only',
+		options: [
+			{ value: 'redtf_only', title: 'Только re: (по умолчанию)', description: 'Показывать только метку reDTF' },
+			{ value: 'all', title: 'Все бейджи', description: 'Показывать re: и метки официальных приложений (Android / iOS)' },
+			{ value: 'none', title: 'Отключено', description: 'Скрыть все бейджи клиентов' }
+		]
+	};
+
+	const mobileBadgesPositionField: ChoiceField = {
+		key: 'mobileBadgesPosition',
+		type: 'radio',
+		title: 'Расположение бейджей ОС',
+		description: 'Где показывать значки официальных приложений Android и iOS. Метка re: всегда остаётся у имени автора.',
+		default: 'author',
+		options: [
+			{ value: 'author', title: 'Возле ника (по умолчанию)', description: 'В строке автора рядом с именем' },
+			{ value: 'date', title: 'Возле времени отправления', description: 'Компактная мини-иконка рядом со временем комментария' }
 		]
 	};
 
@@ -600,6 +628,30 @@
 								value={settings.value.commentVirtualization}
 								onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
 							/>
+							<FieldControl
+								field={clientBadgesField}
+								value={settings.value.clientBadges}
+								onchange={(value) => settings.patch({ clientBadges: value as ClientBadgesMode })}
+							/>
+							{#if settings.value.clientBadges === 'all'}
+								<FieldControl
+									field={mobileBadgesPositionField}
+									value={settings.value.mobileBadgesPosition}
+									onchange={(value) => settings.patch({ mobileBadgesPosition: value as MobileBadgesPosition })}
+								/>
+							{/if}
+							<SettingsGroup title="Подпись reDTF">
+								<SettingsRow
+									tag="label"
+									title="Невидимая подпись reDTF"
+									subtitle="Добавляет скрытую метку к отправляемым комментариям, чтобы другие пользователи reDTF видели, что комментарий написан через этот клиент."
+								>
+									<SettingsSwitch
+										checked={settings.value.watermark}
+										onchange={(value) => settings.patch({ watermark: value })}
+									/>
+								</SettingsRow>
+							</SettingsGroup>
 						{/if}
 					{:else}
 						<!-- Ни один подпункт не выбран — минималистичный плейсхолдер -->
