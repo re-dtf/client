@@ -520,8 +520,6 @@
 		align-items: center;
 		flex: 1;
 		min-width: 0;
-		width: var(--comment-main-width, auto);
-		max-width: var(--comment-main-width, 100%);
 		box-sizing: border-box;
 		padding-top: var(--content-offset-top);
 		padding-bottom: var(--content-offset-bottom);
@@ -529,6 +527,11 @@
 
 	:global(.comments-section.autopan) .comment-item {
 		width: max-content;
+	}
+
+	:global(.comments-section.autopan) .comment-item__content {
+		width: var(--comment-main-width, auto);
+		max-width: var(--comment-main-width, 100%);
 	}
 
 	.comment-item__avatar,

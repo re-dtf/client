@@ -220,11 +220,12 @@
 		if (node && node.getBoundingClientRect().top < 0) node.scrollIntoView({ block: 'start' });
 	}
 
-	// Сброс горизонтального смещения при переключении режима
+	// Сброс горизонтального смещения и ширины при переключении режима
 	$effect(() => {
 		if (!isAutopan && logic.viewportElement) {
 			const listEl = logic.viewportElement.querySelector('.comments-list') as HTMLElement | null;
 			if (listEl) listEl.style.transform = '';
+			logic.viewportElement.style.removeProperty('--comment-main-width');
 		}
 	});
 </script>

@@ -43,21 +43,25 @@ export class PanoramaEngine {
 			if (Math.abs(width - this.lastObservedWidth) < 2) return;
 			this.lastObservedWidth = width;
 
-			const mainWidth = Math.max(200, width - 64);
-			this.viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
-			const g = parseFloat(getComputedStyle(this.viewportElement).getPropertyValue('--gap-branch'));
-			if (g) this.cachedIndentPx = g;
+			if (settings.value.commentNesting === 'autopan') {
+				const mainWidth = Math.max(200, width - 64);
+				this.viewportElement.style.setProperty('--comment-main-width', `${mainWidth}px`);
+				const g = parseFloat(getComputedStyle(this.viewportElement).getPropertyValue('--gap-branch'));
+				if (g) this.cachedIndentPx = g;
 
-			if (settings.value.commentNesting === 'autopan' && !this.isPanning) {
-				const prevTarget = this.targetScrollLeft;
-				this.lastScrollY = -1; // Force recalculation
-				this.isPanning = true;
-				this.panLoop();
-				// If target didn't meaningfully change, don't animate — just snap
-				if (Math.abs(this.targetScrollLeft - prevTarget) < 0.5) {
-					this.isPanning = false;
-					cancelAnimationFrame(this.panAnimationFrame);
+				if (!this.isPanning) {
+					const prevTarget = this.targetScrollLeft;
+					this.lastScrollY = -1; // Force recalculation
+					this.isPanning = true;
+					this.panLoop();
+					// If target didn't meaningfully change, don't animate — just snap
+					if (Math.abs(this.targetScrollLeft - prevTarget) < 0.5) {
+						this.isPanning = false;
+						cancelAnimationFrame(this.panAnimationFrame);
+					}
 				}
+			} else {
+				this.viewportElement.style.removeProperty('--comment-main-width');
 			}
 		});
 		
@@ -71,6 +75,9 @@ export class PanoramaEngine {
 		this.panVisibleItems.clear();
 		cancelAnimationFrame(this.panAnimationFrame);
 		window.removeEventListener('scroll', this.handleScroll);
+		if (this.viewportElement) {
+			this.viewportElement.style.removeProperty('--comment-main-width');
+		}
 	}
 
 	handleScroll() {
