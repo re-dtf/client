@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*' # Запускаем строго по тегу релиза (например v1.0.0)
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -32,7 +33,7 @@ jobs:
 
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Build
         run: npm run build

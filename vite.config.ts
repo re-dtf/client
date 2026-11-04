@@ -22,6 +22,18 @@ function resolveVersion(): string {
 }
 
 const appVersion = resolveVersion();
+const basePath = process.env.BASE_PATH === '/' ? '' : (process.env.BASE_PATH || '').replace(/\/+$/, '');
+
+function svgIconsPlugin(base: string) {
+	if (!base) return [];
+	return {
+		name: 'svg-icons-base',
+		renderChunk: (code: string) => ({
+			code: code.replace(/(["'`])\/(icons|reIcons)\.svg#/g, `$1${base}/$2.svg#`),
+			map: null
+		})
+	};
+}
 
 export default defineConfig({
 	resolve: {
@@ -42,11 +54,12 @@ export default defineConfig({
 				fallback: 'index.html'
 			}),
 			paths: {
-				base: (process.env.BASE_PATH as `/${string}`) || ''
+				base: basePath as `/${string}`
 			},
 			prerender: {
 				handleUnseenRoutes: 'ignore'
 			}
-		})
+		}),
+		svgIconsPlugin(basePath)
 	]
 });
