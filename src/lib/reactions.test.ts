@@ -38,25 +38,25 @@ describe('nextReactionId', () => {
 });
 
 describe('votesOf', () => {
-	// 1 ❤️ и 2 🔥 — плюсовые, 23 😐 и 25 🤡 — минусовые, 6 😮 — нейтральная, 99 — неизвестная
+	// 1 ❤️ и 2 🔥 — плюсовые, 23 😐 и 25 🤡 — минусовые, 7 🐸 — нейтральная, 99 — неизвестная
 	const reactions = (reactionId: number) => ({
-		counters: [{ id: 1, count: 5 }, { id: 2, count: 1 }, { id: 23, count: 2 }, { id: 25, count: 3 }, { id: 6, count: 40 }, { id: 99, count: 9 }],
+		counters: [{ id: 1, count: 5 }, { id: 2, count: 1 }, { id: 23, count: 2 }, { id: 25, count: 3 }, { id: 7, count: 40 }, { id: 99, count: 9 }],
 		reactionId
 	});
 
 	it('плюсовые и минусовые реакции складываются, нейтральные и неизвестные не считаются', () => {
 		expect(votesOf({ reactions: reactions(25) })).toEqual({ up: 6, down: 8, myVote: -1 });
-		expect(votesOf({ reactions: reactions(6) }).myVote).toBe(0);
+		expect(votesOf({ reactions: reactions(7) }).myVote).toBe(0);
 	});
 
 	it('вес реакции и её вид берутся из настроек пользователя', () => {
 		setRule(25, { weight: 3 });
-		setRule(6, { kind: 'positive' });
+		setRule(7, { kind: 'positive' });
 		setRule(1, { kind: 'neutral' });
 		// В хранилище лежит только вид и вес, без картинки и названия из каталога
 		expect(reactionSettings.value.rules[25]).toEqual({ kind: 'negative', weight: 3 });
 
-		expect(votesOf({ reactions: reactions(6) })).toEqual({ up: 41, down: 2 + 9, myVote: 1 });
+		expect(votesOf({ reactions: reactions(7) })).toEqual({ up: 41, down: 2 + 9, myVote: 1 });
 
 		resetRules();
 		expect(votesOf({ reactions: reactions(0) })).toEqual({ up: 6, down: 8, myVote: 0 });
@@ -74,7 +74,7 @@ describe('rankByScore', () => {
 	it('залайканное выше задизлайканного, закреплённое сверху, при равенстве порядок прежний', () => {
 		const loved = item('loved', [{ id: 1, count: 4 }]);
 		const hated = item('hated', [{ id: 1, count: 9 }, { id: 25, count: 20 }]);
-		const first = item('first', [{ id: 6, count: 5 }]);
+		const first = item('first', [{ id: 7, count: 5 }]);
 		const second = item('second', []);
 		const pinned = item('pinned', [{ id: 25, count: 1 }], true);
 

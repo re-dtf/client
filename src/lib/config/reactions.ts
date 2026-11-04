@@ -15,12 +15,12 @@ export interface ReactionConfig {
 export const REACTIONS: Record<number, ReactionConfig> = {
 	1: { url: '/reactions/1.png', name: 'Сердце', kind: 'positive', weight: 1 },
 	2: { url: '/reactions/2.png', name: 'Огонь', kind: 'positive', weight: 1 },
-	3: { url: '/reactions/3.png', name: 'Грусть', kind: 'neutral', weight: 1 },
-	4: { url: '/reactions/4.png', name: 'Смех', kind: 'positive', weight: 1 },
+	3: { url: '/reactions/3.png', name: 'Грусть', kind: 'positive', weight: 1 },
+	4: { url: '/reactions/4.png', name: 'Смех', kind: 'neutral', weight: 1 },
 	5: { url: '/reactions/5.png', name: 'Злость', kind: 'negative', weight: 1 },
-	6: { url: '/reactions/6.png', name: 'Удивление', kind: 'neutral', weight: 1 },
+	6: { url: '/reactions/6.png', name: 'Удивление', kind: 'positive', weight: 1 },
 	7: { url: '/reactions/7.png', name: 'Грустный Пепе', kind: 'neutral', weight: 1 },
-	8: { url: '/reactions/8.webp', name: 'Алмаз', kind: 'positive', weight: 1 },
+	8: { url: '/reactions/8.webp', name: 'Алмаз', kind: 'positive', weight: 2 },
 	9: { url: '/reactions/9.png', name: 'Попкорн', kind: 'neutral', weight: 1 },
 	10: { url: '/reactions/10.png', name: 'Кубок', kind: 'positive', weight: 1 },
 	11: { url: '/reactions/11.png', name: 'Награда', kind: 'positive', weight: 1 },
@@ -61,6 +61,6 @@ export const REACTIONS: Record<number, ReactionConfig> = {
 	49: { url: '/reactions/49.webp', name: 'Скала', kind: 'positive', weight: 1 },
 	50: { url: '/reactions/50.webp', name: 'Макмэхон', kind: 'neutral', weight: 1 },
 	51: { url: '/reactions/51.webp', name: 'Шрек', kind: 'positive', weight: 1 },
-	52: { url: '/reactions/52.webp', name: 'Бежевый кролик', kind: 'neutral', weight: 1 },
+	52: { url: '/reactions/52.webp', name: 'Бежевый кролик', kind: 'positive', weight: 1 },
 	53: { url: '/reactions/53.webp', name: 'Моргающий парень', kind: 'neutral', weight: 1 }
 };
