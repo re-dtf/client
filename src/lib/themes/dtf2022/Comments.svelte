@@ -218,8 +218,8 @@
 	}
 </script>
 
-{#snippet editor()}
-	<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {canDonate} replying editing={editMode} {sending} error={sendError} oncancel={cancel} onsubmit={submit} />
+{#snippet editor(continueBranch = false)}
+	<CommentEditor bind:text={draft} bind:media bind:donation {paymentLink} {canDonate} replying editing={editMode} {sending} error={sendError} {continueBranch} oncancel={cancel} onsubmit={submit} />
 {/snippet}
 
 <section class="comments-section" id="comments" aria-label="Комментарии">

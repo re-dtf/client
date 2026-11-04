@@ -26,4 +26,22 @@ describe('CommentEditor', () => {
 		expect(body).toContain('Написать ответ...');
 		expect(body).toContain('Отмена');
 	});
+
+	it('добавляет класс продолжения ветки при continueBranch', () => {
+		const withoutContinue = render(CommentEditor, {
+			props: {
+				replying: true,
+				continueBranch: false
+			}
+		});
+		expect(withoutContinue.body).not.toContain('comment-editor-container__line--continue');
+
+		const withContinue = render(CommentEditor, {
+			props: {
+				replying: true,
+				continueBranch: true
+			}
+		});
+		expect(withContinue.body).toContain('comment-editor-container__line--continue');
+	});
 });

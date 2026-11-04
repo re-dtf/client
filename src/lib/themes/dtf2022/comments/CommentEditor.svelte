@@ -21,6 +21,7 @@
 		editing = false,
 		sending = false,
 		error = '',
+		continueBranch = false,
 		oncancel,
 		onsubmit
 	}: {
@@ -40,6 +41,8 @@
 		editing?: boolean;
 		sending?: boolean;
 		error?: string;
+		/** Ветка продолжается вниз под редактором к следующему комментарию */
+		continueBranch?: boolean;
 		oncancel?: () => void;
 		onsubmit?: () => void;
 	} = $props();
@@ -117,7 +120,7 @@
 
 <div class="comment-editor-container">
 	<div class="comment-editor-container__branches">
-		<div class="comment-editor-container__line"></div>
+		<div class={['comment-editor-container__line', { 'comment-editor-container__line--continue': continueBranch }]}></div>
 	</div>
 
 	<div class="comment-editor-container__content">
@@ -225,7 +228,7 @@
 	.comment-editor-container__line {
 		flex-shrink: 0;
 		width: var(--gap-branch, 0);
-		border-left: 1px solid var(--color-branch);
+
 	}
 
 	.comment-editor-container__line::before {
@@ -235,10 +238,18 @@
 		width: 12px;
 		height: var(--content-offset-top);
 		padding-bottom: calc(var(--size-avatar) * 0.5 + var(--offset-avatar-top));
-		margin-left: -1px;
+
 		border: solid var(--color-branch);
 		border-width: 0 0 1px 1px;
 		border-bottom-left-radius: 8px;
+	}
+
+	.comment-editor-container__line--continue {
+		border-left: 1px solid var(--color-branch);
+	}
+
+	.comment-editor-container__line--continue::before {
+		margin-left: -1px;
 	}
 
 	.comment-editor-container__content {

@@ -55,7 +55,7 @@
 		onlineclick: (owner: string) => void;
 		onexpand: () => void;
 		/** Редактор ответа (один на все комментарии, рендерит родитель) */
-		editor: Snippet;
+		editor: Snippet<[boolean]>;
 	} = $props();
 
 	let itemNode = $state<HTMLElement>();
@@ -69,6 +69,7 @@
 	});
 
 	let comment = $derived(row.comment);
+	let hasRepliesBelow = $derived(comment.children.length > 0 && !row.hiddenReplies);
 	let votes = $derived(themeSettings.votes);
 	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
 	let paragraphs = $derived(parseCommentText(comment.content));
@@ -403,7 +404,7 @@
 			{@render repliesAction()}
 
 			{#if replying}
-				{@render editor()}
+				{@render editor(hasRepliesBelow)}
 			{/if}
 		{/if}
 	</div>
