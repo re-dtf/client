@@ -25,6 +25,7 @@
 	import { commentKey, type CommentRow } from './flatten';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
 	import { shouldVirtualizeComments } from '$lib/storage/settings.svelte';
+	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 
 	// Заглушка аватара удалённого комментария из исходной вёрстки
 	const REMOVED_AVATAR = 'https://leonardo.osnova.io/04ee6149-5c89-5a20-846d-be172c424736/-/scale_crop/64x64/-/format/webp/';
@@ -75,6 +76,9 @@
 	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 
 	let score = $derived(votesOf(comment));
+	let filterMatch = $derived(matchCommentFilter(comment));
+	let revealed = $state(false);
+	let isFiltered = $derived(!!filterMatch && !revealed);
 
 	// Голос «за» и «против» — выбранные в настройках реакции; false — голос не принят, анимации клика не будет
 	const rate = (vote: 1 | -1) => voteComment(comment, vote);
@@ -185,6 +189,32 @@
 
 			<div class="comment-item__text comment-item__text--deleted">
 				<p>{comment.content || 'Комментарий удалён'}</p>
+			</div>
+
+			<div class="comment-item__break"></div>
+			{@render repliesAction()}
+		{:else if isFiltered}
+			<div class="comment-item__avatar">
+				<div class="comment-item__avatar-image">
+					{#if comment.author.avatarUrl}
+						<img src={comment.author.avatarUrl} alt="" style="opacity: 0.5;" />
+					{/if}
+				</div>
+			</div>
+
+			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)} style="opacity: 0.7;">{comment.author.name}</a>
+
+			<div class="comment-item__break"></div>
+
+			<a class="comment-item__time" href="#comment-{row.key}">
+				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
+			</a>
+
+			<div class="comment-item__text comment-item__text--filtered">
+				<span>Комментарий скрыт фильтром ({filterMatch?.rule})</span>
+				{#if filterSettings.value.mode === 'soft'}
+					<button type="button" class="comment-item__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
+				{/if}
 			</div>
 
 			<div class="comment-item__break"></div>
@@ -610,6 +640,29 @@
 
 	.comment-item__text--deleted p {
 		color: var(--text-muted);
+	}
+
+	.comment-item__text--filtered {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		flex-wrap: wrap;
+		color: var(--text-muted);
+		font-size: 14px;
+	}
+
+	.comment-item__reveal-btn {
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--color-blue, #1976d2);
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.comment-item__reveal-btn:hover {
+		text-decoration: underline;
 	}
 
 	/* Это для альтернативной темы RE как прошлые 2 коммента, НЕ УДАЛЯТЬ ПРИ ПЕРЕРАБОТКЕ */

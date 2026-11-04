@@ -2,11 +2,20 @@ import type { ThemeMotion } from '$lib/motion';
 
 /** Описание темы. Лежит в `<тема>/theme.ts`, реестр находит его сам (см. registry.ts). */
 
+export interface FieldDependency {
+	/** Ключ поля, от которого зависит видимость */
+	key: string;
+	/** Значение или список значений, при которых поле видимо */
+	value: SettingValue | SettingValue[];
+}
+
 interface FieldBase {
 	/** Ключ в сохранённых настройках темы */
 	key: string;
 	title: string;
 	description?: string;
+	/** Условие показа: поле отображается только если значение другого поля совпадает с указанным */
+	dependsOn?: FieldDependency;
 }
 
 export interface ChoiceOption {
@@ -41,6 +50,24 @@ export interface SliderField extends FieldBase {
 
 export type SettingField = ChoiceField | ToggleField | SliderField;
 export type SettingValue = string | boolean | number;
+
+/** Проверяет, должно ли отображаться поле с учётом его зависимости `dependsOn` */
+export function isFieldVisible(
+	field: SettingField,
+	values: Record<string, SettingValue>,
+	allFields?: SettingField[]
+): boolean {
+	if (!field.dependsOn) return true;
+	let current = values[field.dependsOn.key];
+	if (current === undefined && allFields) {
+		const target = allFields.find((f) => f.key === field.dependsOn?.key);
+		if (target) current = target.default;
+	}
+	if (Array.isArray(field.dependsOn.value)) {
+		return field.dependsOn.value.includes(current);
+	}
+	return current === field.dependsOn.value;
+}
 
 export interface ThemeManifest {
 	/** Совпадает с именем папки темы */

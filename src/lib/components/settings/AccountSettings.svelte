@@ -107,11 +107,14 @@
 		min-width: 0;
 		height: 40px;
 		padding: 0 16px;
+		border: 1px solid transparent;
 		border-radius: 20px;
 		background: var(--st-field);
 		color: inherit;
 		font: inherit;
 		font-size: 14px;
+		outline: none;
+		transition: border-color var(--duration-base), background-color var(--duration-base);
 	}
 
 	.entry--area {
@@ -121,9 +124,11 @@
 		resize: vertical;
 	}
 
-	.entry:focus-visible {
-		outline: 2px solid var(--st-accent);
-		outline-offset: 0;
+	.entry:focus-visible,
+	.entry:focus {
+		border-color: var(--st-accent);
+		background: var(--st-card);
+		outline: none;
 	}
 
 	.actions {
