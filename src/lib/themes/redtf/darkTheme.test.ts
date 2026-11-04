@@ -80,4 +80,14 @@ describe('redtf dark mode configuration', () => {
 		const accountMenuContent = fs.readFileSync(accountMenuPath, 'utf-8');
 		expect(accountMenuContent).toContain('class="icon account-menu__item-icon"');
 	});
+
+	it('locks darkreader when dark mode is enabled in app.html and +layout.svelte', () => {
+		const appHtmlPath = path.resolve(__dirname, '../../../app.html');
+		const appHtmlContent = fs.readFileSync(appHtmlPath, 'utf-8');
+		expect(appHtmlContent).toContain('darkreader-lock');
+
+		const layoutPath = path.resolve(__dirname, '../../../routes/+layout.svelte');
+		const layoutContent = fs.readFileSync(layoutPath, 'utf-8');
+		expect(layoutContent).toContain('darkreader-lock');
+	});
 });

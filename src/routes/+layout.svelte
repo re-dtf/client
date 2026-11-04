@@ -281,6 +281,18 @@
 			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
 			const metaThemeColor = document.querySelector('meta[name="theme-color"]');
 			if (metaThemeColor) metaThemeColor.setAttribute('content', isDark ? '#202022' : '#D9F5FF');
+
+			const lock = document.querySelector('meta[name="darkreader-lock"]');
+			if (isDark) {
+				if (!lock) {
+					const newLock = document.createElement('meta');
+					newLock.name = 'darkreader-lock';
+					document.head.appendChild(newLock);
+				}
+				document.querySelectorAll('.darkreader').forEach((el) => el.remove());
+			} else {
+				lock?.remove();
+			}
 		};
 
 		updateMode();
@@ -292,12 +304,14 @@
 				mql.removeEventListener('change', updateMode);
 				delete document.documentElement.dataset.colorScheme;
 				delete document.documentElement.dataset.themeMode;
+				document.querySelector('meta[name="darkreader-lock"]')?.remove();
 			};
 		}
 
 		return () => {
 			delete document.documentElement.dataset.colorScheme;
 			delete document.documentElement.dataset.themeMode;
+			document.querySelector('meta[name="darkreader-lock"]')?.remove();
 		};
 	});
 
