@@ -13,7 +13,7 @@ declare global {
 		type OverlayData =
 			| { type: 'post'; data: { postId: number; sourceId: string; commentId?: number; focusNonce?: number } }
 			| { type: 'profile'; data: { profileId: number } }
-			| { type: 'settings'; data?: { page?: string } }
+			| { type: 'settings'; data?: { page?: string; section?: string; solo?: boolean } }
 			| { type: 'notifications' }
 			| { type: 'login' }
 			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } }

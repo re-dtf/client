@@ -169,8 +169,9 @@ export default defineTheme({
 			key: 'arrowsSide',
 			type: 'radio',
 			title: 'Стрелки оценки',
-			description: 'С какой стороны стоят стрелки. Действует только на «Стрелки · осень 2022».',
+			description: 'С какой стороны стоят стрелки.',
 			default: 'right',
+			dependsOn: { key: 'votes', value: 'rating' },
 			options: [
 				{ value: 'right', title: 'Справа' },
 				{ value: 'left', title: 'Слева' }
@@ -180,8 +181,9 @@ export default defineTheme({
 			key: 'arrowsOrder',
 			type: 'radio',
 			title: 'Порядок стрелок',
-			description: 'В каком порядке стоят стрелки. Действует только на «Стрелки · осень 2022».',
+			description: 'В каком порядке стоят стрелки.',
 			default: 'down-up',
+			dependsOn: { key: 'votes', value: 'rating' },
 			options: [
 				{ value: 'down-up', title: 'Вниз / вверх', description: 'Стрелка вниз слева, вверх — справа' },
 				{ value: 'up-down', title: 'Вверх / вниз', description: 'Стрелка вверх слева, вниз — справа' }
