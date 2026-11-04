@@ -94,6 +94,16 @@
 
 	let gifsOpen = $state(false);
 
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.isComposing) return;
+		if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+			e.preventDefault();
+			if (!isEmpty && !sending && !uploading) {
+				onsubmit?.();
+			}
+		}
+	}
+
 	function addGif(gif: GifResult) {
 		media = [...media, gif.media];
 		gifsOpen = false;
@@ -125,6 +135,7 @@
 						bind:textContent={text}
 						onfocus={() => (focused = true)}
 						onblur={() => (focused = false)}
+						onkeydown={handleKeydown}
 						{@attach focusOnReply}
 					></div>
 				</div>
