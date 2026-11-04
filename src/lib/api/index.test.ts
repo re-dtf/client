@@ -15,6 +15,7 @@ vi.mock('$lib/storage/auth.svelte', () => ({ authStorage: {} }));
 
 import { api } from './index.svelte';
 import { reactionSettings } from '$lib/storage/reactions.svelte';
+import { clearPostCache } from '$lib/postCache';
 
 const post = (id: number, sourceId: string, createdAt: string): Post =>
 	({ id, sourceId, title: `Пост ${id}`, blocks: [], author: { id: 1, name: 'a' }, commentsCount: 0, createdAt }) as Post;
@@ -36,6 +37,7 @@ const source = (id: string, permissions: string[] = [], endpoints: string[] = ['
 describe('api.getPosts', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearPostCache();
 		mocks.registry.activeSources = [];
 	});
 
@@ -96,6 +98,7 @@ describe('ранжирование по реакциям', () => {
 	// 1 ❤️ плюсовая, 25 🤡 минусовая
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearPostCache();
 		mocks.registry.activeSources = [];
 		reactionSettings.value = { rules: {}, like: 1, dislike: 23, rank: true };
 	});
@@ -124,6 +127,7 @@ describe('ранжирование по реакциям', () => {
 describe('api.getPost и реакции', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearPostCache();
 		mocks.registry.activeSources = [];
 		mocks.sourceProvider.reactToComment = undefined;
 	});
@@ -137,6 +141,19 @@ describe('api.getPost и реакции', () => {
 
 		expect(mocks.sourceProvider.getPost).toHaveBeenCalledWith(5);
 		expect(mocks.dtf.getPost).toHaveBeenCalledWith(6);
+	});
+
+	it('посты из getPosts попадают в кэш и открываются через getPost без сети', async () => {
+		const cachedPost = post(10, 'dtf', '2024-01-01T00:00:00.000Z');
+		mocks.dtf.getPosts.mockResolvedValue({ items: [cachedPost] });
+
+		await api.getPosts();
+
+		expect(api.peekPost(10)).toEqual(cachedPost);
+
+		const result = await api.getPost(10);
+		expect(result).toEqual(cachedPost);
+		expect(mocks.dtf.getPost).not.toHaveBeenCalled();
 	});
 
 	it('неизвестный или выключенный источник — понятная ошибка', () => {
@@ -172,6 +189,7 @@ describe('api.getPost и реакции', () => {
 describe('api.getComments', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearPostCache();
 		mocks.registry.activeSources = [];
 		mocks.sourceProvider.getReplacedComments = undefined;
 	});

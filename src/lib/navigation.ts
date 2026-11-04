@@ -5,6 +5,8 @@ import { parseDtfUrl } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
 import { scrollBehavior } from './motion';
 import { markOrigin } from './pageTransition.svelte';
+import { cachePost } from './postCache';
+import type { Post } from '$lib/api/types';
 
 /*
  * Навигация внутри приложения. Посты, профили, настройки, вход и редактор открываются
@@ -179,7 +181,10 @@ function openFromLink(e: MouseEvent, overlay: App.OverlayData) {
 }
 
 /** Открыть пост поверх ленты (лента сохраняет прокрутку) */
-export function openPost(e: MouseEvent, post: { id: number; sourceId: string }) {
+export function openPost(e: MouseEvent, post: { id: number; sourceId: string } & Partial<Post>) {
+	if ('blocks' in post && Array.isArray((post as Post).blocks)) {
+		cachePost(post as Post);
+	}
 	openFromLink(e, { type: 'post', data: { postId: post.id, sourceId: post.sourceId } });
 }
 

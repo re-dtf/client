@@ -22,17 +22,21 @@
 	} = $props();
 
 	// svelte-ignore state_referenced_locally
+	const cached = api.peekPost(postId, sourceId);
+	// svelte-ignore state_referenced_locally
+	let post = $state.raw<Post | undefined>(cached);
+	let error = $state<string>();
+
+	// svelte-ignore state_referenced_locally
 	let postPromise = $state.raw(api.getPost(postId, sourceId));
 	function retryLoad() {
 		error = undefined;
-		postPromise = api.getPost(postId, sourceId);
+		postPromise = api.getPost(postId, sourceId, true);
 	}
 	// Комментарии рисуются после кадра с постом: тысячи их узлов иначе задерживают и сам пост
 	// svelte-ignore state_referenced_locally
-	const commentsTurn = postPromise.then(nextPaint, () => {});
+	const commentsTurn = (cached ? Promise.resolve() : postPromise).then(nextPaint, () => {});
 
-	let post = $state.raw<Post>();
-	let error = $state<unknown>();
 	// Комментарии (тысячи узлов) строятся, когда пост уже показан и его анимация закончилась
 	let postShown = $state(false);
 
@@ -66,16 +70,21 @@
 
 
 	$effect(() => {
+		if (cached) {
+			trackPostLoaded(cached);
+			onLoaded?.(cached.title);
+		}
 		postPromise
 			.then((loaded) => {
 				post = loaded;
 				trackPostLoaded(loaded);
 				onLoaded?.(loaded.title);
-
 			})
 			.catch((e) => {
-				error = e;
-				onLoaded?.('Ошибка');
+				if (!post) {
+					error = e.message;
+					onLoaded?.('Ошибка');
+				}
 			});
 	});
 

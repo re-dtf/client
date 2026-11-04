@@ -8,6 +8,7 @@ import { authStorage } from '$lib/storage/auth.svelte';
 import { reactionSettings } from '$lib/storage/reactions.svelte';
 import { rankByScore } from '$lib/reactions';
 import { trackComment, trackFavorite, trackReaction, trackSubscription } from '$lib/storage/stats.svelte';
+import { cachePost, cachePosts, loadPost, peekPost } from '$lib/postCache';
 
 /*
  * Единственная точка, через которую UI получает данные. Компоненты вызывают api.getPosts() и так далее
@@ -98,11 +99,22 @@ export const api = {
 
 		const merged = mergePosts(results, options?.sorting);
 		// Популярное (любой период) сервер ранжирует по своим очкам, в которых все реакции плюсовые: пересчитываем по правилам пользователя
-		return reactionSettings.value.rank && options?.pageName === 'popular' ? { ...merged, items: rankByScore(merged.items) } : merged;
+		const ranked = reactionSettings.value.rank && options?.pageName === 'popular' ? { ...merged, items: rankByScore(merged.items) } : merged;
+		cachePosts(ranked.items);
+		return ranked;
 	},
 
-	getPost(id: number, sourceId: string = DTF) {
-		return providerFor(sourceId).getPost(id);
+	getPost(id: number, sourceId: string = DTF, force = false): Promise<Post> {
+		const provider = providerFor(sourceId);
+		return loadPost(id, sourceId, force, () => provider.getPost(id));
+	},
+
+	peekPost(id: number, sourceId: string = DTF): Post | undefined {
+		return peekPost(id, sourceId);
+	},
+
+	cachePost(post: Post): void {
+		cachePost(post);
 	},
 
 	async getComments(postId: number, sourceId: string = DTF, cursors?: Cursors, sorting: string = 'date') {
@@ -177,7 +189,11 @@ export const api = {
 		trackReaction('comment', reactionId, author, sourceId);
 	},
 
-	getEditorialNews: (lastId?: number) => dtfApiProvider.getEditorialNews(lastId),
+	async getEditorialNews(lastId?: number) {
+		const items = await dtfApiProvider.getEditorialNews(lastId);
+		cachePosts(items.items);
+		return items;
+	},
 
 	// --- Действия вошедшего пользователя (только DTF) ---
 
@@ -215,7 +231,11 @@ export const api = {
 	// --- Профили (пока только DTF) ---
 
 	getProfile: (id: number) => dtfApiProvider.getProfile(id),
-	getProfilePosts: dtfApiProvider.getProfilePosts,
+	async getProfilePosts(...args: Parameters<typeof dtfApiProvider.getProfilePosts>) {
+		const res = await dtfApiProvider.getProfilePosts(...args);
+		cachePosts(res.items);
+		return res;
+	},
 	getProfileSubscribers: dtfApiProvider.getProfileSubscribers,
 	getProfileSubscriptions: dtfApiProvider.getProfileSubscriptions,
 	getProfileComments: dtfApiProvider.getProfileComments,
