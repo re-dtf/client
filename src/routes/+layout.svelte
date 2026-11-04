@@ -255,11 +255,17 @@
 			? Boolean(values.transparencyEffects)
 			: (typeof window !== 'undefined' ? !window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches : true);
 		document.documentElement.dataset.transparency = String(transparency);
+		if (activeTheme.id === 'redtf' && Boolean(values.headerBlur)) {
+			document.documentElement.dataset.headerBlur = 'true';
+		} else {
+			delete document.documentElement.dataset.headerBlur;
+		}
 		const style = document.documentElement.style;
 		for (const [name, value] of Object.entries(vars)) style.setProperty(name, value);
 		return () => {
 			Object.keys(vars).forEach((name) => style.removeProperty(name));
 			delete document.documentElement.dataset.transparency;
+			delete document.documentElement.dataset.headerBlur;
 		};
 	});
 

@@ -37,4 +37,12 @@ describe('настройки темы', () => {
 		activeTheme.set('dtf2022');
 		expect(activeThemeSettings()).toBe(getThemeSettings('dtf2022'));
 	});
+
+	it('настройка headerBlur есть только у темы redtf', () => {
+		const redtfSettings = getThemeSettings('redtf').value;
+		expect(redtfSettings.headerBlur).toBe(false);
+
+		const dtfSettings = getThemeSettings('dtf2022').value;
+		expect(dtfSettings.headerBlur).toBeUndefined();
+	});
 });

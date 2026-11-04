@@ -198,6 +198,13 @@ export default defineTheme({
 			default: true
 		},
 		{
+			key: 'headerBlur',
+			type: 'toggle',
+			title: 'Блюр верхней панели',
+			description: 'Размытие фона под шапкой при прокрутке',
+			default: false
+		},
+		{
 			key: 'transparencyEffects',
 			type: 'toggle',
 			title: 'Продвинутые эффекты прозрачности и размытия',

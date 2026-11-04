@@ -20,6 +20,10 @@
 				const st = JSON.parse(localStorage.getItem('redtf:settings'));
 				if (st?.d?.disableMobileTopBar) document.documentElement.dataset.disableMobileTopBar = 'true';
 				const themeId = st?.d?.theme ?? 'redtf';
+				if (themeId === 'redtf') {
+					const themeSt = JSON.parse(localStorage.getItem('redtf:theme:redtf'));
+					if (themeSt?.d?.headerBlur) document.documentElement.dataset.headerBlur = 'true';
+				}
 				const supportsDark = themeId === 'redtf';
 				const cs = st?.d?.colorScheme ?? 'auto';
 				if (supportsDark && (cs === 'dark' || cs === 'light')) {

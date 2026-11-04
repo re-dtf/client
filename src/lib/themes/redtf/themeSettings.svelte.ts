@@ -31,5 +31,9 @@ export const themeSettings = {
 		if (typeof val === 'boolean') return val;
 		if (typeof window === 'undefined') return true;
 		return !window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches;
+	},
+	/** Блюр верхней панели */
+	get headerBlur(): boolean {
+		return activeThemeSettings().value.headerBlur === true;
 	}
 };
