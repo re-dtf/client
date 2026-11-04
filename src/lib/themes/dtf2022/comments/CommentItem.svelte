@@ -172,6 +172,7 @@
 					'comment-item__thread-line',
 					{
 						'comment-item__thread-line--no-border': !line.border,
+						'comment-item__thread-line--empty': !line.border && !line.arc,
 						'comment-item__thread-line--max-level': i === row.lines.length - 1 && !line.arc,
 						'comment-item__thread-line--highlighted': i === highlightedLine
 					}
@@ -460,11 +461,22 @@
 	}
 
 	.comment-item__thread-line {
+		position: relative;
 		flex-shrink: 0;
 		width: var(--gap-branch, 0);
 		border-left: 1px solid var(--color-branch);
 		cursor: pointer;
 		user-select: none;
+	}
+
+	/* Хитбокс для клика/тапа: расширяет область нажатия влево и вправо на половину шага ветки */
+	.comment-item__thread-line::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(var(--gap-branch) * -0.5);
+		right: calc(var(--gap-branch) * 0.5);
 	}
 
 	/* Дуга от ветки к аватару */
@@ -482,8 +494,11 @@
 	}
 
 	.comment-item__thread-line--no-border {
-		height: 0;
 		border-color: transparent;
+	}
+
+	.comment-item__thread-line--empty {
+		pointer-events: none;
 	}
 
 	@media (hover: hover) and (pointer: fine) {
