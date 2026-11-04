@@ -115,9 +115,9 @@
 		max-width: var(--popover-max-width, 400px);
 		overflow: hidden;
 		border-radius: 8px;
-		background-color: #fff;
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.25);
-		color: #000;
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-dropdown);
+		color: var(--text-primary);
 		font-size: 16px;
 		line-height: 1.5em;
 		text-align: left;
@@ -144,9 +144,9 @@
 		margin: 6px 6px 0;
 		padding: 0 11px;
 		box-sizing: border-box;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 8px;
-		background-color: #f5f5f5;
+		background-color: var(--bg-secondary);
 		color: inherit;
 		font: inherit;
 		outline: 0;
@@ -154,12 +154,12 @@
 
 	.popover__search:focus {
 		border-color: var(--color-blue);
-		background-color: #fff;
+		background-color: var(--bg-card);
 	}
 
 	.popover__empty {
 		padding: 6px 10px;
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 	}
 
 	.popover-item {
@@ -179,17 +179,17 @@
 
 	.popover-item:hover,
 	.popover-item:focus-visible {
-		--color-background: rgba(0, 0, 0, 0.05);
+		--color-background: var(--bg-card-hover);
 	}
 
 	.popover-item--selected {
 		--item-offset-right: 10px;
-		--color-background: #e3edfd;
+		--color-background: var(--bg-popover-selected);
 	}
 
 	.popover-item--selected:hover,
 	.popover-item--selected:focus-visible {
-		--color-background: #d8e7fc;
+		--color-background: var(--bg-popover-selected-hover);
 	}
 
 	.popover-item__icon {

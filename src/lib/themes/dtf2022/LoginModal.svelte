@@ -315,7 +315,7 @@
 	}
 
 	.auth__hint a {
-		color: #3766a9;
+		color: var(--text-link);
 		text-decoration: underline;
 	}
 
@@ -329,7 +329,7 @@
 	}
 
 	.auth__default-proxy-link {
-		color: #3766a9;
+		color: var(--text-link);
 		font-size: 16px;
 		font-weight: 500;
 		cursor: pointer;
@@ -340,7 +340,7 @@
 	}
 
 	.auth__default-proxy-link--disabled {
-		color: #8c8c8c;
+		color: var(--text-disabled);
 		font-size: 15px;
 		font-weight: 400;
 		cursor: not-allowed;
@@ -355,7 +355,7 @@
 	}
 
 	.auth__footer a {
-		color: #3766a9;
+		color: var(--text-link);
 		font-size: 16px;
 		font-weight: 400;
 	}
@@ -369,13 +369,13 @@
 	}
 
 	.auth__message--error {
-		color: #e52a42;
-		background: #ffe6e9;
+		color: var(--color-danger-text);
+		background: var(--color-danger-bg);
 	}
 
 	.auth__message--success {
-		color: #2e7d32;
-		background: #e8f5e9;
+		color: var(--color-success-text);
+		background: var(--color-success-bg);
 	}
 
 	/* Мобильная версия — в исходной вёрстке её нет */

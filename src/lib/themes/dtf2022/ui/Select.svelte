@@ -48,9 +48,9 @@
 		min-height: 38px;
 		box-sizing: border-box;
 		padding: 7px 42px 7px 11px;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 8px;
-		background-color: #f5f5f5;
+		background-color: var(--bg-secondary);
 		color: inherit;
 		font-size: 16px;
 		line-height: 1.5em;
@@ -61,31 +61,31 @@
 
 	@media (hover: hover) {
 		.select__field:hover {
-			border-color: #bdd6fa;
-			background-color: #fff;
-			box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+			border-color: var(--border-focus);
+			background-color: var(--bg-card);
+			box-shadow: var(--focus-ring);
 		}
 	}
 
 	.select__field--focused {
 		z-index: 5;
 		border-color: var(--color-blue);
-		background-color: #fff;
-		box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+		background-color: var(--bg-card);
+		box-shadow: var(--focus-ring);
 	}
 
 	.select__placeholder {
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 	}
 
 	.select__chevron {
 		position: absolute;
 		top: 8px;
 		right: 11px;
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 	}
 
 	.select__field--focused .select__chevron {
-		color: #000;
+		color: var(--text-primary);
 	}
 </style>

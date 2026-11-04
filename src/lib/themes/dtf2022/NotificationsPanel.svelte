@@ -128,7 +128,7 @@
 		justify-content: space-between;
 		gap: 12px;
 		padding: 12px 15px;
-		border-bottom: 1px solid #f2f2f2;
+		border-bottom: 1px solid var(--bg-main);
 	}
 
 	.notifications__title {
@@ -138,14 +138,14 @@
 	}
 
 	.notifications__mark-all {
-		color: #3766a9;
+		color: var(--text-link);
 		font-size: 13px;
 		line-height: 14px;
 		cursor: pointer;
 	}
 
 	.notifications__mark-all:hover {
-		color: #5d8aca;
+		color: var(--text-link-subtle);
 	}
 
 	.notifications__loader {
@@ -167,7 +167,7 @@
 	}
 
 	.notifications__footer {
-		border-top: 1px solid #f2f2f2;
+		border-top: 1px solid var(--bg-main);
 		text-align: center;
 		font-weight: 500;
 	}
@@ -175,7 +175,7 @@
 	.notifications__footer-link {
 		display: block;
 		padding: 15px;
-		color: #3766a9;
+		color: var(--text-link);
 		line-height: 1;
 	}
 
@@ -191,7 +191,7 @@
 	}
 
 	.u-notification--border {
-		border-bottom: 1px solid #f2f2f2;
+		border-bottom: 1px solid var(--bg-main);
 	}
 
 	.u-notification--border:last-of-type {
@@ -199,15 +199,15 @@
 	}
 
 	.u-notification--hover:hover {
-		background: #f3f3f3;
+		background: var(--bg-read-hover);
 	}
 
 	.u-notification--unread {
-		background: #f5fcff;
+		background: var(--bg-unread);
 	}
 
 	.u-notification--unread.u-notification--hover:hover {
-		background: #eef4f7;
+		background: var(--bg-unread-hover);
 	}
 
 	.u-notification__link {
@@ -236,7 +236,7 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 4px;
-		outline: 1px solid rgba(0, 0, 0, 0.1);
+		outline: 1px solid var(--border-avatar);
 		outline-offset: -1px;
 		object-fit: cover;
 	}
@@ -256,9 +256,9 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 4px;
-		background: #dedede;
-		color: #000;
-		outline: 1px solid rgba(0, 0, 0, 0.1);
+		background: var(--border-color);
+		color: var(--text-primary);
+		outline: 1px solid var(--border-avatar);
 		outline-offset: -1px;
 	}
 
@@ -269,9 +269,9 @@
 		width: 16px;
 		height: 16px;
 		border-radius: 100%;
-		background: #595959;
-		color: #fff;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+		background: var(--text-muted);
+		color: var(--text-on-accent);
+		box-shadow: var(--shadow-avatar-badge);
 	}
 
 	.u-notification__content {
@@ -286,7 +286,7 @@
 	}
 
 	.u-notification__content a:hover {
-		color: #3766a9;
+		color: var(--text-link);
 	}
 
 	.u-notification__content b {
@@ -294,13 +294,13 @@
 	}
 
 	.u-notification__content__date {
-		color: #595959;
+		color: var(--text-muted);
 	}
 
 	.u-notification__content__reply-text {
 		margin-top: 5px;
 		padding: 4px 8px 5px;
-		background: rgba(0, 0, 0, 0.05);
+		background: var(--bg-card-hover);
 		font-size: 12px;
 		line-height: 16px;
 		white-space: pre-line;
@@ -312,48 +312,48 @@
 		display: inline-flex;
 		font-size: 12px;
 		line-height: 24px;
-		color: #3766a9;
+		color: var(--text-link);
 		cursor: pointer;
 	}
 
 	.u-notification__content__button:hover {
-		color: #5d8aca;
+		color: var(--text-link-subtle);
 	}
 
 	.u-notification--blue .u-notification__image-icon {
-		background: #66a6ed;
-		color: #fff;
+		background: var(--color-notify-blue);
+		color: var(--text-on-accent);
 	}
 
 	.u-notification--blue .u-notification__avatar-icon {
-		background: #66a6ed;
+		background: var(--color-notify-blue);
 	}
 
 	.u-notification--red .u-notification__image-icon {
-		background: rgba(255, 71, 89, 0.1);
-		color: #e92a40;
+		background: var(--bg-notify-red);
+		color: var(--color-notify-red-text);
 	}
 
 	.u-notification--red .u-notification__avatar-icon {
-		background: #ff4759;
+		background: var(--color-notify-red);
 	}
 
 	.u-notification--green .u-notification__image-icon {
-		background: rgba(69, 192, 69, 0.1);
-		color: #2ea83a;
+		background: var(--bg-notify-green);
+		color: var(--color-positive);
 	}
 
 	.u-notification--green .u-notification__avatar-icon {
-		background: #45c045;
+		background: var(--color-notify-green);
 	}
 
 	.u-notification--yellow .u-notification__image-icon {
-		background: #fffdf1;
-		color: #af9557;
+		background: var(--bg-coin);
+		color: var(--color-coin-text);
 	}
 
 	.u-notification--yellow .u-notification__avatar-icon {
-		background: #ffdd39;
+		background: var(--color-coin);
 	}
 
 	/* Страница уведомлений: крупный заголовок, ссылка под ним, список целиком */

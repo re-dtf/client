@@ -172,7 +172,7 @@
 	/* Наведение подсвечивает круг; цвет поставленной стрелки под курсором не меняется */
 	@media (hover: hover) {
 		.vote__button:hover {
-			--color-background: rgba(0, 0, 0, 0.05);
+			--color-background: var(--bg-card-hover);
 		}
 
 		/* Пока играет анимация клика, подсветки нет */

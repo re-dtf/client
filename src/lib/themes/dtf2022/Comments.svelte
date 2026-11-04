@@ -320,7 +320,7 @@
 		/* внутри обёртки PostContent (блок, а не flex) — центрируем сами */
 		margin: 28px auto 0;
 		padding: 32px 0;
-		background-color: #fff;
+		background-color: var(--bg-card);
 	}
 
 	.comments-wrapper {
@@ -390,9 +390,9 @@
 		width: 100%;
 		height: 48px;
 		padding: 0 17px 0 15px;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 10px;
-		background-color: #f7f7f7;
+		background-color: var(--bg-tertiary);
 		color: inherit;
 		font: inherit;
 		text-align: inherit;
@@ -400,7 +400,7 @@
 	}
 
 	.comment-fake-form__text {
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 		line-height: 1.5em;
 	}
 

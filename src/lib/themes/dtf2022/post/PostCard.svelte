@@ -112,7 +112,7 @@
 		position: relative;
 		max-width: 600px;
 		overflow: hidden;
-		box-shadow: 0 0 0 1px #dedede;
+		box-shadow: 0 0 0 1px var(--border-color);
 	}
 
 	.post-content {
@@ -173,20 +173,32 @@
 			margin-top: 20px;
 		}
 
-		.feed-item--embed {
-			margin: 24px 0;
+		.post-footer {
+			margin-top: 6px;
+			padding-bottom: 12px;
+		}
+
+		.post-footer__controls {
+			gap: 16px;
+		}
+
+		.post-footer--arrows .post-footer__controls {
+			gap: 24px;
+		}
+
+		.post-footer--arrows-left .post-footer__controls {
+			gap: 16px;
 		}
 	}
 
 	@media (max-width: 639px) {
+		.post-card:not(.post-card--embed) {
+			border-radius: 0;
+		}
+
 		.post-block {
 			padding-left: 16px;
 			padding-right: 16px;
-		}
-
-		/* На узких экранах карточка — на всю ширину, без скруглений */
-		.post-card:not(.post-card--embed) {
-			border-radius: 0;
 		}
 	}
 </style>

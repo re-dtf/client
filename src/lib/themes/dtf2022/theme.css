@@ -23,7 +23,31 @@
     /* --bg-main: #f4f5f7; ДЛЯ АЛЬТЕРНАТИВНОЙ ТЕМЫ RE, НЕ УДАЛЯТЬ КОММЕНТ */
     --bg-main: #f2f2f2;
     --bg-card: #ffffff;
+    --bg-card-hover: rgba(0, 0, 0, 0.05);
+    --bg-card-hover-2: rgba(0, 0, 0, 0.07);
+    --bg-card-active: rgba(0, 0, 0, 0.08);
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #f7f7f7;
     --bg-header: #D9F5FF;
+    --bg-sidebar-hover: rgba(255, 255, 255, 0.5);
+    --bg-media-frame: rgba(0, 0, 0, 0.08);
+    --bg-spoiler: rgba(0, 0, 0, 0.04);
+    --bg-spoiler-hover: rgba(0, 0, 0, 0.06);
+    --bg-highlight: rgba(70, 131, 217, 0.12);
+    --bg-unread: #f5fcff;
+    --bg-unread-hover: #eef4f7;
+    --bg-read-hover: #f3f3f3;
+    --bg-tint-overlay: rgba(0, 0, 0, 0.6);
+    --bg-reaction-hover: rgba(0, 0, 0, 0.09);
+    --bg-reaction-active: rgba(70, 131, 217, 0.14);
+    --bg-reaction-active-hover: rgba(70, 131, 217, 0.24);
+    --bg-nav-tab-active: #eff5fe;
+    --bg-nav-tab-hover: rgba(239, 245, 254, 0.5);
+    --bg-popover-selected: #e3edfd;
+    --bg-popover-selected-hover: #d8e7fc;
+    --bg-editor-dragover: rgba(145, 222, 255, 0.22);
+    --bg-editor-dragover-preview: #eef2f5;
+    --bg-cover-button: rgba(255, 255, 255, 0.3);
 
     /* Модальные окна */
     --bg-modal: #fff;
@@ -31,6 +55,7 @@
 
     /* Кнопки */
     --bg-button: #fff;
+    --bg-button-hover: rgba(0, 0, 0, 0.06);
     --bg-submit-button: #4683d9;
     --bg-submit-button--hover: #437cce;
     --text-submit-button: #fff;
@@ -39,14 +64,92 @@
     --text-primary: #000000;
     --text-secondary: rgba(0, 0, 0, 0.75);
     --text-muted: #595959;
+    --text-caption: #666666;
+    --text-subtle: rgba(0, 0, 0, 0.65);
+    --text-subtle-dim: rgba(0, 0, 0, 0.4);
+    --text-placeholder: #bfbfbf;
     --text-link: #3766a9;
+    --text-link-subtle: #5d8aca;
     --text-hover: #1e88e5;
+    --text-tab: #4d4d4d;
+    --text-disabled: #8c8c8c;
+    --text-on-accent: #ffffff;
 
-    /* Акценты */
+    /* Акценты и статусы */
     --color-accent: #1693e5;
     --color-blue: #4683d9;
     --color-positive: #2ea83a;
     --color-negative: #e52e3a;
+    --color-badge: #e62e3b;
+    --color-danger: #cd192e;
+    --color-danger-subtle: #f6b4bc;
+    --color-danger-bg: #ffe6e9;
+    --color-danger-text: #e52a42;
+    --color-success-bg: #e8f5e9;
+    --color-success-text: #2e7d32;
+    --color-coin: #ffdd39;
+    --color-coin-text: #af9557;
+    --bg-coin: #fffdf1;
+    --color-donate: #447;
+    --color-donate-remove: rgba(255, 255, 255, 0.5);
+    --color-gif: #6f77c3;
+    --color-notify-blue: #66a6ed;
+    --color-notify-red: #ff4759;
+    --color-notify-red-text: #e92a40;
+    --bg-notify-red: rgba(255, 71, 89, 0.1);
+    --color-notify-green: #45c045;
+    --bg-notify-green: rgba(69, 192, 69, 0.1);
+
+    /* Оценки */
+    --color-like: #f0303d;
+    --color-like-active: #e65151;
+    --color-like-hover-bg: #e5545e;
+    --color-dislike: #ff8a00;
+    --color-dislike-active: #ff8a00;
+    --color-comments-hover: #68a2f3;
+    --color-comments-hover-bg: #06f;
+
+    /* Границы и разделители */
+    --border-color: #dedede;
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-subtle-2: rgba(0, 0, 0, 0.1);
+    --border-subtle-3: rgba(0, 0, 0, 0.12);
+    --border-input: rgba(0, 0, 0, 0.03);
+    --border-focus: #bdd6fa;
+    --border-link: #bed0ea;
+    --border-avatar: rgba(0, 0, 0, 0.1);
+    --border-reaction-active: rgba(70, 131, 217, 0.5);
+    --border-donate-form: rgba(0, 0, 0, 0.07);
+    --border-checkbox: rgba(0, 0, 0, 0.129);
+    --border-checkbox-top: rgba(0, 0, 0, 0.25);
+    --border-checkbox-hover: rgba(89, 89, 89, 0.8);
+    --border-editor-dragover: #ccc;
+    --color-branch: #e6e6e6;
+    --color-branch-hover: var(--color-blue);
+    --color-inline-action: var(--color-blue);
+
+    /* Тени */
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-button: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-button-hover: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+    --shadow-button-active: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 0 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-popup: 0 3px 5px 0 rgba(116, 116, 116, 0.25);
+    --shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.25);
+    --shadow-picker: 0 2px 12px rgba(0, 0, 0, 0.16);
+    --shadow-toast: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.2);
+    --shadow-donate: 0 1px 2px rgba(68, 68, 119, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    --shadow-donate-form: 0 4px 8px rgba(0, 0, 0, 0.06), inset 0 -1px 0 #fff;
+    --shadow-slider-track: inset 0 0.5px 1.5px rgba(0, 0, 0, 0.25);
+    --shadow-slider-thumb: 0 2px 1px rgba(0, 0, 0, 0.02), 0 2.5px 0.5px rgba(0, 0, 0, 0.02), 0 2px 0.5px rgba(27, 27, 28, 0.03), 0 1px 0.5px rgba(28, 26, 26, 0.03), 0 0.5px 1px rgba(28, 26, 26, 0.04), 0 3px 8px rgba(22, 18, 18, 0.15);
+    --shadow-button-blue: 0 1px 2px rgba(70, 131, 217, 0.48), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    --shadow-button-blue-active: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+    --shadow-avatar-badge: 0 1px 2px rgba(0, 0, 0, 0.15);
+    --shadow-avatar-change: 0 2px 1px rgba(0, 0, 0, 0.05);
+    --shadow-sorting-button: 0 1px 4px rgba(0, 0, 0, 0.15);
+    --shadow-btn-outline: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+    --shadow-btn-outline-hover: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+    --shadow-btn-outline-active: inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+    --focus-ring: 0 0 0 3px rgba(70, 131, 217, 0.12);
 
     /* Шрифт */
     --font-family: 'Roboto', Tahoma, sans-serif;

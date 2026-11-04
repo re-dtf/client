@@ -18,7 +18,7 @@
 		width: 100%;
 		max-width: var(--content-width);
 		flex-grow: 1;
-		background: #fff;
-		color: #000;
+		background: var(--bg-card);
+		color: var(--text-primary);
 	}
 </style>

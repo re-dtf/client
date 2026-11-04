@@ -114,17 +114,17 @@
 		height: 32px;
 		margin-right: 6px;
 		border-radius: 32px;
-		color: #447;
+		color: var(--color-donate);
 		cursor: pointer;
 	}
 
 	.attacher--active .attacher__button {
-		background-color: #f2f2f2;
+		background-color: var(--bg-main);
 	}
 
 	@media (hover: hover) {
 		.attacher__button:hover {
-			background-color: #f2f2f2;
+			background-color: var(--bg-main);
 		}
 	}
 
@@ -136,10 +136,10 @@
 		width: 210px;
 		margin-bottom: 12px;
 		padding: 12px 16px;
-		border: 1px solid rgba(0, 0, 0, 0.07);
+		border: 1px solid var(--border-donate-form);
 		border-radius: 4px;
-		background-color: #fff;
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06), inset 0 -1px 0 #fff;
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-donate-form);
 	}
 
 	/* Стрелка к кнопке */
@@ -150,9 +150,9 @@
 		left: 17px;
 		width: 10px;
 		height: 10px;
-		border: solid rgba(0, 0, 0, 0.07);
+		border: solid var(--border-donate-form);
 		border-width: 0 1px 1px 0;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		transform: rotate(45deg);
 		pointer-events: none;
 	}
@@ -163,9 +163,9 @@
 		box-sizing: border-box;
 		margin-bottom: 10px;
 		padding: 0 11px;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 8px;
-		background-color: #f5f5f5;
+		background-color: var(--bg-secondary);
 		font: inherit;
 		font-size: 24px;
 		text-align: center;
@@ -174,9 +174,9 @@
 
 	.attacher__input:focus {
 		border-color: var(--color-blue);
-		background-color: #fff;
+		background-color: var(--bg-card);
 		outline: 0;
-		box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+		box-shadow: var(--focus-ring);
 	}
 
 	/* Слайдер: дорожка 4px, закрашенная часть синяя, ползунок 20px */
@@ -193,15 +193,15 @@
 	.attacher__range::-webkit-slider-runnable-track {
 		height: 4px;
 		border-radius: 2px;
-		background: linear-gradient(to right, #4683d9 var(--fill), #f5f5f5 var(--fill));
-		box-shadow: inset 0 0.5px 1.5px rgba(0, 0, 0, 0.25);
+		background: linear-gradient(to right, var(--color-blue) var(--fill), var(--bg-secondary) var(--fill));
+		box-shadow: var(--shadow-slider-track);
 	}
 
 	.attacher__range::-moz-range-track {
 		height: 4px;
 		border-radius: 2px;
-		background: linear-gradient(to right, #4683d9 var(--fill), #f5f5f5 var(--fill));
-		box-shadow: inset 0 0.5px 1.5px rgba(0, 0, 0, 0.25);
+		background: linear-gradient(to right, var(--color-blue) var(--fill), var(--bg-secondary) var(--fill));
+		box-shadow: var(--shadow-slider-track);
 	}
 
 	.attacher__range::-webkit-slider-thumb {
@@ -210,9 +210,9 @@
 		margin-top: -8px;
 		border: 0;
 		border-radius: 50%;
-		background-color: #fff;
-		box-shadow: 0 2px 1px rgba(0, 0, 0, 0.02), 0 2.5px 0.5px rgba(0, 0, 0, 0.02), 0 2px 0.5px rgba(27, 27, 28, 0.03), 0 1px 0.5px rgba(28, 26, 26, 0.03),
-			0 0.5px 1px rgba(28, 26, 26, 0.04), 0 3px 8px rgba(22, 18, 18, 0.15);
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-slider-thumb);
+
 		appearance: none;
 	}
 
@@ -221,9 +221,9 @@
 		height: 20px;
 		border: 0;
 		border-radius: 50%;
-		background-color: #fff;
-		box-shadow: 0 2px 1px rgba(0, 0, 0, 0.02), 0 2.5px 0.5px rgba(0, 0, 0, 0.02), 0 2px 0.5px rgba(27, 27, 28, 0.03), 0 1px 0.5px rgba(28, 26, 26, 0.03),
-			0 0.5px 1px rgba(28, 26, 26, 0.04), 0 3px 8px rgba(22, 18, 18, 0.15);
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-slider-thumb);
+
 	}
 
 	.attacher__button-wrap {

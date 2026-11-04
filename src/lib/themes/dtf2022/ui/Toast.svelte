@@ -82,9 +82,9 @@
 		margin-bottom: 0;
 		padding: 11px 42px 11px 46px;
 		border-radius: 8px;
-		background: #fff;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.2);
-		color: #000;
+		background: var(--bg-card);
+		box-shadow: var(--shadow-toast);
+		color: var(--text-primary);
 		font-size: 0;
 		opacity: 0;
 		transform: translateX(120%);
@@ -142,7 +142,7 @@
 		position: absolute;
 		right: 12px;
 		top: 12px;
-		color: #bfbfbf;
+		color: var(--text-placeholder);
 		cursor: pointer;
 	}
 

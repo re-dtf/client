@@ -24,8 +24,8 @@
 		height: 48px;
 		padding: 0 11px;
 		font-size: 16px;
-		background-color: #f5f5f5;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		background-color: var(--bg-secondary);
+		border: 1px solid var(--border-input);
 		border-radius: 8px;
 		transition: background-color 0.1s linear, border-color 0.1s linear, box-shadow 0.1s linear;
 	}
@@ -33,9 +33,9 @@
 	/* focus-within — видимый фокус с клавиатуры (у самого input outline сброшен) */
 	.field__wrapper:hover,
 	.field__wrapper:focus-within {
-		background-color: #fff;
-		border-color: #bdd6fa;
-		box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+		background-color: var(--bg-card);
+		border-color: var(--border-focus);
+		box-shadow: var(--focus-ring);
 	}
 
 	input {

@@ -107,9 +107,9 @@
 		height: 38px;
 		box-sizing: border-box;
 		padding: 0 11px 0 41px;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 8px;
-		background-color: #f5f5f5;
+		background-color: var(--bg-secondary);
 		font: inherit;
 		font-size: 16px;
 		transition: background-color 0.1s linear, border-color 0.1s linear, box-shadow 0.1s linear;
@@ -117,22 +117,22 @@
 
 	.gif-picker__search input:focus {
 		border-color: var(--color-blue);
-		background-color: #fff;
+		background-color: var(--bg-card);
 		outline: 0;
-		box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+		box-shadow: var(--focus-ring);
 	}
 
 	.gif-picker__search-icon {
 		position: absolute;
 		top: 9px;
 		left: 10px;
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 		pointer-events: none;
 	}
 
 	.gif-picker__title {
 		margin: 16px 0 8px;
-		color: #595959;
+		color: var(--text-muted);
 		font-size: 14px;
 		line-height: 20px;
 	}
@@ -152,7 +152,7 @@
 		aspect-ratio: 1;
 		overflow: hidden;
 		border-radius: 8px;
-		background-color: #f5f5f5;
+		background-color: var(--bg-secondary);
 		cursor: pointer;
 	}
 
@@ -167,7 +167,7 @@
 		display: flex;
 		justify-content: center;
 		margin: 16px 0 0;
-		color: #595959;
+		color: var(--text-muted);
 		font-size: 15px;
 	}
 

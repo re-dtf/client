@@ -146,7 +146,7 @@
 		position: relative;
 		margin-bottom: 28px;
 		padding: 9px 20px 5px;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		overflow-wrap: anywhere;
 	}
 
@@ -201,7 +201,7 @@
 		height: 16px;
 		margin-right: 4px;
 		border-radius: 2px;
-		outline: 1px solid rgba(0, 0, 0, 0.1);
+		outline: 1px solid var(--border-avatar);
 		outline-offset: -1px;
 	}
 
@@ -218,7 +218,7 @@
 
 	.profile-comment__date {
 		margin-left: 13px;
-		color: #595959;
+		color: var(--text-muted);
 		font-size: 12px;
 		text-transform: lowercase;
 	}
@@ -240,13 +240,13 @@
 	}
 
 	.profile-comment__text a {
-		border-bottom: 1px solid #bed0ea;
+		border-bottom: 1px solid var(--border-link);
 		color: var(--text-link);
 	}
 
 	.profile-comment__text a:hover {
-		border-bottom-color: #f6b4bc;
-		color: #cd192e;
+		border-bottom-color: var(--color-danger-subtle);
+		color: var(--color-danger);
 	}
 
 	.profile-comment__quote {
@@ -286,7 +286,7 @@
 	.profile-comment__reply {
 		margin-top: 3px;
 		margin-right: 17px;
-		color: #595959;
+		color: var(--text-muted);
 		font-size: 15px;
 	}
 
@@ -297,7 +297,7 @@
 	.profile-comment__bookmark {
 		display: flex;
 		margin-right: 20px;
-		color: #595959;
+		color: var(--text-muted);
 		cursor: pointer;
 	}
 
@@ -309,12 +309,12 @@
 	.profile-comment__etc {
 		display: flex;
 		align-items: center;
-		color: #595959;
+		color: var(--text-muted);
 		cursor: pointer;
 	}
 
 	.profile-comment__etc:hover,
 	.profile-comment__etc[aria-expanded='true'] {
-		color: #000;
+		color: var(--text-primary);
 	}
 </style>

@@ -256,16 +256,16 @@
 		display: flex;
 		min-height: 48px;
 		padding: 12px 11px 11px;
-		border: 1px solid rgba(0, 0, 0, 0.03);
+		border: 1px solid var(--border-input);
 		border-radius: 10px;
-		background-color: #f7f7f7;
+		background-color: var(--bg-tertiary);
 		transition: background-color 0.1s linear, border-color 0.1s linear, box-shadow 0.1s linear;
 	}
 
 	.comment-editor--focused {
 		border-color: var(--color-blue);
-		background-color: #fff;
-		box-shadow: 0 0 0 3px rgba(70, 131, 217, 0.12);
+		background-color: var(--bg-card);
+		box-shadow: var(--focus-ring);
 	}
 
 	.comment-editor-box {
@@ -336,8 +336,8 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 50%;
-		background-color: rgba(0, 0, 0, 0.6);
-		color: #fff;
+		background-color: var(--bg-tint-overlay);
+		color: var(--text-on-accent);
 		line-height: 20px;
 		cursor: pointer;
 	}
@@ -386,16 +386,16 @@
 
 	/* Цвета иконок вложений — как у DTF */
 	.comment-editor-box__attach-btn--image {
-		color: #2ea83a;
+		color: var(--color-positive);
 	}
 
 	.comment-editor-box__attach-btn--gif {
-		color: #6f77c3;
+		color: var(--color-gif);
 	}
 
 	@media (hover: hover) {
 		.comment-editor-box__attach-btn:hover {
-			background-color: #f2f2f2;
+			background-color: var(--bg-main);
 		}
 	}
 
@@ -409,12 +409,12 @@
 		padding-left: 12px;
 		padding-right: 6px;
 		border-radius: 5px;
-		background: #447;
-		box-shadow: 0 1px 2px rgba(68, 68, 119, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+		background: var(--color-donate);
+		box-shadow: var(--shadow-donate);
 	}
 
 	.donate-attachment__sum {
-		color: #fff;
+		color: var(--text-on-accent);
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 18px;
@@ -422,7 +422,7 @@
 
 	.donate-attachment__remove {
 		margin-left: 5px;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--color-donate-remove);
 		cursor: pointer;
 	}
 
@@ -436,7 +436,7 @@
 	}
 
 	.comment-editor-box__custom-btn {
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 		cursor: pointer;
 	}
 

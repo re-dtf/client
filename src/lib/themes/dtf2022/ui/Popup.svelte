@@ -56,15 +56,15 @@
 		padding: 36px 16px;
 		overflow-x: hidden;
 		overflow-y: auto;
-		background-color: rgba(0, 0, 0, 0.5);
+		background-color: var(--modal-backdrop);
 	}
 
 	.popup {
 		width: 100%;
 		margin: auto;
 		border-radius: 8px;
-		background-color: #fff;
-		color: #000;
+		background-color: var(--bg-card);
+		color: var(--text-primary);
 		text-align: left;
 	}
 
@@ -73,9 +73,9 @@
 		z-index: 1;
 		min-height: 65px;
 		padding: 20px 56px 16px;
-		border-bottom: 1px solid #dedede;
+		border-bottom: 1px solid var(--border-color);
 		border-radius: 8px 8px 0 0;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		font-size: 20px;
 		font-weight: 500;
 		line-height: 28px;
@@ -86,7 +86,7 @@
 		position: absolute;
 		top: 23px;
 		right: 16px;
-		color: #000;
+		color: var(--text-primary);
 		opacity: 0.5;
 		cursor: pointer;
 	}

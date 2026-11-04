@@ -215,7 +215,7 @@
 		--offset-x: var(--island-offset-x, 20px);
 		padding: 15px var(--offset-x) 16px;
 		border-radius: 8px;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		font-size: 16px;
 		line-height: 1.5em;
 	}
@@ -275,7 +275,7 @@
 		right: 0;
 		left: 48px;
 		height: 1px;
-		background-color: rgba(0, 0, 0, 0.1);
+		background-color: var(--border-avatar);
 	}
 
 	.subsite-item:first-child::before {
@@ -302,9 +302,9 @@
 		height: 34px;
 		min-width: 40px;
 		border-radius: 8px;
-		background-color: #fff;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
-		color: #000;
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-btn-outline);
+		color: var(--text-primary);
 		font: inherit;
 		font-weight: 500;
 		white-space: nowrap;
@@ -313,11 +313,11 @@
 	}
 
 	.subscribe-button:hover {
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-btn-outline-hover);
 	}
 
 	.subscribe-button:active {
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-btn-outline-active);
 		transform: translateY(1px);
 	}
 
@@ -346,8 +346,8 @@
 		height: 36px;
 		margin-right: 12px;
 		border-radius: 6px;
-		background: #dedede no-repeat 50% 50% / cover;
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+		background: var(--border-color) no-repeat 50% 50% / cover;
+		box-shadow: inset 0 0 0 1px var(--border-avatar);
 	}
 
 	.subsite-item__label-container {
@@ -376,7 +376,7 @@
 	}
 
 	.subsites__more:hover {
-		color: #cd192e;
+		color: var(--color-danger);
 	}
 
 	.subsites__more .icon {
@@ -426,7 +426,7 @@
 		align-items: center;
 		width: 36px;
 		padding-bottom: 3px;
-		color: rgba(0, 0, 0, 0.65);
+		color: var(--text-subtle);
 	}
 
 	.nav-tab__label {
@@ -452,17 +452,17 @@
 		left: 0;
 		width: 100%;
 		height: 1px;
-		background-color: rgba(0, 0, 0, 0.1);
+		background-color: var(--border-avatar);
 	}
 
 	.nav-tab--active {
-		background-color: #eff5fe;
+		background-color: var(--bg-nav-tab-active);
 		font-weight: 500;
 		pointer-events: none;
 	}
 
 	.nav-tab--active .nav-tab__icon {
-		color: #000;
+		color: var(--text-primary);
 	}
 
 	.nav-tab--active .nav-tab__label::after,
@@ -472,7 +472,7 @@
 
 	@media (hover: hover) {
 		.nav-tab:hover {
-			background-color: rgba(239, 245, 254, 0.5);
+			background-color: var(--bg-nav-tab-hover);
 		}
 
 		.nav-tab:hover .nav-tab__label::after,
@@ -519,8 +519,8 @@
 			z-index: 2;
 			display: flex;
 			height: 56px;
-			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-			background-color: #fff;
+			border-bottom: 1px solid var(--border-avatar);
+			background-color: var(--bg-card);
 		}
 
 		.details-navbar__button {
@@ -547,7 +547,7 @@
 		}
 
 		.details-content {
-			background-color: #fff;
+			background-color: var(--bg-card);
 		}
 
 		.island {

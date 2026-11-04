@@ -157,7 +157,7 @@
 		height: 28px;
 		padding: 0 11px 0 7px;
 		border-radius: 14px;
-		background-color: rgba(0, 0, 0, 0.05);
+		background-color: var(--bg-card-hover);
 		box-shadow: inset 0 0 0 1px transparent;
 		color: var(--text-muted);
 		font-size: 15px;
@@ -169,17 +169,17 @@
 
 	@media (hover: hover) {
 		.post-reaction:hover {
-			background-color: rgba(0, 0, 0, 0.09);
+			background-color: var(--bg-reaction-hover);
 		}
 
 		.post-reaction--active:hover {
-			background-color: rgba(70, 131, 217, 0.24);
+			background-color: var(--bg-reaction-active-hover);
 		}
 	}
 
 	.post-reaction--active {
-		background-color: rgba(70, 131, 217, 0.14);
-		box-shadow: inset 0 0 0 1px rgba(70, 131, 217, 0.5);
+		background-color: var(--bg-reaction-active);
+		box-shadow: inset 0 0 0 1px var(--border-reaction-active);
 	}
 
 	.post-reaction__icon {
@@ -219,7 +219,7 @@
 	}
 
 	.post-reaction--open {
-		background-color: rgba(0, 0, 0, 0.09);
+		background-color: var(--bg-reaction-hover);
 	}
 
 	/* Панель выбора под рядом реакций; вне прокручиваемого ряда, иначе её обрежет overflow */
@@ -235,8 +235,8 @@
 		max-width: min(320px, 100%);
 		padding: 8px;
 		border-radius: 16px;
-		background-color: #fff;
-		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-picker);
 	}
 
 	.post-reactions__pick {
@@ -248,12 +248,12 @@
 	}
 
 	.post-reactions__pick--active {
-		background-color: rgba(70, 131, 217, 0.14);
+		background-color: var(--bg-reaction-active);
 	}
 
 	@media (hover: hover) {
 		.post-reactions__pick:hover {
-			background-color: rgba(0, 0, 0, 0.07);
+			background-color: var(--bg-card-hover-2);
 		}
 	}
 </style>

@@ -21,9 +21,9 @@
 		height: 40px;
 		min-width: 44px;
 		border-radius: 8px;
-		background-color: #fff;
-		color: #000;
-		box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+		background-color: var(--bg-button);
+		color: var(--text-primary);
+		box-shadow: var(--shadow-button);
 		font-size: 15px;
 		font-weight: 500;
 		white-space: nowrap;
@@ -32,11 +32,11 @@
 	}
 
 	.create:hover {
-		box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+		box-shadow: var(--shadow-button-hover);
 	}
 
 	.create:active {
-		box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.06) inset, 0 0 2px 0 rgba(0, 0, 0, 0.04);
+		box-shadow: var(--shadow-button-active);
 		transform: translateY(1px);
 	}
 

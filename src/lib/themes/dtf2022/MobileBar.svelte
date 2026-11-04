@@ -79,8 +79,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		background-color: #fff;
-		border-top: 1px solid rgba(0, 0, 0, 0.1);
+		background-color: var(--bg-card);
+		border-top: 1px solid var(--border-subtle-2);
 		padding: 0 var(--padding-x) env(safe-area-inset-bottom);
 		height: var(--mobile-bar-height);
 	}
@@ -111,8 +111,8 @@
 		min-width: 12px;
 		padding: 3px 5px;
 		border-radius: 4px;
-		background-color: #e62e3b;
-		color: #fff;
+		background-color: var(--color-badge);
+		color: var(--text-on-accent);
 		font-size: 12px;
 		line-height: 1em;
 	}

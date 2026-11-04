@@ -103,7 +103,7 @@
 		margin: 0 auto;
 		padding-top: 24px;
 		padding-bottom: 30px;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		/* медиа на всю ширину страницы: width: 100cqw */
 		container-type: inline-size;
 	}
