@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" content="#D9F5FF" />
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 
@@ -18,6 +19,23 @@
 				if (saved?.v === 1 && saved.d === true) document.documentElement.dataset.splash = 'off';
 				const st = JSON.parse(localStorage.getItem('redtf:settings'));
 				if (st?.d?.disableMobileTopBar) document.documentElement.dataset.disableMobileTopBar = 'true';
+				const themeId = st?.d?.theme ?? 'redtf';
+				const supportsDark = themeId === 'redtf';
+				const cs = st?.d?.colorScheme ?? 'auto';
+				if (supportsDark && (cs === 'dark' || cs === 'light')) {
+					document.documentElement.dataset.colorScheme = cs;
+					const meta = document.querySelector('meta[name="color-scheme"]');
+					if (meta) meta.content = cs;
+					const themeMeta = document.querySelector('meta[name="theme-color"]');
+					if (themeMeta && cs === 'dark') themeMeta.content = '#202022';
+				}
+				const isDark = supportsDark && (cs === 'dark' || (cs === 'auto' && window.matchMedia?.('(prefers-color-scheme: dark)').matches === true));
+				document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
+				if (isDark) {
+					const lock = document.createElement('meta');
+					lock.name = 'darkreader-lock';
+					document.head.appendChild(lock);
+				}
 			} catch {}
 		</script>
 	</head>
@@ -42,6 +60,9 @@
 			}
 			@media (prefers-color-scheme: dark) {
 				#splash { --paper: 0 0 0; --ink: #fff; }
+			}
+			html[data-color-scheme='dark'] #splash { --paper: 0 0 0; --ink: #fff; }
+			html[data-color-scheme='light'] #splash { --paper: 255 255 255; --ink: #000;
 			}
 
 			/* Фон: белый → полупрозрачный и сильно размытый, под ним проступает приложение */

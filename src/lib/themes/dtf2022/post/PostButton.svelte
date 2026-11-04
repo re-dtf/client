@@ -107,8 +107,8 @@
 <style>
 	.post-button {
 		--size: var(--post-button-size, 28px);
-		--text-hover: #68a2f3;
-		--bg-hover: #06f;
+		--text-hover: var(--color-comments-hover);
+		--bg-hover: var(--color-comments-hover-bg);
 
 		display: inline-flex;
 		align-items: center;
@@ -187,17 +187,17 @@
 	}
 
 	.post-button--like {
-		--text-hover: #f0303d;
-		--text-active: #e65151;
-		--bg-hover: #e5545e;
+		--text-hover: var(--color-like);
+		--text-active: var(--color-like-active);
+		--bg-hover: var(--color-like-hover-bg);
 		margin-left: -2px;
 		margin-right: var(--post-button-like-margin-right, 0);
 	}
 
 	.post-button--dislike {
-		--text-hover: #ff8a00;
-		--text-active: #ff8a00;
-		--bg-hover: #ff8a00;
+		--text-hover: var(--color-dislike);
+		--text-active: var(--color-dislike-active);
+		--bg-hover: var(--color-dislike);
 	}
 
 	.post-button--like .icon,

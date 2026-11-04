@@ -24,7 +24,7 @@
 {/snippet}
 
 <section class="hero">
-	<img class="hero__logo" src={asset('reLogo.svg')} alt="reDTF" width="123" height="50" />
+	<svg class="icon hero__logo" width="123" height="50" aria-label="reDTF"><use href="/reIcons.svg#redtf_logo"></use></svg>
 	<p class="hero__tagline">Переосмысление клиентского опыта для DTF</p>
 	<p class="hero__description">
 		Лёгкий, быстрый и настраиваемый неофициальный клиент. Без нежеланных редизайнов и шпионских метрик.
@@ -95,7 +95,7 @@
 		background:
 			radial-gradient(circle at 12% 0%, color-mix(in srgb, #1693e5 20%, transparent), transparent 55%),
 			radial-gradient(circle at 92% 100%, color-mix(in srgb, #8e4ec6 14%, transparent), transparent 55%),
-			#fff;
+			var(--st-card);
 		box-shadow: var(--st-card-shadow);
 		text-align: center;
 	}
@@ -125,7 +125,7 @@
 		padding: 4px 14px;
 		border-radius: 14px;
 		background: color-mix(in srgb, #1693e5 14%, transparent);
-		color: #0f6fb0;
+		color: var(--color-blue, #0f6fb0);
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 20px;

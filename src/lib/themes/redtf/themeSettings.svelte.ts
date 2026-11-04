@@ -1,4 +1,5 @@
 import { activeThemeSettings } from '../settings.svelte';
+import { settings } from '$lib/storage/settings.svelte';
 
 /**
  * Вид оценок у постов и комментариев:
@@ -6,8 +7,13 @@ import { activeThemeSettings } from '../settings.svelte';
  * Варианты и подписи описаны в theme.ts, значение хранится в настройках выбранной темы (в том числе форка).
  */
 export type VotesStyle = 'likes' | 'rating' | 'reactions';
+export type ColorScheme = 'auto' | 'light' | 'dark';
 
 export const themeSettings = {
+	/** Цветовая схема: 'auto' (системная), 'light' (светлая) или 'dark' (тёмная) */
+	get colorScheme(): ColorScheme {
+		return settings.value.colorScheme ?? 'auto';
+	},
 	get votes(): VotesStyle {
 		return activeThemeSettings().value.votes as VotesStyle;
 	},

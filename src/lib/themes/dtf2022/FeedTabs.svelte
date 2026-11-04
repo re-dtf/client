@@ -74,7 +74,7 @@
 		border: 0;
 		border-radius: 20px;
 		background: none;
-		color: #000;
+		color: var(--text-primary);
 		font: inherit;
 		font-size: 14px;
 		line-height: 20px;

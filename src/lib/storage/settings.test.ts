@@ -26,6 +26,7 @@ describe('settings & shouldVirtualizeComments', () => {
 		localStorage.clear();
 		settings.value = {
 			theme: 'dtf2022',
+			colorScheme: 'auto',
 			proxyUrl: '',
 			commentNesting: 'flatten',
 			collectStats: true,
@@ -33,6 +34,18 @@ describe('settings & shouldVirtualizeComments', () => {
 			disableMobileTopBar: false,
 			commentVirtualization: 'auto',
 		};
+	});
+
+	it('colorScheme по умолчанию "auto"', () => {
+		expect(settings.value.colorScheme).toBe('auto');
+	});
+
+	it('patch обновляет значение colorScheme и сохраняет в localStorage', () => {
+		settings.patch({ colorScheme: 'dark' });
+		expect(settings.value.colorScheme).toBe('dark');
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.colorScheme).toBe('dark');
 	});
 
 	it('disableMobileTopBar по умолчанию выключен (false)', () => {

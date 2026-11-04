@@ -45,14 +45,14 @@
 				<div class="account-menu__item-wrapper">
 					{#if item.url}
 						<a class="account-menu__item" href={item.url} target="_blank" rel="noopener noreferrer" onclick={onclose}>
-							<svg class="account-menu__item-icon" width="24" height="24" aria-hidden="true">
+							<svg class="icon account-menu__item-icon" width="24" height="24" aria-hidden="true">
 								<use href="/icons.svg#{item.icon}"></use>
 							</svg>
 							<span class="account-menu__item-label">{item.label}</span>
 						</a>
 					{:else}
 						<button type="button" class="account-menu__item" onclick={() => select(item.action)}>
-							<svg class="account-menu__item-icon" width="24" height="24" aria-hidden="true">
+							<svg class="icon account-menu__item-icon" width="24" height="24" aria-hidden="true">
 								<use href="/icons.svg#{item.icon}"></use>
 							</svg>
 							<span class="account-menu__item-label">{item.label}</span>
@@ -66,8 +66,8 @@
 
 <style>
 	.account-menu-root {
-		background: #fff;
-		color: #000;
+		background: var(--bg-card);
+		color: var(--text-primary);
 		font-size: 17px;
 		line-height: 26px;
 	}
@@ -96,7 +96,7 @@
 	.account-menu__item {
 		display: block;
 		border-radius: 8px;
-		color: #000;
+		color: var(--text-primary);
 	}
 
 	.account-menu__item {
@@ -112,7 +112,7 @@
 
 	.account-menu__user-card:hover,
 	.account-menu__item:hover {
-		background: rgba(0, 0, 0, 0.05);
+		background: var(--bg-card-hover);
 	}
 
 	.account-menu__item-icon {
@@ -136,8 +136,8 @@
 		height: 44px;
 		margin-right: 12px;
 		border-radius: 50%;
-		background: rgba(0, 0, 0, 0.05) 50% 50% / cover no-repeat;
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+		background: var(--bg-card-hover) 50% 50% / cover no-repeat;
+		box-shadow: inset 0 0 0 1px var(--border-avatar);
 	}
 
 	.user-card__text {

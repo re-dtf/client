@@ -118,7 +118,7 @@
 		width: var(--avatar-size);
 		padding-bottom: 100%;
 		border-radius: 50%;
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+		box-shadow: inset 0 0 0 1px var(--border-avatar);
 		background: no-repeat 50% 50% / cover;
 	}
 

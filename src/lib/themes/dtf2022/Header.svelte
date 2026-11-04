@@ -68,7 +68,7 @@
 				onclick={() => sidebar.toggle()}
 				onkeydown={clickOnKey}
 			>
-				<svg width="24" height="24" aria-hidden="true">
+				<svg class="icon" width="24" height="24" aria-hidden="true">
 					<use href="/icons.svg#v_menu"></use>
 				</svg>
 			</div>
@@ -268,7 +268,7 @@
 		margin-left: -8px;
 		border-left: 7px solid transparent;
 		border-right: 7px solid transparent;
-		border-bottom: 7px solid #fff;
+		border-bottom: 7px solid var(--bg-card);
 	}
 
 	.bell {
@@ -285,8 +285,8 @@
 		min-width: 12px;
 		padding: 3px 5px;
 		border-radius: 4px;
-		background-color: #e62e3b;
-		color: #fff;
+		background-color: var(--color-badge);
+		color: var(--text-on-accent);
 		font-size: 12px;
 		line-height: 1em;
 	}
@@ -297,9 +297,9 @@
 		top: 100%;
 		right: -5px;
 		width: 430px;
-		background: #fff;
-		color: #000;
-		box-shadow: 0 3px 5px 0 rgba(116, 116, 116, 0.25);
+		background: var(--bg-card);
+		color: var(--text-primary);
+		box-shadow: var(--shadow-popup);
 		z-index: 2;
 		font-size: 13px;
 	}
@@ -343,8 +343,8 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		background: #dedede 50% 50% / cover no-repeat;
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+		background: var(--border-color) 50% 50% / cover no-repeat;
+		box-shadow: inset 0 0 0 1px var(--border-avatar);
 	}
 
 	.header-profile__avatar:hover .header-profile__avatar-image {
@@ -372,9 +372,7 @@
 		max-height: calc(100vh - var(--header-height) - 12px);
 		overflow-y: auto;
 		border-radius: 8px;
-		box-shadow:
-			0 4px 8px rgba(0, 0, 0, 0.06),
-			0 0 1px rgba(0, 0, 0, 0.25);
+		box-shadow: var(--shadow-dropdown);
 	}
 
 	@media (max-width: 859px) {

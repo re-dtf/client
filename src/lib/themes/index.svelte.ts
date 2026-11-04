@@ -7,6 +7,14 @@ export { themes } from './registry';
 /** Выбранная пользователем тема */
 export const activeTheme = {
 	/** id темы. Если выбранной темы больше нет, берётся тема по умолчанию */
+	/** Название темы */
+	get name(): string {
+		return getTheme(activeTheme.id)?.name ?? '';
+	},
+	/** Поддерживает ли выбранная тема тёмный режим */
+	get supportsDarkMode(): boolean {
+		return getTheme(activeTheme.id)?.supportsDarkMode === true;
+	},
 	get id(): string {
 		return getTheme(settings.value.theme) ? settings.value.theme : DEFAULT_THEME;
 	},

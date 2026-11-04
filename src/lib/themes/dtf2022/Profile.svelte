@@ -445,7 +445,7 @@
 		min-width: 0;
 		padding: var(--offset-y) var(--offset-x);
 		border-radius: var(--border-radius);
-		background-color: #fff;
+		background-color: var(--bg-card);
 		font-size: 16px;
 		line-height: 1.5em;
 	}
@@ -461,7 +461,7 @@
 		margin-top: calc(var(--offset-y) * -1);
 		margin-left: calc(var(--offset-x) * -1);
 		margin-right: calc(var(--offset-x) * -1);
-		background: #dedede no-repeat 50% 50% / cover;
+		background: var(--border-color) no-repeat 50% 50% / cover;
 	}
 
 	.profile-head__avatar {
@@ -478,7 +478,7 @@
 		margin-bottom: -8px;
 		padding: 12px 16px;
 		border-radius: 8px;
-		background-color: #fff;
+		background-color: var(--bg-card);
 	}
 
 	.cover-manage {
@@ -506,7 +506,7 @@
 	}
 
 	.cover-manage--edit {
-		background-color: rgba(255, 255, 255, 0.3);
+		background-color: var(--bg-cover-button);
 		cursor: move;
 		touch-action: none;
 	}
@@ -537,11 +537,11 @@
 		width: 28px;
 		height: 24px;
 		padding: 0;
-		border: 1px solid rgba(0, 0, 0, 0.1);
+		border: 1px solid var(--border-avatar);
 		border-radius: 4px;
-		background-color: #fff;
-		box-shadow: 0 2px 1px rgba(0, 0, 0, 0.05);
-		color: rgba(0, 0, 0, 0.65);
+		background-color: var(--bg-card);
+		box-shadow: var(--shadow-avatar-change);
+		color: var(--text-subtle);
 		cursor: pointer;
 		visibility: hidden;
 		opacity: 0;
@@ -575,8 +575,8 @@
 		border: 0;
 		overflow: hidden;
 		border-radius: 6px;
-		background: #dedede no-repeat 50% 50% / cover;
-		box-shadow: 0 0 0 var(--border-width) #fff, inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+		background: var(--border-color) no-repeat 50% 50% / cover;
+		box-shadow: 0 0 0 var(--border-width) var(--bg-card), inset 0 0 0 1px var(--border-avatar);
 		cursor: zoom-in;
 	}
 
@@ -650,7 +650,7 @@
 	}
 
 	.profile-description__edit:hover {
-		color: #cd192e;
+		color: var(--color-danger);
 	}
 
 	/* Кнопки действий: подписка и колокольчик у чужого профиля, шестерёнка у своего */
@@ -742,7 +742,7 @@
 		background: none;
 		font: inherit;
 		padding: 0 var(--tab-offset);
-		color: #4d4d4d;
+		color: var(--text-tab);
 		cursor: pointer;
 	}
 
@@ -751,7 +751,7 @@
 	}
 
 	.profile-tabs__item--active {
-		color: #000;
+		color: var(--text-primary);
 		pointer-events: none;
 	}
 
@@ -812,8 +812,8 @@
 	}
 
 	.profile-feed-sorting__button--active {
-		background: #fff;
-		box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+		background: var(--bg-card);
+		box-shadow: var(--shadow-sorting-button);
 	}
 
 	/* Первая карточка — сразу под сортировкой, между карточками — как в ленте */
@@ -846,7 +846,7 @@
 
 	.profile-sidebar-block {
 		padding: 15px 20px 16px;
-		background-color: #fff;
+		background-color: var(--bg-card);
 		font-size: 16px;
 		line-height: 1.5em;
 	}
@@ -877,7 +877,7 @@
 	}
 
 	.profile-sidebar-block__show-all:hover {
-		color: #cd192e;
+		color: var(--color-danger);
 	}
 
 	.profile-sidebar-list {
@@ -903,9 +903,9 @@
 		flex-shrink: 0;
 		width: 24px;
 		height: 24px;
-		border: 1px solid rgba(0, 0, 0, 0.1);
+		border: 1px solid var(--border-avatar);
 		border-radius: 6px;
-		background-color: #dedede;
+		background-color: var(--border-color);
 		object-fit: cover;
 	}
 

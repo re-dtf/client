@@ -46,6 +46,8 @@ export interface ThemeManifest {
 	/** Совпадает с именем папки темы */
 	id: string;
 	name: string;
+	/** Поддерживает ли тема тёмный режим */
+	supportsDarkMode?: boolean;
 	description?: string;
 	/**
 	 * id темы-основы (форк). Недостающие компоненты, стили и настройки берутся у неё,

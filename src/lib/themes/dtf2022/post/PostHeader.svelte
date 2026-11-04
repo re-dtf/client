@@ -182,13 +182,13 @@
 	.post-header__etc-button {
 		display: flex;
 		align-items: center;
-		color: #595959;
+		color: var(--text-muted);
 		cursor: pointer;
 	}
 
 	.post-header__etc-button:hover,
 	.post-header__etc-button[aria-expanded='true'] {
-		color: #000;
+		color: var(--text-primary);
 	}
 
 	/* Подсайт */

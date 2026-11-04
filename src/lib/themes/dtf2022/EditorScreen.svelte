@@ -125,8 +125,8 @@
 		flex-direction: column;
 		overflow-x: hidden;
 		overflow-y: auto;
-		background-color: #fff;
-		color: #000;
+		background-color: var(--bg-card);
+		color: var(--text-primary);
 	}
 
 	.writing__bar {
@@ -140,8 +140,8 @@
 		min-height: 56px;
 		padding: 8px 16px;
 		box-sizing: border-box;
-		border-bottom: 1px solid #dedede;
-		background-color: #fff;
+		border-bottom: 1px solid var(--border-color);
+		background-color: var(--bg-card);
 	}
 
 	.writing__close,
@@ -152,7 +152,7 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 8px;
-		color: #000;
+		color: var(--text-primary);
 		opacity: 0.5;
 		cursor: pointer;
 	}
@@ -223,14 +223,14 @@
 		width: 17px;
 		height: 17px;
 		margin-right: 0.4em;
-		border: 1px solid rgba(0, 0, 0, 0.129);
-		border-top-color: rgba(0, 0, 0, 0.25);
+		border: 1px solid var(--border-checkbox);
+		border-top-color: var(--border-checkbox-top);
 		border-radius: 4px;
 		vertical-align: text-bottom;
 	}
 
 	.ui-checkbox:hover {
-		border-color: rgba(89, 89, 89, 0.8);
+		border-color: var(--border-checkbox-hover);
 	}
 
 	.ui-checkbox--checked::before {
@@ -240,8 +240,8 @@
 		left: 20%;
 		width: 8px;
 		height: 4px;
-		border-bottom: 2px solid #000;
-		border-left: 2px solid #000;
+		border-bottom: 2px solid var(--text-primary);
+		border-left: 2px solid var(--text-primary);
 		transform: rotate(-45deg);
 	}
 
@@ -277,7 +277,7 @@
 	}
 
 	.writing__title::placeholder {
-		color: #bfbfbf;
+		color: var(--text-placeholder);
 	}
 
 	@media (max-width: 859px) {
@@ -331,8 +331,8 @@
 
 	.writing :global(.ce-redactor a) {
 		padding-bottom: 0;
-		border-bottom: 1px solid #bed0ea;
-		color: #3766a9;
+		border-bottom: 1px solid var(--border-link);
+		color: var(--text-link);
 	}
 
 	.writing :global(.ce-paragraph::before),
@@ -344,7 +344,7 @@
 	.writing :global(.ce-quote--author::before),
 	.writing :global(.ce-quote--job::before),
 	.writing :global(.cdx-image-form__button) {
-		color: #bfbfbf !important;
+		color: var(--text-placeholder) !important;
 	}
 
 	.writing :global(h2.ce-header),
@@ -355,20 +355,20 @@
 
 	.writing :global(.marked-text) {
 		padding: 0.09em 0;
-		background: rgba(145, 222, 255, 0.22);
+		background: var(--bg-editor-dragover);
 	}
 
 	.writing :global(.cdx-image-form),
 	.writing :global(.cdx-gallery__select-file) {
-		border: 2px dashed #ccc;
+		border: 2px dashed var(--border-editor-dragover);
 	}
 
 	.writing :global(.cdx-gallery__select-file) {
-		color: #bfbfbf;
+		color: var(--text-placeholder);
 	}
 
 	.writing :global(.cdx-image--backgrounded) {
-		background: #eef2f5;
+		background: var(--bg-editor-dragover-preview);
 	}
 
 	@media (max-width: 859px) {

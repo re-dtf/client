@@ -2,10 +2,13 @@ import { persistedState } from './persisted.svelte';
 
 export type NestingMode = 'flatten' | 'autopan';
 export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
+export type ColorScheme = 'auto' | 'light' | 'dark';
 
 export interface AppSettings {
 	/** id активной темы (см. $lib/themes) */
 	theme: string;
+	/** Цветовая схема: системная, светлая или тёмная */
+	colorScheme: ColorScheme;
 	/** CORS-прокси для входа и обновления токена DTF; пусто — прямые запросы */
 	proxyUrl: string;
 	/** Показ глубоко вложенных комментариев */
@@ -32,6 +35,7 @@ export const DEFAULT_THEME = 'redtf';
 /** Общие настройки приложения, не зависящие от темы. Настройки темы лежат в themeSettings. */
 export const settings = persistedState<AppSettings>('redtf:settings', {
 	theme: DEFAULT_THEME,
+	colorScheme: 'auto',
 	proxyUrl: '',
 	commentNesting: 'flatten',
 	commentVirtualization: 'auto',

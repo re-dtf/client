@@ -154,7 +154,8 @@
 		margin-bottom: 28px;
 		padding: 14px 20px;
 		border-radius: 14px;
-		background: color-mix(in srgb, #e5a50a 13%, #fff);
+		background: color-mix(in srgb, #e5a50a 16%, var(--st-card));
+		border: 1px solid color-mix(in srgb, #e5a50a 30%, transparent);
 		font-size: 14px;
 		line-height: 20px;
 	}

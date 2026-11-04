@@ -64,7 +64,7 @@
 		border-radius: var(--btn-radius, 8px);
 		background-color: var(--bg-button, #fff);
 		color: var(--text-primary, #000);
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-btn-outline);
 		font-size: var(--btn-font-size, 16px);
 		font-weight: 500;
 		white-space: nowrap;
@@ -73,18 +73,18 @@
 	}
 
 	.btn:hover {
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-btn-outline-hover);
 	}
 
 	.btn:active {
-		box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(0, 0, 0, 0.12), inset 1px 0 0 rgba(0, 0, 0, 0.06), inset -1px 0 0 rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-btn-outline-active);
 		transform: translateY(1px);
 	}
 
 	.btn--blue {
 		background-color: var(--bg-submit-button);
 		color: var(--text-submit-button);
-		box-shadow: 0 1px 2px rgba(70, 131, 217, 0.48), inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+		box-shadow: var(--shadow-button-blue);
 	}
 
 	.btn--blue:hover {
@@ -92,7 +92,7 @@
 	}
 
 	.btn--blue:active {
-		box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+		box-shadow: var(--shadow-button-blue-active);
 	}
 
 	.btn--disabled {
