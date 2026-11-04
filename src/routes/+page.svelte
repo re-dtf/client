@@ -15,7 +15,7 @@
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let refreshing = $state(false);
-	let error = $state<string | null>(null);
+	let error = $state<unknown | null>(null);
 	// Растёт, когда показана новая первая страница: список пересоздаётся и проигрывает появление (подгрузка вниз его не трогает)
 	let epoch = $state(0);
 
@@ -54,7 +54,7 @@
 			}
 		} catch (e: any) {
 			// Показанный из кэша список остаётся, даже если обновить его не вышло
-			if (id === requestId && !cached) error = e.message;
+			if (id === requestId && !cached) error = e;
 			console.error('Failed to load posts:', e);
 		} finally {
 			if (id === requestId) loading = refreshing = false;

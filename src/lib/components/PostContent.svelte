@@ -32,7 +32,7 @@
 	const commentsTurn = postPromise.then(nextPaint, () => {});
 
 	let post = $state.raw<Post>();
-	let error = $state<string>();
+	let error = $state<unknown>();
 	// Комментарии (тысячи узлов) строятся, когда пост уже показан и его анимация закончилась
 	let postShown = $state(false);
 
@@ -74,7 +74,7 @@
 
 			})
 			.catch((e) => {
-				error = e.message;
+				error = e;
 				onLoaded?.('Ошибка');
 			});
 	});

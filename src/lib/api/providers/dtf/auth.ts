@@ -1,4 +1,5 @@
 import type { Session } from '../../types';
+import { ApiError, ProxyError } from '../../errors';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { getEnabledProxies } from '$lib/storage/settings.svelte';
 import { fetchWithProxyFailover, refreshSession } from './client';
@@ -6,7 +7,7 @@ import { fetchWithProxyFailover, refreshSession } from './client';
 /** Вход по почте и паролю. Проходит через включённые прокси с поддержкой автоматического перебора при сбоях (failover). */
 export async function login(email: string, password: string): Promise<Session> {
 	if (getEnabledProxies().length === 0) {
-		throw new Error('Укажите или включите хотя бы один прокси в настройках, прямой запрос логина заблокирован CORS политикой DTF.');
+		throw new ProxyError('Укажите или включите хотя бы один прокси в настройках, прямой запрос логина заблокирован CORS политикой DTF.');
 	}
 
 	const { response } = await fetchWithProxyFailover('/v3.4/auth/email/login', () => {
@@ -23,7 +24,9 @@ export async function login(email: string, password: string): Promise<Session> {
 	const json = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
-		throw new Error(json.message || json.error?.message || `Ошибка авторизации: ${response.status}`);
+		throw new ApiError(json.message || json.error?.message || `Ошибка авторизации: ${response.status}`, {
+			status: response.status
+		});
 	}
 
 	return (json.data || json) as Session;
@@ -45,7 +48,7 @@ export function parseRefreshToken(input: string): string {
  */
 export async function loginByToken(input: string): Promise<Session> {
 	if (getEnabledProxies().length === 0) {
-		throw new Error('Укажите или включите прокси в настройках: обновление токена заблокировано CORS политикой DTF.');
+		throw new ProxyError('Укажите или включите прокси в настройках: обновление токена заблокировано CORS политикой DTF.');
 	}
 
 	authStorage.session = {
@@ -58,7 +61,7 @@ export async function loginByToken(input: string): Promise<Session> {
 
 	if (!(await refreshSession())) {
 		authStorage.logout();
-		throw new Error('Не удалось войти по токену. Возможно, он устарел или все настроенные прокси недоступны.');
+		throw new ProxyError('Не удалось войти по токену. Возможно, он устарел или все настроенные прокси недоступны.', { status: 401 });
 	}
 
 	return authStorage.session!;

@@ -16,7 +16,7 @@
 	let lastSorting: Sorting | undefined;
 
 	let profile = $state.raw<Profile>();
-	let profileError = $state<string>();
+	let profileError = $state<unknown>();
 
 	function retryLoadProfile() {
 		profileError = undefined;
@@ -76,7 +76,7 @@
 			},
 			(e) => {
 				if (currentId !== lastLoadedId) return;
-				profileError = e.message;
+				profileError = e;
 				onLoaded?.('Ошибка');
 			}
 		);

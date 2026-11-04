@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api } from '$lib/api/index.svelte';
+	import { api, ProxyError } from '$lib/api/index.svelte';
 	import { closeOverlay, openOverlay } from '$lib/navigation';
 	import {
 		settings,
@@ -147,14 +147,7 @@
 			closeModal();
 		} catch (err: any) {
 			error = err?.message || 'Ошибка авторизации по почте';
-			isProxyFailure = Boolean(
-				error.includes('Failed to fetch') ||
-				error.includes('CORS') ||
-				error.includes('прокси') ||
-				error.includes('404') ||
-				error.includes('502') ||
-				error.includes('NetworkError')
-			);
+			isProxyFailure = err instanceof ProxyError;
 		} finally {
 			isLoading = false;
 		}
@@ -172,14 +165,7 @@
 			closeModal();
 		} catch (err: any) {
 			error = err?.message || 'Неверный токен авторизации';
-			isProxyFailure = Boolean(
-				error.includes('Failed to fetch') ||
-				error.includes('CORS') ||
-				error.includes('прокси') ||
-				error.includes('404') ||
-				error.includes('502') ||
-				error.includes('NetworkError')
-			);
+			isProxyFailure = err instanceof ProxyError;
 		} finally {
 			isLoading = false;
 		}

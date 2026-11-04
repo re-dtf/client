@@ -21,7 +21,8 @@ import { trackComment, trackFavorite, trackReaction, trackSubscription } from '$
 
 const DTF = 'dtf';
 
-type Cursors = Record<string, CursorData>;
+export { ApiError, ProxyError } from './errors';
+export type Cursors = Record<string, CursorData>;
 
 function providerFor(sourceId: string): ApiProvider {
 	if (sourceId === DTF) return dtfApiProvider;

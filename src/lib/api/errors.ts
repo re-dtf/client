@@ -26,3 +26,21 @@ export class ApiError extends Error {
 		}
 	}
 }
+
+/**
+ * Ошибка CORS-прокси (все прокси недоступны, таймаут, блокировка или нет включённых прокси).
+ */
+export class ProxyError extends ApiError {
+	constructor(
+		message: string,
+		options?: {
+			url?: string;
+			status?: number;
+			rawMessage?: string;
+			cause?: unknown;
+		}
+	) {
+		super(message, options);
+		this.name = 'ProxyError';
+	}
+}

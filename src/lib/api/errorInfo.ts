@@ -1,4 +1,5 @@
-import { ApiError } from './errors';
+import { ApiError, ProxyError } from './errors';
+import { authStorage } from '$lib/storage/auth.svelte';
 
 export type ErrorKind =
 	| 'network_error'
@@ -162,17 +163,18 @@ export function analyzeError(
 	}
 
 	// 4. CORS / блокировка прокси
-	if (lower.includes('cors') || lower.includes('cross-origin') || lower.includes('прокси')) {
+	if (error instanceof ProxyError || lower.includes('cors') || lower.includes('cross-origin')) {
 		return {
 			kind: 'cors_proxy',
 			badge: 'CORS / Прокси',
 			badgeType: 'warning',
-			title: 'Запрос заблокирован браузером',
-			subtitle: 'Ограничение политики CORS',
-			description: 'Браузер заблокировал прямой сетевой запрос к серверу DTF. Для входа и обновления токена требуется рабочий CORS-прокси.',
+			title: 'Запрос заблокирован браузером или прокси',
+			subtitle: 'Ограничение политики CORS или недоступность прокси',
+			description: 'Для входа и обновления токена требуется доступный CORS-прокси. Запрос через прокси-сервер не удался.',
 			suggestions: [
-				'Откройте настройки reDTF и проверьте адрес прокси-сервера.',
-				'Убедитесь, что прокси-сервер запущен и доступен по указанному URL.'
+				'Откройте настройки сети и проверьте адрес и статус прокси-серверов.',
+				'Убедитесь, что прокси-сервер запущен и доступен по указанному URL.',
+				'Попробуйте включить резервный Cloudflare-прокси в настройках.'
 			],
 			technicalDetails
 		};
@@ -180,17 +182,29 @@ export function analyzeError(
 
 	// 5. Ошибка авторизации (401 / 403)
 	if (status === 401 || (status === 403 && !lower.includes('cloudflare'))) {
+		const hasSavedRefresh = Boolean(authStorage?.session?.refreshToken);
 		return {
 			kind: 'auth_error',
-			badge: `Доступ (${status || 401})`,
+			badge: `Доступ (${status})`,
 			badgeType: 'warning',
 			title: 'Ошибка авторизации',
-			subtitle: 'Сессия истекла или доступ ограничен',
-			description: 'Сервер DTF отклонил запрос из-за недействительного токена или ограничения прав доступа.',
-			suggestions: [
-				'Попробуйте войти в аккаунт заново через настройки или окно входа.',
-				'Если вход был выполнен по токену, скопируйте свежее значение auth-refresh-remember.'
-			],
+			subtitle: hasSavedRefresh
+				? 'Не удалось обновить сессию через прокси или сессия истекла'
+				: 'Сессия истекла или доступ ограничен',
+			description: hasSavedRefresh
+				? 'Сервер DTF отклонил запрос. У вас сохранена сессия, но не удалось обновить токен через CORS-прокси (прокси недоступен или заблокирован).'
+				: 'Сервер DTF отклонил запрос из-за отсутствия токена или ограничения прав доступа.',
+			suggestions: hasSavedRefresh
+				? [
+						'Проверьте доступность и статус CORS-прокси в настройках сети.',
+						'Если вы открыли «Мою ленту», переключитесь на «Популярное» или «Свежее» — они доступны без входа.',
+						'Попробуйте войти заново или скопировать свежее значение auth-refresh-remember.'
+					]
+				: [
+						'Попробуйте войти в аккаунт заново через настройки или окно входа.',
+						'Для просмотра материалов без входа переключитесь на «Популярное» или «Свежее».',
+						'Если вход был выполнен по токену, скопируйте свежее значение auth-refresh-remember.'
+					],
 			technicalDetails
 		};
 	}

@@ -1,12 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { parseRefreshToken, login } from './auth';
-import { refreshSession } from './client';
+import { refreshSession, fetchWithAuth, resetRefreshCooldown } from './client';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings, DEFAULT_PROXIES } from '$lib/storage/settings.svelte';
 
 describe('auth & proxy failover', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		resetRefreshCooldown();
 		settings.value = {
 			theme: 'dtf2022',
 			colorScheme: 'auto',
@@ -134,5 +135,89 @@ describe('auth & proxy failover', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2);
 		expect(authStorage.session?.accessToken).toBe('new-refreshed-access');
 		expect(authStorage.session?.refreshToken).toBe('new-refreshed-token');
+	});
+
+	it('fetchWithAuth при 401 и недоступности прокси сбрасывает accessToken и повторяет публичный запрос анонимно', async () => {
+		authStorage.session = {
+			type: 'Bearer',
+			accessToken: 'expired-access-token',
+			refreshToken: 'saved-refresh-token',
+			accessExpTimestamp: 1000,
+			refreshExpTimestamp: 2000
+		};
+
+		let callCount = 0;
+		const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+			callCount++;
+			// Запрос к прокси для обновления токена падает (прокси оффлайн)
+			if (url.includes('proxy1.example.com') || url.includes('proxy2.example.com')) {
+				return new Response('Proxy Down', { status: 502 });
+			}
+			// Запрос к DTF
+			if (url.includes('api.dtf.ru/v2.31/feed')) {
+				const authHeader = (init?.headers as Headers)?.get('JWTAuthorization');
+				if (authHeader) {
+					// DTF отвергает просроченный токен
+					return new Response(
+						JSON.stringify({
+							message: 'Кажется у вас нет доступа к этому разделу, попробуйте раздел получше',
+							error: { code: 401 }
+						}),
+						{ status: 401, headers: { 'Content-Type': 'application/json' } }
+					);
+				}
+				// Анонимный повторный запрос проходит успешно
+				return new Response(
+					JSON.stringify({
+						result: { items: [], lastId: 100, lastSortingValue: 100 }
+					}),
+					{ status: 200, headers: { 'Content-Type': 'application/json' } }
+				);
+			}
+			return new Response('Not found', { status: 404 });
+		});
+
+		vi.stubGlobal('fetch', fetchMock);
+
+		const res = await fetchWithAuth('https://api.dtf.ru/v2.31/feed?pageName=popular');
+		expect(res.status).toBe(200);
+
+		// Невалидный accessToken сброшен, чтобы не слать его на каждый следующий скролл
+		expect(authStorage.session?.accessToken).toBe('');
+		// Но сохранённый refresh-токен не потерян!
+		expect(authStorage.session?.refreshToken).toBe('saved-refresh-token');
+	});
+
+	it('fetchWithAuth при 401 и недоступности прокси на приватном эндпоинте выбрасывает ApiError со статусом 401', async () => {
+		authStorage.session = {
+			type: 'Bearer',
+			accessToken: 'expired-access-token',
+			refreshToken: 'saved-refresh-token',
+			accessExpTimestamp: 1000,
+			refreshExpTimestamp: 2000
+		};
+
+		const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+			if (url.includes('proxy1.example.com') || url.includes('proxy2.example.com')) {
+				return new Response('Proxy Down', { status: 502 });
+			}
+			// Приватный эндпоинт DTF возвращает 401 и с токеном, и без него
+			return new Response(
+				JSON.stringify({
+					message: 'Кажется у вас нет доступа к этому разделу, попробуйте раздел получше',
+					error: { code: 401 }
+				}),
+				{ status: 401, headers: { 'Content-Type': 'application/json' } }
+			);
+		});
+
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			fetchWithAuth('https://api.dtf.ru/v2.31/feed?pageName=my')
+		).rejects.toThrow('Кажется у вас нет доступа к этому разделу, попробуйте раздел получше');
+
+		expect(authStorage.session?.accessToken).toBe('');
+		expect(authStorage.session?.refreshToken).toBe('saved-refresh-token');
 	});
 });

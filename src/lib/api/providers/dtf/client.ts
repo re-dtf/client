@@ -1,7 +1,7 @@
 import { untrack } from 'svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings, getEnabledProxies, type ProxyItem } from '$lib/storage/settings.svelte';
-import { ApiError } from '../../errors';
+import { ApiError, ProxyError } from '../../errors';
 
 /** Адреса и версии API DTF */
 export const API_URL = 'https://api.dtf.ru/v2.31';
@@ -14,7 +14,9 @@ export const apiV = (version: string) => `https://api.dtf.ru/v${version}`;
 
 /** Для методов, которые работают только после входа */
 export function requireAuth() {
-	if (!authStorage.dtfToken) throw new Error('Необходима авторизация');
+	if (!authStorage.dtfToken) {
+		throw new ApiError('Необходима авторизация', { status: 401 });
+	}
 }
 
 /**
@@ -27,7 +29,7 @@ export async function fetchWithProxyFailover(
 ): Promise<{ response: Response; proxy: ProxyItem }> {
 	const enabled = getEnabledProxies();
 	if (enabled.length === 0) {
-		throw new Error('Нет активных прокси. Включите хотя бы один прокси в настройках.');
+		throw new ProxyError('Нет активных прокси. Включите хотя бы один прокси в настройках.');
 	}
 
 	const errors: string[] = [];
@@ -74,11 +76,40 @@ export async function fetchWithProxyFailover(
 		}
 	}
 
-	throw new Error(`Все доступные прокси (${enabled.length}) не ответили:\n${errors.map((e) => `• ${e}`).join('\n')}`);
+	throw new ProxyError(`Все доступные прокси (${enabled.length}) не ответили:\n${errors.map((e) => `• ${e}`).join('\n')}`);
+}
+
+let refreshPromise: Promise<boolean> | null = null;
+let lastRefreshFailedAt = 0;
+const REFRESH_COOLDOWN_MS = 10000;
+
+/** Сбросить кулдаун сбоя обновления (например, при явном повторе пользователем) */
+export function resetRefreshCooldown() {
+	lastRefreshFailedAt = 0;
 }
 
 /** Обновляет access-токен по refresh-токену с перебором прокси при ошибках. */
-export async function refreshSession(): Promise<boolean> {
+export function refreshSession(force = false): Promise<boolean> {
+	if (!force && lastRefreshFailedAt && Date.now() - lastRefreshFailedAt < REFRESH_COOLDOWN_MS) {
+		return Promise.resolve(false);
+	}
+	if (refreshPromise) return refreshPromise;
+	refreshPromise = doRefreshSession()
+		.then((success) => {
+			lastRefreshFailedAt = success ? 0 : Date.now();
+			return success;
+		})
+		.catch(() => {
+			lastRefreshFailedAt = Date.now();
+			return false;
+		})
+		.finally(() => {
+			refreshPromise = null;
+		});
+	return refreshPromise;
+}
+
+async function doRefreshSession(): Promise<boolean> {
 	const session = untrack(() => authStorage.session);
 	if (!session || !session.refreshToken) return false;
 
@@ -107,7 +138,9 @@ export async function refreshSession(): Promise<boolean> {
 			authStorage.session = {
 				...session,
 				accessToken: newAccessToken.replace('Bearer ', ''),
-				refreshToken: newRefreshToken
+				refreshToken: newRefreshToken,
+				accessExpTimestamp: sessionData.accessExpTimestamp ?? session.accessExpTimestamp,
+				refreshExpTimestamp: sessionData.refreshExpTimestamp ?? session.refreshExpTimestamp
 			};
 			return true;
 		} catch {
@@ -145,7 +178,9 @@ export async function refreshSession(): Promise<boolean> {
 		authStorage.session = {
 			...session,
 			accessToken: newAccessToken.replace('Bearer ', ''),
-			refreshToken: newRefreshToken
+			refreshToken: newRefreshToken,
+			accessExpTimestamp: sessionData.accessExpTimestamp ?? session.accessExpTimestamp,
+			refreshExpTimestamp: sessionData.refreshExpTimestamp ?? session.refreshExpTimestamp
 		};
 		return true;
 	} catch {
@@ -182,14 +217,24 @@ export async function fetchWithAuth(
 
 	let response = await doFetch();
 
-	if (response.status === 401 && untrack(() => authStorage.dtfToken)) {
-		if (await refreshSession() && untrack(() => authStorage.dtfToken)) {
-			setAuth(untrack(() => authStorage.dtfToken));
+	const hasToken = untrack(() => !!authStorage.dtfToken);
+	const hasRefreshToken = untrack(() => !!authStorage.session?.refreshToken);
+
+	if (response.status === 401 && (hasToken || hasRefreshToken)) {
+		const refreshed = await refreshSession();
+		const nextToken = untrack(() => authStorage.dtfToken);
+
+		if (refreshed && nextToken) {
+			setAuth(nextToken);
 			response = await doFetch();
-		} else if (authHeader === 'JWTAuthorization') {
-			// Автовыход отключен, сессия могла протухнуть
-			console.warn('[DTF API] 401 Unauthorized (JWTAuthorization) - не удалось обновить токен');
 		} else {
+			// Прокси недоступен или токен устарел: сбрасываем невалидный accessToken,
+			// чтобы следующие вызовы не слали мёртвый токен и не тормозили на повторных попытках.
+			// refreshToken сохраняем, чтобы сессию можно было восстановить при доступности прокси.
+			const session = untrack(() => authStorage.session);
+			if (session && session.accessToken) {
+				authStorage.session = { ...session, accessToken: '' };
+			}
 			headers.delete(authHeader);
 			response = await doFetch();
 		}

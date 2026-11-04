@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeError } from './errorInfo';
-import { ApiError } from './errors';
+import { ApiError, ProxyError } from './errors';
 
 describe('errorInfo', () => {
 	it('detects network failure from Firefox NetworkError message with balanced advice', () => {
@@ -61,12 +61,24 @@ describe('errorInfo', () => {
 		expect(info.title).toBe('Слишком много запросов');
 	});
 
-	it('detects CORS / proxy errors', () => {
-		const err = new Error('Запрос заблокирован CORS. Настройте прокси-сервер.');
+	it('detects CORS / proxy errors from message and ProxyError', () => {
+		const err = new ProxyError('Все доступные прокси (2) не ответили');
 		const info = analyzeError(err);
 
 		expect(info.kind).toBe('cors_proxy');
 		expect(info.badge).toContain('CORS');
+	});
+
+	it('detects DTF auth error from ApiError status 401', () => {
+		const err = new ApiError('Кажется у вас нет доступа к этому разделу, попробуйте раздел получше', {
+			url: 'https://api.dtf.ru/v2.31/feed',
+			status: 401
+		});
+		const info = analyzeError(err);
+
+		expect(info.kind).toBe('auth_error');
+		expect(info.title).toBe('Ошибка авторизации');
+		expect(info.technicalDetails.status).toBe(401);
 	});
 
 	it('provides technical details for copy and debugging', () => {
