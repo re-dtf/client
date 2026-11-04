@@ -6,6 +6,8 @@
 	import { asset } from '$app/paths';
 	import { version } from '$app/env';
 
+	let { section }: { section?: string } = $props();
+
 	/* Страница «О проекте»: название и версия, коротко о принципах, ссылки проекта и юридические документы */
 	const ORG_URL = 'https://github.com/re-dtf';
 	const CLIENT_URL = `${ORG_URL}/client`;
@@ -17,6 +19,13 @@
 		{ title: 'Открытый код', text: 'Собирается на Github Actions, можно проверить и форкнуть', path: 'M8 7l-5 5 5 5M16 7l5 5-5 5', tint: '#1693e5' },
 		{ title: 'Без слежки', text: 'Ни аналитики, ни сбора данных: всё хранится у вас', path: 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3', tint: '#8e4ec6' }
 	];
+
+	$effect(() => {
+		if (section === 'documents' || section === 'legal') {
+			const el = document.getElementById('about-documents');
+			el?.scrollIntoView?.({ behavior: 'smooth' });
+		}
+	});
 </script>
 
 {#snippet icon(path: string, tint = 'var(--st-accent)')}
@@ -61,7 +70,7 @@
 	</SettingsRow>
 </SettingsGroup>
 
-<SettingsGroup title="Документы" description="Что можно и нельзя, и как мы обращаемся с данными">
+<SettingsGroup id="about-documents" title="Документы" description="Что можно и нельзя, и как мы обращаемся с данными">
 	<SettingsRow title="Пользовательское соглашение" subtitle="Условия использования и отказ от ответственности">
 		{#snippet prefix()}{@render icon('M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h5', '#d99a00')}{/snippet}
 		<span class="action"><SettingsButton href="{DOCS_URL}/TERMS.md">Читать</SettingsButton></span>

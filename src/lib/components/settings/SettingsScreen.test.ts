@@ -46,4 +46,43 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('solo-back-button--menu');
 		expect(body).toContain('Показать меню');
 	});
+
+	it('рендерит страницу «О приложении» при передаче page: about', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'about'
+			}
+		});
+
+		expect(body).toContain('reDTF');
+		expect(body).toContain('Переосмысление клиентского опыта для DTF');
+		expect(body).toContain('Пользовательское соглашение');
+		expect(body).toContain('id="about-documents"');
+	});
+
+	it('рендерит страницу «Хочу помочь» при передаче page: help', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'help'
+			}
+		});
+
+		expect(body).toContain('Поддержите reDTF');
+		expect(body).toContain('Расскажите о проекте');
+		expect(body).toContain('Из России');
+	});
+
+	it('открывает «О приложении» при передаче page: legal', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'legal'
+			}
+		});
+
+		expect(body).toContain('Пользовательское соглашение');
+		expect(body).toContain('Политика конфиденциальности');
+	});
 });

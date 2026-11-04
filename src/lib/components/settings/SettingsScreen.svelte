@@ -241,32 +241,35 @@
 	];
 
 	// --- Преобразование старых / прямых id страниц ---
-	function resolveInitialNav(): { folderId: string | null; pageId: string | null } {
+	function resolveInitialNav(): { folderId: string | null; pageId: string | null; section: string | undefined } {
 		const targetPage = page;
 		const targetSection = section;
 
 		if (targetSection === 'appearance' || targetPage === 'themes' || targetPage === 'theme') {
 			const sub = targetPage === 'theme' ? 'appearance-general' : 'theme-select';
-			return { folderId: 'appearance', pageId: targetPage ? sub : null };
+			return { folderId: 'appearance', pageId: targetPage ? sub : null, section: targetSection };
 		}
 		if (targetPage === 'app-icon' || targetPage === 'icons' || targetPage === 'appearance-icons') {
-			return { folderId: 'appearance', pageId: 'appearance-icons' };
+			return { folderId: 'appearance', pageId: 'appearance-icons', section: targetSection };
 		}
 		if (targetSection === 'behavior' || targetPage === 'reactions' || targetPage === 'comments') {
 			const sub = targetPage === 'reactions' ? 'behavior-reactions' : (targetPage === 'comments' ? 'behavior-comments' : 'behavior-feed');
-			return { folderId: 'behavior', pageId: targetPage ? sub : null };
+			return { folderId: 'behavior', pageId: targetPage ? sub : null, section: targetSection };
 		}
 		if (targetPage === 'dtf') {
-			return { folderId: null, pageId: 'notifications' };
+			return { folderId: null, pageId: 'notifications', section: targetSection };
+		}
+		if (targetPage === 'legal' || targetPage === 'documents') {
+			return { folderId: null, pageId: 'about', section: 'documents' };
 		}
 		if (targetPage === 'proxy') {
-			return { folderId: null, pageId: 'network' };
+			return { folderId: null, pageId: 'network', section: targetSection };
 		}
 		if (targetPage) {
-			return { folderId: null, pageId: targetPage };
+			return { folderId: null, pageId: targetPage, section: targetSection };
 		}
 		// По умолчанию открываем источники
-		return { folderId: null, pageId: 'sources' };
+		return { folderId: null, pageId: 'sources', section: targetSection };
 	}
 
 	const initial = resolveInitialNav();
@@ -275,6 +278,7 @@
 	let activeFolderId = $state<string | null>(initial.folderId);
 	// Текущая выбранная страница контента справа (null = empty state)
 	let selectedPageId = $state<string | null>(initial.pageId);
+	let activeSection = $state<string | undefined>(initial.section);
 
 	// Solo-режим (скрытый сайдбар)
 	let soloByUser = $state<boolean>();
@@ -325,6 +329,7 @@
 
 	// Клик по элементу Уровня 1
 	function handleRootItemClick(item: RootNavItem) {
+		activeSection = undefined;
 		resetSolo();
 		if (item.type === 'folder') {
 			activeFolderId = item.id;
@@ -340,6 +345,7 @@
 
 	// Клик по сабпункту Уровня 2
 	function handleSubItemClick(item: SubNavItem) {
+		activeSection = undefined;
 		resetSolo();
 		selectedPageId = item.id;
 		openedByUser = true;
@@ -554,7 +560,7 @@
 						{:else if selectedPageId === 'help'}
 							<HelpSettings />
 						{:else if selectedPageId === 'about'}
-							<AboutSettings />
+							<AboutSettings section={activeSection} />
 
 						<!-- Подстраницы «Внешний вид» -->
 						{:else if selectedPageId === 'theme-select'}

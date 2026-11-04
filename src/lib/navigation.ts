@@ -37,6 +37,14 @@ export function getProfilePath(id: number) {
 	return `/u/${id}`;
 }
 
+export function getSettingsPath(page?: string, section?: string): string {
+	const params = new URLSearchParams();
+	if (page) params.set('page', page);
+	if (section) params.set('section', section);
+	const qs = params.toString();
+	return qs ? `/settings?${qs}` : '/settings';
+}
+
 function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): string {
 	switch (overlay.type) {
 		case 'post':
@@ -44,7 +52,7 @@ function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): s
 		case 'profile':
 			return getProfilePath(overlay.data.profileId);
 		case 'settings':
-			return '/settings';
+			return getSettingsPath(overlay.data?.page, overlay.data?.section);
 		case 'notifications':
 			return '/notifications';
 		case 'login':
@@ -183,6 +191,15 @@ export function openNotifications(e: MouseEvent) {
 /** Открыть профиль пользователя или подсайта поверх текущего экрана */
 export function openProfile(e: MouseEvent, id: number) {
 	openFromLink(e, { type: 'profile', data: { profileId: id } });
+}
+
+/** Открыть окно настроек (опционально конкретную страницу или секцию) */
+export function openSettings(e?: MouseEvent, page?: string, section?: string) {
+	if (e) {
+		openFromLink(e, { type: 'settings', data: page || section ? { page, section } : undefined });
+	} else {
+		openOverlay({ type: 'settings', data: page || section ? { page, section } : undefined });
+	}
 }
 
 /**

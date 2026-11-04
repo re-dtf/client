@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { feed, openFeedTab, type FeedName } from '$lib/feed.svelte';
 	import { prefetchFeed } from '$lib/feedCache';
-	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
+	import { getProfilePath, openFeed, openProfile, openSettings } from '$lib/navigation';
 	import { startWriting } from '../dtf2022/actions.svelte';
 	import { clickOnKey } from '../dtf2022/a11y';
 	import { sidebar } from '../dtf2022/sidebar.svelte';
@@ -36,11 +36,6 @@
 		document.body.style.overflow = 'hidden';
 		return () => (document.body.style.overflow = '');
 	});
-
-	function openSettings(e: MouseEvent) {
-		e.preventDefault();
-		openOverlay({ type: 'settings' });
-	}
 
 	/** В режиме панели переход по любой кнопке или ссылке её закрывает */
 	function closeOnNavigate(e: MouseEvent) {
@@ -122,12 +117,11 @@
 			<div class="sidebar-footer">
 				<div class="sidebar-footer__links">
 					<a href={resolve('/settings')} onclick={openSettings}>Настройки</a>
-					<!-- span: для этих пунктов в re:DTF пока нет страниц -->
-					<span>О проекте</span>
+					<a href="{resolve('/settings')}?page=about" onclick={(e) => openSettings(e, 'about')}>О проекте</a>
 					<a href="https://github.com/re-dtf" target="_blank" rel="noreferrer">Наш Github</a>
-					<span>Поддержать развитие</span>
+					<a href="{resolve('/settings')}?page=help" onclick={(e) => openSettings(e, 'help')}>Поддержать развитие</a>
 					<span>Правила DTF</span>
-					<span>Правовая информация</span>
+					<a href="{resolve('/settings')}?page=about&section=documents" onclick={(e) => openSettings(e, 'about', 'documents')}>Правовая информация</a>
 					<a href="https://github.com/re-dtf/client/issues" target="_blank" rel="noreferrer">Сообщить о проблеме</a>
 				</div>
 			</div>
