@@ -4,7 +4,7 @@
 
 	let { ondone }: { ondone: () => void } = $props();
 
-	const REPO = 'https://github.com/re-dtf/client';
+	const ORG_REPO = 'https://github.com/re-dtf/.github';
 	let leaving = $state(false);
 
 	async function start() {
@@ -26,8 +26,8 @@
 		<button class="start" onclick={start} {@attach (el) => el.focus({ preventScroll: true })}>Начать</button>
 		<p class="legal">
 			Нажимая эту кнопку, вы принимаете наши
-			<a href="{REPO}/blob/main/docs/user/privacy-and-security.md" target="_blank" rel="noopener">политику конфиденциальности</a>,
-			<a href="{REPO}/blob/main/LICENSE" target="_blank" rel="noopener">лицензионное соглашение</a>,
+			<a href="{ORG_REPO}/blob/main/docs/user/privacy-and-security.md" target="_blank" rel="noopener">политику конфиденциальности</a>,
+			<a href="{ORG_REPO}/blob/main/LICENSE" target="_blank" rel="noopener">лицензионное соглашение</a>,
 			<a href="https://dtf.ru/privacy" target="_blank" rel="noopener">политику</a> и
 			<a href="https://dtf.ru/terms" target="_blank" rel="noopener">лицензионное соглашение DTF</a>, а также подтверждаете, что
 			будете соблюдать <a href="https://dtf.ru/rules" target="_blank" rel="noopener">правила DTF</a>
