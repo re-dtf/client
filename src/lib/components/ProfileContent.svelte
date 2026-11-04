@@ -2,6 +2,7 @@
 	import type { CursorData, Post, Profile, ProfileListItem, ProfileSorting as Sorting } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import Reveal from './Reveal.svelte';
+	import NetworkErrorState from './NetworkErrorState.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { untrack } from 'svelte';
 
@@ -16,6 +17,11 @@
 
 	let profile = $state.raw<Profile>();
 	let profileError = $state<string>();
+
+	function retryLoadProfile() {
+		profileError = undefined;
+		lastLoadedId = undefined;
+	}
 
 	let subscribersPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
 	let subscriptionsPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
@@ -112,7 +118,7 @@
 				</div>
 			</ThemeLoader>
 	{:else}
-		<div class="profile-fallback">{profileError}</div>
+		<NetworkErrorState error={profileError} title="Не удалось загрузить профиль" onretry={retryLoadProfile} />
 	{/if}
 	</Reveal>
 </div>

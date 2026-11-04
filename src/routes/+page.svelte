@@ -3,6 +3,7 @@
 	import type { PaginatedResult, Post } from '$lib/api/types';
 	import ThemeLoader, { preloadThemeComponent } from '$lib/themes/ThemeLoader.svelte';
 	import Reveal from '$lib/components/Reveal.svelte';
+	import NetworkErrorState from '$lib/components/NetworkErrorState.svelte';
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { loadFeed, peekFeed, sortingOf } from '$lib/feedCache';
 	import { feed, feedFromUrl, openFeedTab, periodFromUrl, type Period } from '$lib/feed.svelte';
@@ -124,7 +125,7 @@
 	{/if}
 
 	{#if error}
-		<div class="error">{error}</div>
+		<NetworkErrorState {error} onretry={() => loadInitial()} />
 	{:else}
 		<Reveal ready={!loading} block>
 			{#if feedResult?.items.length === 0}
@@ -204,11 +205,5 @@
 		min-height: 50px;
 		display: flex;
 		justify-content: center;
-	}
-	.error {
-		color: red;
-		text-align: center;
-		padding: 40px;
-		font-weight: bold;
 	}
 </style>

@@ -2,6 +2,7 @@
 	import { api } from '$lib/api/index.svelte';
 	import type { Post } from '$lib/api/types';
 	import Reveal from './Reveal.svelte';
+	import NetworkErrorState from './NetworkErrorState.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import { markCommentsStart, trackPostClosed, trackPostLoaded } from '$lib/storage/stats.svelte';
 	import { nextPaint } from '$lib/ready';
@@ -21,8 +22,13 @@
 	} = $props();
 
 	// svelte-ignore state_referenced_locally
-	let postPromise = api.getPost(postId, sourceId);
+	let postPromise = $state.raw(api.getPost(postId, sourceId));
+	function retryLoad() {
+		error = undefined;
+		postPromise = api.getPost(postId, sourceId);
+	}
 	// Комментарии рисуются после кадра с постом: тысячи их узлов иначе задерживают и сам пост
+	// svelte-ignore state_referenced_locally
 	const commentsTurn = postPromise.then(nextPaint, () => {});
 
 	let post = $state.raw<Post>();
@@ -93,7 +99,7 @@
 					</div>
 				{/if}
 			{:else}
-				<div class="message error">{error}</div>
+				<NetworkErrorState {error} title="Не удалось загрузить пост" onretry={retryLoad} />
 			{/if}
 		{/snippet}
 	</Reveal>
@@ -122,22 +128,12 @@
 		margin: 0 auto;
 		padding: var(--post-screen-padding, 20px 0);
 	}
-	/* Заглушка комментариев: стоит там, где будет список, и не уезжает под шапку при прокрутке к ней */
 	.comments-wait {
 		--placeholder-height: 60vh;
 		scroll-margin-top: var(--header-height, 60px);
 	}
 	.comments-hidden {
 		display: none;
-	}
-	.message {
-		text-align: center;
-		padding: 40px;
-		color: #666;
-		font-size: 1.1em;
-	}
-	.error {
-		color: #d32f2f;
 	}
 	.actions {
 		display: var(--post-screen-actions-display, block);

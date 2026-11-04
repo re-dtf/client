@@ -114,6 +114,10 @@
 
 	.popup__footer {
 		--btn-height: 40px;
+		--btn-icon-size: 18px;
+		--btn-icon-margin-left: 12px;
+		--btn-icon-margin-right: -6px;
+		--btn-offset: 14px;
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;

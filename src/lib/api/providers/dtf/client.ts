@@ -1,6 +1,7 @@
 import { untrack } from 'svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings } from '$lib/storage/settings.svelte';
+import { ApiError } from '../../errors';
 
 /** Адреса и версии API DTF */
 export const API_URL = 'https://api.dtf.ru/v2.31';
@@ -79,7 +80,12 @@ export async function fetchWithAuth(
 	if (currentToken) setAuth(currentToken);
 
 	const doFetch = () => fetch(url, { ...options, headers }).catch((e: unknown) => {
-		throw new Error(`Сетевая ошибка: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}`);
+		const raw = e instanceof Error ? e.message : 'Неизвестная ошибка';
+		throw new ApiError(`Сетевая ошибка: ${raw}`, {
+			url,
+			rawMessage: raw,
+			cause: e
+		});
 	});
 
 	let response = await doFetch();
@@ -99,8 +105,20 @@ export async function fetchWithAuth(
 
 	if (!response.ok) {
 		const json = await response.json().catch(() => ({}));
-		if (response.status === 422) throw new Error(json.message || 'Ошибка 422 (возможно, действие уже выполнено)');
-		throw new Error(json.message || `Ошибка API: ${response.status}`);
+		const defaultMessage = response.status === 422
+			? 'Ошибка 422 (возможно, действие уже выполнено)'
+			: response.status >= 500 && response.status <= 599
+				? `Сервер DTF временно недоступен (код ${response.status})`
+				: response.status === 429
+					? 'Слишком много запросов к DTF (код 429)'
+					: `Ошибка API: ${response.status}`;
+		const message = json.message || defaultMessage;
+		throw new ApiError(message, {
+			url,
+			status: response.status,
+			rawMessage: json.message || response.statusText || String(response.status)
+		});
+
 	}
 
 	return response;

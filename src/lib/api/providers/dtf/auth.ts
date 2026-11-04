@@ -1,6 +1,7 @@
 import type { Session } from '../../types';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { getProxyUrl, refreshSession } from './client';
+import { ApiError } from '../../errors';
 
 /** Вход по почте и паролю. Только через прокси: DTF не отдаёт CORS-заголовки на вход. */
 export async function login(email: string, password: string): Promise<Session> {
@@ -21,7 +22,12 @@ export async function login(email: string, password: string): Promise<Session> {
 			body: formData
 		});
 	} catch (e: unknown) {
-		throw new Error(`Сетевая ошибка при попытке авторизации: ${e instanceof Error ? e.message : 'Неизвестная ошибка'}`);
+		const raw = e instanceof Error ? e.message : 'Неизвестная ошибка';
+		throw new ApiError(`Сетевая ошибка при попытке авторизации: ${raw}`, {
+			url: `${proxyUrl}/v3.4/auth/email/login`,
+			rawMessage: raw,
+			cause: e
+		});
 	}
 
 	const json = await response.json();

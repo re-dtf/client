@@ -52,6 +52,11 @@ export interface ThemeComponents {
 	/** Страница уведомлений (оверлей notifications) */
 	Notifications: {};
 	LoginModal: {};
+	NetworkErrorModal: {
+		error: unknown;
+		onretry?: () => void;
+		onclose?: () => void;
+	};
 	EditorScreen: { session: any };
 	/** `inline` — маленький, в потоке; `block` — заглушка на месте содержимого экрана (если тема так умеет); без них — обычный на своём месте */
 	Spinner: { inline?: boolean; block?: boolean };
