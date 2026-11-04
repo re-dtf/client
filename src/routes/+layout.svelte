@@ -21,6 +21,7 @@
 	import { startTracking, type TickContext } from '$lib/storage/stats.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { applyAppIcon } from '$lib/icons';
+	import { pwa } from '$lib/pwa.svelte';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -338,6 +339,7 @@
 
 	onMount(() => {
 		cleanupHangingBio(true);
+		pwa.init();
 		const stopTracking = startTracking(() => statsContext);
 
 		// Заставка из app.html: тем, кто здесь впервые, она переходит в приветствие, остальным просто растворяется

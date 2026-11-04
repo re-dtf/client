@@ -1,7 +1,6 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
@@ -23,14 +22,6 @@ function resolveVersion(): string {
 }
 
 const appVersion = resolveVersion();
-
-function pwaPlugin(options?: Parameters<typeof SvelteKitPWA>[0]) {
-	const plugins = SvelteKitPWA(options);
-	for (const p of plugins as any[]) {
-		delete p.transformIndexHtml;
-	}
-	return plugins;
-}
 
 export default defineConfig({
 	resolve: {
@@ -55,91 +46,6 @@ export default defineConfig({
 			},
 			prerender: {
 				handleUnseenRoutes: 'ignore'
-			}
-		}),
-		pwaPlugin({
-			registerType: 'prompt', // Оставляем ручное подтверждение
-			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt,json,webmanifest}'],
-				navigateFallback: '/index.html', // Критично для SPA-роутинга
-				cleanupOutdatedCaches: true
-			},
-			manifest: {
-				// base
-				name: 're:DTF', // Показывается при установке и на экране загрузки
-				short_name: 're:DTF', // Показывается под иконкой на рабочем столе
-				description: 'Неофициальный клиент для DTF', 
-				...({ version: appVersion } as Record<string, unknown>), 
-				
-				// display
-				display_override: ['window-controls-overlay', 'standalone'],
-				display: 'standalone', // Убирает адресную строку браузера, делает вид полноценного десктопного/мобильного окна
-				theme_color: '#D9F5FF', // Цвет верхней панели системы (status bar на телефоне / шапка окна на ПК)
-				background_color: '#161617', // Цвет фона экрана загрузки
-				lang: 'ru',
-
-				// icons
-				icons: [
-					// для новых устройств
-					{
-						src: 'icons/app-default.svg',
-						sizes: 'any',
-						type: 'image/svg+xml',
-						purpose: 'any'
-					},
-
-					// для Android
-					{
-						src: 'icons/app-default.svg',
-						sizes: 'any',
-						type: 'image/svg+xml',
-						purpose: 'maskable'
-					},
-					{
-						src: 'icons/monochrome.svg',
-						sizes: 'any',
-						type: 'image/svg+xml',
-						purpose: 'monochrome'
-					},
-
-					// для старых устройств
-					{
-						src: 'icons/app-default-192.png',
-						sizes: '192x192',
-						type: 'image/png',
-						purpose: 'any'
-					},
-					{
-						src: 'icons/app-default-512.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'any'
-					},
-					{
-						src: 'icons/app-default-192.png',
-						sizes: '192x192',
-						type: 'image/png',
-						purpose: 'maskable'
-					},
-					{
-						src: 'icons/app-default-512.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'maskable'
-					},
-					{
-						src: 'icons/monochrome-192.png',
-						sizes: '192x192',
-						type: 'image/png',
-						purpose: 'monochrome'
-					},
-					{
-						src: 'icons/monochrome-512.png',
-						sizes: '512x512',
-						type: 'image/png',
-						purpose: 'monochrome'
-					}
-				]
 			}
 		})
 	]

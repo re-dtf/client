@@ -2,12 +2,13 @@
 	"name": "re:DTF",
 	"short_name": "re:DTF",
 	"description": "Неофициальный клиент для DTF",
+	"id": "./",
 	"start_url": "./",
 	"scope": "./",
 	"display": "standalone",
 	"display_override": ["window-controls-overlay", "standalone"],
 	"background_color": "#161617",
-	"theme_color": "#BEE6FF",
+	"theme_color": "#D9F5FF",
 	"lang": "ru",
 	"icons": [
 		{

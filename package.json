@@ -22,7 +22,6 @@
 		"@sveltejs/kit": "^3.1.1",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@types/node": "^26.6.6",
-		"@vite-pwa/sveltekit": "^1.1.0",
 		"svelte": "^5.57.3",
 		"svelte-check": "^4.7.7",
 		"typescript": "^6.0.3",
@@ -42,9 +41,6 @@
 		"photoswipe": "^5.4.4"
 	},
 	"overrides": {
-		"@vite-pwa/sveltekit": {
-			"@sveltejs/kit": "$@sveltejs/kit"
-		},
 		"glob": "^14.0.3",
 		"minimatch": "^11.0.3"
 	}

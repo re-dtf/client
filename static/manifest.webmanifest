@@ -2,6 +2,7 @@
 	"name": "re:DTF",
 	"short_name": "re:DTF",
 	"description": "Неофициальный клиент для DTF",
+	"id": "./",
 	"start_url": "./",
 	"scope": "./",
 	"display": "standalone",
