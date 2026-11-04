@@ -1,9 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { freeze, pageTransition, shouldTransition } from './pageTransition.svelte';
+import { fluent } from './motion';
 
 describe('pageTransition', () => {
 	it('shouldTransition возвращает false в среде без window (SSR / node)', () => {
 		expect(shouldTransition()).toBe(false);
+	});
+
+	it('fluent содержит определения fastDepart и fastApproach', () => {
+		expect(fluent.fastDepart).toBeDefined();
+		expect(fluent.fastDepart?.duration).toBe(300);
+		expect(fluent.fastApproach).toBeDefined();
+		expect(fluent.fastApproach?.duration).toBe(400);
 	});
 
 	it('isOutgoing и isIncoming возвращают false по умолчанию', () => {

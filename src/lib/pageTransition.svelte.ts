@@ -1,7 +1,8 @@
 /*
  * Универсальный переход между страницами (Recede → Hold → Approach).
- * Старый экран уходит вглубь, при задержке >1.5с плавно размывается и «дышит»,
+ * Старый экран уходит вглубь при ожидании сети (>80мс), при задержке >1.5с плавно размывается и «дышит»,
  * а при готовности нового экрана плавно передает ему фокус.
+ * Для быстрых переходов (из кэша) экран не отдаляется, а сразу плавно сменяется (fastDepart + fastApproach).
  * Анимации задаются данными темы (ThemeMotion).
  */
 
@@ -35,13 +36,17 @@ let currentBreatheAnim: Animation | undefined;
 let currentDepartAnim: Animation | undefined;
 let currentIncomingAnim: Animation | undefined;
 
+let transitionStartTime = 0;
 let slowTimer: ReturnType<typeof setTimeout> | undefined;
 let hadHoldBlur = false;
 
 /** Проверить, поддерживает ли текущая тема анимацию перехода */
 export function shouldTransition(): boolean {
 	if (typeof window === 'undefined') return false;
-	if (reducedMotion()) return false;
+	if (reducedMotion()) {
+		console.warn('[reDTF] Переход между страницами пропущен: в системе активен prefers-reduced-motion');
+		return false;
+	}
 	const m = activeTheme.motion ?? fluent;
 	return Boolean(m.recede && m.approach);
 }
@@ -100,7 +105,7 @@ export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
 }
 
 /** Запустить переход от старого слоя к новому */
-export function startTransition(fromId: string, toId: string, screenEl: HTMLElement) {
+export function startTransition(fromId: string, toId: string, screenEl: HTMLElement, isInstant = false) {
 	cleanup();
 
 	if (!shouldTransition()) return;
@@ -112,6 +117,7 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 	incomingId = toId;
 	outgoingScreen = screenEl;
 	hadHoldBlur = false;
+	transitionStartTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
 	const rect = screenEl.getBoundingClientRect();
 	unfreezeOutgoing = freeze(screenEl, rect);
@@ -130,33 +136,36 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 		if (active) abortTransition();
 	}, FAIL_SAFE_TIMEOUT);
 
-	// 1. Фаза Recede: уход вглубь
-	const motion = activeTheme.motion ?? fluent;
-	const recedeAnim = motion.recede;
-	if (recedeAnim) {
-		currentRecedeAnim = play(screenEl, recedeAnim, 'forwards');
-	}
-
-	// 2. Таймер Hold: если загрузка дольше SLOW_DELAY
-	slowTimer = setTimeout(() => {
-		if (!active || outgoingId !== fromId) return;
-		slow = true;
-		hadHoldBlur = true;
-
-		// Плавно нарастает размытие
-		const waitAnim = motion.wait;
-		if (waitAnim && outgoingScreen) {
-			currentWaitAnim = play(outgoingScreen, waitAnim, 'forwards');
-			currentWaitAnim?.finished.then(() => {
-				if (!active || outgoingId !== fromId || !outgoingScreen) return;
-				// Дыхание на чистых transform и opacity
-				const breatheAnim = motion.breathe;
-				if (breatheAnim) {
-					currentBreatheAnim = play(outgoingScreen, breatheAnim);
-				}
-			}).catch(() => {});
+	// Фаза Recede: уход вглубь запускается ТОЛЬКО при ожидании сети.
+	// Для мгновенных (кэшированных) переходов экран не отдаляется, исключая рывок назад-вперед.
+	if (!isInstant) {
+		const motion = activeTheme.motion ?? fluent;
+		const recedeAnim = motion.recede;
+		if (recedeAnim) {
+			currentRecedeAnim = play(screenEl, recedeAnim, 'forwards');
 		}
-	}, SLOW_DELAY);
+
+		// Таймер Hold: если загрузка дольше SLOW_DELAY
+		slowTimer = setTimeout(() => {
+			if (!active || outgoingId !== fromId) return;
+			slow = true;
+			hadHoldBlur = true;
+
+			// Плавно нарастает размытие
+			const waitAnim = motion.wait;
+			if (waitAnim && outgoingScreen) {
+				currentWaitAnim = play(outgoingScreen, waitAnim, 'forwards');
+				currentWaitAnim?.finished.then(() => {
+					if (!active || outgoingId !== fromId || !outgoingScreen) return;
+					// Дыхание на чистых transform и opacity
+					const breatheAnim = motion.breathe;
+					if (breatheAnim) {
+						currentBreatheAnim = play(outgoingScreen, breatheAnim);
+					}
+				}).catch(() => {});
+			}
+		}, SLOW_DELAY);
+	}
 }
 
 /** Сообщить, что входящий слой готов к показу */
@@ -176,20 +185,32 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		currentBreatheAnim = undefined;
 	}
 
+	const isFast = !slow;
 	const motion = activeTheme.motion ?? fluent;
 	const promises: Promise<unknown>[] = [];
 
-	// 1. Depart для старого экрана от его текущего состояния
-	if (motion?.depart && outgoingScreen) {
-		try {
-			currentRecedeAnim?.commitStyles?.();
-			currentWaitAnim?.commitStyles?.();
-		} catch {}
-		currentRecedeAnim?.cancel();
-		currentWaitAnim?.cancel();
+	// 1. Анимация ухода старого экрана
+	if (outgoingScreen) {
+		if (isFast) {
+			const fastDepartAnim = motion.fastDepart ?? fluent.fastDepart;
+			if (fastDepartAnim) {
+				currentRecedeAnim?.cancel();
+				currentRecedeAnim = undefined;
 
-		currentDepartAnim = play(outgoingScreen, motion.depart, 'forwards');
-		if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
+				currentDepartAnim = play(outgoingScreen, fastDepartAnim, 'forwards');
+				if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
+			}
+		} else if (motion?.depart) {
+			try {
+				currentRecedeAnim?.commitStyles?.();
+				currentWaitAnim?.commitStyles?.();
+			} catch {}
+			currentRecedeAnim?.cancel();
+			currentWaitAnim?.cancel();
+
+			currentDepartAnim = play(outgoingScreen, motion.depart, 'forwards');
+			if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
+		}
 	}
 
 	// Делаем входящий экран видимым перед началом анимации
@@ -201,8 +222,9 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 	incomingScreen.style.visibility = 'visible';
 	await tick();
 
-	// 2. Approach для нового экрана
-	if (motion?.approach) {
+	// 2. Анимация появления нового экрана
+	const approachAnim = isFast ? (motion.fastApproach ?? fluent.fastApproach) : motion.approach;
+	if (approachAnim) {
 		const incomingRect = incomingScreen.getBoundingClientRect();
 		const visibleTop = Math.max(0, incomingRect.top);
 		const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
@@ -213,8 +235,8 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		incomingScreen.style.position = 'relative';
 		incomingScreen.style.transformOrigin = `50% ${originY}px`;
 
-		let keyframes: Keyframe[] = motion.approach.keyframes.map((kf) => ({ ...kf }));
-		if (hadHoldBlur) {
+		let keyframes: Keyframe[] = approachAnim.keyframes.map((kf) => ({ ...kf }));
+		if (!isFast && hadHoldBlur) {
 			keyframes = keyframes.map((kf, i, arr) => {
 				const progress = i / (arr.length - 1);
 				const blur = Math.round(14 * (1 - progress));
@@ -224,8 +246,8 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 
 		const anim: Anim = {
 			keyframes,
-			duration: motion.approach.duration,
-			easing: motion.approach.easing
+			duration: approachAnim.duration,
+			easing: approachAnim.easing
 		};
 
 		currentIncomingAnim = play(incomingScreen, anim, 'forwards');
@@ -268,6 +290,7 @@ export function abortTransition() {
 	currentRecedeAnim?.cancel();
 	currentWaitAnim?.cancel();
 	currentDepartAnim?.cancel();
+	currentIncomingAnim?.cancel();
 
 	// Возврат к нормальному виду старого экрана
 	const returnAnim = outgoingScreen.animate([
@@ -330,6 +353,7 @@ function cleanup() {
 	incomingId = null;
 	currentOrigin = null;
 	hadHoldBlur = false;
+	transitionStartTime = 0;
 }
 
 export const pageTransition = {

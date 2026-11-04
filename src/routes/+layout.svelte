@@ -30,6 +30,7 @@
 	import { loadThemeStyles, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { abortTransition, incomingReady, pageTransition, shouldTransition, startTransition } from '$lib/pageTransition.svelte';
+	import { api } from '$lib/api/index.svelte';
 	
 	let { children } = $props();
 	let showWelcome = $state(false);
@@ -179,9 +180,13 @@
 				const isOpeningPage = overlays.length > previousDepth && overlays[overlays.length - 1]?.presentation === 'page';
 				if (isOpeningPage && outgoing && shouldTransition() && lastTransitionedTo !== activeScrollId) {
 					lastTransitionedTo = activeScrollId;
-					startTransition(previousScrollId, activeScrollId, outgoing);
-				} else if (overlays.length < previousDepth && pageTransition.active) {
-					abortTransition();
+					const topOverlay = overlays[overlays.length - 1];
+					const isInstant = topOverlay?.type === 'post' && Boolean(api.peekPost(topOverlay.data.postId, topOverlay.data.sourceId));
+					startTransition(previousScrollId, activeScrollId, outgoing, isInstant);
+				} else if (overlays.length < previousDepth) {
+					lastTransitionedTo = '__feed__';
+					if (pageTransition.active) abortTransition();
+
 				}
 			});
 		}

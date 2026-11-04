@@ -49,6 +49,10 @@ export interface ThemeMotion {
 	depart?: Anim;
 	/** Новый экран приближается к зрителю (Approach) */
 	approach?: Anim;
+	/** Быстрый переход: старый экран синхронно отдаляется и тает (из кэша) */
+	fastDepart?: Anim;
+	/** Быстрый переход: новый экран всплывает на передний план (из кэша) */
+	fastApproach?: Anim;
 }
 
 /** Поля ThemeMotion, которые являются анимациями (их проигрывает `play`) */
@@ -65,7 +69,9 @@ export type AnimKey =
 	| 'wait'
 	| 'breathe'
 	| 'depart'
-	| 'approach';
+	| 'approach'
+	| 'fastDepart'
+	| 'fastApproach';
 
 /** Кривые: QuarticEase, Fluent и Material */
 export const ease = {
@@ -147,6 +153,23 @@ export const fluent: ThemeMotion = {
 		],
 		duration: 500,
 		easing: ease.out
+	},
+	fastDepart: {
+		keyframes: [
+			{ transform: 'none', opacity: 1 },
+			{ transform: 'translateY(-20px) scale(0.98)', opacity: 0 }
+		],
+		duration: 300,
+		easing: ease.smooth
+	},
+	fastApproach: {
+		keyframes: [
+			{ transform: 'translateY(40px) scale(0.97)', opacity: 0 },
+			{ transform: 'translateY(12px) scale(0.99)', opacity: 0.85, offset: 0.45 },
+			{ transform: 'none', opacity: 1 }
+		],
+		duration: 400,
+		easing: ease.smooth
 	}
 };
 
