@@ -10,7 +10,6 @@
 		addCustomProxy,
 		DEFAULT_VALTOWN_PROXY_URL
 	} from '$lib/storage/settings.svelte';
-	import { clickOnKey } from './a11y';
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
 
@@ -181,23 +180,21 @@
 	</div>
 
 	<div class="login-modal__content">
-		<div
+		<button
 			class="login-modal__close"
+			type="button"
 			aria-label="Закрыть"
-			role="button"
-			tabindex="0"
 			onclick={closeModal}
-			onkeydown={clickOnKey}
 		>
 			<svg height="24" width="24" class="icon" aria-hidden="true">
 				<use href="/icons.svg#v_close"></use>
 			</svg>
-		</div>
+		</button>
 
 		<div class="auth">
 			{#if mode !== 'selector'}
 				<div class="auth__controls">
-					<button class="auth__back" onclick={goBack}>
+					<button class="auth__back" type="button" onclick={goBack}>
 						<span class="auth__back-container">
 							<svg height="20" width="20" class="icon" aria-hidden="true">
 								<use href="/icons.svg#v_arrow_left"></use>
@@ -478,12 +475,20 @@
 		margin: auto;
 	}
 
+	/* Обложка статичная со светлым фоном — логотип не менять, он всегда чёрный даже в тёмной теме */
 	.login-modal__cover {
 		padding: 25px 30px;
 		border-radius: 8px 0 0 8px;
 		background: var(--bg-ac-modal)
 			url('https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/')
 			no-repeat 50% 50% / cover;
+		color: #000;
+	}
+
+	.login-modal__cover .icon {
+		/* Не менять: логотип на обложке всегда чёрный независимо от темы */
+		color: #000;
+		fill: #000;
 	}
 
 	.login-modal__content {
@@ -499,11 +504,17 @@
 		position: absolute;
 		top: 0;
 		right: 0;
-		z-index: 1;
+		z-index: 10;
 		padding: 16px;
 		color: var(--text-primary);
 		opacity: 0.5;
 		cursor: pointer;
+		background: none;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: opacity var(--duration-base);
 	}
 
 	.login-modal__close:hover {
@@ -523,7 +534,7 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		right: 0;
+		right: 56px;
 		z-index: 9;
 		display: flex;
 		border-radius: 0 8px 0 0;
@@ -542,6 +553,11 @@
 		background: none;
 		border: none;
 		padding: 0;
+		transition: opacity var(--duration-base);
+	}
+
+	.auth__back:hover {
+		opacity: 1;
 	}
 
 	.auth__back-container {
@@ -808,10 +824,27 @@
 		background: #2868b2;
 	}
 
-	/* Мобильная версия */
-	@media (max-width: 640px) {
+	/* Мобильный экран: на весь экран по аналогии с настройками */
+	@media (max-width: 719px) {
 		.login-modal {
+			position: fixed;
+			inset: 0;
+			width: auto;
+			height: auto;
+			max-width: none;
+			margin: 0;
+			border-radius: 0;
+			box-shadow: none;
 			grid-template-columns: 1fr;
+			display: flex;
+			flex-direction: column;
+			background: var(--bg-modal, #fff);
+			padding-top: env(safe-area-inset-top, 0px);
+			padding-bottom: env(safe-area-inset-bottom, 0px);
+			padding-left: env(safe-area-inset-left, 0px);
+			padding-right: env(safe-area-inset-right, 0px);
+			overflow: hidden;
+			z-index: 100;
 		}
 
 		.login-modal__cover {
@@ -819,27 +852,87 @@
 		}
 
 		.login-modal__content {
-			border-radius: 8px;
-			padding: 20px;
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			padding: 0;
+			border-radius: 0;
+			position: relative;
+			overflow: hidden;
+			background: transparent;
 		}
 
-		.auth {
-			margin: -20px;
-			padding: 16px 20px;
-			min-height: 480px;
+		.login-modal__close {
+			top: env(safe-area-inset-top, 0px);
+			right: 0;
+			padding: 12px 16px;
+			opacity: 0.8;
+			z-index: 20;
 		}
 
 		.auth__controls {
-			margin: -16px -20px 0 -20px;
-			padding: 10px 16px;
+			top: env(safe-area-inset-top, 0px);
+			left: 0;
+			right: 56px;
+			height: 48px;
+			align-items: center;
+			background: transparent;
+			z-index: 15;
+		}
+
+		.auth__back {
+			margin: 0;
+			padding: 12px 16px;
+			font-size: 15px;
+			opacity: 0.8;
+		}
+
+		.auth__back-container .icon {
+			margin-right: 6px;
+		}
+
+		.auth {
+			flex: 1;
+			min-height: 0;
+			margin: 0;
+			padding: 48px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			-webkit-overflow-scrolling: touch;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			max-width: 480px;
+			width: 100%;
+			margin-left: auto;
+			margin-right: auto;
+			box-sizing: border-box;
+		}
+
+		.auth__form {
+			flex-grow: 0;
+			display: flex;
+			flex-direction: column;
+			margin: auto 0;
 		}
 
 		.auth__title {
-			margin-top: 40px;
+			margin-top: 0;
+			margin-bottom: 20px;
+			font-size: 24px;
+			line-height: 32px;
+			font-weight: 500;
 		}
 
 		.auth__methods {
 			grid-template-columns: 1fr;
+			gap: 12px;
+		}
+
+		.auth__footer {
+			margin-top: 24px;
+			margin-bottom: 8px;
 		}
 	}
 </style>

@@ -416,6 +416,34 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	}
 
+	/* Мобильный экран телефона: на весь экран по аналогии с настройками */
+	@media (max-width: 719px) {
+		.login-container {
+			position: fixed;
+			inset: 0;
+			width: auto;
+			height: auto;
+			max-width: none;
+			margin: 0;
+			border-radius: 0;
+			box-shadow: none;
+			padding: calc(16px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
+			overflow-y: auto;
+			overscroll-behavior: contain;
+			-webkit-overflow-scrolling: touch;
+			display: flex;
+			flex-direction: column;
+		}
+
+		h1 {
+			margin-top: auto;
+		}
+
+		.login-form {
+			margin-bottom: auto;
+		}
+	}
+
 	.back-action {
 		margin-bottom: 20px;
 	}

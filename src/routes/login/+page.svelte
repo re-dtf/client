@@ -26,4 +26,10 @@
 		overflow-y: var(--modal-overflow-y, visible);
 		background: var(--modal-backdrop, rgba(0, 0, 0, 0.5));
 	}
+
+	@media (max-width: 719px) {
+		.standalone-login-page {
+			padding: 0;
+		}
+	}
 </style>
