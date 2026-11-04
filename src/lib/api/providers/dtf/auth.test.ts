@@ -28,6 +28,7 @@ describe('auth & proxy failover', () => {
 			collectStats: true,
 			haptics: true,
 			disableMobileTopBar: false,
+			watermark: true,
 			commentVirtualization: 'auto'
 		};
 	});

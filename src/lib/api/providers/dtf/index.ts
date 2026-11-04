@@ -26,6 +26,9 @@ import type {
 } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchWithAuth, requireAuth } from './client';
+import { untrack } from 'svelte';
+import { addWatermark } from '$lib/watermark';
+import { settings } from '$lib/storage/settings.svelte';
 import { login, loginByToken } from './auth';
 import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
 
@@ -258,15 +261,19 @@ export const dtfApiProvider = {
 
 	async addComment(postId: number, text: string, replyTo = 0, media: CommentMedia[] = []): Promise<Comment> {
 		requireAuth();
+		const shouldWatermark = untrack(() => settings.value.watermark);
+		const preparedText = shouldWatermark ? addWatermark(text) : text;
 		// nonce сайт придумывает сам, сервер возвращает его в ответе
-		const body = formOf({ id: postId, text, attachments: attachmentsOf(media), reply_to: replyTo, nonce: Math.floor(Math.random() * 1e6) });
+		const body = formOf({ id: postId, text: preparedText, attachments: attachmentsOf(media), reply_to: replyTo, nonce: Math.floor(Math.random() * 1e6) });
 		const response = await fetchWithAuth(`${apiV('2.4')}/comment/add`, { method: 'POST', body });
 		return mapComment(await resultOf(response, 'Не удалось отправить комментарий'), postId);
 	},
 
 	async editComment(commentId: number, postId: number, text: string, media: CommentMedia[] = []): Promise<Comment> {
 		requireAuth();
-		const body = formOf({ comment_id: commentId, text, attachments: attachmentsOf(media) });
+		const shouldWatermark = untrack(() => settings.value.watermark);
+		const preparedText = shouldWatermark ? addWatermark(text) : text;
+		const body = formOf({ comment_id: commentId, text: preparedText, attachments: attachmentsOf(media) });
 		const response = await fetchWithAuth(`${apiV('2.4')}/comment/edit`, { method: 'POST', body });
 		return mapComment(await resultOf(response, 'Не удалось изменить комментарий'), postId);
 	},

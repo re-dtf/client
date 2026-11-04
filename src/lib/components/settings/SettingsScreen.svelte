@@ -9,7 +9,10 @@
 	import ProxySettings from './ProxySettings.svelte';
 	import ReactionsSettings from './ReactionsSettings.svelte';
 	import SettingsEmptyState from './SettingsEmptyState.svelte';
+	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsIcon from './SettingsIcon.svelte';
+	import SettingsRow from './SettingsRow.svelte';
+	import SettingsSwitch from './SettingsSwitch.svelte';
 	import StatsSettings from './StatsSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
@@ -600,6 +603,18 @@
 								value={settings.value.commentVirtualization}
 								onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
 							/>
+							<SettingsGroup title="Подпись reDTF">
+								<SettingsRow
+									tag="label"
+									title="Невидимая подпись reDTF"
+									subtitle="Добавляет скрытую метку к отправляемым комментариям, чтобы другие пользователи reDTF видели, что комментарий написан через этот клиент."
+								>
+									<SettingsSwitch
+										checked={settings.value.watermark}
+										onchange={(value) => settings.patch({ watermark: value })}
+									/>
+								</SettingsRow>
+							</SettingsGroup>
 						{/if}
 					{:else}
 						<!-- Ни один подпункт не выбран — минималистичный плейсхолдер -->

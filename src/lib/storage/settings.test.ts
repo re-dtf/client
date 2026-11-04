@@ -46,6 +46,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			collectStats: true,
 			haptics: true,
 			disableMobileTopBar: false,
+			watermark: true,
 			commentVirtualization: 'auto'
 		};
 	});
@@ -60,6 +61,18 @@ describe('settings & shouldVirtualizeComments', () => {
 
 		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
 		expect(saved.d.colorScheme).toBe('dark');
+	});
+
+	it('watermark по умолчанию включен (true)', () => {
+		expect(settings.value.watermark).toBe(true);
+	});
+
+	it('patch обновляет значение watermark', () => {
+		settings.patch({ watermark: false });
+		expect(settings.value.watermark).toBe(false);
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.watermark).toBe(false);
 	});
 
 	it('disableMobileTopBar по умолчанию выключен (false)', () => {

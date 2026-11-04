@@ -33,6 +33,8 @@ export interface AppSettings {
 	haptics: boolean;
 	/** Отключать верхний бар в мобильной версии */
 	disableMobileTopBar: boolean;
+	/** Невидимая подпись reDTF к отправляемым комментариям */
+	watermark: boolean;
 }
 
 /** Адрес CORS-прокси на Val Town (задаётся при сборке VITE_AUTH_PROXY_URL или VITE_VALTOWN_PROXY_URL) */
@@ -91,7 +93,8 @@ export const settings = persistedState<AppSettings>(
 		commentVirtualization: 'auto',
 		collectStats: true,
 		haptics: true,
-		disableMobileTopBar: false
+		disableMobileTopBar: false,
+		watermark: true,
 	},
 	4
 );
