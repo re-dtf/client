@@ -5,12 +5,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" content="#D9F5FF" />
-		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/icons/fav-default.svg" id="app-favicon" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" id="app-manifest" />
 
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		<meta name="apple-mobile-web-app-title" content="re:DTF" />
-		<link rel="apple-touch-icon" href="%sveltekit.assets%/logo-192.png" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/app-default-180.png" id="app-apple-touch-icon" />
 
 		%sveltekit.head%
 		<script>
@@ -39,6 +40,43 @@
 					const lock = document.createElement('meta');
 					lock.name = 'darkreader-lock';
 					document.head.appendChild(lock);
+				}
+				const appIcon = st?.d?.appIcon ?? 'default';
+				const customIcon = st?.d?.customIconData;
+				if (appIcon === 'custom' && customIcon) {
+					const isSvg = customIcon.startsWith('data:image/svg');
+					const fav = document.getElementById('app-favicon');
+					if (fav) {
+						fav.type = isSvg ? 'image/svg+xml' : 'image/png';
+						fav.href = customIcon;
+					}
+					const apple = document.getElementById('app-apple-touch-icon');
+					if (apple) apple.href = customIcon;
+					const mf = document.getElementById('app-manifest');
+					if (mf) {
+						const dynMf = {
+							name: 're:DTF',
+							short_name: 're:DTF',
+							display: 'standalone',
+							background_color: '#161617',
+							theme_color: '#D9F5FF',
+							icons: [
+								{ src: customIcon, sizes: 'any', type: isSvg ? 'image/svg+xml' : 'image/png', purpose: 'any' },
+								{ src: customIcon, sizes: 'any', type: isSvg ? 'image/svg+xml' : 'image/png', purpose: 'maskable' }
+							]
+						};
+						mf.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(dynMf));
+					}
+				} else if (appIcon === 'bluer' || appIcon === 'white') {
+					const fav = document.getElementById('app-favicon');
+					if (fav) {
+						fav.type = 'image/svg+xml';
+						fav.href = `%sveltekit.assets%/icons/fav-${appIcon}.svg`;
+					}
+					const apple = document.getElementById('app-apple-touch-icon');
+					if (apple) apple.href = `%sveltekit.assets%/icons/app-${appIcon}-180.png`;
+					const mf = document.getElementById('app-manifest');
+					if (mf) mf.href = `%sveltekit.assets%/manifest-${appIcon}.webmanifest`;
 				}
 			} catch {}
 		</script>

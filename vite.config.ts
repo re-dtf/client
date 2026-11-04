@@ -60,7 +60,7 @@ export default defineConfig({
 		pwaPlugin({
 			registerType: 'prompt', // Оставляем ручное подтверждение
 			workbox: {
-				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt,json}'],
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,txt,json,webmanifest}'],
 				navigateFallback: '/index.html', // Критично для SPA-роутинга
 				cleanupOutdatedCaches: true
 			},
@@ -80,23 +80,23 @@ export default defineConfig({
 
 				// icons
 				icons: [
-					
 					// для новых устройств
 					{
-						src: '/logo.svg',
+						src: 'icons/app-default.svg',
 						sizes: 'any',
-						type: 'image/svg+xml'
+						type: 'image/svg+xml',
+						purpose: 'any'
 					},
 
 					// для Android
 					{
-						src: '/logo.svg',
+						src: 'icons/app-default.svg',
 						sizes: 'any',
 						type: 'image/svg+xml',
-						purpose: 'any maskable'
+						purpose: 'maskable'
 					},
 					{
-						src: '/logo-mono.svg',
+						src: 'icons/monochrome.svg',
 						sizes: 'any',
 						type: 'image/svg+xml',
 						purpose: 'monochrome'
@@ -104,14 +104,40 @@ export default defineConfig({
 
 					// для старых устройств
 					{
-						src: '/logo-192.png',
+						src: 'icons/app-default-192.png',
 						sizes: '192x192',
-						type: 'image/png'
+						type: 'image/png',
+						purpose: 'any'
 					},
 					{
-						src: '/logo-512.png',
+						src: 'icons/app-default-512.png',
 						sizes: '512x512',
-						type: 'image/png'
+						type: 'image/png',
+						purpose: 'any'
+					},
+					{
+						src: 'icons/app-default-192.png',
+						sizes: '192x192',
+						type: 'image/png',
+						purpose: 'maskable'
+					},
+					{
+						src: 'icons/app-default-512.png',
+						sizes: '512x512',
+						type: 'image/png',
+						purpose: 'maskable'
+					},
+					{
+						src: 'icons/monochrome-192.png',
+						sizes: '192x192',
+						type: 'image/png',
+						purpose: 'monochrome'
+					},
+					{
+						src: 'icons/monochrome-512.png',
+						sizes: '512x512',
+						type: 'image/png',
+						purpose: 'monochrome'
 					}
 				]
 			}

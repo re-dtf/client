@@ -1,5 +1,6 @@
 import { untrack } from 'svelte';
 import { persistedState } from './persisted.svelte';
+import type { AppIconId } from '$lib/icons';
 
 export type NestingMode = 'flatten' | 'autopan';
 export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
@@ -41,6 +42,10 @@ export interface AppSettings {
 	clientBadges: ClientBadgesMode;
 	/** Расположение бейджей мобильных клиентов (Android / iOS): 'author' (у автора), 'date' (у времени) */
 	mobileBadgesPosition: MobileBadgesPosition;
+	/** Выбранная иконка приложения и вкладки браузера: 'default' | 'bluer' | 'white' | 'custom' */
+	appIcon: AppIconId;
+	/** Пользовательская иконка в формате data URI (image/png или image/svg+xml) */
+	customIconData?: string | null;
 }
 
 /** Адрес CORS-прокси на Val Town (задаётся при сборке VITE_AUTH_PROXY_URL или VITE_VALTOWN_PROXY_URL) */
@@ -102,9 +107,11 @@ export const settings = persistedState<AppSettings>(
 		disableMobileTopBar: false,
 		watermark: true,
 		clientBadges: 'redtf_only',
-		mobileBadgesPosition: 'author'
+		mobileBadgesPosition: 'author',
+		appIcon: 'default',
+		customIconData: null
 	},
-	5
+	6
 );
 
 /** Список всех активных прокси с непустым URL */

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import AboutSettings from './AboutSettings.svelte';
 	import AccountSettings from './AccountSettings.svelte';
+	import AppIconSettings from './AppIconSettings.svelte';
 	import FeedSettings from './FeedSettings.svelte';
 	import FieldControl from './FieldControl.svelte';
 	import HelpSettings from './HelpSettings.svelte';
@@ -221,6 +222,7 @@
 			title: 'Персонализация',
 			items: [
 				{ id: 'appearance-general', title: 'Общее', icon: 'general' },
+				{ id: 'appearance-icons', title: 'Иконка приложения', icon: 'appearance-icons' },
 				{ id: 'appearance-votes', title: 'Оценки', icon: 'votes' },
 				{ id: 'appearance-editor', title: 'Редактор', icon: 'editor' }
 			]
@@ -246,6 +248,9 @@
 		if (targetSection === 'appearance' || targetPage === 'themes' || targetPage === 'theme') {
 			const sub = targetPage === 'theme' ? 'appearance-general' : 'theme-select';
 			return { folderId: 'appearance', pageId: targetPage ? sub : null };
+		}
+		if (targetPage === 'app-icon' || targetPage === 'icons' || targetPage === 'appearance-icons') {
+			return { folderId: 'appearance', pageId: 'appearance-icons' };
 		}
 		if (targetSection === 'behavior' || targetPage === 'reactions' || targetPage === 'comments') {
 			const sub = targetPage === 'reactions' ? 'behavior-reactions' : (targetPage === 'comments' ? 'behavior-comments' : 'behavior-feed');
@@ -583,6 +588,8 @@
 									/>
 								{/if}
 							{/each}
+						{:else if selectedPageId === 'appearance-icons'}
+							<AppIconSettings />
 						{:else if selectedPageId === 'appearance-votes'}
 							{#if votesThemeFields.length > 0}
 								{#each votesThemeFields as field (field.key)}

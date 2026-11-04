@@ -49,8 +49,21 @@ describe('settings & shouldVirtualizeComments', () => {
 			watermark: true,
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
-			commentVirtualization: 'auto'
+			commentVirtualization: 'auto',
+			appIcon: 'default'
 		};
+	});
+
+	it('appIcon по умолчанию "default"', () => {
+		expect(settings.value.appIcon).toBe('default');
+	});
+
+	it('patch обновляет значение appIcon и сохраняет в localStorage', () => {
+		settings.patch({ appIcon: 'bluer' });
+		expect(settings.value.appIcon).toBe('bluer');
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.appIcon).toBe('bluer');
 	});
 
 	it('colorScheme по умолчанию "auto"', () => {

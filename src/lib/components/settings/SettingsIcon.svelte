@@ -42,6 +42,10 @@
 		<path d="M2.5 5h2.2M8.3 5h5.2M2.5 11h5.7M11.8 11h1.7" />
 		<circle cx="6.5" cy="5" r="1.75" />
 		<circle cx="10" cy="11" r="1.75" />
+	{:else if name === 'app-icon' || name === 'icons' || name === 'appearance-icons'}
+		<!-- Иконка приложения -->
+		<rect x="2.5" y="2.5" width="11" height="11" rx="3" />
+		<circle cx="8" cy="8" r="2" />
 	{:else if name === 'sources'}
 		<rect x="2.5" y="3" width="11" height="4" rx="1.5" />
 		<rect x="2.5" y="9" width="11" height="4" rx="1.5" />

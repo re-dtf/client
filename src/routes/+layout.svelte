@@ -20,6 +20,7 @@
 	import { cleanupHangingBio } from '$lib/api/sources/bio-auth';
 	import { startTracking, type TickContext } from '$lib/storage/stats.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
+	import { applyAppIcon } from '$lib/icons';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -328,6 +329,11 @@
 		return () => {
 			delete document.documentElement.dataset.disableMobileTopBar;
 		};
+	});
+
+	// Применение активной иконки приложения (favicon, manifest, capacitor)
+	$effect(() => {
+		applyAppIcon(settings.value.appIcon ?? 'default', settings.value.customIconData);
 	});
 
 	onMount(() => {

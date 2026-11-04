@@ -32,7 +32,8 @@ describe('auth & proxy failover', () => {
 			watermark: true,
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
-			commentVirtualization: 'auto'
+			commentVirtualization: 'auto',
+			appIcon: 'default'
 		};
 	});
 
