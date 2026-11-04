@@ -20,7 +20,7 @@
 
 | Ключ | Слой | Содержимое | Файл |
 | --- | --- | --- | --- |
-| `redtf:settings` | settings | `{ theme, proxyUrl, commentNesting, collectStats }` | `storage/settings.svelte.ts` |
+| `redtf:settings` | settings | `{ theme, proxies, commentNesting, collectStats }` | `storage/settings.svelte.ts` |
 | `redtf:settings:reactions` | settings | правила реакций (вид и вес), реакции лайка и дизлайка, сортировка по рейтингу | `storage/reactions.svelte.ts` |
 | `redtf:theme:<id>` | theme | значения полей настроек темы | `themes/settings.svelte.ts` |
 | `redtf:secrets:dtf-session` | secrets | сессия DTF: токены и сроки | `storage/auth.svelte.ts` |
@@ -38,11 +38,11 @@
 ```ts
 import { persistedState } from '$lib/storage/persisted.svelte';
 
-const store = persistedState('redtf:settings', { theme: 'dtf2022', proxyUrl: '' });
+const store = persistedState('redtf:settings', { theme: 'dtf2022', proxies: [] });
 
 store.value;                         // прочитать, реактивно
-store.value = { theme: 'x', proxyUrl: '' };   // заменить целиком
-store.patch({ proxyUrl: 'https://…' });       // заменить часть полей объекта
+store.value = { theme: 'x', proxies: [] };   // заменить целиком
+store.patch({ proxies: [...] });             // заменить часть полей объекта
 ```
 
 Значение **заменяется целиком**, а не мутируется (`store.value.theme = 'x'` не сохранится). Внутри используется `$state.raw`, поэтому глубокая реактивность не нужна и лишних прокси нет.
@@ -50,7 +50,7 @@ store.patch({ proxyUrl: 'https://…' });       // заменить часть �
 Для `bind:` используйте функциональную привязку:
 
 ```svelte
-<input bind:value={() => settings.value.proxyUrl, (v) => settings.patch({ proxyUrl: v })} />
+<input bind:value={() => settings.value.theme, (v) => settings.patch({ theme: v })} />
 ```
 
 Модули вроде `storage/auth.svelte.ts` оборачивают `persistedState` в объект с понятным API (`authStorage.session`, `sourceStorage.getToken(id)`), чтобы остальной код не знал про ключи.

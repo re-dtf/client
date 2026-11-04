@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 vi.hoisted(() => {
 	const data: Record<string, string> = {};
@@ -19,7 +19,21 @@ vi.hoisted(() => {
 	});
 });
 
-import { settings, shouldVirtualizeComments } from './settings.svelte';
+import {
+	settings,
+	shouldVirtualizeComments,
+	DEFAULT_PROXIES,
+	getEnabledProxies,
+	getPrimaryProxyUrl,
+	toggleProxy,
+	updateProxyUrl,
+	addCustomProxy,
+	removeCustomProxy,
+	moveProxy,
+	testProxy,
+	applyDefaultProxySettings,
+	enableCloudflareProxy
+} from './settings.svelte';
 
 describe('settings & shouldVirtualizeComments', () => {
 	beforeEach(() => {
@@ -27,12 +41,12 @@ describe('settings & shouldVirtualizeComments', () => {
 		settings.value = {
 			theme: 'dtf2022',
 			colorScheme: 'auto',
-			proxyUrl: '',
+			proxies: JSON.parse(JSON.stringify(DEFAULT_PROXIES)),
 			commentNesting: 'flatten',
 			collectStats: true,
 			haptics: true,
 			disableMobileTopBar: false,
-			commentVirtualization: 'auto',
+			commentVirtualization: 'auto'
 		};
 	});
 
@@ -101,7 +115,10 @@ describe('settings & shouldVirtualizeComments', () => {
 				configurable: true
 			});
 			Object.defineProperty(globalThis, 'navigator', {
-				value: { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36' },
+				value: {
+					userAgent:
+						'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+				},
 				writable: true,
 				configurable: true
 			});
@@ -132,5 +149,167 @@ describe('settings & shouldVirtualizeComments', () => {
 				configurable: true
 			});
 		}
+	});
+
+	describe('управление списком прокси и failover порядок', () => {
+		beforeEach(() => {
+			settings.value = {
+				...settings.value,
+				proxies: [
+					{
+						id: 'valtown',
+						name: 'Val Town (открытый)',
+						url: 'https://valtown.example.com',
+						enabled: true,
+						isPreset: true
+					},
+					{
+						id: 'cloudflare',
+						name: 'Cloudflare Workers (резервный)',
+						url: 'https://cf.example.com',
+						enabled: false,
+						isPreset: true
+					}
+				]
+			};
+		});
+
+		it('DEFAULT_PROXIES содержит только настроенные в сборке прокси с флагом isPreset', () => {
+			for (const proxy of DEFAULT_PROXIES) {
+				expect(proxy.isPreset).toBe(true);
+				expect(proxy.url).toBeTruthy();
+			}
+		});
+
+		it('getEnabledProxies возвращает только активные прокси с непустым URL', () => {
+			const enabled = getEnabledProxies();
+			expect(enabled.length).toBe(1);
+			expect(enabled[0].id).toBe('valtown');
+		});
+
+		it('getPrimaryProxyUrl возвращает URL первого активного прокси без слэша', () => {
+			expect(getPrimaryProxyUrl()).toBe('https://valtown.example.com');
+		});
+
+		it('toggleProxy переключает активность прокси', () => {
+			toggleProxy('cloudflare', true);
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(true);
+			expect(getEnabledProxies().length).toBe(2);
+
+			toggleProxy('cloudflare', false);
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(false);
+			expect(getEnabledProxies().length).toBe(1);
+		});
+
+		it('toggleProxy не включает прокси, если URL пустой', () => {
+			updateProxyUrl('cloudflare', '');
+			toggleProxy('cloudflare', true);
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(false);
+			expect(getEnabledProxies().length).toBe(1);
+		});
+
+		it('updateProxyUrl обновляет URL, нормализует протокол и удаляет концевой слэш', () => {
+			updateProxyUrl('cloudflare', 'my-proxy.workers.dev/');
+			const cf = settings.value.proxies.find((p) => p.id === 'cloudflare');
+			expect(cf?.url).toBe('https://my-proxy.workers.dev');
+		});
+
+		it('addCustomProxy добавляет новый прокси в список активным', () => {
+			const item = addCustomProxy('https://my-proxy.workers.dev', 'Мой воркер');
+			expect(item.name).toBe('Мой воркер');
+			expect(item.url).toBe('https://my-proxy.workers.dev');
+			expect(item.enabled).toBe(true);
+			expect(item.isPreset).toBe(false);
+
+			const found = settings.value.proxies.find((p) => p.id === item.id);
+			expect(found).toBeDefined();
+			expect(found?.name).toBe('Мой воркер');
+		});
+
+		it('addCustomProxy выбрасывает ошибку при пустом или некорректном URL', () => {
+			expect(() => addCustomProxy('')).toThrow('Укажите адрес прокси-сервера');
+			expect(() => addCustomProxy('   ')).toThrow('Укажите адрес прокси-сервера');
+			expect(() => addCustomProxy('http://')).toThrow('Некорректный адрес URL');
+			expect(() => addCustomProxy('https:// broken host')).toThrow('Некорректный адрес URL');
+		});
+
+		it('removeCustomProxy удаляет пользовательский прокси', () => {
+			const item = addCustomProxy('https://test-to-remove.example.com');
+			expect(settings.value.proxies.some((p) => p.id === item.id)).toBe(true);
+
+			removeCustomProxy(item.id);
+			expect(settings.value.proxies.some((p) => p.id === item.id)).toBe(false);
+		});
+
+		it('moveProxy меняет приоритет прокси местами', () => {
+			expect(settings.value.proxies[0].id).toBe('valtown');
+			expect(settings.value.proxies[1].id).toBe('cloudflare');
+
+			moveProxy('cloudflare', 'up');
+			expect(settings.value.proxies[0].id).toBe('cloudflare');
+			expect(settings.value.proxies[1].id).toBe('valtown');
+
+			moveProxy('cloudflare', 'down');
+			expect(settings.value.proxies[0].id).toBe('valtown');
+			expect(settings.value.proxies[1].id).toBe('cloudflare');
+		});
+
+		it('applyDefaultProxySettings включает Val Town и выключает остальные', () => {
+			toggleProxy('cloudflare', true);
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(true);
+
+			applyDefaultProxySettings();
+			const valtown = settings.value.proxies.find((p) => p.id === 'valtown');
+			const cf = settings.value.proxies.find((p) => p.id === 'cloudflare');
+			expect(valtown?.enabled).toBe(true);
+			expect(cf?.enabled).toBe(false);
+		});
+
+		it('enableCloudflareProxy включает Cloudflare прокси', () => {
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(false);
+			enableCloudflareProxy();
+			expect(settings.value.proxies.find((p) => p.id === 'cloudflare')?.enabled).toBe(true);
+		});
+	});
+
+	describe('testProxy', () => {
+		afterEach(() => {
+			vi.restoreAllMocks();
+		});
+
+		it('возвращает ошибку при пустом URL', async () => {
+			const res = await testProxy('   ');
+			expect(res).toEqual({ ok: false, error: 'URL не указан' });
+		});
+
+		it('возвращает ok: true и задержку при ответе 200/204', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
+			);
+			const res = await testProxy('https://my-proxy.workers.dev');
+			expect(res.ok).toBe(true);
+			expect(typeof res.latencyMs).toBe('number');
+		});
+
+		it('возвращает ошибку со статусом при коде 502', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockResolvedValue(new Response(null, { status: 502 }))
+			);
+			const res = await testProxy('https://my-proxy.workers.dev');
+			expect(res.ok).toBe(false);
+			expect(res.error).toBe('Код 502');
+		});
+
+		it('обрабатывает таймаут AbortError', async () => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockRejectedValue(new DOMException('The operation was aborted', 'AbortError'))
+			);
+			const res = await testProxy('https://my-proxy.workers.dev');
+			expect(res.ok).toBe(false);
+			expect(res.error).toBe('Таймаут (5с)');
+		});
 	});
 });

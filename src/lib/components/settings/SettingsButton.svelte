@@ -2,11 +2,12 @@
 	import type { Snippet } from 'svelte';
 
 	/* Кнопка настроек: обычная серая, «suggested» (акцент) и «destructive» (красный текст). С href это ссылка в новой вкладке */
-	let { variant = 'flat', disabled = false, href, onclick, children }: {
+	let { variant = 'flat', disabled = false, href, type = 'button', onclick, children }: {
 		variant?: 'flat' | 'suggested' | 'destructive';
 		disabled?: boolean;
 		href?: string;
-		onclick?: () => void;
+		type?: 'button' | 'submit';
+		onclick?: (e: MouseEvent) => void;
 		children: Snippet;
 	} = $props();
 </script>
@@ -16,7 +17,7 @@
 		{@render children()}
 	</a>
 {:else}
-	<button class="btn btn--{variant}" type="button" {disabled} {onclick}>
+	<button class="btn btn--{variant}" {type} {disabled} {onclick}>
 		{@render children()}
 	</button>
 {/if}

@@ -1,36 +1,26 @@
 import type { Session } from '../../types';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { getProxyUrl, refreshSession } from './client';
-import { ApiError } from '../../errors';
+import { getEnabledProxies } from '$lib/storage/settings.svelte';
+import { fetchWithProxyFailover, refreshSession } from './client';
 
-/** Вход по почте и паролю. Только через прокси: DTF не отдаёт CORS-заголовки на вход. */
+/** Вход по почте и паролю. Проходит через включённые прокси с поддержкой автоматического перебора при сбоях (failover). */
 export async function login(email: string, password: string): Promise<Session> {
-	const formData = new FormData();
-	formData.append('email', email);
-	formData.append('password', password);
-
-	const proxyUrl = getProxyUrl();
-	if (!proxyUrl) {
-		throw new Error('Укажите URL прокси сервера в настройках, прямой запрос логина заблокирован CORS политикой DTF.');
+	if (getEnabledProxies().length === 0) {
+		throw new Error('Укажите или включите хотя бы один прокси в настройках, прямой запрос логина заблокирован CORS политикой DTF.');
 	}
 
-	let response: Response;
-	try {
-		response = await fetch(`${proxyUrl}/v3.4/auth/email/login`, {
+	const { response } = await fetchWithProxyFailover('/v3.4/auth/email/login', () => {
+		const formData = new FormData();
+		formData.append('email', email);
+		formData.append('password', password);
+		return {
 			method: 'POST',
 			headers: { 'Accept': 'application/json' },
 			body: formData
-		});
-	} catch (e: unknown) {
-		const raw = e instanceof Error ? e.message : 'Неизвестная ошибка';
-		throw new ApiError(`Сетевая ошибка при попытке авторизации: ${raw}`, {
-			url: `${proxyUrl}/v3.4/auth/email/login`,
-			rawMessage: raw,
-			cause: e
-		});
-	}
+		};
+	});
 
-	const json = await response.json();
+	const json = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
 		throw new Error(json.message || json.error?.message || `Ошибка авторизации: ${response.status}`);
@@ -51,11 +41,11 @@ export function parseRefreshToken(input: string): string {
 
 /**
  * Вход по refresh-токену. Access-токен живёт 5 минут, поэтому по нему одному войти нельзя:
- * по refresh-токену получаем access. Обновление идёт через прокси, как и вход по паролю.
+ * по refresh-токену получаем access. Обновление идёт через прокси с failover.
  */
 export async function loginByToken(input: string): Promise<Session> {
-	if (!getProxyUrl()) {
-		throw new Error('Укажите URL прокси сервера в настройках: обновление токена заблокировано CORS политикой DTF.');
+	if (getEnabledProxies().length === 0) {
+		throw new Error('Укажите или включите прокси в настройках: обновление токена заблокировано CORS политикой DTF.');
 	}
 
 	authStorage.session = {
@@ -68,7 +58,7 @@ export async function loginByToken(input: string): Promise<Session> {
 
 	if (!(await refreshSession())) {
 		authStorage.logout();
-		throw new Error('Не удалось войти по токену. Возможно, он устарел или скопирован не полностью.');
+		throw new Error('Не удалось войти по токену. Возможно, он устарел или все настроенные прокси недоступны.');
 	}
 
 	return authStorage.session!;

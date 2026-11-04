@@ -18,7 +18,7 @@
 | `components/settings/AccountSettings.svelte`, `NotificationSettings.svelte`, `IgnoredSettings.svelte`, `AccountGate.svelte` | страницы «Профиль» (имя и описание), «Уведомления» (каналы и тумблеры) и «Чёрный список» (локальные фильтры по тегам и фразам + серверные скрытые пользователи и темы DTF). Серверные значения лежат на DTF и читаются через `api`, локальные фильтры лежат в `filterSettings` |
 | `components/settings/FeedSettings.svelte` | страница «Лента»: сортировка по моему рейтингу, параметры лент DTF и быстрая ссылка на Чёрный список в режиме Solo |
 | `components/settings/SettingsEmptyState.svelte` | заглушка в стиле `AdwStatusPage`, пока ни один подпункт раздела не выбран |
-| `components/settings/ProxySettings.svelte` | прокси для входа |
+| `components/settings/ProxySettings.svelte` | страница «Сеть и прокси»: управление списком прокси и failover |
 | `components/settings/HelpSettings.svelte` | страница «Хочу помочь»: поддержка и участие в разработке, адреса проекта лежат в константах файла |
 | `components/settings/AboutSettings.svelte` | страница «О приложении»: логотип, версия, принципы, ссылки проекта и юридические документы |
 | `components/settings/SettingsTile.svelte` | цветная плитка-значок строки, общая для «Хочу помочь» и «О приложении» |
@@ -42,7 +42,7 @@
 ```ts
 interface AppSettings {
 	theme: string;                  // id темы
-	proxyUrl: string;               // CORS-прокси для входа
+	proxies: ProxyItem[];           // список CORS-прокси для входа и обновления с failover
 	commentNesting: 'flatten' | 'autopan';
 	collectStats: boolean;          // вести локальную статистику
 	haptics: boolean;               // тактильный отклик
@@ -50,9 +50,7 @@ interface AppSettings {
 }
 ```
 
-Читать и писать: `settings.value.proxyUrl`, `settings.patch({ proxyUrl })` (из `$lib/storage/settings.svelte`). Тему переключает `activeTheme.set(id)`, читать её нужно через `activeTheme.id` (если выбранной темы больше нет, вернётся тема по умолчанию).
-
-Прокси по умолчанию (`DEFAULT_PROXY_URL`) приходит из `VITE_AUTH_PROXY_URL` при сборке. Если переменная пуста, кнопки «Использовать прокси от автора» нет.
+Управление CORS-прокси вынесено на страницу «Сеть и прокси». Поддерживается последовательный перебор (failover): если первый сервер не отвечает, запрос повторяется через следующий активный прокси. По умолчанию включён открытый прокси на Val Town (с ссылкой на исходный код), доступен резервный на Cloudflare Workers и добавление собственных серверов.
 
 ## Реакции и рейтинг
 

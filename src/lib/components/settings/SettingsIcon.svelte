@@ -46,6 +46,9 @@
 		<rect x="2.5" y="3" width="11" height="4" rx="1.5" />
 		<rect x="2.5" y="9" width="11" height="4" rx="1.5" />
 		<path d="M5 5h.01M5 11h.01" stroke-width="2" />
+	{:else if name === 'network'}
+		<circle cx="8" cy="8" r="5.5" />
+		<path d="M2.8 8h10.4M8 2.5a8.5 8.5 0 010 11 8.5 8.5 0 010-11" />
 	{:else if name === 'themes' || name === 'theme-select'}
 		<path d="M8 2.5c-3.3 0-5.5 2.4-5.5 5.5 0 3 2.2 5.5 5 5.5 1.2 0 1.5-.8 1-1.6-.5-.9 0-1.9 1-1.9H12c1 0 1.5-.8 1.5-1.8C13.5 4.5 11.3 2.5 8 2.5z" />
 		<path d="M5.5 7h.01M8 5.5h.01M10.5 7h.01" stroke-width="2" />

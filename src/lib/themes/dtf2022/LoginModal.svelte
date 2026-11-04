@@ -1,32 +1,66 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
-	import { closeOverlay } from '$lib/navigation';
-	import { settings, DEFAULT_PROXY_URL } from '$lib/storage/settings.svelte';
+	import { closeOverlay, openOverlay } from '$lib/navigation';
+	import {
+		settings,
+		getEnabledProxies,
+		getPrimaryProxyUrl,
+		applyDefaultProxySettings,
+		enableCloudflareProxy,
+		addCustomProxy,
+		DEFAULT_VALTOWN_PROXY_URL
+	} from '$lib/storage/settings.svelte';
 	import { clickOnKey } from './a11y';
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
 
 	type Mode = 'selector' | 'email' | 'token' | 'proxy';
+	type ProxyStep = 'choice' | 'custom_input';
+
 	let mode = $state<Mode>('selector');
 	let pendingMode = $state<'email' | 'token' | null>(null);
 
 	let email = $state('');
 	let password = $state('');
 	let token = $state('');
-	let proxyUrl = $state(settings.value.proxyUrl);
+
+	let proxyStep = $state<ProxyStep>('choice');
+	let proxyChoice = $state<'default' | 'custom'>('default');
+	let customUrlInput = $state('');
 
 	let isLoading = $state(false);
 	let error = $state('');
 	let successMsg = $state('');
+	let isProxyFailure = $state(false);
+
+	let proxies = $derived(settings.value.proxies || []);
+	let enabledList = $derived(proxies.filter((p) => p.enabled && Boolean(p.url?.trim())));
+	let enabledCount = $derived(enabledList.length);
+	let cloudflareProxy = $derived(proxies.find((p) => p.id === 'cloudflare'));
+	let canQuickEnableCloudflare = $derived(
+		Boolean(cloudflareProxy?.url && !cloudflareProxy?.enabled)
+	);
 
 	function setMode(next: Mode) {
 		mode = next;
 		error = '';
 		successMsg = '';
+		isProxyFailure = false;
+		if (next === 'proxy') {
+			if (DEFAULT_VALTOWN_PROXY_URL) {
+				proxyStep = 'choice';
+				const hasCustomActive = proxies.some((p) => !p.isPreset && p.enabled);
+				proxyChoice = hasCustomActive ? 'custom' : 'default';
+			} else {
+				// Если в сборке нет открытого прокси — пропускаем выбор и сразу открываем ввод
+				proxyStep = 'custom_input';
+			}
+			customUrlInput = getPrimaryProxyUrl() || '';
+		}
 	}
 
 	function chooseMethod(method: 'email' | 'token') {
-		if (!settings.value.proxyUrl?.trim()) {
+		if (getEnabledProxies().length === 0) {
 			pendingMode = method;
 			setMode('proxy');
 		} else {
@@ -36,6 +70,11 @@
 	}
 
 	function goBack() {
+		if (mode === 'proxy' && proxyStep === 'custom_input' && DEFAULT_VALTOWN_PROXY_URL) {
+			proxyStep = 'choice';
+			error = '';
+			return;
+		}
 		pendingMode = null;
 		setMode('selector');
 	}
@@ -44,20 +83,78 @@
 		closeOverlay();
 	}
 
+	function openNetworkSettings() {
+		closeModal();
+		openOverlay({ type: 'settings', data: { page: 'network' } });
+	}
+
+	function handleApplyDefaultProxy() {
+		applyDefaultProxySettings();
+		const valtown = (settings.value.proxies || []).find((p) => p.id === 'valtown');
+		if (!valtown?.url?.trim()) {
+			error = 'URL открытого прокси не задан в сборке. Укажите свой прокси или перейдите в настройки сети.';
+			return;
+		}
+		if (pendingMode) {
+			const next = pendingMode;
+			pendingMode = null;
+			setMode(next);
+		} else {
+			successMsg = 'Стандартные настройки прокси применены';
+			setMode('selector');
+		}
+	}
+
+	function handleSaveCustomProxy(e: SubmitEvent) {
+		e.preventDefault();
+		const trimmed = customUrlInput.trim();
+		if (!trimmed) {
+			error = 'Укажите URL прокси';
+			return;
+		}
+		try {
+			addCustomProxy(trimmed, undefined, true);
+			customUrlInput = '';
+			if (pendingMode) {
+				const next = pendingMode;
+				pendingMode = null;
+				setMode(next);
+			} else {
+				successMsg = 'Свой прокси сохранён';
+				setMode('selector');
+			}
+		} catch (err: unknown) {
+			error = err instanceof Error ? err.message : 'Некорректный адрес URL';
+		}
+	}
+
+	function handleQuickEnableCloudflare() {
+		enableCloudflareProxy();
+		isProxyFailure = false;
+		error = '';
+		successMsg = 'Резервный Cloudflare прокси включён. Повторите попытку входа.';
+	}
+
 	async function handleEmailLogin(e: SubmitEvent) {
 		e.preventDefault();
 		if (!email || !password) return;
 		isLoading = true;
 		error = '';
 		successMsg = '';
+		isProxyFailure = false;
 		try {
 			await api.login(email, password);
 			closeModal();
 		} catch (err: any) {
 			error = err?.message || 'Ошибка авторизации по почте';
-			if (error.includes('Failed to fetch') || error.includes('CORS')) {
-				error = 'Запрос заблокирован CORS. Настройте прокси-сервер в разделе «Настройки прокси».';
-			}
+			isProxyFailure = Boolean(
+				error.includes('Failed to fetch') ||
+				error.includes('CORS') ||
+				error.includes('прокси') ||
+				error.includes('404') ||
+				error.includes('502') ||
+				error.includes('NetworkError')
+			);
 		} finally {
 			isLoading = false;
 		}
@@ -69,37 +166,23 @@
 		isLoading = true;
 		error = '';
 		successMsg = '';
+		isProxyFailure = false;
 		try {
 			await api.loginByToken(token.trim());
 			closeModal();
 		} catch (err: any) {
 			error = err?.message || 'Неверный токен авторизации';
+			isProxyFailure = Boolean(
+				error.includes('Failed to fetch') ||
+				error.includes('CORS') ||
+				error.includes('прокси') ||
+				error.includes('404') ||
+				error.includes('502') ||
+				error.includes('NetworkError')
+			);
 		} finally {
 			isLoading = false;
 		}
-	}
-
-	function handleSaveProxy(e: SubmitEvent) {
-		e.preventDefault();
-		const trimmed = proxyUrl.trim();
-		if (!trimmed) {
-			error = 'Укажите URL прокси';
-			return;
-		}
-		settings.patch({ proxyUrl: trimmed });
-		if (pendingMode) {
-			const next = pendingMode;
-			pendingMode = null;
-			setMode(next);
-		} else {
-			successMsg = 'Настройки прокси сохранены';
-			error = '';
-		}
-	}
-
-	function useDefaultProxy() {
-		proxyUrl = DEFAULT_PROXY_URL;
-		error = '';
 	}
 </script>
 
@@ -112,7 +195,14 @@
 	</div>
 
 	<div class="login-modal__content">
-		<div class="login-modal__close" aria-label="Закрыть" role="button" tabindex="0" onclick={closeModal} onkeydown={clickOnKey}>
+		<div
+			class="login-modal__close"
+			aria-label="Закрыть"
+			role="button"
+			tabindex="0"
+			onclick={closeModal}
+			onkeydown={clickOnKey}
+		>
 			<svg height="24" width="24" class="icon" aria-hidden="true">
 				<use href="/icons.svg#v_close"></use>
 			</svg>
@@ -134,12 +224,41 @@
 
 			<div class="auth__form">
 				<div class="auth__title" id="login-modal-title">
-					{mode === 'proxy' ? 'Настройки прокси' : 'Вход в аккаунт'}
+					{#if mode === 'proxy'}
+						{proxyStep === 'custom_input' ? (DEFAULT_VALTOWN_PROXY_URL ? 'Свой CORS-прокси' : 'Настройка прокси') : 'Настройки прокси'}
+					{:else}
+						Вход в аккаунт
+					{/if}
 				</div>
 
 				{#if error}
-					<div class="auth__message auth__message--error" role="alert">{error}</div>
+					<div class="auth__message auth__message--error" role="alert">
+						<div class="auth__error-text">{error}</div>
+						{#if isProxyFailure}
+							<div class="auth__error-help">
+								<div class="auth__error-btns">
+									{#if canQuickEnableCloudflare}
+										<button
+											type="button"
+											class="auth__action-btn auth__action-btn--quick"
+											onclick={handleQuickEnableCloudflare}
+										>
+											Включить резервный Cloudflare
+										</button>
+									{/if}
+									<button
+										type="button"
+										class="auth__action-btn"
+										onclick={openNetworkSettings}
+									>
+										Открыть настройки и включить резервный →
+									</button>
+								</div>
+							</div>
+						{/if}
+					</div>
 				{/if}
+
 				{#if successMsg}
 					<div class="auth__message auth__message--success" role="status">{successMsg}</div>
 				{/if}
@@ -148,57 +267,212 @@
 					<div class="auth__methods">
 						<Button icon="v_email" label="Почта" onclick={() => chooseMethod('email')} />
 						<Button icon="v_lock_full" label="Токен" onclick={() => chooseMethod('token')} />
-						<Button icon="v_gear" label="Настройки прокси" onclick={() => { pendingMode = null; setMode('proxy'); }} />
+						<Button
+							icon="v_gear"
+							label="Настройки прокси"
+							onclick={() => {
+								pendingMode = null;
+								setMode('proxy');
+							}}
+						/>
 					</div>
 				{:else if mode === 'email'}
 					<form onsubmit={handleEmailLogin}>
-						<Input type="email" placeholder="Почта" name="email" autocomplete="email" bind:value={email} required disabled={isLoading} />
-						<Input type="password" placeholder="Пароль" name="password" autocomplete="current-password" bind:value={password} required disabled={isLoading} />
-						<Button type="submit" variant="blue" fullWidth disabled={isLoading} label={isLoading ? 'Загрузка...' : 'Войти'} />
-					</form>
-				{:else if mode === 'token'}
-					<form onsubmit={handleTokenLogin}>
-						<p class="auth__hint">
-							Для аккаунтов без пароля. Откройте dtf.ru, затем DevTools (F12) → Application → Cookies и скопируйте значение
-							<b>auth-refresh-remember</b> целиком. Обновление токена идёт через прокси, как и вход по почте.
-						</p>
-						<Input type="text" placeholder="Токен (auth-refresh-remember)" name="auth-token-manual" autocomplete="off" bind:value={token} required disabled={isLoading} />
-						<Button type="submit" variant="blue" fullWidth disabled={isLoading} label={isLoading ? 'Загрузка...' : 'Войти'} />
-					</form>
-				{:else if mode === 'proxy'}
-					<form onsubmit={handleSaveProxy}>
-						<p class="auth__hint">
-							DTF блокирует запросы авторизации из браузера (CORS). Прокси необходим для входа и обновления сессии. Вы можете использовать встроенный прокси или развернуть собственный по инструкции в <a target="_blank" rel="noreferrer" href="https://github.com/re-dtf/proxy">re-dtf/proxy</a>.
-						</p>
-						<Input type="url" placeholder="Ссылка на прокси" name="proxy-url" bind:value={proxyUrl} required />
-						<div class="auth__default-proxy">
-							{#if DEFAULT_PROXY_URL}
-								<a
-									href="#default-proxy"
-									class="auth__default-proxy-link"
-									onclick={(e) => {
-										e.preventDefault();
-										useDefaultProxy();
-									}}
-								>
-									Использовать встроенный
-								</a>
-							{:else}
-								<span
-									class="auth__default-proxy-link auth__default-proxy-link--disabled"
-									title="Встроенный прокси недоступен в этой сборке, используйте свой"
-								>
-									Встроенный прокси недоступен
-								</span>
-							{/if}
-						</div>
+						<Input
+							type="email"
+							placeholder="Почта"
+							name="email"
+							autocomplete="email"
+							bind:value={email}
+							required
+							disabled={isLoading}
+						/>
+						<Input
+							type="password"
+							placeholder="Пароль"
+							name="password"
+							autocomplete="current-password"
+							bind:value={password}
+							required
+							disabled={isLoading}
+						/>
+
 						<Button
 							type="submit"
 							variant="blue"
 							fullWidth
-							label={pendingMode ? 'Продолжить' : 'Сохранить'}
+							disabled={isLoading || enabledCount === 0}
+							label={isLoading ? 'Загрузка...' : 'Войти'}
 						/>
 					</form>
+				{:else if mode === 'token'}
+					<form onsubmit={handleTokenLogin}>
+						<p class="auth__hint">
+							Для аккаунтов без пароля. Откройте dtf.ru, затем DevTools (F12) → Application → Cookies и
+							скопируйте значение <b>auth-refresh-remember</b> целиком. Обновление токена идёт через прокси.
+						</p>
+						<Input
+							type="text"
+							placeholder="Токен (auth-refresh-remember)"
+							name="auth-token-manual"
+							autocomplete="off"
+							bind:value={token}
+							required
+							disabled={isLoading}
+						/>
+
+						<Button
+							type="submit"
+							variant="blue"
+							fullWidth
+							disabled={isLoading || enabledCount === 0}
+							label={isLoading ? 'Загрузка...' : 'Войти'}
+						/>
+					</form>
+				{:else if mode === 'proxy'}
+					{#if proxyStep === 'choice'}
+						<div class="auth__proxy-flow">
+							<p class="auth__hint">
+								DTF блокирует запросы авторизации из браузера (CORS). Прокси используется только для входа по паролю и обновления сессии.
+							</p>
+
+							<div class="proxy-minimal-options">
+								<label class={['p-opt', { 'p-opt--active': proxyChoice === 'default' }]}>
+									<span class="p-opt__radio">
+										<input
+											type="radio"
+											name="proxyChoice"
+											value="default"
+											checked={proxyChoice === 'default'}
+											onchange={() => (proxyChoice = 'default')}
+										/>
+										<span class="p-opt__radio-dot"></span>
+									</span>
+									<div class="p-opt__body">
+										<div class="p-opt__row">
+											<span class="p-opt__label">Стандартные настройки</span>
+											<a
+												href="https://www.val.town/x/donnertech/redtf-proxy"
+												target="_blank"
+												rel="noreferrer"
+												class="p-opt__link"
+												onclick={(e) => e.stopPropagation()}
+											>
+												код на Val Town
+											</a>
+										</div>
+										<span class="p-opt__hint">Открытый публичный прокси</span>
+									</div>
+								</label>
+
+								<label class={['p-opt', { 'p-opt--active': proxyChoice === 'custom' }]}>
+									<span class="p-opt__radio">
+										<input
+											type="radio"
+											name="proxyChoice"
+											value="custom"
+											checked={proxyChoice === 'custom'}
+											onchange={() => (proxyChoice = 'custom')}
+										/>
+										<span class="p-opt__radio-dot"></span>
+									</span>
+									<div class="p-opt__body">
+										<div class="p-opt__row">
+											<span class="p-opt__label">Свой прокси</span>
+											<a
+												href="https://github.com/re-dtf/proxy"
+												target="_blank"
+												rel="noreferrer"
+												class="p-opt__link"
+												onclick={(e) => e.stopPropagation()}
+											>
+												инструкция
+											</a>
+										</div>
+										<span class="p-opt__hint">Собственный сервер по инструкции</span>
+									</div>
+								</label>
+							</div>
+
+							<div class="auth__proxy-actions">
+								{#if proxyChoice === 'default'}
+									<Button
+										type="button"
+										variant="blue"
+										fullWidth
+										label={pendingMode ? 'Продолжить' : 'Сохранить'}
+										onclick={handleApplyDefaultProxy}
+									/>
+								{:else}
+									<Button
+										type="button"
+										variant="blue"
+										fullWidth
+										label="Далее →"
+										onclick={() => {
+											proxyStep = 'custom_input';
+											error = '';
+										}}
+									/>
+								{/if}
+							</div>
+
+							<div class="auth__network-link-box">
+								<button type="button" class="auth__network-link" onclick={openNetworkSettings}>
+									Расширенные настройки сети →
+								</button>
+							</div>
+						</div>
+					{:else if proxyStep === 'custom_input'}
+						<form onsubmit={handleSaveCustomProxy} class="auth__proxy-custom-form">
+							{#if Boolean(DEFAULT_VALTOWN_PROXY_URL)}
+								<p class="auth__hint">
+									Укажите адрес вашего CORS-прокси (например, на Val Town или Cloudflare Workers). Свой можно развернуть по инструкции <a href="https://github.com/re-dtf/proxy" target="_blank" rel="noreferrer">re-dtf/proxy</a>:
+								</p>
+							{:else}
+								<p class="auth__hint">
+									DTF блокирует запросы авторизации из браузера (CORS). В этой сборке публичный прокси не настроен, поэтому для входа требуется указать собственный сервер. Свой можно развернуть по инструкции <a href="https://github.com/re-dtf/proxy" target="_blank" rel="noreferrer">re-dtf/proxy</a>:
+								</p>
+							{/if}
+							<Input
+								type="url"
+								placeholder="https://my-proxy.workers.dev"
+								name="custom-proxy-url"
+								bind:value={customUrlInput}
+								required
+								disabled={isLoading}
+							/>
+							<div class="auth__proxy-actions">
+								<Button
+									type="submit"
+									variant="blue"
+									fullWidth
+									disabled={isLoading || !customUrlInput.trim()}
+									label={pendingMode ? 'Продолжить' : 'Сохранить'}
+								/>
+							</div>
+							{#if Boolean(DEFAULT_VALTOWN_PROXY_URL)}
+								<div class="auth__network-link-box">
+									<button
+										type="button"
+										class="auth__network-link"
+										onclick={() => {
+											proxyStep = 'choice';
+											error = '';
+										}}
+									>
+										← Вернуться к выбору
+									</button>
+								</div>
+							{:else}
+								<div class="auth__network-link-box">
+									<button type="button" class="auth__network-link" onclick={openNetworkSettings}>
+										Расширенные настройки сети →
+									</button>
+								</div>
+							{/if}
+						</form>
+					{/if}
 				{/if}
 
 				<div class="auth__footer">
@@ -221,7 +495,9 @@
 	.login-modal__cover {
 		padding: 25px 30px;
 		border-radius: 8px 0 0 8px;
-		background: var(--bg-ac-modal) url('https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/') no-repeat 50% 50% / cover;
+		background: var(--bg-ac-modal)
+			url('https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/')
+			no-repeat 50% 50% / cover;
 	}
 
 	.login-modal__content {
@@ -277,10 +553,14 @@
 		line-height: 1.3em;
 		opacity: 0.5;
 		cursor: pointer;
+		background: none;
+		border: none;
+		padding: 0;
 	}
 
 	.auth__back-container {
 		display: flex;
+		align-items: center;
 	}
 
 	.auth__back-container .icon {
@@ -308,8 +588,8 @@
 	}
 
 	.auth__hint {
-		margin: 0 0 16px;
-		font-size: 14px;
+		margin: 0 0 12px;
+		font-size: 13px;
 		line-height: 1.4;
 		color: var(--text-secondary);
 	}
@@ -323,35 +603,153 @@
 		opacity: 0.8;
 	}
 
-	.auth__default-proxy {
-		margin-top: -6px;
-		margin-bottom: 16px;
+	.auth__proxy-flow {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 
-	.auth__default-proxy-link {
-		color: var(--text-link);
-		font-size: 16px;
-		font-weight: 500;
+	.proxy-minimal-options {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.p-opt {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 14px;
+		border-radius: 8px;
+		cursor: pointer;
+		border: 1px solid rgba(0, 0, 0, 0.08);
+		background: #fbfbfb;
+		transition: all 0.12s ease;
+	}
+
+	.p-opt:hover {
+		background: #fff;
+		border-color: #c4d7ed;
+	}
+
+	.p-opt--active {
+		background: #f4f8fe;
+		border-color: #3584e4;
+	}
+
+	.p-opt__radio {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		border: 2px solid rgba(0, 0, 0, 0.28);
+		background: #fff;
+		flex-shrink: 0;
+		transition: border-color 0.15s ease;
+	}
+
+	.p-opt--active .p-opt__radio {
+		border-color: #3584e4;
+	}
+
+	.p-opt__radio input[type='radio'] {
+		position: absolute;
+		opacity: 0;
+		width: 100%;
+		height: 100%;
+		margin: 0;
 		cursor: pointer;
 	}
 
-	.auth__default-proxy-link:hover:not(.auth__default-proxy-link--disabled) {
+	.p-opt__radio-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: #3584e4;
+		opacity: 0;
+		transform: scale(0.4);
+		transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.p-opt--active .p-opt__radio-dot {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	.p-opt__body {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		flex: 1;
+	}
+
+	.p-opt__row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.p-opt__label {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
+	.p-opt__link {
+		font-size: 12px;
+		color: var(--text-link);
+		text-decoration: underline;
+	}
+
+	.p-opt__link:hover {
 		opacity: 0.8;
 	}
 
-	.auth__default-proxy-link--disabled {
-		color: var(--text-disabled);
-		font-size: 15px;
-		font-weight: 400;
-		cursor: not-allowed;
-		user-select: none;
+	.p-opt__hint {
+		font-size: 12px;
+		color: var(--text-secondary, #777);
+	}
+
+	.auth__proxy-custom-form {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.auth__proxy-custom-form :global(.field) {
+		margin-bottom: 8px;
+	}
+
+	.auth__proxy-actions {
+		margin-top: 0;
+	}
+
+	.auth__network-link-box {
+		text-align: center;
+		margin-top: 6px;
+	}
+
+	.auth__network-link {
+		background: none;
+		border: none;
+		color: var(--text-link);
+		font-size: 13px;
+		cursor: pointer;
+		padding: 4px;
+	}
+
+	.auth__network-link:hover {
+		text-decoration: underline;
 	}
 
 	.auth__footer {
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		margin-top: 16px;
+		margin-top: 20px;
 	}
 
 	.auth__footer a {
@@ -360,12 +758,12 @@
 		font-weight: 400;
 	}
 
-	/* Сообщения формы — в исходной вёрстке их нет */
 	.auth__message {
-		margin-bottom: 16px;
+		margin-bottom: 14px;
 		padding: 10px 14px;
 		border-radius: 6px;
-		font-size: 14px;
+		font-size: 13px;
+		line-height: 1.4;
 	}
 
 	.auth__message--error {
@@ -378,7 +776,53 @@
 		background: var(--color-success-bg);
 	}
 
-	/* Мобильная версия — в исходной вёрстке её нет */
+	.auth__error-text {
+		word-break: break-word;
+	}
+
+	.auth__error-help {
+		margin-top: 10px;
+		padding-top: 8px;
+		border-top: 1px dashed rgba(229, 42, 66, 0.3);
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.auth__error-btns {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.auth__action-btn {
+		background: #fff;
+		border: 1px solid #e52a42;
+		color: #e52a42;
+		border-radius: 6px;
+		padding: 7px 12px;
+		font-size: 12px;
+		font-weight: 500;
+		cursor: pointer;
+		text-align: center;
+		transition: all 0.15s ease;
+	}
+
+	.auth__action-btn:hover {
+		background: #ffe6e9;
+	}
+
+	.auth__action-btn--quick {
+		background: #3584e4;
+		border-color: #3584e4;
+		color: #fff;
+	}
+
+	.auth__action-btn--quick:hover {
+		background: #2868b2;
+	}
+
+	/* Мобильная версия */
 	@media (max-width: 640px) {
 		.login-modal {
 			grid-template-columns: 1fr;
@@ -390,10 +834,26 @@
 
 		.login-modal__content {
 			border-radius: 8px;
+			padding: 20px;
+		}
+
+		.auth {
+			margin: -20px;
+			padding: 16px 20px;
+			min-height: 480px;
 		}
 
 		.auth__controls {
-			border-radius: 8px 8px 0 0;
+			margin: -16px -20px 0 -20px;
+			padding: 10px 16px;
+		}
+
+		.auth__title {
+			margin-top: 40px;
+		}
+
+		.auth__methods {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

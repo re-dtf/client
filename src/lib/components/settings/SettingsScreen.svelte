@@ -153,7 +153,8 @@
 		{
 			title: 'Сеть',
 			items: [
-				{ id: 'sources', type: 'page', title: 'Источники данных', icon: 'sources' }
+				{ id: 'sources', type: 'page', title: 'Источники данных', icon: 'sources' },
+				{ id: 'network', type: 'page', title: 'Сеть и прокси', icon: 'network' }
 			]
 		},
 		{
@@ -224,6 +225,9 @@
 		}
 		if (targetPage === 'dtf') {
 			return { folderId: null, pageId: 'notifications' };
+		}
+		if (targetPage === 'proxy') {
+			return { folderId: null, pageId: 'network' };
 		}
 		if (targetPage) {
 			return { folderId: null, pageId: targetPage };
@@ -510,6 +514,7 @@
 							<IgnoredSettings />
 						{:else if selectedPageId === 'sources'}
 							<SourcesSettings />
+						{:else if selectedPageId === 'network'}
 							<ProxySettings />
 						{:else if selectedPageId === 'stats'}
 							<StatsSettings />
