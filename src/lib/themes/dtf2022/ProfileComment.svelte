@@ -208,10 +208,6 @@
 		cursor: pointer;
 	}
 
-	.profile-comment__reveal-btn:hover {
-		text-decoration: underline;
-	}
-
 	@media (min-width: 640px) {
 		.profile-comment {
 			border-radius: 8px;
@@ -239,10 +235,6 @@
 		font-weight: 700;
 		line-height: 22px;
 		word-break: break-word;
-	}
-
-	.profile-comment__title:hover {
-		color: var(--text-link);
 	}
 
 	.profile-comment__header {
@@ -306,11 +298,6 @@
 		line-height: 16px;
 	}
 
-	.profile-comment__user:hover,
-	.profile-comment__date:hover {
-		color: var(--text-link);
-	}
-
 	.profile-comment__date {
 		margin-left: 13px;
 		color: var(--text-muted);
@@ -327,10 +314,6 @@
 		user-select: none;
 		cursor: default;
 		transition: opacity var(--duration-base, 0.15s);
-	}
-
-	.profile-comment__time-badge:hover {
-		opacity: 0.9;
 	}
 
 	.profile-comment__time-badge .icon {
@@ -356,11 +339,6 @@
 	.profile-comment__text a {
 		border-bottom: 1px solid var(--border-link);
 		color: var(--text-link);
-	}
-
-	.profile-comment__text a:hover {
-		border-bottom-color: var(--color-danger-subtle);
-		color: var(--color-danger);
 	}
 
 	.profile-comment__quote {
@@ -404,10 +382,6 @@
 		font-size: 15px;
 	}
 
-	.profile-comment__reply:hover {
-		color: var(--text-link);
-	}
-
 	.profile-comment__bookmark {
 		display: flex;
 		margin-right: 20px;
@@ -427,8 +401,33 @@
 		cursor: pointer;
 	}
 
-	.profile-comment__etc:hover,
 	.profile-comment__etc[aria-expanded='true'] {
 		color: var(--text-primary);
+	}
+
+	@media (hover: hover) {
+		.profile-comment__reveal-btn:hover {
+			text-decoration: underline;
+		}
+
+		.profile-comment__title:hover,
+		.profile-comment__user:hover,
+		.profile-comment__date:hover,
+		.profile-comment__reply:hover {
+			color: var(--text-link);
+		}
+
+		.profile-comment__time-badge:hover {
+			opacity: 0.9;
+		}
+
+		.profile-comment__text a:hover {
+			border-bottom-color: var(--color-danger-subtle);
+			color: var(--color-danger);
+		}
+
+		.profile-comment__etc:hover {
+			color: var(--text-primary);
+		}
 	}
 </style>

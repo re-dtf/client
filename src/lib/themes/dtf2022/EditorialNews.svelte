@@ -94,10 +94,6 @@
 		line-height: 26px;
 	}
 
-	.news-item__title:hover {
-		color: var(--text-link);
-	}
-
 	.comments-counter {
 		position: relative;
 		top: 3px;
@@ -140,11 +136,14 @@
 		cursor: pointer;
 	}
 
-	.news-widget__load-more:hover {
-		color: var(--text-link);
-	}
-
 	.news-widget__load-more .icon {
 		margin-left: 6px;
+	}
+
+	@media (hover: hover) {
+		.news-item__title:hover,
+		.news-widget__load-more:hover {
+			color: var(--text-link);
+		}
 	}
 </style>

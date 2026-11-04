@@ -144,10 +144,6 @@
 		cursor: pointer;
 	}
 
-	.notifications__mark-all:hover {
-		color: var(--text-link-subtle);
-	}
-
 	.notifications__loader {
 		display: flex;
 		justify-content: center;
@@ -198,16 +194,8 @@
 		border-bottom: none;
 	}
 
-	.u-notification--hover:hover {
-		background: var(--bg-read-hover);
-	}
-
 	.u-notification--unread {
 		background: var(--bg-unread);
-	}
-
-	.u-notification--unread.u-notification--hover:hover {
-		background: var(--bg-unread-hover);
 	}
 
 	.u-notification__link {
@@ -285,10 +273,6 @@
 		z-index: 2;
 	}
 
-	.u-notification__content a:hover {
-		color: var(--text-link);
-	}
-
 	.u-notification__content b {
 		font-weight: 500;
 	}
@@ -314,10 +298,6 @@
 		line-height: 24px;
 		color: var(--text-link);
 		cursor: pointer;
-	}
-
-	.u-notification__content__button:hover {
-		color: var(--text-link-subtle);
 	}
 
 	.u-notification--blue .u-notification__image-icon {
@@ -383,6 +363,28 @@
 	@media (max-width: 719px) {
 		.u-notification {
 			font-size: 14px;
+		}
+	}
+
+	@media (hover: hover) {
+		.notifications__mark-all:hover {
+			color: var(--text-link-subtle);
+		}
+
+		.u-notification--hover:hover {
+			background: var(--bg-read-hover);
+		}
+
+		.u-notification--unread.u-notification--hover:hover {
+			background: var(--bg-unread-hover);
+		}
+
+		.u-notification__content a:hover {
+			color: var(--text-link);
+		}
+
+		.u-notification__content__button:hover {
+			color: var(--text-link-subtle);
 		}
 	}
 </style>

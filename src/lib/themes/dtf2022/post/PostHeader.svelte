@@ -186,7 +186,6 @@
 		cursor: pointer;
 	}
 
-	.post-header__etc-button:hover,
 	.post-header__etc-button[aria-expanded='true'] {
 		color: var(--text-primary);
 	}
@@ -245,10 +244,6 @@
 		flex-shrink: 1;
 		min-width: 0;
 		color: var(--text-muted);
-	}
-
-	.post-header-time:hover {
-		color: var(--text-link);
 	}
 
 	.time {
@@ -342,6 +337,16 @@
 		.post-header--card {
 			padding-left: 16px;
 			padding-right: 16px;
+		}
+	}
+
+	@media (hover: hover) {
+		.post-header__etc-button:hover {
+			color: var(--text-primary);
+		}
+
+		.post-header-time:hover {
+			color: var(--text-link);
 		}
 	}
 </style>

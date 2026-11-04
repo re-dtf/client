@@ -118,10 +118,6 @@
 		cursor: pointer;
 	}
 
-	.post-button:hover {
-		color: var(--text-hover);
-	}
-
 	.post-button--active {
 		color: var(--text-active, var(--text-hover));
 	}
@@ -148,10 +144,6 @@
 		border-radius: 100%;
 		background-color: var(--bg-hover);
 		opacity: 0;
-	}
-
-	.post-button:hover .post-button__icon::before {
-		opacity: 0.12;
 	}
 
 	/* Анимация рисуется поверх иконки, сама иконка на это время скрыта */
@@ -226,5 +218,15 @@
 	.post-button--downvote {
 		--text-hover: var(--color-negative);
 		--bg-hover: var(--color-negative);
+	}
+
+	@media (hover: hover) {
+		.post-button:hover {
+			color: var(--text-hover);
+		}
+
+		.post-button:hover .post-button__icon::before {
+			opacity: 0.12;
+		}
 	}
 </style>
