@@ -137,8 +137,8 @@ export function createCustomManifest(dataUri: string): string {
 		scope: './',
 		display: 'standalone',
 		display_override: ['window-controls-overlay', 'standalone'],
-		background_color: '#161617',
-		theme_color: '#D9F5FF',
+		background_color: '#141414',
+		theme_color: '#141414',
 		lang: 'ru',
 		icons: [
 			{

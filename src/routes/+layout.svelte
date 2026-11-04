@@ -292,8 +292,16 @@
 			document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
 			const metaScheme = document.querySelector('meta[name="color-scheme"]');
 			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
-			const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-			if (metaThemeColor) metaThemeColor.setAttribute('content', isDark ? '#202022' : '#D9F5FF');
+			const targetColor = isDark ? '#141414' : '#f2f2f2';
+			const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+			if (themeMetas.length > 0) {
+				themeMetas.forEach((m) => m.setAttribute('content', targetColor));
+			} else {
+				const meta = document.createElement('meta');
+				meta.name = 'theme-color';
+				meta.content = targetColor;
+				document.head.appendChild(meta);
+			}
 
 			const lock = document.querySelector('meta[name="darkreader-lock"]');
 			if (isDark) {

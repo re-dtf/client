@@ -127,7 +127,11 @@ describe('App Icons & PWA Manifest management', () => {
 		expect(fav?.getAttribute('href')).toBe(customUri);
 		expect(fav?.type).toBe('image/png');
 		expect(apple?.getAttribute('href')).toBe(customUri);
-		expect(manifest?.getAttribute('href')).toContain('data:application/manifest+json');
+		const manifestHref = manifest?.getAttribute('href') ?? '';
+		expect(manifestHref).toContain('data:application/manifest+json');
+		const decoded = JSON.parse(decodeURIComponent(manifestHref.replace('data:application/manifest+json,', '')));
+		expect(decoded.theme_color).toBe('#141414');
+		expect(decoded.background_color).toBe('#141414');
 	});
 
 	it('вызывает зарегистрированный Capacitor мост при смене иконки', async () => {
