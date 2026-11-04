@@ -714,6 +714,8 @@
 		--st-accent: var(--color-blue, #3584e4);
 		--st-danger: #c01c28;
 		--st-ok: #1f8a3b;
+		--st-nav-active-bg: var(--st-card);
+		--st-nav-active-shadow: var(--st-card-shadow-soft);
 
 		position: relative;
 		container-type: inline-size;
@@ -732,7 +734,7 @@
 	/* Тёмная тема окна настроек (Libadwaita Dark) */
 	:global(html[data-theme-mode='dark']) .window {
 		--st-bg: #242424;
-		--st-side: #303030;
+		--st-side: #2e2e2e;
 		--st-side-border: rgba(255, 255, 255, 0.08);
 		--st-card: #303030;
 		--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -748,6 +750,8 @@
 		--st-accent: var(--color-blue, #78aeed);
 		--st-danger: #e01b24;
 		--st-ok: #2ec27e;
+		--st-nav-active-bg: rgba(255, 255, 255, 0.12);
+		--st-nav-active-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.25);
 		box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		color: var(--st-text);
@@ -756,7 +760,7 @@
 	@media (prefers-color-scheme: dark) {
 		:global(html:not([data-theme-mode='light'])) .window {
 			--st-bg: #242424;
-			--st-side: #303030;
+			--st-side: #2e2e2e;
 			--st-side-border: rgba(255, 255, 255, 0.08);
 			--st-card: #303030;
 			--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -772,6 +776,8 @@
 			--st-accent: var(--color-blue, #78aeed);
 			--st-danger: #e01b24;
 			--st-ok: #2ec27e;
+			--st-nav-active-bg: rgba(255, 255, 255, 0.12);
+			--st-nav-active-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.25);
 			box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
 			border: 1px solid rgba(255, 255, 255, 0.1);
 			color: var(--st-text);
@@ -913,13 +919,14 @@
 		min-height: 38px;
 		padding: 0 12px;
 		border-radius: 10px;
-		color: inherit;
+		color: color-mix(in srgb, var(--st-text) 80%, transparent);
 		font-size: 14px;
 		text-align: left;
 		cursor: pointer;
 		transition:
 			background-color var(--duration-base),
-			box-shadow var(--duration-base);
+			box-shadow var(--duration-base),
+			color var(--duration-base);
 	}
 
 	.nav__title {
@@ -931,6 +938,7 @@
 	}
 
 	.nav__item:hover {
+		color: var(--st-text);
 		background: color-mix(in srgb, currentColor 6%, transparent);
 	}
 
@@ -941,9 +949,14 @@
 	/* Активный пункт меню — спокойная Adwaita карточка */
 	.nav__item--active,
 	.nav__item--active:hover {
-		background: var(--st-card);
-		box-shadow: var(--st-card-shadow-soft);
+		background: var(--st-nav-active-bg);
+		box-shadow: var(--st-nav-active-shadow);
+		color: var(--st-text);
 		font-weight: 500;
+	}
+
+	.nav__item--active :global(.glyph) {
+		color: var(--st-accent);
 	}
 
 	.nav__item:focus-visible {
@@ -1186,6 +1199,10 @@
 		.nav__item--active:hover {
 			background: none;
 			box-shadow: none;
+		}
+
+		.nav__item--active :global(.glyph) {
+			color: inherit;
 		}
 
 		.icon-button.back {

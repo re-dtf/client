@@ -664,7 +664,7 @@
 	.field-input:focus-visible {
 		outline: none;
 		border-color: var(--st-accent);
-		background: #fff;
+		background: var(--st-card);
 	}
 
 	.add-form__actions {

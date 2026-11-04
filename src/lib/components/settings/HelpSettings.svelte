@@ -90,7 +90,9 @@
 		margin-bottom: 36px;
 		padding: 24px;
 		border-radius: 18px;
-		background: linear-gradient(135deg, color-mix(in srgb, #e5484d 12%, #fff), #fff 75%);
+		background:
+			linear-gradient(135deg, color-mix(in srgb, #e5484d 16%, transparent), transparent 75%),
+			var(--st-card);
 		box-shadow: var(--st-card-shadow);
 	}
 
@@ -101,8 +103,18 @@
 		width: 60px;
 		height: 60px;
 		border-radius: 50%;
-		background: color-mix(in srgb, #e5484d 16%, #fff);
+		background: color-mix(in srgb, #e5484d 18%, transparent);
 		color: #e5484d;
+	}
+
+	:global(html[data-theme-mode='dark']) .hero__icon {
+		color: #ff6467;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:global(html:not([data-theme-mode='light'])) .hero__icon {
+			color: #ff6467;
+		}
 	}
 
 	.hero__text {
@@ -111,12 +123,15 @@
 	}
 
 	.hero__title {
+		margin: 0;
+		color: var(--st-text);
 		font-size: 20px;
 		font-weight: 500;
 		line-height: 28px;
 	}
 
 	.hero__description {
+		margin: 4px 0 0;
 		color: var(--st-muted);
 		font-size: 14px;
 		line-height: 20px;
