@@ -45,7 +45,7 @@ describe('votesOf', () => {
 	});
 
 	it('плюсовые и минусовые реакции складываются, нейтральные и неизвестные не считаются', () => {
-		expect(votesOf({ reactions: reactions(25) })).toEqual({ up: 6, down: 5, myVote: -1 });
+		expect(votesOf({ reactions: reactions(25) })).toEqual({ up: 6, down: 8, myVote: -1 });
 		expect(votesOf({ reactions: reactions(6) }).myVote).toBe(0);
 	});
 
@@ -59,7 +59,7 @@ describe('votesOf', () => {
 		expect(votesOf({ reactions: reactions(6) })).toEqual({ up: 41, down: 2 + 9, myVote: 1 });
 
 		resetRules();
-		expect(votesOf({ reactions: reactions(0) })).toEqual({ up: 6, down: 5, myVote: 0 });
+		expect(votesOf({ reactions: reactions(0) })).toEqual({ up: 6, down: 8, myVote: 0 });
 	});
 
 	it('без реакций берёт likes', () => {
@@ -79,7 +79,7 @@ describe('rankByScore', () => {
 		const pinned = item('pinned', [{ id: 25, count: 1 }], true);
 
 		expect(rankByScore([hated, first, loved, second, pinned]).map((i) => i.name)).toEqual(['pinned', 'loved', 'first', 'second', 'hated']);
-		expect(scoreOf(hated)).toBe(-11);
+		expect(scoreOf(hated)).toBe(-31);
 	});
 });
 

@@ -2,6 +2,9 @@
 	import AccountGate from './AccountGate.svelte';
 	import SettingsButton from './SettingsButton.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
+	import SettingsRow from './SettingsRow.svelte';
+	import SettingsSegmented from './SettingsSegmented.svelte';
+	import SettingsSwitch from './SettingsSwitch.svelte';
 	import { api } from '$lib/api/index.svelte';
 	import type { IgnoredSubsite } from '$lib/api/types';
 	import {
@@ -115,6 +118,48 @@
 		</SettingsGroup>
 	{/if}
 {/snippet}
+
+<!-- Параметры фильтрации -->
+<SettingsGroup title="Параметры фильтрации" description="Настройка поведения клиентского скрытия нежелательного контента.">
+	<SettingsRow
+		title="Режим скрытия"
+		subtitle={filterSettings.value.mode === 'soft'
+			? 'Мягкий: скрывает под плашку с кнопкой «Показать»'
+			: 'Жёсткий: полностью вырезает элементы из ленты'}
+	>
+		<SettingsSegmented
+			options={[
+				{ value: 'soft', title: 'Мягкий' },
+				{ value: 'hard', title: 'Жёсткий' }
+			]}
+			value={filterSettings.value.mode}
+			label="Режим скрытия"
+			onchange={(mode) => filterSettings.patch({ mode })}
+		/>
+	</SettingsRow>
+	<SettingsRow
+		title="Фильтровать посты"
+		subtitle="Скрывать посты в ленте по тегам и фразам"
+		tag="label"
+	>
+		<SettingsSwitch
+			checked={filterSettings.value.filterPosts}
+			label="Фильтровать посты"
+			onchange={(filterPosts) => filterSettings.patch({ filterPosts })}
+		/>
+	</SettingsRow>
+	<SettingsRow
+		title="Фильтровать комментарии"
+		subtitle="Скрывать комментарии под постами по тегам и фразам"
+		tag="label"
+	>
+		<SettingsSwitch
+			checked={filterSettings.value.filterComments}
+			label="Фильтровать комментарии"
+			onchange={(filterComments) => filterSettings.patch({ filterComments })}
+		/>
+	</SettingsRow>
+</SettingsGroup>
 
 <!-- Локальные фильтры (клиентский ЧС) -->
 <SettingsGroup title="Локальные фильтры" description="Скрытие постов в приложении по тегам и фразам без авторизации на DTF.">

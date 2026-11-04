@@ -20,12 +20,16 @@
 	import { themeSettings } from './themeSettings.svelte';
 	import Popover from './ui/Popover.svelte';
 	import { notify } from './ui/notify.svelte';
+	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 
 	/** Карточка комментария на вкладке «Комментарии» профиля, как profile_comment_favorite у DTF */
 	let { comment }: { comment: Comment } = $props();
 
 	let votes = $derived(themeSettings.votes);
 	let score = $derived(votesOf(comment));
+	let filterMatch = $derived(matchCommentFilter(comment));
+	let revealed = $state(false);
+	let isFiltered = $derived(!!filterMatch && !revealed);
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let post = $derived({ id: comment.postId, sourceId: comment.sourceId });
 	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
@@ -57,6 +61,14 @@
 	<ComplaintDialog onsubmit={(reasonId) => api.complain('comment', comment.id, reasonId)} onclose={() => (complaining = false)} />
 {/if}
 
+{#if isFiltered}
+	{#if filterSettings.value.mode === 'soft'}
+		<article class="profile-comment profile-comment--filtered">
+			<span class="profile-comment__filtered-text">Комментарий скрыт фильтром ({filterMatch?.rule})</span>
+			<button type="button" class="profile-comment__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
+		</article>
+	{/if}
+{:else}
 <article class="profile-comment">
 	<a class="profile-comment__title" href={postPath} onclick={(e) => openPost(e, post)}>{comment.postTitle}</a>
 
@@ -139,6 +151,7 @@
 		</Popover>
 	</div>
 </article>
+{/if}
 
 <style>
 	/* Остров DTF: белая карточка с отступом 20px (16px до 639px), скругление от 640px */
@@ -148,6 +161,33 @@
 		padding: 9px 20px 5px;
 		background-color: #fff;
 		overflow-wrap: anywhere;
+	}
+
+	.profile-comment--filtered {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 12px 20px;
+	}
+
+	.profile-comment__filtered-text {
+		color: var(--text-muted, #777);
+		font-size: 14px;
+	}
+
+	.profile-comment__reveal-btn {
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--color-blue, #1976d2);
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.profile-comment__reveal-btn:hover {
+		text-decoration: underline;
 	}
 
 	@media (min-width: 640px) {

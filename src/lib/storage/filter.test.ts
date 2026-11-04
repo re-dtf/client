@@ -19,12 +19,28 @@ vi.hoisted(() => {
 	});
 });
 
-import { addIgnoredKeyword, addIgnoredTag, filterSettings, normalizeTag, removeIgnoredKeyword, removeIgnoredTag } from './filter.svelte';
+import {
+	addIgnoredKeyword,
+	addIgnoredTag,
+	filterSettings,
+	matchCommentFilter,
+	matchPostFilter,
+	normalizeTag,
+	removeIgnoredKeyword,
+	removeIgnoredTag
+} from './filter.svelte';
+import type { Comment, Post } from '$lib/api/types';
 
 describe('filter storage', () => {
 	beforeEach(() => {
 		localStorage.clear();
-		filterSettings.patch({ tags: [], keywords: [] });
+		filterSettings.patch({
+			tags: [],
+			keywords: [],
+			mode: 'soft',
+			filterPosts: true,
+			filterComments: true
+		});
 	});
 
 	it('нормализует теги', () => {
@@ -53,5 +69,114 @@ describe('filter storage', () => {
 
 		removeIgnoredKeyword('СПОЙЛЕР');
 		expect(filterSettings.value.keywords).toEqual([]);
+	});
+
+	it('фильтрует посты по тегам и подсайтам', () => {
+		addIgnoredTag('щитпост');
+
+		const postWithSubsite: Post = {
+			id: 1,
+			sourceId: 'dtf',
+			title: 'Интересный пост',
+			blocks: [],
+			author: { id: 10, name: 'User' },
+			commentsCount: 0,
+			createdAt: '',
+			subsite: { id: 5, name: 'Щитпост' }
+		};
+
+		const match = matchPostFilter(postWithSubsite);
+		expect(match).toEqual({ matched: true, kind: 'tag', rule: '#щитпост' });
+
+		const postWithTagInText: Post = {
+			id: 2,
+			sourceId: 'dtf',
+			title: 'Мой пост #щитпост!',
+			blocks: [],
+			author: { id: 10, name: 'User' },
+			commentsCount: 0,
+			createdAt: ''
+		};
+
+		const match2 = matchPostFilter(postWithTagInText);
+		expect(match2).toEqual({ matched: true, kind: 'tag', rule: '#щитпост' });
+
+		const postDifferentTag: Post = {
+			id: 3,
+			sourceId: 'dtf',
+			title: 'Пост про #щитпостинг',
+			blocks: [],
+			author: { id: 10, name: 'User' },
+			commentsCount: 0,
+			createdAt: ''
+		};
+		// Не должно матчить часть другого слова
+		expect(matchPostFilter(postDifferentTag)).toBeNull();
+	});
+
+	it('фильтрует посты по ключевым словам', () => {
+		addIgnoredKeyword('спойлер к фильму');
+
+		const post: Post = {
+			id: 1,
+			sourceId: 'dtf',
+			title: 'Осторожно, СПОЙЛЕР К ФИЛЬМУ внутри',
+			blocks: [],
+			author: { id: 10, name: 'User' },
+			commentsCount: 0,
+			createdAt: ''
+		};
+
+		const match = matchPostFilter(post);
+		expect(match).toEqual({ matched: true, kind: 'keyword', rule: 'спойлер к фильму' });
+	});
+
+	it('учитывает флаг filterPosts', () => {
+		addIgnoredKeyword('спойлер');
+		filterSettings.patch({ filterPosts: false });
+
+		const post: Post = {
+			id: 1,
+			sourceId: 'dtf',
+			title: 'Тут есть спойлер',
+			blocks: [],
+			author: { id: 10, name: 'User' },
+			commentsCount: 0,
+			createdAt: ''
+		};
+
+		expect(matchPostFilter(post)).toBeNull();
+	});
+
+	it('фильтрует комментарии по ключевым словам и тегам', () => {
+		addIgnoredKeyword('реклама');
+		addIgnoredTag('спам');
+
+		const comment1: Comment = {
+			id: 100,
+			sourceId: 'dtf',
+			postId: 1,
+			author: { id: 5, name: 'Bot' },
+			content: 'Лучшая Реклама только у нас',
+			createdAt: ''
+		};
+
+		expect(matchCommentFilter(comment1)).toEqual({ matched: true, kind: 'keyword', rule: 'реклама' });
+
+		const comment2: Comment = {
+			id: 101,
+			sourceId: 'dtf',
+			postId: 1,
+			author: { id: 6, name: 'Spammer' },
+			content: 'Осторожно #спам!',
+			createdAt: ''
+		};
+
+		expect(matchCommentFilter(comment2)).toEqual({ matched: true, kind: 'tag', rule: '#спам' });
+
+		// Если выключить фильтр комментариев
+		filterSettings.patch({ filterComments: false });
+		expect(matchCommentFilter(comment1)).toBeNull();
+		expect(matchCommentFilter(comment2)).toBeNull();
 	});
 });
