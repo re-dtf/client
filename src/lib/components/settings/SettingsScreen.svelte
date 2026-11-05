@@ -268,8 +268,8 @@
 		if (targetPage) {
 			return { folderId: null, pageId: targetPage, section: targetSection };
 		}
-		// По умолчанию открываем источники
-		return { folderId: null, pageId: 'sources', section: targetSection };
+		// По умолчанию ничего не выбрано (открываем пустыми)
+		return { folderId: null, pageId: null, section: targetSection };
 	}
 
 	const initial = resolveInitialNav();
@@ -541,8 +541,8 @@
 			</header>
 
 			<div class="scroller" bind:this={scroller}>
-				<div class="page">
-					{#if selectedPageId}
+				{#if selectedPageId}
+					<div class="page">
 						<h2 class="page__title">{pageTitle}</h2>
 
 						{#if selectedPageId === 'account'}
@@ -666,11 +666,11 @@
 								</SettingsRow>
 							</SettingsGroup>
 						{/if}
-					{:else}
-						<!-- Ни один подпункт не выбран — минималистичный плейсхолдер -->
-						<SettingsEmptyState text="Выберите подраздел в меню слева" />
-					{/if}
-				</div>
+					</div>
+				{:else}
+					<!-- Ни один раздел не выбран — плейсхолдер по центру -->
+					<SettingsEmptyState text={activeFolderId ? 'Выберите подраздел в меню слева' : 'Выберите раздел в меню слева'} />
+				{/if}
 			</div>
 		</main>
 	</div>
@@ -1029,15 +1029,20 @@
 	}
 
 	.scroller {
+		display: flex;
+		flex-direction: column;
 		flex: 1;
+		min-height: 0;
 		overflow-y: auto;
 		overscroll-behavior: contain;
 	}
 
 	.page {
+		width: 100%;
 		max-width: 680px;
 		margin: 0 auto;
 		padding: 0 40px 48px;
+		box-sizing: border-box;
 		animation: pageFadeIn 180ms var(--ease-smooth, cubic-bezier(0.2, 0, 0, 1));
 	}
 

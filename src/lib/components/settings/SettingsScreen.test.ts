@@ -32,6 +32,30 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('О приложении');
 	});
 
+	it('по умолчанию открывается пустым с заглушкой по центру', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {}
+			}
+		});
+
+		expect(body).toContain('Выберите раздел в меню слева');
+		expect(body).toContain('empty-state');
+		expect(body).not.toContain('nav__item--active');
+	});
+
+	it('открывает источники при явной передаче page: sources', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'sources'
+			}
+		});
+
+		expect(body).toContain('nav__item--active');
+		expect(body).not.toContain('Выберите раздел в меню слева');
+	});
+
 	it('рендерит режим solo с кнопкой возврата', () => {
 		const { body } = render(SettingsScreen, {
 			props: {

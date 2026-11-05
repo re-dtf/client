@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { text = 'Выберите раздел для настройки' }: { text?: string } = $props();
+	let { text = 'Выберите раздел в меню слева' }: { text?: string } = $props();
 </script>
 
 <div class="empty-state">
@@ -8,10 +8,16 @@
 
 <style>
 	.empty-state {
-		display: grid;
-		place-items: center;
-		min-height: 420px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex: 1;
+		width: 100%;
+		height: 100%;
+		min-height: 100%;
 		padding: 40px 20px;
+		box-sizing: border-box;
+		text-align: center;
 		color: var(--st-muted);
 	}
 
@@ -19,6 +25,7 @@
 		margin: 0;
 		font-size: 15px;
 		line-height: 22px;
+		text-align: center;
 		color: var(--st-muted);
 	}
 </style>
