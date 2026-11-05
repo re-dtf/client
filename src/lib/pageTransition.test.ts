@@ -1,10 +1,27 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { freeze, pageTransition, shouldTransition } from './pageTransition.svelte';
 import { fluent } from './motion';
+import { activeTheme } from './themes/index.svelte';
 
 describe('pageTransition', () => {
 	it('shouldTransition возвращает false в среде без window (SSR / node)', () => {
 		expect(shouldTransition()).toBe(false);
+	});
+
+	it('shouldTransition возвращает false для темы dtf2022 без motion', () => {
+		vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+		activeTheme.set('dtf2022');
+		expect(activeTheme.motion).toBeUndefined();
+		expect(shouldTransition()).toBe(false);
+		vi.unstubAllGlobals();
+	});
+
+	it('shouldTransition возвращает true для темы redtf с motion', () => {
+		vi.stubGlobal('window', { matchMedia: () => ({ matches: false }) });
+		activeTheme.set('redtf');
+		expect(activeTheme.motion).toBeDefined();
+		expect(shouldTransition()).toBe(true);
+		vi.unstubAllGlobals();
 	});
 
 	it('fluent содержит определения fastDepart и fastApproach', () => {

@@ -47,8 +47,8 @@ export function shouldTransition(): boolean {
 		console.warn('[reDTF] Переход между страницами пропущен: в системе активен prefers-reduced-motion');
 		return false;
 	}
-	const m = activeTheme.motion ?? fluent;
-	return Boolean(m.recede && m.approach);
+	const m = activeTheme.motion;
+	return Boolean(m?.recede && m?.approach);
 }
 
 /** Запомнить элемент и координаты клика */
@@ -139,8 +139,8 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 	// Фаза Recede: уход вглубь запускается ТОЛЬКО при ожидании сети.
 	// Для мгновенных (кэшированных) переходов экран не отдаляется, исключая рывок назад-вперед.
 	if (!isInstant) {
-		const motion = activeTheme.motion ?? fluent;
-		const recedeAnim = motion.recede;
+		const motion = activeTheme.motion;
+		const recedeAnim = motion?.recede;
 		if (recedeAnim) {
 			currentRecedeAnim = play(screenEl, recedeAnim, 'forwards');
 		}
@@ -152,13 +152,13 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 			hadHoldBlur = true;
 
 			// Плавно нарастает размытие
-			const waitAnim = motion.wait;
+			const waitAnim = motion?.wait;
 			if (waitAnim && outgoingScreen) {
 				currentWaitAnim = play(outgoingScreen, waitAnim, 'forwards');
 				currentWaitAnim?.finished.then(() => {
 					if (!active || outgoingId !== fromId || !outgoingScreen) return;
 					// Дыхание на чистых transform и opacity
-					const breatheAnim = motion.breathe;
+					const breatheAnim = motion?.breathe;
 					if (breatheAnim) {
 						currentBreatheAnim = play(outgoingScreen, breatheAnim);
 					}
@@ -170,7 +170,7 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 
 /** Сообщить, что входящий слой готов к показу */
 export async function incomingReady(layerId: string, incomingScreen: HTMLElement): Promise<void> {
-	if (!active || incomingId !== layerId || !outgoingScreen) {
+	if (!active || incomingId !== layerId || !outgoingScreen || !activeTheme.motion) {
 		return;
 	}
 
@@ -186,13 +186,13 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 	}
 
 	const isFast = !slow;
-	const motion = activeTheme.motion ?? fluent;
+	const motion = activeTheme.motion;
 	const promises: Promise<unknown>[] = [];
 
 	// 1. Анимация ухода старого экрана
 	if (outgoingScreen) {
 		if (isFast) {
-			const fastDepartAnim = motion.fastDepart ?? fluent.fastDepart;
+			const fastDepartAnim = motion?.fastDepart ?? fluent.fastDepart;
 			if (fastDepartAnim) {
 				currentRecedeAnim?.cancel();
 				currentRecedeAnim = undefined;
@@ -223,7 +223,7 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 	await tick();
 
 	// 2. Анимация появления нового экрана
-	const approachAnim = isFast ? (motion.fastApproach ?? fluent.fastApproach) : motion.approach;
+	const approachAnim = isFast ? (motion?.fastApproach ?? fluent.fastApproach) : motion?.approach;
 	if (approachAnim) {
 		const incomingRect = incomingScreen.getBoundingClientRect();
 		const visibleTop = Math.max(0, incomingRect.top);
