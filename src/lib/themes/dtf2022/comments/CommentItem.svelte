@@ -442,6 +442,13 @@
 		contain-intrinsic-size: auto none auto 72px;
 	}
 
+	.comment-item:has(:global(.post-reactions__picker)),
+	.comment-item:has(:global(.popover)) {
+		content-visibility: visible;
+		position: relative;
+		z-index: 20;
+	}
+
 	.comment-item--reply {
 		--content-offset-top: 20px;
 		--content-offset-bottom: 6px;

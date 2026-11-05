@@ -124,6 +124,10 @@
 		--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
+	.post-reactions:has(.post-reactions__picker) {
+		z-index: 10;
+	}
+
 	/* Вариант для комментария: свой ряд, но плотнее, чем у поста */
 	.post-reactions--compact {
 		flex-basis: 100%;

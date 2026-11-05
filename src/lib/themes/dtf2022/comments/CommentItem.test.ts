@@ -20,4 +20,12 @@ describe('CommentItem thread lines hitbox', () => {
 		// Пустые линии (без границы и без дуги) игнорируют события указателя
 		expect(svelteContent).toContain('.comment-item__thread-line--empty');
 	});
+
+	it('не обрезает меню реакций и поповер из-за content-visibility', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('.comment-item:has(:global(.post-reactions__picker))');
+		expect(svelteContent).toContain('content-visibility: visible');
+		expect(svelteContent).toContain('z-index: 20');
+	});
 });

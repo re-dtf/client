@@ -102,6 +102,13 @@
 		content-visibility: visible;
 	}
 
+	.feed-item:has(:global(.post-reactions__picker)),
+	.feed-item:has(:global(.popover)) {
+		content-visibility: visible;
+		position: relative;
+		z-index: 20;
+	}
+
 	.post-card {
 		border-radius: 8px;
 		background-color: var(--bg-card);
