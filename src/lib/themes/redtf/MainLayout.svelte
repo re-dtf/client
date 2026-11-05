@@ -58,7 +58,7 @@
 	}
 
 	/* Хватает места: справа резервируем столько же, сколько слева, и контент встаёт по центру окна */
-	@media (min-width: 1300px) {
+	@media (min-width: 1400px) {
 		.layout {
 			grid-template-columns: var(--sidebar-left-width) minmax(0, 1fr) var(--sidebar-left-width);
 		}
@@ -83,7 +83,7 @@
 		grid-template-columns: 0px minmax(0, 1fr);
 	}
 
-	@media (min-width: 1300px) {
+	@media (min-width: 1400px) {
 		.layout.layout--no-left {
 			grid-template-columns: 0px minmax(0, 1fr) 0px;
 		}
