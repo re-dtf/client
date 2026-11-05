@@ -201,7 +201,16 @@
 					</div>
 
 					<div class="comment-editor-box__submit">
-						<Button variant="blue" disabled={isEmpty || sending || uploading} label={submitLabel} onclick={onsubmit} />
+						<Button
+							variant="blue"
+							disabled={isEmpty || sending || uploading}
+							icon="v_send"
+							iconSize={20}
+							label={submitLabel}
+							aria-label={submitLabel}
+							title={submitLabel}
+							onclick={onsubmit}
+						/>
 					</div>
 				</div>
 			</div>
@@ -254,6 +263,7 @@
 
 	.comment-editor-container__content {
 		min-width: 0;
+		container-type: inline-size;
 	}
 
 	:global(.comment-item) .comment-editor-container {
@@ -466,9 +476,37 @@
 		--btn-height: 40px;
 	}
 
+	.comment-editor-box__submit :global(.btn__icon) {
+		display: none;
+	}
+
 	@media (max-width: 859px) {
 		.comment-editor-box__footer {
 			margin: 12px -5px -5px;
+		}
+	}
+
+	@container (max-width: 300px) {
+		.comment-editor-box__submit {
+			--btn-min-width: 40px;
+			--btn-icon-size: 20px;
+			--btn-offset: 0;
+			--btn-icon-margin-left: 0;
+			--btn-icon-margin-right: 0;
+		}
+
+		.comment-editor-box__submit :global(.btn) {
+			width: 40px;
+			padding: 0;
+		}
+
+		.comment-editor-box__submit :global(.btn__label) {
+			display: none;
+		}
+
+		.comment-editor-box__submit :global(.btn__icon) {
+			display: flex;
+			margin: 0;
 		}
 	}
 </style>

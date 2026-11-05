@@ -44,4 +44,15 @@ describe('CommentEditor', () => {
 		});
 		expect(withContinue.body).toContain('comment-editor-container__line--continue');
 	});
+
+	it('рендерит кнопку отправки с иконкой самолётика и подписью', () => {
+		const { body } = render(CommentEditor, {
+			props: {
+				replying: true
+			}
+		});
+
+		expect(body).toContain('/icons.svg#v_send');
+		expect(body).toContain('aria-label="Ответить"');
+	});
 });
