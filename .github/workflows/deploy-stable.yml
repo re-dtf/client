@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,6 +42,8 @@ jobs:
           APP_VERSION: ${{ github.ref_name }}
           BASE_PATH: ${{ steps.pages.outputs.base_path == '/' && '' || steps.pages.outputs.base_path }}
           VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
+          VITE_VALTOWN_PROXY_URL: ${{ vars.VITE_VALTOWN_PROXY_URL }}
+          VITE_CLOUDFLARE_PROXY_URL: ${{ vars.VITE_CLOUDFLARE_PROXY_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

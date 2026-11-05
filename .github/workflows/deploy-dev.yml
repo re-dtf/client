@@ -32,6 +32,8 @@ jobs:
           # Cloudflare Pages всегда хостит проекты в корне (имя.pages.dev), поэтому базовый путь пустой
           BASE_PATH: ''
           VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
+          VITE_VALTOWN_PROXY_URL: ${{ vars.VITE_VALTOWN_PROXY_URL }}
+          VITE_CLOUDFLARE_PROXY_URL: ${{ vars.VITE_CLOUDFLARE_PROXY_URL }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
