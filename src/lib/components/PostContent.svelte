@@ -15,6 +15,7 @@
 		sourceId = 'dtf',
 		commentId,
 		focusNonce,
+		toComments,
 		depth = 0,
 		onLoaded,
 		backButton
@@ -25,6 +26,8 @@
 		commentId?: number;
 		focusNonce?: number;
 		depth?: number;
+		/** Прокрутить сразу к комментариям после загрузки */
+		toComments?: boolean;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	} = $props();
@@ -58,12 +61,26 @@
 	});
 
 	function showPost() {
-		if (commentId === undefined || postShown) return;
+		if ((commentId === undefined && !toComments) || postShown) return;
 		postShown = true;
 		commentsTurn.then(tick).then(() => {
-			commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+			requestAnimationFrame(() => {
+				commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+			});
 		});
 	}
+
+	let lastScrollNonce = 0;
+	$effect(() => {
+		if (toComments && postShown && focusNonce && focusNonce !== lastScrollNonce) {
+			lastScrollNonce = focusNonce;
+			tick().then(() => {
+				requestAnimationFrame(() => {
+					commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+				});
+			});
+		}
+	});
 
 	$effect(() => {
 		if (cached) {
@@ -112,7 +129,7 @@
 		{@const loaded = post}
 		{#if depth <= 1}
 			{#await commentsTurn then}
-				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined ? appear('feedIn') : () => {})}>
+				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined && !toComments ? appear('feedIn') : () => {})}>
 					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
 				</div>
 			{/await}

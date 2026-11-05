@@ -385,6 +385,7 @@
 		margin: 28px auto 0;
 		padding: 32px 0;
 		background-color: var(--bg-card);
+		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
 	.comments-wrapper {

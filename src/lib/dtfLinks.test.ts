@@ -5,6 +5,7 @@ describe('parseDtfUrl', () => {
 	it('пост в разделе и пост автора, с комментарием и без', () => {
 		expect(parseDtfUrl('https://dtf.ru/games/5220898-atomic-heart-dostupna')).toEqual({ type: 'post', postId: 5220898 });
 		expect(parseDtfUrl('https://dtf.ru/id1157049/5220874-dtf')).toEqual({ type: 'post', postId: 5220874 });
+		expect(parseDtfUrl('https://dtf.ru/hard/5218338-xbox#comments')).toEqual({ type: 'post', postId: 5218338, toComments: true });
 		expect(parseDtfUrl('https://dtf.ru/hard/5218338-xbox?comment=67015878')).toEqual({ type: 'post', postId: 5218338, commentId: 67015878 });
 	});
 

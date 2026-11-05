@@ -209,7 +209,7 @@
 				scrollPositions.set('__feed__', 0);
 			}
 			const activeOverlay = topmostPageOverlayIndex >= 0 ? overlays[topmostPageOverlayIndex] : undefined;
-			if (activeOverlay?.type === 'post' && activeOverlay.data.commentId !== undefined) {
+			if (activeOverlay?.type === 'post' && (activeOverlay.data.commentId !== undefined || activeOverlay.data.toComments)) {
 				scrollPositions.delete(activeScrollId);
 			}
 			const savedScroll = scrollPositions.get(activeScrollId) || 0;

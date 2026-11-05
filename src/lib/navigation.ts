@@ -30,9 +30,14 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	lightbox: 'fullscreen'
 };
 
-export function getPostPath(post: { id: number; sourceId: string }, commentId?: number) {
-	if (post.sourceId !== 'dtf') return commentId ? `/post/${post.id}?source=${post.sourceId}&comment=${commentId}` : `/post/${post.id}?source=${post.sourceId}`;
-	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}`;
+export function getPostPath(post: { id: number; sourceId: string }, target?: number | 'comments') {
+	const hash = target === 'comments' ? '#comments' : '';
+	const commentId = typeof target === 'number' ? target : undefined;
+	if (post.sourceId !== 'dtf') {
+		const query = commentId ? `?source=${post.sourceId}&comment=${commentId}` : `?source=${post.sourceId}`;
+		return `/post/${post.id}${query}${hash}`;
+	}
+	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}${hash}`;
 }
 
 export function getProfilePath(id: number) {
@@ -50,7 +55,10 @@ export function getSettingsPath(page?: string, section?: string): string {
 function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): string {
 	switch (overlay.type) {
 		case 'post':
-			return getPostPath({ id: overlay.data.postId, sourceId: overlay.data.sourceId }, overlay.data.commentId);
+			return getPostPath(
+				{ id: overlay.data.postId, sourceId: overlay.data.sourceId },
+				overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : undefined)
+			);
 		case 'profile':
 			return getProfilePath(overlay.data.profileId);
 		case 'settings':
@@ -95,7 +103,12 @@ export function openOverlay(overlay: App.OverlayData) {
 			const existing = currentOverlays[activePostIndex] as Extract<App.OverlayState, { type: 'post' }>;
 			const updated: App.OverlayState = {
 				...existing,
-				data: { ...existing.data, commentId: overlay.data.commentId, focusNonce: Date.now() }
+				data: {
+					...existing.data,
+					commentId: overlay.data.commentId,
+					toComments: overlay.data.toComments,
+					focusNonce: Date.now()
+				}
 			};
 			const nextOverlays = [...currentOverlays.slice(0, activePostIndex), updated];
 			const url = resolve(overlayPath(updated) as '/');
@@ -112,7 +125,12 @@ export function openOverlay(overlay: App.OverlayData) {
 			Number(page.params.id) === overlay.data.postId &&
 			(page.url.searchParams.get('source') || 'dtf') === sourceId
 		) {
-			const url = resolve(getPostPath({ id: overlay.data.postId, sourceId }, overlay.data.commentId) as '/');
+			const url = resolve(
+				getPostPath(
+					{ id: overlay.data.postId, sourceId },
+					overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : undefined)
+				) as '/'
+			);
 			return goto(url, {
 				shallow: true,
 				replace: true,
@@ -188,11 +206,23 @@ function openFromLink(e: MouseEvent, overlay: App.OverlayData) {
 }
 
 /** Открыть пост поверх ленты (лента сохраняет прокрутку) */
-export function openPost(e: MouseEvent, post: { id: number; sourceId: string } & Partial<Post>) {
+export function openPost(
+	e: MouseEvent,
+	post: { id: number; sourceId: string } & Partial<Post>,
+	options?: { commentId?: number; toComments?: boolean }
+) {
 	if ('blocks' in post && Array.isArray((post as Post).blocks)) {
 		cachePost(post as Post);
 	}
-	openFromLink(e, { type: 'post', data: { postId: post.id, sourceId: post.sourceId } });
+	openFromLink(e, {
+		type: 'post',
+		data: {
+			postId: post.id,
+			sourceId: post.sourceId,
+			commentId: options?.commentId,
+			toComments: options?.toComments
+		}
+	});
 }
 
 /** Открыть страницу уведомлений */
@@ -224,7 +254,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 
 	e.preventDefault();
 	markOrigin(e);
-	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId } });
+	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId, toComments: target.toComments } });
 	else openOverlay({ type: 'profile', data: { profileId: target.profileId } });
 	return true;
 }

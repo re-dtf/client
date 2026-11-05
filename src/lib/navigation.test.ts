@@ -1,9 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { getSettingsPath } from './navigation';
+import { getPostPath, getSettingsPath } from './navigation';
 import fs from 'node:fs';
 import path from 'node:path';
 
 describe('navigation', () => {
+	it('getPostPath строит правильные адреса для постов и комментариев', () => {
+		expect(getPostPath({ id: 123, sourceId: 'dtf' })).toBe('/post/123');
+		expect(getPostPath({ id: 123, sourceId: 'dtf' }, 456)).toBe('/post/123?comment=456');
+		expect(getPostPath({ id: 123, sourceId: 'dtf' }, 'comments')).toBe('/post/123#comments');
+		expect(getPostPath({ id: 123, sourceId: 'sourceX' })).toBe('/post/123?source=sourceX');
+		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 456)).toBe('/post/123?source=sourceX&comment=456');
+		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 'comments')).toBe('/post/123?source=sourceX#comments');
+	});
+
 	it('getSettingsPath строит правильные адреса для настроек', () => {
 		expect(getSettingsPath()).toBe('/settings');
 		expect(getSettingsPath('about')).toBe('/settings?page=about');

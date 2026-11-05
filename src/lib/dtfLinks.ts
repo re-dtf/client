@@ -1,6 +1,6 @@
 /** Куда ведёт ссылка на dtf.ru, если это место есть в приложении */
 export type DtfTarget =
-	| { type: 'post'; postId: number; commentId?: number }
+	| { type: 'post'; postId: number; commentId?: number; toComments?: boolean }
 	| { type: 'profile'; profileId: number };
 
 /**
@@ -23,5 +23,11 @@ export function parseDtfUrl(href: string): DtfTarget | undefined {
 	if (!post) return undefined;
 
 	const commentId = Number(url.searchParams.get('comment'));
-	return { type: 'post', postId: Number(post[1]), ...(commentId > 0 && { commentId }) };
+	const toComments = url.hash === '#comments';
+	return {
+		type: 'post',
+		postId: Number(post[1]),
+		...(commentId > 0 && { commentId }),
+		...(toComments && { toComments: true })
+	};
 }

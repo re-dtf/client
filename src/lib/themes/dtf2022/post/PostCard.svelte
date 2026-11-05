@@ -33,6 +33,7 @@
 	let arrowsLeft = $derived(arrows && themeSettings.arrowsSide === 'left');
 	let iconSize = $derived(arrows ? 22 : 20);
 	let postPath = $derived(resolve(getPostPath(post) as any));
+	let commentsPath = $derived(resolve(getPostPath(post, 'comments') as any));
 </script>
 
 <article class={['feed-item', { 'feed-item--embed': embed }]}>
@@ -60,10 +61,10 @@
 					<PostButton
 						kind="comments"
 						title="Комментарии"
-						href={postPath}
+						href={commentsPath}
 						{iconSize}
 						value={post.commentsCount}
-						onclick={(e) => openPost(e, post)}
+						onclick={(e) => openPost(e, post, { toComments: true })}
 					/>
 					<!-- Осенью 2022 вместо репоста — «Поделиться», и стоит он после закладки -->
 					{#if arrows}

@@ -47,9 +47,10 @@
 	<section class="news-widget" class:news-widget--loading={loading} aria-label="Новости">
 		{#each news as item (item.sourceId + '_' + item.id)}
 			{@const href = resolve(getPostPath(item) as any)}
+			{@const commentsHref = resolve(getPostPath(item, 'comments') as any)}
 			<div class="news-item">
 				<a {href} class="news-item__title" onclick={(e) => openPost(e, item)}>{item.title}</a>
-				<a {href} class="comments-counter" aria-label="Комментарии: {item.commentsCount}" onclick={(e) => openPost(e, item)}>
+				<a href={commentsHref} class="comments-counter" aria-label="Комментарии: {item.commentsCount}" onclick={(e) => openPost(e, item, { toComments: true })}>
 					<svg class="icon" width="16" height="16" aria-hidden="true">
 						<use href="/icons.svg#v_comments"></use>
 					</svg>
