@@ -11,6 +11,11 @@
 	import { notificationsPopup } from './notificationsPopup.svelte';
 	import { sidebar } from './sidebar.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
+	import { themeSettings } from './themeSettings.svelte';
+
+	let { avatarOpensMenu: avatarOpensMenuProp }: { avatarOpensMenu?: boolean } = $props();
+
+	let avatarOpensMenu = $derived(avatarOpensMenuProp ?? themeSettings.avatarOpensMenu);
 
 	let isUserMenuOpen = $state(false);
 	let userNode = $state<HTMLElement>();
@@ -119,30 +124,48 @@
 
 			{#if authStorage.isAuthenticated}
 				<div class="header-profile" bind:this={userNode}>
-					<!-- Как у DTF: аватар ведёт в профиль, меню открывает стрелка с отступом справа -->
-					<a
-						class="header-profile__avatar"
-						href={user ? resolve(getProfilePath(user.id) as any) : undefined}
-						aria-label="Мой профиль"
-						onclick={(e) => {
-							isUserMenuOpen = false;
-							if (user) openProfile(e, user.id);
-						}}
-					>
-						<div class="header-profile__avatar-image" style:background-image={user?.avatarUrl ? `url('${user.avatarUrl}')` : undefined}></div>
-					</a>
-					<button
-						type="button"
-						class="header-profile__toggle"
-						aria-label="Меню профиля"
-						aria-haspopup="menu"
-						aria-expanded={isUserMenuOpen}
-						onclick={() => (isUserMenuOpen = !isUserMenuOpen)}
-					>
-						<svg class="icon" width="20" height="20" aria-hidden="true">
-							<use href="/icons.svg#v_chevron_down"></use>
-						</svg>
-					</button>
+					{#if avatarOpensMenu}
+						<button
+							type="button"
+							class="header-profile__btn"
+							aria-label="Меню профиля"
+							aria-haspopup="menu"
+							aria-expanded={isUserMenuOpen}
+							onclick={() => (isUserMenuOpen = !isUserMenuOpen)}
+						>
+							<div class="header-profile__avatar-image" style:background-image={user?.avatarUrl ? `url('${user.avatarUrl}')` : undefined}></div>
+							<span class={['header-profile__arrow', { 'header-profile__arrow--open': isUserMenuOpen }]}>
+								<svg class="icon" width="20" height="20" aria-hidden="true">
+									<use href="/icons.svg#v_chevron_down"></use>
+								</svg>
+							</span>
+						</button>
+					{:else}
+						<!-- Как у DTF: аватар ведёт в профиль, меню открывает стрелка с отступом справа -->
+						<a
+							class="header-profile__avatar"
+							href={user ? resolve(getProfilePath(user.id) as any) : undefined}
+							aria-label="Мой профиль"
+							onclick={(e) => {
+								isUserMenuOpen = false;
+								if (user) openProfile(e, user.id);
+							}}
+						>
+							<div class="header-profile__avatar-image" style:background-image={user?.avatarUrl ? `url('${user.avatarUrl}')` : undefined}></div>
+						</a>
+						<button
+							type="button"
+							class="header-profile__toggle"
+							aria-label="Меню профиля"
+							aria-haspopup="menu"
+							aria-expanded={isUserMenuOpen}
+							onclick={() => (isUserMenuOpen = !isUserMenuOpen)}
+						>
+							<svg class="icon" width="20" height="20" aria-hidden="true">
+								<use href="/icons.svg#v_chevron_down"></use>
+							</svg>
+						</button>
+					{/if}
 
 					{#if isUserMenuOpen}
 						<div class="header-profile__menu" role="menu" transition:slideAndFade>
@@ -333,10 +356,44 @@
 		align-self: stretch;
 	}
 
+	/* Единая кнопка профиля: аватар + стрелка без зазоров */
+	.header-profile__btn {
+		display: flex;
+		align-items: center;
+		height: 100%;
+		padding-left: var(--offset-left);
+		padding-right: var(--offset-right);
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.header-profile__btn:hover .header-profile__avatar-image {
+		opacity: 0.9;
+	}
+
+	.header-profile__btn:hover .header-profile__arrow {
+		opacity: 0.6;
+	}
+
+	.header-profile__arrow {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-left: 4px;
+		width: 20px;
+		height: 20px;
+		transition: transform 0.2s ease, opacity 0.2s ease;
+	}
+
+	.header-profile__arrow--open {
+		transform: rotate(180deg);
+	}
+
 	.header-profile__avatar {
 		display: flex;
 		align-items: center;
 		padding-left: var(--offset-left);
+		cursor: pointer;
 	}
 
 	.header-profile__avatar-image {

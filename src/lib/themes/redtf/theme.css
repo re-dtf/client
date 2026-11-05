@@ -154,14 +154,14 @@
 }
 
 /* Отклик на нажатие и наведение у кнопок шапки и мобильной строки */
-:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .header-profile__toggle, .mobile-bar__link) {
+:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .mobile-bar__link) {
 	transition:
 		opacity 0.2s ease,
 		color 0.2s ease,
 		scale 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .header-profile__toggle, .mobile-bar__link):active {
+:root[data-theme~="redtf"] :is(.header-menu, .header-logo, .bell, .header-user, .mobile-bar__link):active {
 	scale: 0.92;
 }
 

@@ -38,11 +38,13 @@ describe('настройки темы', () => {
 		expect(activeThemeSettings()).toBe(getThemeSettings('dtf2022'));
 	});
 
-	it('настройка headerBlur есть только у темы redtf', () => {
+	it('настройка headerBlur и avatarOpensMenu есть только у темы redtf', () => {
 		const redtfSettings = getThemeSettings('redtf').value;
 		expect(redtfSettings.headerBlur).toBe(false);
+		expect(redtfSettings.avatarOpensMenu).toBe(true);
 
 		const dtfSettings = getThemeSettings('dtf2022').value;
 		expect(dtfSettings.headerBlur).toBeUndefined();
+		expect(dtfSettings.avatarOpensMenu).toBeUndefined();
 	});
 });

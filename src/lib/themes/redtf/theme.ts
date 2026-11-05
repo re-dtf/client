@@ -198,6 +198,13 @@ export default defineTheme({
 			default: true
 		},
 		{
+			key: 'avatarOpensMenu',
+			type: 'toggle',
+			title: 'Меню по клику на аватар',
+			description: 'Клик на аватар в шапке открывает меню вместо перехода в профиль',
+			default: true
+		},
+		{
 			key: 'headerBlur',
 			type: 'toggle',
 			title: 'Блюр верхней панели',

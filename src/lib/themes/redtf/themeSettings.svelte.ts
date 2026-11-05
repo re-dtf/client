@@ -35,5 +35,9 @@ export const themeSettings = {
 	/** Блюр верхней панели */
 	get headerBlur(): boolean {
 		return activeThemeSettings().value.headerBlur === true;
+	},
+	/** Клик на аватар в шапке открывает меню вместо перехода в профиль */
+	get avatarOpensMenu(): boolean {
+		return activeThemeSettings().value.avatarOpensMenu !== false;
 	}
 };

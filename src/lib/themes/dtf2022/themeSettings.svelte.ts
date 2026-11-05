@@ -18,5 +18,9 @@ export const themeSettings = {
 	/** Порядок стрелок оценки: 'down-up' (вниз / вверх) или 'up-down' (вверх / вниз) */
 	get arrowsOrder(): 'down-up' | 'up-down' {
 		return (activeThemeSettings().value.arrowsOrder as 'down-up' | 'up-down') ?? 'down-up';
+	},
+	/** Клик на аватар в шапке открывает меню вместо перехода в профиль */
+	get avatarOpensMenu(): boolean {
+		return activeThemeSettings().value.avatarOpensMenu === true;
 	}
 };
