@@ -129,4 +129,38 @@ describe('SettingsScreen', () => {
 		expect(backIndex).toBeGreaterThan(-1);
 		expect(titleIndex).toBeLessThan(backIndex);
 	});
+
+	it('скрывает настройки для мобильных на десктопе и показывает настройки для десктопа', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'appearance-general',
+				device: 'desktop'
+			}
+		});
+
+		// Десктопная настройка ширины контента видна
+		expect(body).toContain('Ширина контента');
+		// Мобильные настройки скрыты
+		expect(body).not.toContain('Отключить верхний бар в мобильной версии');
+		expect(body).not.toContain('Блюр мобильного бара');
+		expect(body).not.toContain('Плавающий мобильный бар');
+	});
+
+	it('показывает настройки для мобильных на смартфонах и скрывает десктопные', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'appearance-general',
+				device: 'mobile'
+			}
+		});
+
+		// Мобильные настройки видны
+		expect(body).toContain('Отключить верхний бар в мобильной версии');
+		expect(body).toContain('Блюр мобильного бара');
+		expect(body).toContain('Плавающий мобильный бар');
+		// Десктопная настройка ширины контента скрыта
+		expect(body).not.toContain('Ширина контента');
+	});
 });

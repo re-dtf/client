@@ -247,14 +247,16 @@ export default defineTheme({
 			type: 'toggle',
 			title: 'Блюр мобильного бара',
 			description: 'Размытие фона под нижней навигационной панелью',
-			default: false
+			default: false,
+			device: 'mobile'
 		},
 		{
 			key: 'mobileBarFloating',
 			type: 'toggle',
 			title: 'Плавающий мобильный бар',
 			description: 'Скругление углов и отступы у нижней панели',
-			default: false
+			default: false,
+			device: 'mobile'
 		},
 		{
 			key: 'transparencyEffects',
@@ -272,7 +274,8 @@ export default defineTheme({
 			default: 640,
 			unit: 'px',
 			// Колонка текста у́же самой ленты на 40px (как у DTF: 600 при 640)
-			cssVars: (width) => ({ '--content-width': `${width}px`, '--inner-content-width': `${width - 40}px` })
+			cssVars: (width) => ({ '--content-width': `${width}px`, '--inner-content-width': `${width - 40}px` }),
+			device: 'desktop'
 		}
 	],
 	get motion() {

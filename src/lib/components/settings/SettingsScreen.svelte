@@ -21,8 +21,8 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import type { NestingMode, CommentVirtualization, ColorScheme, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
-	import { isFieldVisible } from '$lib/themes/types';
-	import type { ChoiceField, SettingField, ToggleField } from '$lib/themes/types';
+	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
+	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
 
 	/*
@@ -37,13 +37,30 @@
 		onclose,
 		page,
 		section,
-		solo = false
+		solo = false,
+		device
 	}: {
 		onclose: () => void;
 		page?: string;
 		section?: string;
 		solo?: boolean;
+		device?: SettingDevice;
 	} = $props();
+
+	let detectedDevice = $state<SettingDevice>(getCurrentDevice());
+
+	$effect(() => {
+		if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+		const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+		const update = () => {
+			detectedDevice = mql.matches ? 'mobile' : 'desktop';
+		};
+		update();
+		mql.addEventListener('change', update);
+		return () => mql.removeEventListener('change', update);
+	});
+
+	let currentDevice = $derived(device ?? detectedDevice);
 
 	// --- Описания общих полей настроек ---
 	let colorSchemeDescription = $derived(
@@ -85,7 +102,8 @@
 		type: 'toggle',
 		title: 'Отключить верхний бар в мобильной версии',
 		description: 'Скрывать шапку с логотипом на смартфонах для экономии места',
-		default: false
+		default: false,
+		device: 'mobile'
 	};
 
 	const nestingField: ChoiceField = {
@@ -149,6 +167,9 @@
 	let generalThemeFields = $derived(themeFields.filter((f) => !VOTE_KEYS.has(f.key) && !EDITOR_KEYS.has(f.key)));
 	let votesThemeFields = $derived(themeFields.filter((f) => VOTE_KEYS.has(f.key)));
 	let editorThemeFields = $derived(themeFields.filter((f) => EDITOR_KEYS.has(f.key)));
+
+	let visibleVotesFields = $derived(votesThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
+	let visibleEditorFields = $derived(editorThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
 
 	// --- Структура навигации Уровня 1 ---
 	interface RootNavItem {
@@ -580,13 +601,15 @@
 									if (enabled) haptics.click();
 								}}
 							/>
-							<FieldControl
-								field={disableMobileTopBarField}
-								value={settings.value.disableMobileTopBar}
-								onchange={(value) => settings.patch({ disableMobileTopBar: Boolean(value) })}
-							/>
+							{#if isFieldVisible(disableMobileTopBarField, settings.value, undefined, currentDevice)}
+								<FieldControl
+									field={disableMobileTopBarField}
+									value={settings.value.disableMobileTopBar}
+									onchange={(value) => settings.patch({ disableMobileTopBar: Boolean(value) })}
+								/>
+							{/if}
 							{#each generalThemeFields as field (field.key)}
-								{#if isFieldVisible(field, themeValues.value, themeFields)}
+								{#if isFieldVisible(field, themeValues.value, themeFields, currentDevice)}
 									<FieldControl
 										{field}
 										value={themeValues.value[field.key] ?? field.default}
@@ -597,29 +620,25 @@
 						{:else if selectedPageId === 'appearance-icons'}
 							<AppIconSettings />
 						{:else if selectedPageId === 'appearance-votes'}
-							{#if votesThemeFields.length > 0}
-								{#each votesThemeFields as field (field.key)}
-									{#if isFieldVisible(field, themeValues.value, themeFields)}
-										<FieldControl
-											{field}
-											value={themeValues.value[field.key] ?? field.default}
-											onchange={(value) => themeValues.patch({ [field.key]: value })}
-										/>
-									{/if}
+							{#if visibleVotesFields.length > 0}
+								{#each visibleVotesFields as field (field.key)}
+									<FieldControl
+										{field}
+										value={themeValues.value[field.key] ?? field.default}
+										onchange={(value) => themeValues.patch({ [field.key]: value })}
+									/>
 								{/each}
 							{:else}
 								<p class="section-hint">У выбранной темы нет дополнительных настроек оценок.</p>
 							{/if}
 						{:else if selectedPageId === 'appearance-editor'}
-							{#if editorThemeFields.length > 0}
-								{#each editorThemeFields as field (field.key)}
-									{#if isFieldVisible(field, themeValues.value, themeFields)}
-										<FieldControl
-											{field}
-											value={themeValues.value[field.key] ?? field.default}
-											onchange={(value) => themeValues.patch({ [field.key]: value })}
-										/>
-									{/if}
+							{#if visibleEditorFields.length > 0}
+								{#each visibleEditorFields as field (field.key)}
+									<FieldControl
+										{field}
+										value={themeValues.value[field.key] ?? field.default}
+										onchange={(value) => themeValues.patch({ [field.key]: value })}
+									/>
 								{/each}
 							{:else}
 								<p class="section-hint">У выбранной темы нет отдельных настроек редактора.</p>

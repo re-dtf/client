@@ -9,6 +9,12 @@ export interface FieldDependency {
 	value: SettingValue | SettingValue[];
 }
 
+/** Брейкпоинт мобильных устройств (смартфонов). До 719px включительно — мобильный режим, выше — десктоп */
+export const MOBILE_BREAKPOINT = 719;
+
+/** Устройство, на котором отображается настройка */
+export type SettingDevice = 'mobile' | 'desktop';
+
 interface FieldBase {
 	/** Ключ в сохранённых настройках темы */
 	key: string;
@@ -16,6 +22,8 @@ interface FieldBase {
 	description?: string;
 	/** Условие показа: поле отображается только если значение другого поля совпадает с указанным */
 	dependsOn?: FieldDependency;
+	/** Устройство, на котором доступна настройка: только смартфоны ('mobile') или десктопы ('desktop') */
+	device?: SettingDevice | SettingDevice[];
 }
 
 export interface ChoiceOption {
@@ -51,12 +59,34 @@ export interface SliderField extends FieldBase {
 export type SettingField = ChoiceField | ToggleField | SliderField;
 export type SettingValue = string | boolean | number;
 
-/** Проверяет, должно ли отображаться поле с учётом его зависимости `dependsOn` */
+/** Определяет текущий тип устройства по медиавыражению ширины экрана (<= 719px — mobile, иначе desktop) */
+export function getCurrentDevice(): SettingDevice {
+	if (typeof window !== 'undefined') {
+		if (typeof window.matchMedia === 'function') {
+			return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches ? 'mobile' : 'desktop';
+		}
+		if (typeof window.innerWidth === 'number') {
+			return window.innerWidth <= MOBILE_BREAKPOINT ? 'mobile' : 'desktop';
+		}
+	}
+	return 'desktop';
+}
+
+/** Проверяет, должно ли отображаться поле с учётом его зависимости `dependsOn` и ограничения по устройству `device` */
 export function isFieldVisible(
 	field: SettingField,
-	values: Record<string, SettingValue>,
-	allFields?: SettingField[]
+	values: Record<string, any> = {},
+	allFields?: SettingField[],
+	device?: SettingDevice
 ): boolean {
+	if (field.device) {
+		const currentDevice = device ?? getCurrentDevice();
+		const matches = Array.isArray(field.device)
+			? field.device.includes(currentDevice)
+			: field.device === currentDevice;
+		if (!matches) return false;
+	}
+
 	if (!field.dependsOn) return true;
 	let current = values[field.dependsOn.key];
 	if (current === undefined && allFields) {
