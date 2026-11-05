@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import Dialog from '$lib/components/Dialog.svelte';
 	import type { ManifestUpdateResult } from '$lib/api/sources/registry.svelte';
 	import { getPermissionKey } from '$lib/api/sources/permissions';
@@ -18,9 +19,9 @@
 
 	// Initialize checkboxes for new permissions
 	const checkedState = $state<Record<string, boolean>>(
-		Object.fromEntries(
+		untrack(() => Object.fromEntries(
 			updateResult.addedPermissions.map(p => [getPermissionKey(p.id, p.target), p.required ? true : false])
-		)
+		))
 	);
 
 	function handleConfirm() {

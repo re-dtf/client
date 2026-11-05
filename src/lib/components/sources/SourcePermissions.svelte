@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import Dialog from '$lib/components/Dialog.svelte';
 	import type { SourceManifest, SourcePermission } from '$lib/api/sources/types';
 	import { getPermissionDescription } from './utils';
@@ -40,7 +41,7 @@
 	}
 
 	let checkedState = $state<Record<string, boolean>>(
-		initCheckedState(preparePermissions(manifest))
+		untrack(() => initCheckedState(preparePermissions(manifest)))
 	);
 
 	function handleConfirm() {

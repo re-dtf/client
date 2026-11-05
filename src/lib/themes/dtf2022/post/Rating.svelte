@@ -32,10 +32,14 @@
 	// Смена числа: старое гаснет, новое выезжает на 4px (как v-transition у DTF)
 	let previous = $state<number>();
 	let valueChanging = $state(false);
-	let lastValue = value;
+	let lastValue: number | undefined = undefined;
 	let valueTimer: ReturnType<typeof setTimeout>;
 
 	$effect.pre(() => {
+		if (lastValue === undefined) {
+			lastValue = value;
+			return;
+		}
 		if (value === lastValue) return;
 		previous = lastValue;
 		lastValue = value;

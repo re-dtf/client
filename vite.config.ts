@@ -7,7 +7,7 @@ import { execSync } from 'child_process';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
-function resolveVersion(): string {
+function resolveVersion(command?: string): string {
 	const raw =
 		process.env.APP_VERSION ||
 		(process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : undefined) ||
@@ -19,6 +19,9 @@ function resolveVersion(): string {
 			}
 		})();
 	if (raw) return raw.replace(/^refs\/tags\//, '').replace(/^v/, '');
+
+	// В dev-сервере держим стабильную версию, чтобы Vite не сбрасывал кэш зависимостей при каждом git-коммите
+	if (command === 'serve') return `${pkg.version}-dev`;
 
 	const commit =
 		process.env.GITHUB_SHA?.slice(0, 7) ||
@@ -33,7 +36,6 @@ function resolveVersion(): string {
 	return commit ? `${pkg.version}-${commit}` : pkg.version;
 }
 
-const appVersion = resolveVersion();
 const basePath = process.env.BASE_PATH === '/' ? '' : (process.env.BASE_PATH || '').replace(/\/+$/, '');
 
 function svgIconsPlugin(base: string) {
@@ -47,31 +49,49 @@ function svgIconsPlugin(base: string) {
 	};
 }
 
-export default defineConfig({
-	resolve: {
-		alias: {
-			'$lib': path.resolve('./src/lib')
-		}
-	},
-	plugins: [
-		sveltekit({
-			version: {
-				name: appVersion
-			},
-			compilerOptions: {
-				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
-				runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
-			},
-			adapter: adapter({
-				fallback: 'index.html'
-			}),
-			paths: {
-				base: basePath as `/${string}`
-			},
-			prerender: {
-				handleUnseenRoutes: 'ignore'
+export default defineConfig(({ command }) => {
+	const appVersion = resolveVersion(command);
+
+	return {
+		resolve: {
+			alias: {
+				'$lib': path.resolve('./src/lib')
 			}
-		}),
-		svgIconsPlugin(basePath)
-	]
+		},
+		optimizeDeps: {
+			include: [
+				'dompurify',
+				'photoswipe',
+				'lottie-web/build/player/lottie_light',
+				'@editorjs/editorjs',
+				'@editorjs/header',
+				'@editorjs/image',
+				'@editorjs/list',
+				'@editorjs/quote',
+				'@editorjs/code',
+				'@editorjs/delimiter'
+			]
+		},
+		plugins: [
+			sveltekit({
+				version: {
+					name: appVersion
+				},
+				compilerOptions: {
+					// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
+					runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
+				},
+				adapter: adapter({
+					fallback: 'index.html'
+				}),
+				paths: {
+					base: basePath as `/${string}`
+				},
+				prerender: {
+					handleUnseenRoutes: 'ignore'
+				}
+			}),
+			svgIconsPlugin(basePath)
+		]
+	};
 });

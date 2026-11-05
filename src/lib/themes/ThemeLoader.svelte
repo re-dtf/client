@@ -17,10 +17,24 @@
 	function load(path: string): Promise<Component<any>> {
 		let promise = loading.get(path);
 		if (!promise) {
-			promise = modules[path]().then((module) => {
-				loaded.set(path, module.default);
-				return module.default;
-			});
+			promise = (async () => {
+				try {
+					const module = await modules[path]();
+					loaded.set(path, module.default);
+					return module.default;
+				} catch (firstErr) {
+					// В dev-режиме Vite или при кратковременном сбое сети даём второй шанс
+					try {
+						await new Promise((r) => setTimeout(r, 200));
+						const module = await modules[path]();
+						loaded.set(path, module.default);
+						return module.default;
+					} catch {
+						loading.delete(path);
+						throw firstErr;
+					}
+				}
+			})();
 			loading.set(path, promise);
 		}
 		return promise;
@@ -29,7 +43,7 @@
 	/** Загрузить компонент заранее: следующий ThemeLoader нарисует его сразу, без спиннера */
 	export function preloadThemeComponent(chain: string[], name: string): Promise<unknown> {
 		const path = findPath(chain, name);
-		return path ? load(path) : Promise.resolve();
+		return path ? load(path).catch(() => {}) : Promise.resolve();
 	}
 </script>
 
