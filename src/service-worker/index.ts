@@ -12,16 +12,15 @@ const CACHE_SHELL = `redtf-shell-${version}`;
 const CACHE_MEDIA = 'redtf-media-v1';
 const MAX_MEDIA_ENTRIES = 120;
 
-// Precache list: all immutable build chunks, static assets, prerendered routes, and the SPA index fallback
+// Precache list: all immutable build chunks, static assets, prerendered routes, and the SPA root shell
 // Dynamic endpoints (/api/*, version.json) are excluded so update checks always go to the network
 const precacheUrls = Array.from(
 	new Set([
 		resolve('/'),
-		resolve('/index.html'),
 		...immutable.map((f) => resolve(f.path)),
 		...assets.map((f) => resolve(f.path)),
 		...prerendered
-			.filter((f) => !f.startsWith('/api/') && !f.endsWith('version.json'))
+			.filter((f) => !f.startsWith('/api/') && !f.endsWith('version.json') && !f.endsWith('index.html'))
 			.map((f) => resolve(f.path))
 	])
 );
@@ -38,6 +37,12 @@ self.addEventListener('install', (event) => {
 					})
 				)
 			);
+
+			// Populate /index.html cache key from root shell so both '/' and '/index.html' match without 404 on dev/servers
+			const rootResponse = await cache.match(resolve('/'));
+			if (rootResponse) {
+				await cache.put(resolve('/index.html'), rootResponse.clone()).catch(() => {});
+			}
 		})()
 	);
 });
@@ -73,16 +78,28 @@ self.addEventListener('fetch', (event) => {
 	// Ignore chrome extensions or non-http(s) schemes
 	if (!url.protocol.startsWith('http')) return;
 
+	// Do not intercept Range requests (audio/video streaming) as Cache API cannot store 206 Partial Content
+	if (request.headers.has('range')) return;
+
 	// Bypass API routes completely — they must always hit network directly
 	if (url.pathname.includes('/api/')) return;
 
 	// 1. Navigation requests (loading SPA pages)
+	// Cache-first: always serve the trusted/pinned cached shell so unapproved updates never execute automatically
 	if (request.mode === 'navigate') {
 		event.respondWith(
 			(async () => {
 				const cache = await caches.open(CACHE_SHELL);
+
+				// Fallback to exact path match, or /index.html fallback from cache first
+				const cached =
+					(await cache.match(url.pathname)) ||
+					(await cache.match(resolve('/index.html'))) ||
+					(await cache.match(resolve('/')));
+				if (cached) return cached;
+
+				// If not in cache (e.g. before precache finishes on first run), fall back to network
 				try {
-					// Try network first for HTML navigations to get immediate updates if connected
 					const preload = await event.preloadResponse;
 					if (preload) return preload;
 
@@ -91,15 +108,8 @@ self.addEventListener('fetch', (event) => {
 						return networkResponse;
 					}
 				} catch {
-					// Network failed or offline - fall back to cached shell
+					// Network failed or offline
 				}
-
-				// Fallback to exact path match, or /index.html fallback
-				const cached =
-					(await cache.match(url.pathname)) ||
-					(await cache.match(resolve('/index.html'))) ||
-					(await cache.match(resolve('/')));
-				if (cached) return cached;
 
 				return new Response('Offline: page unavailable', {
 					status: 503,
@@ -136,7 +146,7 @@ self.addEventListener('fetch', (event) => {
 	// 3. Media CDN caching (DTF / Osnova images and avatars)
 	const isMediaCDN =
 		url.hostname.includes('osnova.io') ||
-		url.pathname.match(/\.(png|jpg|jpeg|webp|gif|svg|mp4)$/i);
+		url.pathname.match(/\.(png|jpg|jpeg|webp|gif|svg|ico)$/i);
 
 	if (isMediaCDN) {
 		event.respondWith(

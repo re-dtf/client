@@ -55,4 +55,30 @@ describe('pwa manager', () => {
 		expect(swCode).toContain("!f.startsWith('/api/')");
 		expect(swCode).toContain("url.pathname.includes('/api/')");
 	});
+
+	it('service-worker использует cache-first для навигации для защиты от несанкционированного обновления', async () => {
+		const fs = await import('fs');
+		const path = await import('path');
+		const swPath = path.resolve(__dirname, '../service-worker/index.ts');
+		const swCode = fs.readFileSync(swPath, 'utf-8');
+
+		expect(swCode).toContain("request.mode === 'navigate'");
+		// Убеждаемся, что cached извлекается до fetch(request)
+		const navigateIndex = swCode.indexOf("request.mode === 'navigate'");
+		const cachedMatchIndex = swCode.indexOf('await cache.match', navigateIndex);
+		const networkFetchIndex = swCode.indexOf('fetch(request)', cachedMatchIndex);
+		expect(cachedMatchIndex).toBeGreaterThan(navigateIndex);
+		expect(networkFetchIndex).toBeGreaterThan(cachedMatchIndex);
+	});
+
+	it('формирует правильную ссылку на изменения на GitHub', () => {
+		pwa.newVersion = null;
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/commits/dev');
+
+		pwa.newVersion = '0.0.2';
+		expect(pwa.changesUrl).toContain('https://github.com/re-dtf/client');
+
+		pwa.newVersion = '0.0.1-abc1234';
+		expect(pwa.changesUrl).toContain('https://github.com/re-dtf/client');
+	});
 });

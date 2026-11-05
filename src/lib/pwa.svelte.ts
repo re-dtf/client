@@ -7,10 +7,37 @@ class PwaManager {
 	newVersion = $state<string | null>(null);
 	readonly currentVersion = version;
 
+	get changesUrl(): string {
+		const repo = 'https://github.com/re-dtf/client';
+		if (!this.newVersion) return `${repo}/commits/dev`;
+
+		const extractRef = (v: string) => {
+			if (v.includes('-')) {
+				return v.split('-').pop();
+			}
+			return `v${v}`;
+		};
+
+		const fromRef = extractRef(this.currentVersion);
+		const toRef = extractRef(this.newVersion);
+
+		if (fromRef && toRef && fromRef !== toRef) {
+			return `${repo}/compare/${fromRef}...${toRef}`;
+		}
+
+		if (toRef) {
+			return `${repo}/commit/${toRef}`;
+		}
+
+		return `${repo}/commits/dev`;
+	}
+
 	private waitingWorker: ServiceWorker | null = null;
 	private refreshing = false;
 	private initialized = false;
 	private fetchingVersion = false;
+	private dismissed = false;
+	private dismissedVersion: string | null = null;
 
 	init() {
 		if (!browser || this.initialized) return;
@@ -29,8 +56,16 @@ class PwaManager {
 
 		this.initialized = true;
 
-		// Prevent infinite reload loops on controllerchange
+		// Only reload on controllerchange if the page was already controlled.
+		// On the first visit (when controller is initially null), clients.claim() takes control,
+		// and we MUST NOT reload the page while the user is using it (e.g. welcome screen).
+		let hasController = Boolean(navigator.serviceWorker.controller);
+
 		navigator.serviceWorker.addEventListener('controllerchange', () => {
+			if (!hasController) {
+				hasController = true;
+				return;
+			}
 			if (this.refreshing) return;
 			this.refreshing = true;
 			window.location.reload();
@@ -61,9 +96,14 @@ class PwaManager {
 					});
 				});
 
-				// Periodically check for updates (e.g. on focus or once per hour)
+				// Periodically check for updates on window focus (throttled to at most once per 60s)
+				let lastFocusCheck = 0;
 				window.addEventListener('focus', () => {
-					registration.update().catch(() => {});
+					const now = Date.now();
+					if (now - lastFocusCheck > 60_000) {
+						lastFocusCheck = now;
+						registration.update().catch(() => {});
+					}
 				});
 			})
 			.catch((err) => {
@@ -73,7 +113,6 @@ class PwaManager {
 
 	private async handleWaiting(worker: ServiceWorker) {
 		this.waitingWorker = worker;
-		this.needRefresh = true;
 
 		if (this.fetchingVersion) return;
 		this.fetchingVersion = true;
@@ -94,6 +133,14 @@ class PwaManager {
 		} finally {
 			this.fetchingVersion = false;
 		}
+
+		// Don't re-show the prompt if user already dismissed this specific version in this session
+		if (this.dismissed && this.dismissedVersion === this.newVersion) {
+			return;
+		}
+
+		this.dismissed = false;
+		this.needRefresh = true;
 	}
 
 	update() {
@@ -106,6 +153,8 @@ class PwaManager {
 
 	dismiss() {
 		this.needRefresh = false;
+		this.dismissed = true;
+		this.dismissedVersion = this.newVersion;
 	}
 }
 

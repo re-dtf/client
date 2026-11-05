@@ -15,9 +15,17 @@
 				{#if pwa.newVersion && pwa.newVersion !== pwa.currentVersion}
 					Версия <strong class="pwa-prompt__badge">{pwa.newVersion}</strong> (текущая: {pwa.currentVersion})
 				{:else}
-					Новая сборка для версии {pwa.currentVersion}
+					Новая сборка ({pwa.currentVersion})
 				{/if}
 			</span>
+			<a
+				href={pwa.changesUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="pwa-prompt__link"
+			>
+				Посмотреть изменения на GitHub &nearr;
+			</a>
 		</div>
 
 		<div class="pwa-prompt__actions">
@@ -33,7 +41,7 @@
 				class="pwa-prompt__btn pwa-prompt__btn--secondary"
 				onclick={() => pwa.dismiss()}
 			>
-				Пропустить
+				Отложить
 			</button>
 		</div>
 	</aside>
@@ -82,6 +90,21 @@
 	.pwa-prompt__badge {
 		font-weight: 600;
 		color: var(--accent, #1693e5);
+	}
+
+	.pwa-prompt__link {
+		font-size: 12px;
+		color: var(--accent, #1693e5);
+		text-decoration: none;
+		margin-top: 2px;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		width: fit-content;
+	}
+
+	.pwa-prompt__link:hover {
+		text-decoration: underline;
 	}
 
 	.pwa-prompt__actions {

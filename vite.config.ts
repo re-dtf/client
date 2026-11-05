@@ -18,7 +18,19 @@ function resolveVersion(): string {
 				return undefined;
 			}
 		})();
-	return raw ? raw.replace(/^refs\/tags\//, '').replace(/^v/, '') : pkg.version;
+	if (raw) return raw.replace(/^refs\/tags\//, '').replace(/^v/, '');
+
+	const commit =
+		process.env.GITHUB_SHA?.slice(0, 7) ||
+		(() => {
+			try {
+				return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'], encoding: 'utf8' }).trim();
+			} catch {
+				return undefined;
+			}
+		})();
+
+	return commit ? `${pkg.version}-${commit}` : pkg.version;
 }
 
 const appVersion = resolveVersion();
