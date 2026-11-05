@@ -18,14 +18,17 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Персонализация');
 		expect(body).toContain('Сеть');
 		expect(body).toContain('Данные');
-		expect(body).toContain('Приложение');
+		expect(body).toContain('О проекте');
 
 		// Пункты меню первого уровня
 		expect(body).toContain('Профиль');
 		expect(body).toContain('Уведомления');
 		expect(body).toContain('Чёрный список');
-		expect(body).toContain('Внешний вид');
-		expect(body).toContain('Поведение');
+		expect(body).toContain('Моя лента');
+		expect(body).toContain('Выбор темы');
+		expect(body).toContain('Интерфейс');
+		expect(body).toContain('Реестр реакций');
+		expect(body).toContain('Приложение');
 		expect(body).toContain('Источники данных');
 		expect(body).toContain('Моя статистика');
 		expect(body).toContain('Хочу помочь');
@@ -114,11 +117,11 @@ describe('SettingsScreen', () => {
 		const { body } = render(SettingsScreen, {
 			props: {
 				onclose: () => {},
-				section: 'appearance'
+				section: 'interface'
 			}
 		});
 
-		expect(body).toContain('Внешний вид');
+		expect(body).toContain('Интерфейс');
 		expect(body).toContain('folder-back');
 		expect(body).toContain('aria-label="Назад к разделам"');
 
@@ -134,27 +137,33 @@ describe('SettingsScreen', () => {
 		const { body } = render(SettingsScreen, {
 			props: {
 				onclose: () => {},
-				page: 'appearance-general',
+				section: 'interface',
+				page: 'interface-content',
 				device: 'desktop'
 			}
 		});
 
+		// В подменю на десктопе видна Верхняя панель, скрыта Мобильная панель
+		expect(body).toContain('Верхняя панель');
+		expect(body).not.toContain('Мобильная панель');
+
 		// Десктопная настройка ширины контента видна
 		expect(body).toContain('Ширина контента');
-		// Мобильные настройки скрыты
-		expect(body).not.toContain('Отключить верхний бар в мобильной версии');
-		expect(body).not.toContain('Блюр мобильного бара');
-		expect(body).not.toContain('Плавающий мобильный бар');
 	});
 
 	it('показывает настройки для мобильных на смартфонах и скрывает десктопные', () => {
 		const { body } = render(SettingsScreen, {
 			props: {
 				onclose: () => {},
-				page: 'appearance-general',
+				section: 'interface',
+				page: 'interface-mobile-bar',
 				device: 'mobile'
 			}
 		});
+
+		// В подменю на смартфонах видна Мобильная панель, скрыта Верхняя панель
+		expect(body).toContain('Мобильная панель');
+		expect(body).not.toContain('Верхняя панель');
 
 		// Мобильные настройки видны
 		expect(body).toContain('Отключить верхний бар в мобильной версии');
@@ -162,5 +171,87 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Плавающий мобильный бар');
 		// Десктопная настройка ширины контента скрыта
 		expect(body).not.toContain('Ширина контента');
+	});
+
+	it('меняет местами блоки в выборе темы: сначала тема, затем цветовая схема', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'theme-select'
+			}
+		});
+
+		const themeIndex = body.indexOf('Выбор темы');
+		const colorSchemeIndex = body.indexOf('Тема оформления');
+		expect(themeIndex).toBeGreaterThan(-1);
+		expect(colorSchemeIndex).toBeGreaterThan(-1);
+		expect(themeIndex).toBeLessThan(colorSchemeIndex);
+	});
+
+	it('рендерит раздел Приложение с нужными параметрами и кнопкой выбора иконки', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'app'
+			}
+		});
+
+		expect(body).toContain('Тактильный отклик (вибрация)');
+		expect(body).toContain('Продвинутые эффекты прозрачности и размытия');
+		expect(body).toContain('Невидимая подпись reDTF');
+		expect(body).toContain('Иконка приложения');
+		expect(body).toContain('Выбрать');
+	});
+
+	it('рендерит раздел Верхняя панель с меню аватара и блюром', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'interface-top-bar',
+				device: 'desktop'
+			}
+		});
+
+		expect(body).toContain('Меню по клику на аватар');
+		expect(body).toContain('Блюр верхней панели');
+	});
+
+	it('рендерит раздел Лента и контент с рейтингом и соло-ссылкой на фильтрацию', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'interface-content'
+			}
+		});
+
+		expect(body).toContain('Сортировать по моему рейтингу');
+		expect(body).toContain('Фильтрация контента');
+		expect(body).toContain('Чёрный список и стоп-слова');
+	});
+
+	it('рендерит Оценки с соло-ссылкой на Реестр реакций', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'interface-votes'
+			}
+		});
+
+		expect(body).toContain('Оценки');
+		expect(body).toContain('Реестр реакций');
+		expect(body).toContain('Настройка реакций');
+	});
+
+	it('рендерит Комментарии с соло-ссылкой на параметры приложения для подписи', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'interface-comments'
+			}
+		});
+
+		expect(body).toContain('Вложенные комментарии');
+		expect(body).toContain('Виртуализация комментариев');
+		expect(body).toContain('Подпись reDTF');
 	});
 });

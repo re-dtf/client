@@ -6,23 +6,13 @@
 	import SettingsRow from './SettingsRow.svelte';
 	import { api } from '$lib/api/index.svelte';
 	import type { AccountSettings } from '$lib/api/types';
-	import { reactionSettings } from '$lib/storage/reactions.svelte';
-	import type { ChoiceField, SettingField, SettingValue, ToggleField } from '$lib/themes/types';
+	import type { SettingField, SettingValue } from '$lib/themes/types';
 
 	/*
-	 * Страница «Лента»: алгоритмы ранжирования, сортировка, размытие NSFW
-	 * и быстрый переход к фильтрам контента (Чёрному списку).
+	 * Страница «Моя лента»: настройки аккаунта DTF (лента по умолчанию,
+	 * сортировка «Моей ленты», размытие NSFW, скрытие прочитанного).
 	 */
-	let { onopenignored }: { onopenignored?: () => void } = $props();
-
-	const rankField: ToggleField = {
-		key: 'rank',
-		type: 'toggle',
-		title: 'Сортировать по моему рейтингу',
-		description:
-			'«Популярное» и «Лучшие» упорядочиваются по очкам из настроек реакций, а не по очкам DTF. Прежние посты и комментарии на месте не прыгают.',
-		default: true
-	};
+	let { onopencontent }: { onopencontent?: () => void } = $props();
 
 	const FEED_OPTIONS = [
 		{ value: 'popular', title: 'Популярное' },
@@ -89,34 +79,34 @@
 	}
 </script>
 
-<FieldControl
-	field={rankField}
-	value={reactionSettings.value.rank}
-	onchange={(value) => reactionSettings.patch({ rank: value === true })}
-/>
-
 <AccountGate>
-	{#if feed}
-		{#each DTF_FEED_FIELDS as field (field.key)}
-			<FieldControl
-				{field}
-				value={feed[field.key] as SettingValue}
-				onchange={(value) => setFeed(field.key, value)}
-			/>
-		{/each}
-	{:else if !feedError}
-		<p class="status">Загрузка настроек ленты DTF…</p>
-	{/if}
+	<div class="settings-cards">
+		{#if feed}
+			{#each DTF_FEED_FIELDS as field (field.key)}
+				<FieldControl
+					{field}
+					value={feed[field.key] as SettingValue}
+					onchange={(value) => setFeed(field.key, value)}
+				/>
+			{/each}
+		{:else if !feedError}
+			{#each DTF_FEED_FIELDS as field (field.key)}
+				<div class="loading-card" aria-busy="true">
+					<span class="loading-text">Загружаем…</span>
+				</div>
+			{/each}
+		{/if}
+	</div>
 	{#if feedError}<p class="status status--error">{feedError}</p>{/if}
 </AccountGate>
 
-<SettingsGroup title="Фильтрация контента">
-	<SettingsRow
-		title="Чёрный список и стоп-слова"
-		subtitle="Скрытие постов по тегам (#политика, #аниме), ключевым словам, а также авторов и сообществ DTF"
-	>
-		{#if onopenignored}
-			<SettingsButton variant="suggested" onclick={onopenignored}>
+{#if onopencontent}
+	<SettingsGroup title="Оформление ленты">
+		<SettingsRow
+			title="Лента и контент"
+			subtitle="Ширина контента, сортировка по рейтингу реакций и фильтрация"
+		>
+			<SettingsButton variant="suggested" onclick={onopencontent}>
 				<span class="btn-text">
 					Настроить
 					<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -124,11 +114,41 @@
 					</svg>
 				</span>
 			</SettingsButton>
-		{/if}
-	</SettingsRow>
-</SettingsGroup>
+		</SettingsRow>
+	</SettingsGroup>
+{/if}
 
 <style>
+	.settings-cards {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 36px;
+	}
+
+	.settings-cards > :global(.group) {
+		margin-bottom: 0;
+	}
+
+	.loading-card {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 66px;
+		border-radius: 14px;
+		background: var(--st-card);
+		box-shadow: var(--st-card-shadow);
+		padding: 12px 20px;
+		box-sizing: border-box;
+	}
+
+	.loading-text {
+		color: var(--st-muted);
+		font-size: 13px;
+		opacity: 0.65;
+		user-select: none;
+	}
+
 	.status {
 		margin: 0 4px 24px;
 		color: var(--st-muted);

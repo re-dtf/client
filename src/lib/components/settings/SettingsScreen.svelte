@@ -9,6 +9,7 @@
 	import NotificationSettings from './NotificationSettings.svelte';
 	import ProxySettings from './ProxySettings.svelte';
 	import ReactionsSettings from './ReactionsSettings.svelte';
+	import SettingsButton from './SettingsButton.svelte';
 	import SettingsEmptyState from './SettingsEmptyState.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsIcon from './SettingsIcon.svelte';
@@ -20,6 +21,7 @@
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
+	import { reactionSettings } from '$lib/storage/reactions.svelte';
 	import type { NestingMode, CommentVirtualization, ColorScheme, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
@@ -106,6 +108,36 @@
 		device: 'mobile'
 	};
 
+	const watermarkField: ToggleField = {
+		key: 'watermark',
+		type: 'toggle',
+		title: 'Невидимая подпись reDTF',
+		description: 'Добавляет скрытую метку к отправляемым комментариям, чтобы другие пользователи reDTF видели, что комментарий написан через этот клиент.',
+		default: true
+	};
+
+	function defaultTransparency(): boolean {
+		if (typeof window === 'undefined') return true;
+		return !window.matchMedia?.('(prefers-reduced-transparency: reduce)').matches;
+	}
+
+	const defaultTransparencyField: ToggleField = {
+		key: 'transparencyEffects',
+		type: 'toggle',
+		title: 'Продвинутые эффекты прозрачности и размытия',
+		description: 'Размытие при переходах и предпросмотр медиа. Без них анимации быстрее и легче.',
+		default: defaultTransparency()
+	};
+
+	const rankField: ToggleField = {
+		key: 'rank',
+		type: 'toggle',
+		title: 'Сортировать по моему рейтингу',
+		description:
+			'«Популярное» и «Лучшие» упорядочиваются по очкам из настроек реакций, а не по очкам DTF. Прежние посты и комментарии на месте не прыгают.',
+		default: true
+	};
+
 	const nestingField: ChoiceField = {
 		key: 'commentNesting',
 		type: 'radio',
@@ -160,16 +192,41 @@
 	let themeFields = $derived(themeSettingsSchema(activeTheme.id));
 	let themeValues = $derived(activeThemeSettings());
 
-	// Группировка динамических полей темы
+	// Группировка динамических полей темы по разделам интерфейса и приложения
+	const TOP_BAR_KEYS = new Set(['headerBlur', 'avatarOpensMenu']);
+	const MOBILE_BAR_KEYS = new Set(['mobileBarBlur', 'mobileBarFloating']);
+	const CONTENT_KEYS = new Set(['contentWidth']);
 	const VOTE_KEYS = new Set(['votes', 'arrowsSide', 'arrowsOrder']);
 	const EDITOR_KEYS = new Set(['editorFullscreen']);
+	const APP_KEYS = new Set(['transparencyEffects']);
 
-	let generalThemeFields = $derived(themeFields.filter((f) => !VOTE_KEYS.has(f.key) && !EDITOR_KEYS.has(f.key)));
+	let topBarThemeFields = $derived(themeFields.filter((f) => TOP_BAR_KEYS.has(f.key)));
+	let mobileBarThemeFields = $derived(themeFields.filter((f) => MOBILE_BAR_KEYS.has(f.key)));
+	let contentThemeFields = $derived(themeFields.filter((f) => CONTENT_KEYS.has(f.key)));
 	let votesThemeFields = $derived(themeFields.filter((f) => VOTE_KEYS.has(f.key)));
 	let editorThemeFields = $derived(themeFields.filter((f) => EDITOR_KEYS.has(f.key)));
+	let otherThemeFields = $derived(
+		themeFields.filter(
+			(f) =>
+				!TOP_BAR_KEYS.has(f.key) &&
+				!MOBILE_BAR_KEYS.has(f.key) &&
+				!CONTENT_KEYS.has(f.key) &&
+				!VOTE_KEYS.has(f.key) &&
+				!EDITOR_KEYS.has(f.key) &&
+				!APP_KEYS.has(f.key)
+		)
+	);
 
+	let transparencyField = $derived(
+		themeFields.find((f) => f.key === 'transparencyEffects') ?? defaultTransparencyField
+	);
+
+	let visibleTopBarFields = $derived(topBarThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
+	let visibleMobileBarFields = $derived(mobileBarThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
+	let visibleContentFields = $derived(contentThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
 	let visibleVotesFields = $derived(votesThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
 	let visibleEditorFields = $derived(editorThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
+	let visibleOtherFields = $derived(otherThemeFields.filter((f) => isFieldVisible(f, themeValues.value, themeFields, currentDevice)));
 
 	// --- Структура навигации Уровня 1 ---
 	interface RootNavItem {
@@ -190,14 +247,17 @@
 			items: [
 				{ id: 'account', type: 'page', title: 'Профиль', icon: 'profile' },
 				{ id: 'notifications', type: 'page', title: 'Уведомления', icon: 'notifications' },
-				{ id: 'ignored', type: 'page', title: 'Чёрный список', icon: 'ignored' }
+				{ id: 'ignored', type: 'page', title: 'Чёрный список', icon: 'ignored' },
+				{ id: 'feed', type: 'page', title: 'Моя лента', icon: 'feed' }
 			]
 		},
 		{
 			title: 'Персонализация',
 			items: [
-				{ id: 'appearance', type: 'folder', title: 'Внешний вид', icon: 'appearance' },
-				{ id: 'behavior', type: 'folder', title: 'Поведение', icon: 'behavior' }
+				{ id: 'theme-select', type: 'page', title: 'Выбор темы', icon: 'theme-select' },
+				{ id: 'interface', type: 'folder', title: 'Интерфейс', icon: 'interface' },
+				{ id: 'reactions', type: 'page', title: 'Реестр реакций', icon: 'reactions' },
+				{ id: 'app', type: 'page', title: 'Приложение', icon: 'app' }
 			]
 		},
 		{
@@ -214,7 +274,7 @@
 			]
 		},
 		{
-			title: 'Приложение',
+			title: 'О проекте',
 			items: [
 				{ id: 'help', type: 'page', title: 'Хочу помочь', icon: 'help' },
 				{ id: 'about', type: 'page', title: 'О приложении', icon: 'about' }
@@ -227,6 +287,7 @@
 		id: string;
 		title: string;
 		icon: string;
+		device?: SettingDevice;
 	}
 
 	interface SubNavGroup {
@@ -234,29 +295,16 @@
 		items: SubNavItem[];
 	}
 
-	const APPEARANCE_SUBNAV: SubNavGroup[] = [
+	const INTERFACE_SUBNAV: SubNavGroup[] = [
 		{
-			title: 'Тема',
-			items: [{ id: 'theme-select', title: 'Выбор темы', icon: 'theme-select' }]
-		},
-		{
-			title: 'Персонализация',
+			title: 'Интерфейс',
 			items: [
-				{ id: 'appearance-general', title: 'Общее', icon: 'general' },
-				{ id: 'appearance-icons', title: 'Иконка приложения', icon: 'appearance-icons' },
-				{ id: 'appearance-votes', title: 'Оценки', icon: 'votes' },
-				{ id: 'appearance-editor', title: 'Редактор', icon: 'editor' }
-			]
-		}
-	];
-
-	const BEHAVIOR_SUBNAV: SubNavGroup[] = [
-		{
-			title: 'Персонализация',
-			items: [
-				{ id: 'behavior-feed', title: 'Лента', icon: 'feed' },
-				{ id: 'behavior-reactions', title: 'Реакции', icon: 'reactions' },
-				{ id: 'behavior-comments', title: 'Комментарии', icon: 'comments' }
+				{ id: 'interface-top-bar', title: 'Верхняя панель', icon: 'top-bar', device: 'desktop' },
+				{ id: 'interface-mobile-bar', title: 'Мобильная панель', icon: 'mobile-bar', device: 'mobile' },
+				{ id: 'interface-content', title: 'Лента и контент', icon: 'content' },
+				{ id: 'interface-votes', title: 'Оценки', icon: 'votes' },
+				{ id: 'interface-comments', title: 'Комментарии', icon: 'comments' },
+				{ id: 'interface-editor', title: 'Редактор', icon: 'editor' }
 			]
 		}
 	];
@@ -266,16 +314,38 @@
 		const targetPage = page;
 		const targetSection = section;
 
-		if (targetSection === 'appearance' || targetPage === 'themes' || targetPage === 'theme') {
-			const sub = targetPage === 'theme' ? 'appearance-general' : 'theme-select';
-			return { folderId: 'appearance', pageId: targetPage ? sub : null, section: targetSection };
+		if (targetPage === 'themes' || targetPage === 'theme-select' || targetPage === 'theme') {
+			return { folderId: null, pageId: 'theme-select', section: targetSection };
+		}
+		if (targetPage === 'interface-top-bar' || targetPage === 'top-bar') {
+			return { folderId: 'interface', pageId: 'interface-top-bar', section: targetSection };
+		}
+		if (targetPage === 'interface-mobile-bar' || targetPage === 'mobile-bar') {
+			return { folderId: 'interface', pageId: 'interface-mobile-bar', section: targetSection };
+		}
+		if (targetPage === 'interface-content' || targetPage === 'content' || targetPage === 'appearance-general') {
+			return { folderId: 'interface', pageId: 'interface-content', section: targetSection };
+		}
+		if (targetPage === 'interface-votes' || targetPage === 'votes' || targetPage === 'appearance-votes') {
+			return { folderId: 'interface', pageId: 'interface-votes', section: targetSection };
+		}
+		if (targetPage === 'interface-comments' || targetPage === 'comments' || targetPage === 'behavior-comments') {
+			return { folderId: 'interface', pageId: 'interface-comments', section: targetSection };
+		}
+		if (targetPage === 'interface-editor' || targetPage === 'editor' || targetPage === 'appearance-editor') {
+			return { folderId: 'interface', pageId: 'interface-editor', section: targetSection };
+		}
+		if (targetPage === 'reactions' || targetPage === 'behavior-reactions') {
+			return { folderId: null, pageId: 'reactions', section: targetSection };
+		}
+		if (targetPage === 'app') {
+			return { folderId: null, pageId: 'app', section: targetSection };
 		}
 		if (targetPage === 'app-icon' || targetPage === 'icons' || targetPage === 'appearance-icons') {
-			return { folderId: 'appearance', pageId: 'appearance-icons', section: targetSection };
+			return { folderId: null, pageId: 'app-icon', section: targetSection };
 		}
-		if (targetSection === 'behavior' || targetPage === 'reactions' || targetPage === 'comments') {
-			const sub = targetPage === 'reactions' ? 'behavior-reactions' : (targetPage === 'comments' ? 'behavior-comments' : 'behavior-feed');
-			return { folderId: 'behavior', pageId: targetPage ? sub : null, section: targetSection };
+		if (targetPage === 'feed' || targetPage === 'my-feed' || targetPage === 'behavior-feed') {
+			return { folderId: null, pageId: 'feed', section: targetSection };
 		}
 		if (targetPage === 'dtf') {
 			return { folderId: null, pageId: 'notifications', section: targetSection };
@@ -289,13 +359,16 @@
 		if (targetPage) {
 			return { folderId: null, pageId: targetPage, section: targetSection };
 		}
+		if (targetSection === 'interface' || targetSection === 'appearance' || targetSection === 'behavior') {
+			return { folderId: 'interface', pageId: null, section: targetSection };
+		}
 		// По умолчанию ничего не выбрано (открываем пустыми)
 		return { folderId: null, pageId: null, section: targetSection };
 	}
 
 	const initial = resolveInitialNav();
 
-	// Текущая открытая папка в сайдбаре (null = главное меню, 'appearance', 'behavior')
+	// Текущая открытая папка в сайдбаре (null = главное меню, 'interface')
 	let activeFolderId = $state<string | null>(initial.folderId);
 	// Текущая выбранная страница контента справа (null = empty state)
 	let selectedPageId = $state<string | null>(initial.pageId);
@@ -317,7 +390,7 @@
 
 	// Получение заголовка текущей папки Уровня 2
 	let folderTitle = $derived(
-		activeFolderId === 'appearance' ? 'Внешний вид' : (activeFolderId === 'behavior' ? 'Поведение' : 'Настройки')
+		activeFolderId === 'interface' ? 'Интерфейс' : 'Настройки'
 	);
 
 	// Заголовок текущей страницы
@@ -327,14 +400,11 @@
 			const found = s.items.find((i) => i.id === selectedPageId);
 			if (found) return found.title;
 		}
-		for (const g of APPEARANCE_SUBNAV) {
+		for (const g of INTERFACE_SUBNAV) {
 			const found = g.items.find((i) => i.id === selectedPageId);
 			if (found) return found.title;
 		}
-		for (const g of BEHAVIOR_SUBNAV) {
-			const found = g.items.find((i) => i.id === selectedPageId);
-			if (found) return found.title;
-		}
+		if (selectedPageId === 'app-icon') return 'Иконка приложения';
 		return 'Настройки';
 	});
 
@@ -381,16 +451,72 @@
 		openedByUser = false;
 	}
 
-	// Переход в Чёрный список из Ленты (с активацией Solo)
-	function openIgnoredFromFeed() {
+	// Переход в Чёрный список из Ленты и контента (с активацией Solo)
+	function openIgnoredFromContent() {
 		soloBackTarget = {
-			folderId: 'behavior',
-			pageId: 'behavior-feed',
-			title: 'Лента'
+			folderId: 'interface',
+			pageId: 'interface-content',
+			title: 'Лента и контент'
 		};
 		soloByUser = true;
 		selectedPageId = 'ignored';
 		activeFolderId = null;
+		openedByUser = true;
+		scroller?.scrollTo({ top: 0 });
+	}
+
+	// Переход в Реестр реакций из Оценок (с активацией Solo)
+	function openReactionsFromVotes() {
+		soloBackTarget = {
+			folderId: 'interface',
+			pageId: 'interface-votes',
+			title: 'Оценки'
+		};
+		soloByUser = true;
+		selectedPageId = 'reactions';
+		activeFolderId = null;
+		openedByUser = true;
+		scroller?.scrollTo({ top: 0 });
+	}
+
+	// Переход в Приложение из Комментариев для настройки подписи (с активацией Solo)
+	function openAppFromComments() {
+		soloBackTarget = {
+			folderId: 'interface',
+			pageId: 'interface-comments',
+			title: 'Комментарии'
+		};
+		soloByUser = true;
+		selectedPageId = 'app';
+		activeFolderId = null;
+		openedByUser = true;
+		scroller?.scrollTo({ top: 0 });
+	}
+
+	// Переход в Иконку приложения из раздела Приложение (с активацией Solo)
+	function openAppIconSolo() {
+		soloBackTarget = {
+			folderId: null,
+			pageId: 'app',
+			title: 'Приложение'
+		};
+		soloByUser = true;
+		selectedPageId = 'app-icon';
+		activeFolderId = null;
+		openedByUser = true;
+		scroller?.scrollTo({ top: 0 });
+	}
+
+	// Переход в Ленту и контент из раздела Моя лента (с активацией Solo)
+	function openContentFromFeed() {
+		soloBackTarget = {
+			folderId: null,
+			pageId: 'feed',
+			title: 'Моя лента'
+		};
+		soloByUser = true;
+		selectedPageId = 'interface-content';
+		activeFolderId = 'interface';
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
 	}
@@ -400,6 +526,7 @@
 		if (soloBackTarget) {
 			activeFolderId = soloBackTarget.folderId;
 			selectedPageId = soloBackTarget.pageId;
+			openedByUser = true;
 			soloBackTarget = null;
 		}
 		soloByUser = false;
@@ -481,40 +608,23 @@
 				<!-- Уровень 2: Подменю выбранной папки -->
 				<div class={['nav-layer', { 'nav-layer--hidden': activeFolderId === null }]}>
 					<div class="nav">
-						{#if activeFolderId === 'appearance'}
-							{#each APPEARANCE_SUBNAV as group (group.title)}
+						{#if activeFolderId === 'interface'}
+							{#each INTERFACE_SUBNAV as group (group.title)}
 								<section class="nav__section">
 									<h3 class="nav__group">{group.title}</h3>
 									<div class="nav__list">
 										{#each group.items as item (item.id)}
-											<button
-												class={['nav__item', { 'nav__item--active': item.id === selectedPageId }]}
-												type="button"
-												aria-current={item.id === selectedPageId ? 'page' : undefined}
-												onclick={() => handleSubItemClick(item)}
-											>
-												<SettingsIcon name={item.icon} />
-												<span class="nav__title">{item.title}</span>
-											</button>
-										{/each}
-									</div>
-								</section>
-							{/each}
-						{:else if activeFolderId === 'behavior'}
-							{#each BEHAVIOR_SUBNAV as group (group.title)}
-								<section class="nav__section">
-									<h3 class="nav__group">{group.title}</h3>
-									<div class="nav__list">
-										{#each group.items as item (item.id)}
-											<button
-												class={['nav__item', { 'nav__item--active': item.id === selectedPageId }]}
-												type="button"
-												aria-current={item.id === selectedPageId ? 'page' : undefined}
-												onclick={() => handleSubItemClick(item)}
-											>
-												<SettingsIcon name={item.icon} />
-												<span class="nav__title">{item.title}</span>
-											</button>
+											{#if !item.device || item.device === currentDevice}
+												<button
+													class={['nav__item', { 'nav__item--active': item.id === selectedPageId }]}
+													type="button"
+													aria-current={item.id === selectedPageId ? 'page' : undefined}
+													onclick={() => handleSubItemClick(item)}
+												>
+													<SettingsIcon name={item.icon} />
+													<span class="nav__title">{item.title}</span>
+												</button>
+											{/if}
 										{/each}
 									</div>
 								</section>
@@ -572,6 +682,8 @@
 							<NotificationSettings />
 						{:else if selectedPageId === 'ignored'}
 							<IgnoredSettings />
+						{:else if selectedPageId === 'feed'}
+							<FeedSettings onopencontent={openContentFromFeed} />
 						{:else if selectedPageId === 'sources'}
 							<SourcesSettings />
 						{:else if selectedPageId === 'network'}
@@ -583,43 +695,124 @@
 						{:else if selectedPageId === 'about'}
 							<AboutSettings section={activeSection} />
 
-						<!-- Подстраницы «Внешний вид» -->
+						<!-- Персонализация: Прямые страницы -->
 						{:else if selectedPageId === 'theme-select'}
+							<FieldControl field={themeField} value={activeTheme.id} onchange={(value) => activeTheme.set(String(value))} />
 							<FieldControl
 								field={colorSchemeField}
 								value={settings.value.colorScheme ?? 'auto'}
 								onchange={(value) => settings.patch({ colorScheme: value as ColorScheme })}
 							/>
-							<FieldControl field={themeField} value={activeTheme.id} onchange={(value) => activeTheme.set(String(value))} />
-						{:else if selectedPageId === 'appearance-general'}
-							<FieldControl
-								field={hapticsField}
-								value={settings.value.haptics}
-								onchange={(value) => {
-									const enabled = Boolean(value);
-									settings.patch({ haptics: enabled });
-									if (enabled) haptics.click();
-								}}
-							/>
-							{#if isFieldVisible(disableMobileTopBarField, settings.value, undefined, currentDevice)}
+						{:else if selectedPageId === 'reactions'}
+							<ReactionsSettings />
+						{:else if selectedPageId === 'app'}
+							<div class="settings-cards">
+								<FieldControl
+									field={hapticsField}
+									value={settings.value.haptics}
+									onchange={(value) => {
+										const enabled = Boolean(value);
+										settings.patch({ haptics: enabled });
+										if (enabled) haptics.click();
+									}}
+								/>
+								<FieldControl
+									field={transparencyField}
+									value={themeValues.value.transparencyEffects ?? transparencyField.default}
+									onchange={(value) => themeValues.patch({ transparencyEffects: Boolean(value) })}
+								/>
+								<FieldControl
+									field={watermarkField}
+									value={settings.value.watermark}
+									onchange={(value) => settings.patch({ watermark: Boolean(value) })}
+								/>
+							</div>
+							<SettingsGroup title="Внешний вид приложения">
+								<SettingsRow
+									title="Иконка приложения"
+									subtitle="Выбор значка приложения и вкладки браузера, или загрузка своей иконки"
+								>
+									<SettingsButton variant="suggested" onclick={openAppIconSolo}>
+										<span class="btn-text">
+											Выбрать
+											<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+												<path d="M6 3l5 5-5 5" />
+											</svg>
+										</span>
+									</SettingsButton>
+								</SettingsRow>
+							</SettingsGroup>
+						{:else if selectedPageId === 'app-icon'}
+							<AppIconSettings />
+
+						<!-- Интерфейс: Подстраницы -->
+						{:else if selectedPageId === 'interface-top-bar'}
+							{#if visibleTopBarFields.length > 0}
+								<div class="settings-cards">
+									{#each visibleTopBarFields as field (field.key)}
+										<FieldControl
+											{field}
+											value={themeValues.value[field.key] ?? field.default}
+											onchange={(value) => themeValues.patch({ [field.key]: value })}
+										/>
+									{/each}
+								</div>
+							{:else}
+								<p class="section-hint">У выбранной темы нет отдельных настроек верхней панели.</p>
+							{/if}
+						{:else if selectedPageId === 'interface-mobile-bar'}
+							<div class="settings-cards">
 								<FieldControl
 									field={disableMobileTopBarField}
 									value={settings.value.disableMobileTopBar}
 									onchange={(value) => settings.patch({ disableMobileTopBar: Boolean(value) })}
 								/>
-							{/if}
-							{#each generalThemeFields as field (field.key)}
-								{#if isFieldVisible(field, themeValues.value, themeFields, currentDevice)}
+								{#each visibleMobileBarFields as field (field.key)}
 									<FieldControl
 										{field}
 										value={themeValues.value[field.key] ?? field.default}
 										onchange={(value) => themeValues.patch({ [field.key]: value })}
 									/>
-								{/if}
-							{/each}
-						{:else if selectedPageId === 'appearance-icons'}
-							<AppIconSettings />
-						{:else if selectedPageId === 'appearance-votes'}
+								{/each}
+							</div>
+						{:else if selectedPageId === 'interface-content'}
+							<div class="settings-cards">
+								{#each visibleContentFields as field (field.key)}
+									<FieldControl
+										{field}
+										value={themeValues.value[field.key] ?? field.default}
+										onchange={(value) => themeValues.patch({ [field.key]: value })}
+									/>
+								{/each}
+								<FieldControl
+									field={rankField}
+									value={reactionSettings.value.rank}
+									onchange={(value) => reactionSettings.patch({ rank: value === true })}
+								/>
+								{#each visibleOtherFields as field (field.key)}
+									<FieldControl
+										{field}
+										value={themeValues.value[field.key] ?? field.default}
+										onchange={(value) => themeValues.patch({ [field.key]: value })}
+									/>
+								{/each}
+							</div>
+							<SettingsGroup title="Фильтрация контента">
+								<SettingsRow
+									title="Чёрный список и стоп-слова"
+									subtitle="Скрытие постов по тегам (#политика, #аниме), ключевым словам, а также авторов и сообществ DTF"
+								>
+									<SettingsButton variant="suggested" onclick={openIgnoredFromContent}>
+										<span class="btn-text">
+											Настроить
+											<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+												<path d="M6 3l5 5-5 5" />
+											</svg>
+										</span>
+									</SettingsButton>
+								</SettingsRow>
+							</SettingsGroup>
+						{:else if selectedPageId === 'interface-votes'}
 							{#if visibleVotesFields.length > 0}
 								{#each visibleVotesFields as field (field.key)}
 									<FieldControl
@@ -631,7 +824,62 @@
 							{:else}
 								<p class="section-hint">У выбранной темы нет дополнительных настроек оценок.</p>
 							{/if}
-						{:else if selectedPageId === 'appearance-editor'}
+							<SettingsGroup title="Реестр реакций">
+								<SettingsRow
+									title="Настройка реакций"
+									subtitle="Вес и вид реакций, подсчёт рейтинга"
+								>
+									<SettingsButton variant="suggested" onclick={openReactionsFromVotes}>
+										<span class="btn-text">
+											Настроить
+											<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+												<path d="M6 3l5 5-5 5" />
+											</svg>
+										</span>
+									</SettingsButton>
+								</SettingsRow>
+							</SettingsGroup>
+						{:else if selectedPageId === 'interface-comments'}
+							<div class="settings-cards">
+								<FieldControl
+									field={nestingField}
+									value={settings.value.commentNesting}
+									onchange={(value) => settings.patch({ commentNesting: value as NestingMode })}
+								/>
+								<FieldControl
+									field={virtualizationField}
+									value={settings.value.commentVirtualization}
+									onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
+								/>
+								<FieldControl
+									field={clientBadgesField}
+									value={settings.value.clientBadges}
+									onchange={(value) => settings.patch({ clientBadges: value as ClientBadgesMode })}
+								/>
+								{#if settings.value.clientBadges === 'all'}
+									<FieldControl
+										field={mobileBadgesPositionField}
+										value={settings.value.mobileBadgesPosition}
+										onchange={(value) => settings.patch({ mobileBadgesPosition: value as MobileBadgesPosition })}
+									/>
+								{/if}
+							</div>
+							<SettingsGroup title="Подпись reDTF">
+								<SettingsRow
+									title="Невидимая подпись reDTF"
+									subtitle="Скрытая метка клиента в комментариях настраивается в параметрах приложения"
+								>
+									<SettingsButton variant="suggested" onclick={openAppFromComments}>
+										<span class="btn-text">
+											Настроить
+											<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+												<path d="M6 3l5 5-5 5" />
+											</svg>
+										</span>
+									</SettingsButton>
+								</SettingsRow>
+							</SettingsGroup>
+						{:else if selectedPageId === 'interface-editor'}
 							{#if visibleEditorFields.length > 0}
 								{#each visibleEditorFields as field (field.key)}
 									<FieldControl
@@ -643,47 +891,6 @@
 							{:else}
 								<p class="section-hint">У выбранной темы нет отдельных настроек редактора.</p>
 							{/if}
-
-						<!-- Подстраницы «Поведение» -->
-						{:else if selectedPageId === 'behavior-feed'}
-							<FeedSettings onopenignored={openIgnoredFromFeed} />
-						{:else if selectedPageId === 'behavior-reactions'}
-							<ReactionsSettings />
-						{:else if selectedPageId === 'behavior-comments'}
-							<FieldControl
-								field={nestingField}
-								value={settings.value.commentNesting}
-								onchange={(value) => settings.patch({ commentNesting: value as NestingMode })}
-							/>
-							<FieldControl
-								field={virtualizationField}
-								value={settings.value.commentVirtualization}
-								onchange={(value) => settings.patch({ commentVirtualization: value as CommentVirtualization })}
-							/>
-							<FieldControl
-								field={clientBadgesField}
-								value={settings.value.clientBadges}
-								onchange={(value) => settings.patch({ clientBadges: value as ClientBadgesMode })}
-							/>
-							{#if settings.value.clientBadges === 'all'}
-								<FieldControl
-									field={mobileBadgesPositionField}
-									value={settings.value.mobileBadgesPosition}
-									onchange={(value) => settings.patch({ mobileBadgesPosition: value as MobileBadgesPosition })}
-								/>
-							{/if}
-							<SettingsGroup title="Подпись reDTF">
-								<SettingsRow
-									tag="label"
-									title="Невидимая подпись reDTF"
-									subtitle="Добавляет скрытую метку к отправляемым комментариям, чтобы другие пользователи reDTF видели, что комментарий написан через этот клиент."
-								>
-									<SettingsSwitch
-										checked={settings.value.watermark}
-										onchange={(value) => settings.patch({ watermark: value })}
-									/>
-								</SettingsRow>
-							</SettingsGroup>
 						{/if}
 					</div>
 				{:else}
@@ -1011,7 +1218,6 @@
 		flex-direction: column;
 		min-width: 0;
 		min-height: 0;
-		background: var(--st-bg);
 	}
 
 	.bar {
@@ -1083,10 +1289,27 @@
 		line-height: 42px;
 	}
 
+	.settings-cards {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 36px;
+	}
+
+	.settings-cards > :global(.group) {
+		margin-bottom: 0;
+	}
+
 	.section-hint {
 		margin: 8px 4px 16px;
 		color: var(--st-muted);
 		font-size: 14px;
+	}
+
+	.btn-text {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
 
 	.icon-button {
@@ -1305,6 +1528,7 @@
 		--fade: 0.45s cubic-bezier(0.2, 0, 0, 1);
 		transition:
 			background-color var(--fade),
+			border-color var(--fade),
 			box-shadow var(--fade);
 	}
 
@@ -1320,6 +1544,7 @@
 
 	.window[data-fade='active'] {
 		background-color: transparent;
+		border-color: transparent;
 		box-shadow: none;
 		pointer-events: none;
 	}
@@ -1336,6 +1561,7 @@
 
 	.window:global([data-slider-drag]) {
 		background-color: transparent;
+		border-color: transparent;
 		box-shadow: none;
 	}
 

@@ -26,6 +26,15 @@
 		margin-bottom: 36px;
 	}
 
+	.group:has(.group__title) {
+		margin-top: 36px;
+	}
+
+	.group:first-child,
+	.group:has(.group__title):first-child {
+		margin-top: 0;
+	}
+
 	.group:has(:global(.select-wrap--open)) {
 		z-index: 50;
 	}
