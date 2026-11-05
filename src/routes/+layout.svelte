@@ -271,12 +271,24 @@
 		} else {
 			delete document.documentElement.dataset.headerBlur;
 		}
+		if (activeTheme.id === 'redtf' && Boolean(values.mobileBarBlur)) {
+			document.documentElement.dataset.mobileBarBlur = 'true';
+		} else {
+			delete document.documentElement.dataset.mobileBarBlur;
+		}
+		if (activeTheme.id === 'redtf' && Boolean(values.mobileBarFloating)) {
+			document.documentElement.dataset.mobileBarFloating = 'true';
+		} else {
+			delete document.documentElement.dataset.mobileBarFloating;
+		}
 		const style = document.documentElement.style;
 		for (const [name, value] of Object.entries(vars)) style.setProperty(name, value);
 		return () => {
 			Object.keys(vars).forEach((name) => style.removeProperty(name));
 			delete document.documentElement.dataset.transparency;
 			delete document.documentElement.dataset.headerBlur;
+			delete document.documentElement.dataset.mobileBarBlur;
+			delete document.documentElement.dataset.mobileBarFloating;
 		};
 	});
 

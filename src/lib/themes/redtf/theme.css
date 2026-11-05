@@ -37,6 +37,29 @@
 	}
 }
 
+/* Блюр нижней панели */
+:root[data-theme~="redtf"][data-mobile-bar-blur="true"] .mobile-bar {
+	-webkit-backdrop-filter: blur(10px) saturate(180%);
+	backdrop-filter: blur(10px) saturate(180%);
+	background: rgba(255, 255, 255, 0.85);
+}
+
+:root[data-theme~="redtf"][data-theme-mode="dark"][data-mobile-bar-blur="true"] .mobile-bar {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-theme~="redtf"]:not([data-color-scheme="light"])[data-mobile-bar-blur="true"] .mobile-bar {
+		background: rgba(0, 0, 0, 0.1);
+	}
+}
+
+/* Плавающая нижняя панель */
+:root[data-theme~="redtf"][data-mobile-bar-floating="true"] .mobile-bar {
+	margin: 10px;
+	border-radius: 16px;
+}
+
 /* Ширина контента меняется ползунком в настройках: регистрируем переменные как длины, чтобы переход их интерполировал.
    Переход включён, только пока открыто окно настроек, иначе ширина анимировалась бы при каждом запуске */
 @property --content-width {

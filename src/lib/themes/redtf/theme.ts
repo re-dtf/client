@@ -212,6 +212,20 @@ export default defineTheme({
 			default: false
 		},
 		{
+			key: 'mobileBarBlur',
+			type: 'toggle',
+			title: 'Блюр мобильного бара',
+			description: 'Размытие фона под нижней навигационной панелью',
+			default: false
+		},
+		{
+			key: 'mobileBarFloating',
+			type: 'toggle',
+			title: 'Плавающий мобильный бар',
+			description: 'Скругление углов и отступы у нижней панели',
+			default: false
+		},
+		{
 			key: 'transparencyEffects',
 			type: 'toggle',
 			title: 'Продвинутые эффекты прозрачности и размытия',

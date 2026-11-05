@@ -15,6 +15,7 @@ vi.hoisted(() => {
 
 import { getThemeSettings, activeThemeSettings } from './settings.svelte';
 import { activeTheme } from './index.svelte';
+import { themeSettings as redtfThemeSettings } from './redtf/themeSettings.svelte';
 
 describe('настройки темы', () => {
 	beforeEach(() => localStorage.clear());
@@ -38,13 +39,27 @@ describe('настройки темы', () => {
 		expect(activeThemeSettings()).toBe(getThemeSettings('dtf2022'));
 	});
 
-	it('настройка headerBlur и avatarOpensMenu есть только у темы redtf', () => {
+	it('настройка headerBlur, mobileBarBlur, mobileBarFloating и avatarOpensMenu есть только у темы redtf', () => {
 		const redtfSettings = getThemeSettings('redtf').value;
 		expect(redtfSettings.headerBlur).toBe(false);
+		expect(redtfSettings.mobileBarBlur).toBe(false);
+		expect(redtfSettings.mobileBarFloating).toBe(false);
 		expect(redtfSettings.avatarOpensMenu).toBe(true);
 
 		const dtfSettings = getThemeSettings('dtf2022').value;
 		expect(dtfSettings.headerBlur).toBeUndefined();
+		expect(dtfSettings.mobileBarBlur).toBeUndefined();
+		expect(dtfSettings.mobileBarFloating).toBeUndefined();
 		expect(dtfSettings.avatarOpensMenu).toBeUndefined();
+	});
+
+	it('геттеры themeSettings корректно отражают mobileBarBlur и mobileBarFloating', () => {
+		activeTheme.set('redtf');
+		expect(redtfThemeSettings.mobileBarBlur).toBe(false);
+		expect(redtfThemeSettings.mobileBarFloating).toBe(false);
+
+		getThemeSettings('redtf').patch({ mobileBarBlur: true, mobileBarFloating: true });
+		expect(redtfThemeSettings.mobileBarBlur).toBe(true);
+		expect(redtfThemeSettings.mobileBarFloating).toBe(true);
 	});
 });

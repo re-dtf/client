@@ -36,6 +36,14 @@ export const themeSettings = {
 	get headerBlur(): boolean {
 		return activeThemeSettings().value.headerBlur === true;
 	},
+	/** Блюр мобильного бара */
+	get mobileBarBlur(): boolean {
+		return activeThemeSettings().value.mobileBarBlur === true;
+	},
+	/** Плавающий мобильный бар */
+	get mobileBarFloating(): boolean {
+		return activeThemeSettings().value.mobileBarFloating === true;
+	},
 	/** Клик на аватар в шапке открывает меню вместо перехода в профиль */
 	get avatarOpensMenu(): boolean {
 		return activeThemeSettings().value.avatarOpensMenu !== false;

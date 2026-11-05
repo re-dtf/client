@@ -26,6 +26,8 @@
 				if (themeId === 'redtf') {
 					const themeSt = JSON.parse(localStorage.getItem('redtf:theme:redtf'));
 					if (themeSt?.d?.headerBlur) document.documentElement.dataset.headerBlur = 'true';
+					if (themeSt?.d?.mobileBarBlur) document.documentElement.dataset.mobileBarBlur = 'true';
+					if (themeSt?.d?.mobileBarFloating) document.documentElement.dataset.mobileBarFloating = 'true';
 				}
 				const supportsDark = themeId === 'redtf';
 				const cs = st?.d?.colorScheme ?? 'auto';
