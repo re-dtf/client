@@ -141,7 +141,34 @@ function getMotion(): ThemeMotion {
 			],
 			duration: 500,
 			easing: ease.out
-		}
+		},
+		// 6. Быстрый переход (из кэша): старый экран мягко растворяется с отходом вглубь
+		fastDepart: {
+			keyframes: [
+				{ transform: 'none', opacity: 1 },
+				{ transform: 'translateY(-16px) scale(0.98)', opacity: 0 }
+			],
+			duration: 300,
+			easing: ease.smooth
+		},
+		// 7. Быстрый переход (из кэша): новый экран плавно всплывает с мягким размытием (если включена прозрачность)
+		fastApproach: blur
+			? {
+					keyframes: [
+						{ transform: 'translateY(36px) scale(0.97)', opacity: 0, filter: 'blur(8px)' },
+						{ transform: 'none', opacity: 1, filter: 'blur(0px)' }
+					],
+					duration: 400,
+					easing: ease.smooth
+			  }
+			: {
+					keyframes: [
+						{ transform: 'translateY(36px) scale(0.97)', opacity: 0 },
+						{ transform: 'none', opacity: 1 }
+					],
+					duration: 400,
+					easing: ease.smooth
+			  }
 	};
 }
 

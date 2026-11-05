@@ -157,15 +157,14 @@ export const fluent: ThemeMotion = {
 	fastDepart: {
 		keyframes: [
 			{ transform: 'none', opacity: 1 },
-			{ transform: 'translateY(-20px) scale(0.98)', opacity: 0 }
+			{ transform: 'translateY(-16px) scale(0.98)', opacity: 0 }
 		],
 		duration: 300,
 		easing: ease.smooth
 	},
 	fastApproach: {
 		keyframes: [
-			{ transform: 'translateY(40px) scale(0.97)', opacity: 0 },
-			{ transform: 'translateY(12px) scale(0.99)', opacity: 0.85, offset: 0.45 },
+			{ transform: 'translateY(36px) scale(0.97)', opacity: 0 },
 			{ transform: 'none', opacity: 1 }
 		],
 		duration: 400,

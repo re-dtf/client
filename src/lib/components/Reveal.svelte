@@ -82,7 +82,6 @@
 				const screenEl = (layerEl?.firstElementChild as HTMLElement) ?? stage;
 				if (screenEl) await incomingReady(currentLayer, screenEl);
 				if (!live) return;
-				await tick();
 				onshow?.();
 				onreveal?.();
 				return;

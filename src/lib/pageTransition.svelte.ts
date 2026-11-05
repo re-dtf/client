@@ -194,41 +194,7 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 	const motion = activeTheme.motion;
 	const promises: Promise<unknown>[] = [];
 
-	// 1. Анимация ухода старого экрана
-	if (outgoingScreen) {
-		if (isInstantTransition) {
-			const fastDepartAnim = motion?.fastDepart ?? fluent.fastDepart;
-			if (fastDepartAnim) {
-				currentRecedeAnim?.cancel();
-				currentRecedeAnim = undefined;
-
-				currentDepartAnim = play(outgoingScreen, fastDepartAnim, 'forwards');
-				if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
-			}
-		} else if (motion?.depart) {
-			try {
-				currentRecedeAnim?.commitStyles?.();
-				currentWaitAnim?.commitStyles?.();
-			} catch {}
-			currentRecedeAnim?.cancel();
-			currentWaitAnim?.cancel();
-
-			currentDepartAnim = play(outgoingScreen, motion.depart, 'forwards');
-			if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
-		}
-	}
-
-	// Делаем входящий экран видимым перед началом анимации
-	incomingHidden = false;
-	const parentLayer = incomingScreen.closest('[data-layer]') as HTMLElement | null;
-	if (parentLayer) {
-		parentLayer.style.visibility = 'visible';
-	}
-	incomingScreen.style.visibility = 'visible';
-	incomingScreen.style.willChange = 'transform, opacity';
-	await tick();
-
-	// 2. Анимация появления нового экрана
+	// 1. Подготовка и запуск появления нового экрана
 	const approachAnim = isInstantTransition ? (motion?.fastApproach ?? fluent.fastApproach) : motion?.approach;
 	if (approachAnim) {
 		const incomingRect = incomingScreen.getBoundingClientRect();
@@ -240,9 +206,10 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		incomingScreen.style.zIndex = '30';
 		incomingScreen.style.position = 'relative';
 		incomingScreen.style.transformOrigin = `50% ${originY}px`;
+		incomingScreen.style.willChange = 'transform, opacity, filter';
 
 		let keyframes: Keyframe[] = approachAnim.keyframes.map((kf) => ({ ...kf }));
-		if (hadHoldBlur) {
+		if (!isInstantTransition && hadHoldBlur) {
 			keyframes = keyframes.map((kf, i, arr) => {
 				const progress = i / (arr.length - 1);
 				const blur = Math.round(14 * (1 - progress));
@@ -265,14 +232,48 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 						incomingScreen.style.removeProperty('position');
 						incomingScreen.style.removeProperty('transform-origin');
 						incomingScreen.style.removeProperty('will-change');
+						incomingScreen.style.removeProperty('filter');
 					})
 					.catch(() => {
 						incomingScreen.style.removeProperty('z-index');
 						incomingScreen.style.removeProperty('position');
 						incomingScreen.style.removeProperty('transform-origin');
 						incomingScreen.style.removeProperty('will-change');
+						incomingScreen.style.removeProperty('filter');
 					})
 			);
+		}
+	}
+
+	// Делаем входящий экран видимым: он уже начал анимацию с 0-го кадра, исключая вспышку
+	incomingHidden = false;
+	const parentLayer = incomingScreen.closest('[data-layer]') as HTMLElement | null;
+	if (parentLayer) {
+		parentLayer.style.visibility = 'visible';
+	}
+	incomingScreen.style.visibility = 'visible';
+
+	// 2. Анимация ухода старого экрана (одновременно с появлением нового)
+	if (outgoingScreen) {
+		if (isInstantTransition) {
+			const fastDepartAnim = motion?.fastDepart ?? fluent.fastDepart;
+			if (fastDepartAnim) {
+				currentRecedeAnim?.cancel();
+				currentRecedeAnim = undefined;
+
+				currentDepartAnim = play(outgoingScreen, fastDepartAnim, 'forwards');
+				if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
+			}
+		} else if (motion?.depart) {
+			try {
+				currentRecedeAnim?.commitStyles?.();
+				currentWaitAnim?.commitStyles?.();
+			} catch {}
+			currentRecedeAnim?.cancel();
+			currentWaitAnim?.cancel();
+
+			currentDepartAnim = play(outgoingScreen, motion.depart, 'forwards');
+			if (currentDepartAnim) promises.push(currentDepartAnim.finished.catch(() => {}));
 		}
 	}
 
