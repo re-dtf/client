@@ -90,4 +90,52 @@ describe('redtf dark mode configuration', () => {
 		const layoutContent = fs.readFileSync(layoutPath, 'utf-8');
 		expect(layoutContent).toContain('darkreader-lock');
 	});
+
+	it('ensures Dialog and ReloadPrompt use theme CSS variables for dark mode support', () => {
+		const dialogPath = path.resolve(__dirname, '../../components/Dialog.svelte');
+		const dialogContent = fs.readFileSync(dialogPath, 'utf-8');
+		expect(dialogContent).toContain('var(--modal-backdrop');
+		expect(dialogContent).toContain('var(--bg-modal');
+		expect(dialogContent).toContain('var(--text-primary');
+		expect(dialogContent).toContain('var(--color-blue');
+		expect(dialogContent).toContain('var(--color-danger');
+		expect(dialogContent).not.toMatch(/background:\s*#fff\b/);
+
+		const reloadPromptPath = path.resolve(__dirname, '../dtf2022/ReloadPrompt.svelte');
+		const reloadPromptContent = fs.readFileSync(reloadPromptPath, 'utf-8');
+		expect(reloadPromptContent).toContain('var(--bg-card');
+		expect(reloadPromptContent).toContain('var(--text-primary');
+		expect(reloadPromptContent).toContain('var(--shadow-toast');
+		expect(reloadPromptContent).toContain('var(--color-blue');
+		expect(reloadPromptContent).not.toContain('--island-bg');
+		expect(reloadPromptContent).not.toContain('--main-text');
+	});
+
+	it('ensures source dialogs and error components use theme CSS variables', () => {
+		const bioPath = path.resolve(__dirname, '../../components/sources/BioVerification.svelte');
+		const bioContent = fs.readFileSync(bioPath, 'utf-8');
+		expect(bioContent).toContain('var(--border-color');
+		expect(bioContent).toContain('var(--text-primary');
+
+		const permPath = path.resolve(__dirname, '../../components/sources/SourcePermissions.svelte');
+		const permContent = fs.readFileSync(permPath, 'utf-8');
+		expect(permContent).toContain('var(--bg-secondary');
+		expect(permContent).toContain('var(--text-primary');
+
+		const catalogPath = path.resolve(__dirname, '../../components/sources/SourceCatalog.svelte');
+		const catalogContent = fs.readFileSync(catalogPath, 'utf-8');
+		expect(catalogContent).toContain('var(--bg-secondary');
+		expect(catalogContent).toContain('var(--text-primary');
+
+		const updatePath = path.resolve(__dirname, '../../components/sources/SourceUpdate.svelte');
+		const updateContent = fs.readFileSync(updatePath, 'utf-8');
+		expect(updateContent).toContain('var(--bg-secondary');
+		expect(updateContent).toContain('var(--text-primary');
+
+		const errorStatePath = path.resolve(__dirname, '../../components/NetworkErrorState.svelte');
+		const errorStateContent = fs.readFileSync(errorStatePath, 'utf-8');
+		expect(errorStateContent).toContain('var(--bg-card');
+		expect(errorStateContent).toContain('var(--border-subtle');
+		expect(errorStateContent).toContain('var(--bg-button-hover');
+	});
 });

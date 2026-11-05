@@ -139,17 +139,15 @@
 </Dialog>
 
 <style>
-
-
 	.modal-header {
 		padding: 16px 20px;
-		border-bottom: 1px solid #eee;
+		border-bottom: 1px solid var(--border-color, #eee);
 	}
 
 	.modal-header h3 {
 		margin: 0;
 		font-size: 18px;
-		color: #333;
+		color: var(--text-primary, #333);
 	}
 
 	.modal-body {
@@ -171,15 +169,15 @@
 
 	.attempt-info {
 		font-size: 13px;
-		color: #666;
-		background: #f0f0f0;
+		color: var(--text-muted, #666);
+		background: var(--bg-secondary, #f0f0f0);
 		padding: 4px 8px;
 		border-radius: 4px;
 	}
 
 	.warning {
 		font-size: 12px;
-		color: #e65100;
+		color: var(--color-dislike, #e65100);
 		margin-top: 8px;
 	}
 
@@ -193,7 +191,7 @@
 	.success-icon {
 		width: 48px;
 		height: 48px;
-		background: #4caf50;
+		background: var(--color-positive, #4caf50);
 		color: white;
 		border-radius: 50%;
 		display: flex;
@@ -205,13 +203,13 @@
 
 	.sub-text {
 		font-size: 13px;
-		color: #666;
+		color: var(--text-muted, #666);
 		margin: 0;
 	}
 
 	.error-step {
-		color: #d32f2f;
-		background: #ffebee;
+		color: var(--color-danger-text, #d32f2f);
+		background: var(--color-danger-bg, #ffebee);
 		padding: 16px;
 		border-radius: 6px;
 	}
@@ -223,15 +221,15 @@
 
 	.modal-footer {
 		padding: 12px 20px;
-		border-top: 1px solid #eee;
+		border-top: 1px solid var(--border-color, #eee);
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
 	}
 
 	.spinner {
-		border: 3px solid #f3f3f3;
-		border-top: 3px solid #1976d2;
+		border: 3px solid var(--border-subtle, #f3f3f3);
+		border-top: 3px solid var(--color-blue, #1976d2);
 		border-radius: 50%;
 		width: 32px;
 		height: 32px;

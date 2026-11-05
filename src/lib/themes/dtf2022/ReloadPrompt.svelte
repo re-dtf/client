@@ -48,7 +48,7 @@
 {/if}
 
 <style>
-	/* Базовая структура и заглушка оформления. Дизайн можно переписать под тему dtf2022 */
+	/* Базовая структура и оформление плашки обновления PWA / новой сборки */
 	.pwa-prompt {
 		position: fixed;
 		bottom: 24px;
@@ -61,10 +61,10 @@
 		max-width: 360px;
 		padding: 16px;
 		border-radius: 8px;
-		background: var(--island-bg, #ffffff);
-		color: var(--main-text, #000000);
+		background: var(--bg-card, #ffffff);
+		color: var(--text-primary, #000000);
 		border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+		box-shadow: var(--shadow-toast, 0 4px 20px rgba(0, 0, 0, 0.15));
 		font-family: inherit;
 		box-sizing: border-box;
 	}
@@ -79,22 +79,23 @@
 		font-weight: 600;
 		font-size: 14px;
 		line-height: 1.3;
+		color: var(--text-primary, inherit);
 	}
 
 	.pwa-prompt__version {
 		font-size: 13px;
-		color: var(--secondary-text, #666666);
+		color: var(--text-secondary, #666666);
 		line-height: 1.4;
 	}
 
 	.pwa-prompt__badge {
 		font-weight: 600;
-		color: var(--accent, #1693e5);
+		color: var(--color-accent, #1693e5);
 	}
 
 	.pwa-prompt__link {
 		font-size: 12px;
-		color: var(--accent, #1693e5);
+		color: var(--text-link, var(--color-accent, #1693e5));
 		text-decoration: none;
 		margin-top: 2px;
 		display: inline-flex;
@@ -118,9 +119,10 @@
 		border-radius: 6px;
 		font-size: 13px;
 		font-weight: 500;
+		font-family: inherit;
 		cursor: pointer;
 		border: none;
-		transition: opacity 0.15s ease;
+		transition: opacity 0.15s ease, background-color var(--duration-base);
 	}
 
 	.pwa-prompt__btn:hover {
@@ -128,13 +130,18 @@
 	}
 
 	.pwa-prompt__btn--primary {
-		background: var(--accent, #1693e5);
-		color: #ffffff;
+		background: var(--color-blue, var(--color-accent, #1693e5));
+		color: var(--text-submit-button, #ffffff);
 	}
 
 	.pwa-prompt__btn--secondary {
-		background: var(--secondary-bg, rgba(0, 0, 0, 0.06));
-		color: var(--main-text, #000000);
+		background: var(--bg-button, var(--bg-secondary, rgba(0, 0, 0, 0.06)));
+		color: var(--text-primary, #000000);
+		border: 1px solid var(--border-color, transparent);
+	}
+
+	.pwa-prompt__btn--secondary:hover {
+		background: var(--bg-button-hover, var(--bg-card-hover, rgba(0, 0, 0, 0.08)));
 	}
 
 	@media (max-width: 640px) {

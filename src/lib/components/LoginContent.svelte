@@ -410,10 +410,12 @@
 	.login-container {
 		max-width: 480px;
 		margin: 40px auto;
-		background: white;
+		background: var(--bg-card, white);
+		color: var(--text-primary, inherit);
 		padding: 30px;
 		border-radius: 8px;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		border: 1px solid var(--border-subtle, transparent);
+		box-shadow: var(--shadow-card, 0 4px 12px rgba(0, 0, 0, 0.1));
 	}
 
 	/* Мобильный экран телефона: на весь экран по аналогии с настройками */
@@ -457,7 +459,7 @@
 
 	.tabs {
 		display: flex;
-		border-bottom: 1px solid #ddd;
+		border-bottom: 1px solid var(--border-color, #ddd);
 		margin-bottom: 20px;
 	}
 
@@ -468,13 +470,14 @@
 		padding: 10px;
 		font-size: 15px;
 		cursor: pointer;
-		color: #666;
+		color: var(--text-muted, #666);
 		border-bottom: 2px solid transparent;
 		transition: all 0.2s;
 	}
 
 	.tab:hover {
-		background: #f9f9f9;
+		background: var(--bg-card-hover, #f9f9f9);
+		color: var(--text-primary);
 	}
 
 	.tab.active {

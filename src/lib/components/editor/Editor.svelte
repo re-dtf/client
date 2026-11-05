@@ -63,10 +63,10 @@
 <style>
 	.editor-container {
 		min-height: 300px;
-		background: #fff;
+		background: var(--bg-card, #fff);
 		border-radius: 8px;
 		padding: 20px 40px;
-		color: #1a1a1a;
+		color: var(--text-primary, #1a1a1a);
 		font-family: inherit;
 	}
 	

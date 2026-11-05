@@ -15,10 +15,10 @@
 
 <style>
 	.back-link {
-		background: #f4f5f7;
-		border: none;
+		background: var(--bg-button, #f4f5f7);
+		border: 1px solid var(--border-color, transparent);
 		border-radius: 6px;
-		color: #333;
+		color: var(--text-primary, #333);
 		cursor: pointer;
 		font-size: 14px;
 		padding: 8px 16px;
@@ -26,6 +26,6 @@
 		transition: background var(--duration-base);
 	}
 	.back-link:hover {
-		background: #e4e5e7;
+		background: var(--bg-button-hover, #e4e5e7);
 	}
 </style>

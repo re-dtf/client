@@ -44,7 +44,7 @@
 		justify-content: center;
 		padding: 16px;
 		overflow-x: hidden;
-		background: rgba(0, 0, 0, 0.5);
+		background: var(--modal-backdrop, rgba(0, 0, 0, 0.5));
 	}
 
 	.dialog {
@@ -56,8 +56,10 @@
 		padding: 24px;
 		overflow-y: auto;
 		border-radius: 12px;
-		background: #fff;
-		box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+		background: var(--bg-modal, var(--bg-card, #fff));
+		color: var(--text-primary, inherit);
+		border: 1px solid var(--border-subtle, transparent);
+		box-shadow: var(--shadow-popup, 0 4px 24px rgba(0, 0, 0, 0.15));
 	}
 
 	.dialog.flush {
@@ -72,35 +74,36 @@
 		border-radius: 6px;
 		font-size: 14px;
 		font-weight: 500;
+		font-family: inherit;
 		cursor: pointer;
-		transition: background-color var(--duration-base);
+		transition: background-color var(--duration-base), border-color var(--duration-base), color var(--duration-base);
 	}
 
 	.dialog :global(.btn.primary) {
-		background: #1976d2;
-		color: #fff;
+		background: var(--color-blue, #1976d2);
+		color: var(--text-submit-button, #fff);
 	}
 
 	.dialog :global(.btn.primary:hover) {
-		background: #1565c0;
+		background: var(--bg-submit-button--hover, #1565c0);
 	}
 
 	.dialog :global(.btn.secondary) {
-		border-color: #ccc;
-		background: #fff;
-		color: #333;
+		border-color: var(--border-color, #ccc);
+		background: var(--bg-button, #fff);
+		color: var(--text-primary, #333);
 	}
 
 	.dialog :global(.btn.secondary:hover) {
-		background: #f0f0f0;
+		background: var(--bg-button-hover, #f0f0f0);
 	}
 
 	.dialog :global(.btn.danger) {
 		background: transparent;
-		color: #d32f2f;
+		color: var(--color-danger, #d32f2f);
 	}
 
 	.dialog :global(.btn.danger:hover) {
-		background: #ffebee;
+		background: var(--color-danger-bg, #ffebee);
 	}
 </style>

@@ -182,8 +182,10 @@
 		z-index: 5;
 		translate: -50% 0;
 		border-radius: 999px;
-		background: #fff;
-		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+		background: var(--bg-card, #fff);
+		color: var(--text-primary, inherit);
+		border: 1px solid var(--border-subtle, transparent);
+		box-shadow: var(--shadow-popup, 0 2px 12px rgba(0, 0, 0, 0.18));
 		animation: refresh-in 0.25s cubic-bezier(0.165, 0.84, 0.44, 1) backwards;
 		pointer-events: none;
 	}
@@ -197,7 +199,7 @@
 	.empty, .infinite-loader {
 		text-align: center;
 		padding: 40px;
-		color: #666;
+		color: var(--text-muted, #666);
 		font-size: 1.1em;
 	}
 	.infinite-loader {

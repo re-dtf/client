@@ -14,17 +14,17 @@
  */
 
 :root {
-	--dtf-editor-bg: #fff;
-	--dtf-editor-bg-secondary: #f9f9f9;
-	--dtf-editor-bg-hover: #f0f0f0;
-	--dtf-editor-border: #e5e5e5;
-	--dtf-editor-border-hover: #d0d0d0;
-	--dtf-editor-text: #1a1a1a;
-	--dtf-editor-text-secondary: #777;
-	--dtf-editor-accent-bg: #e6f3ff;
-	--dtf-editor-accent-border: #b3d9ff;
-	--dtf-editor-accent-text: #0066cc;
-	--dtf-editor-danger: #ff4d4d;
+	--dtf-editor-bg: var(--bg-card, #fff);
+	--dtf-editor-bg-secondary: var(--bg-secondary, #f9f9f9);
+	--dtf-editor-bg-hover: var(--bg-card-hover, #f0f0f0);
+	--dtf-editor-border: var(--border-color, #e5e5e5);
+	--dtf-editor-border-hover: var(--border-focus, #d0d0d0);
+	--dtf-editor-text: var(--text-primary, #1a1a1a);
+	--dtf-editor-text-secondary: var(--text-secondary, #777);
+	--dtf-editor-accent-bg: var(--bg-nav-tab-active, #e6f3ff);
+	--dtf-editor-accent-border: var(--border-focus, #b3d9ff);
+	--dtf-editor-accent-text: var(--color-blue, #0066cc);
+	--dtf-editor-danger: var(--color-danger, #ff4d4d);
 }
 
 /* Spoiler Tune */
@@ -187,7 +187,7 @@
 	width: 80px;
 	height: 80px;
 	border-radius: 50%;
-	background: #e0e0e0;
+	background: var(--bg-tertiary, #e0e0e0);
 	overflow: hidden;
 	display: flex;
 	align-items: center;
@@ -205,7 +205,7 @@
 
 .dtf-person-tool-avatar-placeholder {
 	font-size: 12px;
-	color: #777;
+	color: var(--text-muted, #777);
 	position: absolute;
 }
 

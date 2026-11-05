@@ -136,14 +136,14 @@
 		flex-direction: column;
 		gap: 12px;
 	}
-	h2 { margin: 0; font-size: 20px; color: #333; }
-	p { margin: 0; font-size: 15px; color: #444; }
-	h3 { margin: 0; font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+	h2 { margin: 0; font-size: 20px; color: var(--text-primary, #333); }
+	p { margin: 0; font-size: 15px; color: var(--text-secondary, #444); }
+	h3 { margin: 0; font-size: 14px; color: var(--text-muted, #666); text-transform: uppercase; letter-spacing: 0.5px; }
 	
 	.version-badge {
 		align-self: flex-start;
-		background: #e3f2fd;
-		color: #1976d2;
+		background: var(--bg-highlight, #e3f2fd);
+		color: var(--color-blue, #1976d2);
 		padding: 4px 12px;
 		border-radius: 16px;
 		font-weight: 500;
@@ -151,13 +151,13 @@
 	}
 
 	.changelog-box {
-		background: #f8f9fa;
-		border: 1px solid #eee;
+		background: var(--bg-secondary, #f8f9fa);
+		border: 1px solid var(--border-color, #eee);
 		padding: 12px;
 		border-radius: 8px;
 		font-family: monospace;
 		font-size: 13px;
-		color: #333;
+		color: var(--text-primary, #333);
 		white-space: pre-wrap;
 		max-height: 150px;
 		overflow-y: auto;
@@ -167,17 +167,17 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		background: #f8f9fa;
+		background: var(--bg-secondary, #f8f9fa);
 		padding: 12px;
 		border-radius: 8px;
-		border: 1px solid #eee;
+		border: 1px solid var(--border-color, #eee);
 	}
 	.endpoint-item {
 		display: flex;
 		gap: 12px;
 		align-items: flex-start;
 		padding-bottom: 8px;
-		border-bottom: 1px solid #eee;
+		border-bottom: 1px solid var(--border-color, #eee);
 	}
 	.endpoint-item:last-child {
 		border-bottom: none;
@@ -191,10 +191,10 @@
 		background: #ccc;
 		color: white;
 	}
-	.method.get { background: #4caf50; }
-	.method.post { background: #2196f3; }
-	.method.put { background: #ff9800; }
-	.method.delete { background: #f44336; }
+	.method.get { background: var(--color-positive, #4caf50); }
+	.method.post { background: var(--color-blue, #2196f3); }
+	.method.put { background: var(--color-dislike, #ff9800); }
+	.method.delete { background: var(--color-danger, #f44336); }
 	
 	.endpoint-info {
 		display: flex;
@@ -202,8 +202,8 @@
 		gap: 2px;
 		font-size: 13px;
 	}
-	.endpoint-info strong { color: #333; }
-	.endpoint-info span { color: #666; }
+	.endpoint-info strong { color: var(--text-primary, #333); }
+	.endpoint-info span { color: var(--text-secondary, #666); }
 	
 	.permission-item {
 		display: flex;
@@ -211,7 +211,7 @@
 		align-items: flex-start;
 		font-size: 14px;
 		cursor: pointer;
-		color: #333;
+		color: var(--text-primary, #333);
 	}
 	.permission-item.required {
 		opacity: 0.8;
@@ -221,8 +221,8 @@
 		margin-top: 3px;
 	}
 
-	.diff-added strong { color: #2e7d32; }
-	.diff-modified strong { color: #f57c00; }
+	.diff-added strong { color: var(--color-positive, #2e7d32); }
+	.diff-modified strong { color: var(--color-dislike, #f57c00); }
 	.diff-removed { opacity: 0.6; text-decoration: line-through; }
 	
 	.actions {

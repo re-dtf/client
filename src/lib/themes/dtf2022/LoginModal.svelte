@@ -624,19 +624,19 @@
 		padding: 10px 14px;
 		border-radius: 8px;
 		cursor: pointer;
-		border: 1px solid rgba(0, 0, 0, 0.08);
-		background: #fbfbfb;
+		border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+		background: var(--bg-secondary, #fbfbfb);
 		transition: all 0.12s ease;
 	}
 
 	.p-opt:hover {
-		background: #fff;
-		border-color: #c4d7ed;
+		background: var(--bg-card-hover, #fff);
+		border-color: var(--border-focus, #c4d7ed);
 	}
 
 	.p-opt--active {
-		background: #f4f8fe;
-		border-color: #3584e4;
+		background: var(--bg-nav-tab-active, #f4f8fe);
+		border-color: var(--color-blue, #3584e4);
 	}
 
 	.p-opt__radio {
@@ -647,14 +647,14 @@
 		width: 18px;
 		height: 18px;
 		border-radius: 50%;
-		border: 2px solid rgba(0, 0, 0, 0.28);
-		background: #fff;
+		border: 2px solid var(--border-checkbox, rgba(0, 0, 0, 0.28));
+		background: var(--bg-card, #fff);
 		flex-shrink: 0;
 		transition: border-color 0.15s ease;
 	}
 
 	.p-opt--active .p-opt__radio {
-		border-color: #3584e4;
+		border-color: var(--color-blue, #3584e4);
 	}
 
 	.p-opt__radio input[type='radio'] {
@@ -798,9 +798,9 @@
 	}
 
 	.auth__action-btn {
-		background: #fff;
-		border: 1px solid #e52a42;
-		color: #e52a42;
+		background: var(--bg-button, #fff);
+		border: 1px solid var(--color-danger, #e52a42);
+		color: var(--color-danger, #e52a42);
 		border-radius: 6px;
 		padding: 7px 12px;
 		font-size: 12px;
@@ -811,17 +811,17 @@
 	}
 
 	.auth__action-btn:hover {
-		background: #ffe6e9;
+		background: var(--color-danger-bg, #ffe6e9);
 	}
 
 	.auth__action-btn--quick {
-		background: #3584e4;
-		border-color: #3584e4;
-		color: #fff;
+		background: var(--color-blue, #3584e4);
+		border-color: var(--color-blue, #3584e4);
+		color: var(--text-submit-button, #fff);
 	}
 
 	.auth__action-btn--quick:hover {
-		background: #2868b2;
+		background: var(--bg-submit-button--hover, #2868b2);
 	}
 
 	/* Мобильный экран: на весь экран по аналогии с настройками */

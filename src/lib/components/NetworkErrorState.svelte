@@ -91,8 +91,8 @@
 		padding: 28px 24px;
 		border-radius: 8px;
 		background: var(--bg-card, #fff);
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-		border: 1px solid rgba(0, 0, 0, 0.06);
+		box-shadow: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.08));
+		border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
 		text-align: left;
 	}
 
@@ -110,18 +110,18 @@
 		width: 48px;
 		height: 48px;
 		border-radius: 50%;
-		background: #fff4e5;
-		color: #e65100;
+		background: var(--bg-coin, #fff4e5);
+		color: var(--color-dislike, #e65100);
 	}
 
 	.error-island__icon-box--error {
-		background: #ffebee;
-		color: #d32f2f;
+		background: var(--color-danger-bg, #ffebee);
+		color: var(--color-danger-text, #d32f2f);
 	}
 
 	.error-island__icon-box--info {
-		background: #e3f2fd;
-		color: #1976d2;
+		background: var(--bg-highlight, #e3f2fd);
+		color: var(--color-blue, #1976d2);
 	}
 
 	.error-island__text {
@@ -139,18 +139,18 @@
 		font-weight: 700;
 		letter-spacing: 0.5px;
 		text-transform: uppercase;
-		background: #ffe0b2;
-		color: #b24100;
+		background: var(--bg-coin, #ffe0b2);
+		color: var(--color-dislike, #b24100);
 	}
 
 	.error-island__badge--error {
-		background: #ffcdd2;
-		color: #b71c1c;
+		background: var(--color-danger-bg, #ffcdd2);
+		color: var(--color-danger-text, #b71c1c);
 	}
 
 	.error-island__badge--info {
-		background: #bbdefb;
-		color: #0d47a1;
+		background: var(--bg-highlight, #bbdefb);
+		color: var(--color-blue, #0d47a1);
 	}
 
 	.error-island__title {
@@ -182,7 +182,7 @@
 		height: 40px;
 		padding: 0 16px;
 		border-radius: 8px;
-		border: 1px solid rgba(0, 0, 0, 0.1);
+		border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
 		background: var(--bg-button, #fff);
 		color: var(--text-primary, #000);
 		font-size: 14px;
@@ -194,14 +194,14 @@
 	}
 
 	.error-btn:hover {
-		background: #f5f5f5;
+		background: var(--bg-button-hover, #f5f5f5);
 	}
 
 	.error-btn--primary {
 		border: none;
 		background: var(--bg-submit-button, #4683d9);
 		color: var(--text-submit-button, #fff);
-		box-shadow: 0 1px 2px rgba(70, 131, 217, 0.4);
+		box-shadow: var(--shadow-button-blue, 0 1px 2px rgba(70, 131, 217, 0.4));
 	}
 
 	.error-btn--primary:hover {

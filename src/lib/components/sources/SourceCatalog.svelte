@@ -108,7 +108,7 @@
 	.header h2 {
 		margin: 0;
 		font-size: 20px;
-		color: #333;
+		color: var(--text-primary, #333);
 	}
 	.close-btn {
 		background: none;
@@ -116,16 +116,16 @@
 		font-size: 24px;
 		line-height: 1;
 		cursor: pointer;
-		color: #999;
+		color: var(--text-muted, #999);
 	}
 	.close-btn:hover {
-		color: #333;
+		color: var(--text-primary, #333);
 	}
 
 	.loading, .empty {
 		text-align: center;
 		padding: 40px;
-		color: #666;
+		color: var(--text-muted, #666);
 	}
 
 	.catalog-list {
@@ -139,9 +139,9 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 16px;
-		background: #f8f9fa;
+		background: var(--bg-secondary, #f8f9fa);
 		border-radius: 8px;
-		border: 1px solid #eee;
+		border: 1px solid var(--border-color, #eee);
 		gap: 16px;
 	}
 
@@ -150,8 +150,8 @@
 		height: 48px;
 		border-radius: 8px;
 		object-fit: cover;
-		background: white;
-		border: 1px solid #e0e0e0;
+		background: var(--bg-card, white);
+		border: 1px solid var(--border-color, #e0e0e0);
 		flex-shrink: 0;
 	}
 
@@ -171,7 +171,7 @@
 	.title-row h3 {
 		margin: 0;
 		font-size: 16px;
-		color: #333;
+		color: var(--text-primary, #333);
 	}
 
 	.verified-badge {
@@ -179,18 +179,18 @@
 		align-items: center;
 		gap: 4px;
 		padding: 2px 8px;
-		background: #e8f5e9;
-		color: #2e7d32;
+		background: var(--color-success-bg, #e8f5e9);
+		color: var(--color-success-text, #2e7d32);
 		border-radius: 12px;
 		font-size: 11px;
 		font-weight: 600;
-		border: 1px solid #c8e6c9;
+		border: 1px solid var(--color-success-text, #c8e6c9);
 	}
 
 	.desc {
 		margin: 0;
 		font-size: 14px;
-		color: #555;
+		color: var(--text-secondary, #555);
 	}
 
 	.meta {
@@ -198,7 +198,7 @@
 		align-items: center;
 		gap: 12px;
 		font-size: 12px;
-		color: #777;
+		color: var(--text-muted, #777);
 		margin-top: 4px;
 	}
 
@@ -208,10 +208,10 @@
 	}
 
 	.tag {
-		background: #e0e0e0;
+		background: var(--bg-tertiary, #e0e0e0);
 		padding: 2px 6px;
 		border-radius: 4px;
-		color: #555;
+		color: var(--text-secondary, #555);
 	}
 
 	.install-btn {
@@ -221,14 +221,14 @@
 
 	.footer-meta {
 		font-size: 12px;
-		color: #999;
+		color: var(--text-muted, #999);
 		text-align: right;
 	}
 
 	.error {
 		text-align: center;
 		padding: 30px;
-		color: #d32f2f;
+		color: var(--color-danger-text, #d32f2f);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -236,7 +236,8 @@
 	}
 	.error-msg {
 		font-family: monospace;
-		background: #fbe9e7;
+		background: var(--color-danger-bg, #fbe9e7);
+		color: var(--color-danger-text, inherit);
 		padding: 8px;
 		border-radius: 4px;
 	}

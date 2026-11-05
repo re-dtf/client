@@ -557,6 +557,7 @@
 		margin: 0;
 		font-size: 17px;
 		font-weight: 600;
+		color: var(--text-primary, inherit);
 	}
 
 	.pwa-dialog__desc {

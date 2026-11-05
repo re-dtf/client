@@ -26,9 +26,9 @@
 		gap: 4px;
 		font-size: 0.75em;
 		padding: 2px 6px;
-		background: rgba(0, 0, 0, 0.05);
+		background: var(--bg-card-hover, rgba(0, 0, 0, 0.05));
 		border-radius: 4px;
-		color: #666;
+		color: var(--text-secondary, #666);
 		margin-left: 8px;
 		vertical-align: middle;
 	}
