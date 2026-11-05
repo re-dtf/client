@@ -49,12 +49,18 @@
 		color: var(--ink);
 	}
 	@media (prefers-color-scheme: dark) {
-		.welcome {
+		:global(html:not([data-theme-mode='light'])) .welcome {
 			--ink: #fff;
 			--card: #1c1c1e;
 			--legal: rgb(255 255 255 / 0.5);
 			--link: rgb(150 190 230 / 0.6);
 		}
+	}
+	:global(html[data-theme-mode='dark']) .welcome {
+		--ink: #fff;
+		--card: #1c1c1e;
+		--legal: rgb(255 255 255 / 0.5);
+		--link: rgb(150 190 230 / 0.6);
 	}
 
 	/* Заголовок по центру кадра макета (514 из 1080) */

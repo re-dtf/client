@@ -91,6 +91,28 @@ describe('redtf dark mode configuration', () => {
 		expect(layoutContent).toContain('darkreader-lock');
 	});
 
+	it('prevents dark theme white flash before load in app.html and app.css', () => {
+		const appHtmlPath = path.resolve(__dirname, '../../../app.html');
+		const appHtmlContent = fs.readFileSync(appHtmlPath, 'utf-8');
+		const headIndex = appHtmlContent.indexOf('%sveltekit.head%');
+		const scriptIndex = appHtmlContent.indexOf('<script>');
+		const styleIndex = appHtmlContent.indexOf('<style>');
+
+		expect(scriptIndex).toBeGreaterThan(-1);
+		expect(styleIndex).toBeGreaterThan(-1);
+		expect(scriptIndex).toBeLessThan(headIndex);
+		expect(styleIndex).toBeLessThan(headIndex);
+
+		expect(appHtmlContent).toContain("html[data-theme-mode='dark']");
+		expect(appHtmlContent).toContain('#141414');
+
+		const appCssPath = path.resolve(__dirname, '../../../app.css');
+		const appCssContent = fs.readFileSync(appCssPath, 'utf-8');
+		expect(appCssContent).toContain('color-scheme: light dark');
+		expect(appCssContent).toContain('html[data-theme-mode="dark"]');
+		expect(appCssContent).toContain('#141414');
+	});
+
 	it('ensures Dialog and ReloadPrompt use theme CSS variables for dark mode support', () => {
 		const dialogPath = path.resolve(__dirname, '../../components/Dialog.svelte');
 		const dialogContent = fs.readFileSync(dialogPath, 'utf-8');
