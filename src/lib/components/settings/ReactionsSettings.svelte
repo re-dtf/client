@@ -3,7 +3,7 @@
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsSegmented from './SettingsSegmented.svelte';
-	import { REACTIONS, type ReactionKind } from '$lib/config/reactions';
+	import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS, type ReactionKind } from '$lib/config/reactions';
 	import { reactionSettings, resetRules, ruleOf, setRule, voteReaction } from '$lib/storage/reactions.svelte';
 
 	/*
@@ -23,9 +23,26 @@
 </script>
 
 {#snippet picker(title: string, subtitle: string, kind: ReactionKind, current: number, onpick: (id: number) => void)}
+	{@const free = FREE_REACTION_IDS.filter((id) => ruleOf(id).kind === kind)}
+	{@const plus = PLUS_REACTION_IDS.filter((id) => ruleOf(id).kind === kind)}
 	<SettingsRow {title} {subtitle}>
 		<div class="picks">
-			{#each idsOf(kind) as id (id)}
+			{#each free as id (id)}
+				<button
+					class="pick"
+					type="button"
+					title={REACTIONS[id].name}
+					aria-label={REACTIONS[id].name}
+					aria-pressed={id === current}
+					onclick={() => onpick(id)}
+				>
+					<img src={REACTIONS[id].url} width="28" height="28" alt="" />
+				</button>
+			{/each}
+			{#if free.length > 0 && plus.length > 0}
+				<div class="picks-divider" role="separator" aria-orientation="horizontal"></div>
+			{/if}
+			{#each plus as id (id)}
 				<button
 					class="pick"
 					type="button"
@@ -96,6 +113,13 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 4px;
+	}
+
+	.picks-divider {
+		flex-basis: 100%;
+		height: 1px;
+		margin: 4px 0;
+		background: var(--st-separator);
 	}
 
 	.pick {

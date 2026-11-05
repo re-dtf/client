@@ -4,7 +4,7 @@
 	import { cubicOut } from 'svelte/easing';
 	import { fade, fly } from 'svelte/transition';
 	import type { Reactions } from '$lib/api/types';
-	import { REACTIONS } from '$lib/config/reactions';
+	import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS } from '$lib/config/reactions';
 	import { reducedMotion } from '$lib/motion';
 	import { formatNumber } from '../format';
 
@@ -101,13 +101,27 @@
 			in:fade={{ duration: ms(150) }}
 			out:fade={{ duration: ms(100) }}
 		>
-			{#each Object.entries(REACTIONS) as [id, reaction] (id)}
+			{#each FREE_REACTION_IDS as id (id)}
+				{@const reaction = REACTIONS[id]}
 				<button
-					class={['post-reactions__pick', { 'post-reactions__pick--active': reactions?.reactionId === Number(id) }]}
+					class={['post-reactions__pick', { 'post-reactions__pick--active': reactions?.reactionId === id }]}
 					role="menuitem"
 					aria-label={reaction.name}
 					title={reaction.name}
-					onclick={() => pick(Number(id))}
+					onclick={() => pick(id)}
+				>
+					<img src={reaction.url} width="24" height="24" alt="" />
+				</button>
+			{/each}
+			<div class="post-reactions__picker-divider" role="separator" aria-orientation="horizontal"></div>
+			{#each PLUS_REACTION_IDS as id (id)}
+				{@const reaction = REACTIONS[id]}
+				<button
+					class={['post-reactions__pick', { 'post-reactions__pick--active': reactions?.reactionId === id }]}
+					role="menuitem"
+					aria-label={reaction.name}
+					title={reaction.name}
+					onclick={() => pick(id)}
 				>
 					<img src={reaction.url} width="24" height="24" alt="" />
 				</button>
@@ -241,6 +255,13 @@
 		border-radius: 16px;
 		background-color: var(--bg-card);
 		box-shadow: var(--shadow-picker);
+	}
+
+	.post-reactions__picker-divider {
+		flex-basis: 100%;
+		height: 1px;
+		margin: 4px 0;
+		background-color: var(--border-subtle-2, rgba(0, 0, 0, 0.08));
 	}
 
 	.post-reactions__pick {

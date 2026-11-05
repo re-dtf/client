@@ -1,6 +1,12 @@
 import { beforeEach, describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { applyReaction, nextReactionId, rankByScore, scoreOf, votesOf } from './reactions';
 import { reactionSettings, resetRules, setRule, voteReaction } from './storage/reactions.svelte';
+import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS } from './config/reactions';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 beforeEach(() => {
 	reactionSettings.value = { rules: {}, like: 1, dislike: 23, rank: true };
@@ -94,5 +100,30 @@ describe('voteReaction', () => {
 
 		expect(voteReaction(1)).toBe(2);
 		expect(voteReaction(-1)).toBe(5);
+	});
+});
+
+describe('free vs plus reactions', () => {
+	it('разделяет бесплатные реакции (10 штук) и плюс реакции', () => {
+		expect(FREE_REACTION_IDS).toEqual([1, 2, 22, 4, 6, 3, 23, 24, 5, 9]);
+
+		for (const id of FREE_REACTION_IDS) {
+			expect(REACTIONS[id]?.isPlus).toBe(false);
+		}
+
+		for (const id of PLUS_REACTION_IDS) {
+			expect(REACTIONS[id]?.isPlus).toBe(true);
+		}
+
+		const allKeys = Object.keys(REACTIONS).map(Number);
+		expect(FREE_REACTION_IDS.length + PLUS_REACTION_IDS.length).toBe(allKeys.length);
+	});
+
+	it('Reactions.svelte и ReactionsSettings.svelte содержат полоски-разделители', () => {
+		const reactionsSvelte = fs.readFileSync(path.resolve(__dirname, 'themes/dtf2022/post/Reactions.svelte'), 'utf8');
+		expect(reactionsSvelte).toContain('post-reactions__picker-divider');
+
+		const settingsSvelte = fs.readFileSync(path.resolve(__dirname, 'components/settings/ReactionsSettings.svelte'), 'utf8');
+		expect(settingsSvelte).toContain('picks-divider');
 	});
 });
