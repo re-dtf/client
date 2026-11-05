@@ -5,7 +5,9 @@
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { openLightbox, preloadLightbox } from '$lib/navigation';
+	import { resolve } from '$app/paths';
+	import { openDtfLink, openLightbox, preloadLightbox } from '$lib/navigation';
+	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import PostCard from './PostCard.svelte';
 	import UnknownBlock from '../UnknownBlock.svelte';
 	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth, mediaPreviewUrl } from '../media';
@@ -36,6 +38,14 @@
 	const HEADINGS = ['h2', 'h3', 'h4'];
 
 	const sanitize = (html: string) => sanitizeHtml(html ?? '');
+
+	function handleContainerClick(e: MouseEvent) {
+		if (e.button !== 0 && e.button !== 1) return;
+		const anchor = (e.target as Element)?.closest?.('a');
+		if (!anchor) return;
+		const href = anchor.getAttribute('href');
+		if (href) openDtfLink(e, href);
+	}
 
 	// YouTube подгружаем только по клику
 	let playingVideos = $state<Record<string, boolean>>({});
@@ -219,8 +229,17 @@
 			<pre class="post-block post-block--code"><code>{block.data.text}</code></pre>
 		{:else if block.type === 'link' && block.data.link?.data}
 			{@const link = block.data.link.data}
+			{@const dtfTarget = parseDtfUrl(link.url)}
 			<div class="post-block post-block--link">
-				<a href={link.url} target="_blank" rel="noopener noreferrer">{link.title || link.hostname || link.url}</a>
+				{#if dtfTarget}
+					<a
+						href={resolve(dtfTargetToPath(dtfTarget) as any)}
+						onclick={(e) => openDtfLink(e, link.url)}
+						onauxclick={(e) => openDtfLink(e, link.url)}
+					>{link.title || link.hostname || link.url}</a>
+				{:else}
+					<a href={link.url} target="_blank" rel="noopener noreferrer">{link.title || link.hostname || link.url}</a>
+				{/if}
 			</div>
 		{:else if block.type === 'osnovaEmbed' && block.data.osnovaEmbed?.data}
 			{#if variant === 'page' && !block.data.osnovaEmbed.data.isNotAvailable}
@@ -233,7 +252,12 @@
 		{/if}
 {/snippet}
 
-<div class={['post-blocks', `post-blocks--${variant}`]}>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<div
+	class={['post-blocks', `post-blocks--${variant}`]}
+	onclick={handleContainerClick}
+	onauxclick={handleContainerClick}
+>
 	{#if title}
 		<div class="post-block post-block--title">{title}</div>
 	{/if}

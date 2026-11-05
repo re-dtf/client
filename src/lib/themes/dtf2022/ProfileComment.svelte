@@ -6,7 +6,8 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import type { Comment } from '$lib/api/types';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
+	import { getPostPath, getProfilePath, openDtfLink, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
+	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { ensureLogin } from './actions.svelte';
 	import { parseCommentText } from './comments/commentText';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './comments/votes.svelte';
@@ -144,7 +145,7 @@
 		{#each paragraphs as paragraph}
 			<p class={{ 'profile-comment__quote': paragraph.quote }}>
 				{#each paragraph.lines as line}
-					{#each line as part}{#if part.type === 'text'}{part.text}{:else if part.type === 'mention'}{part.name}{:else}<a href={part.url} target="_blank" rel="noopener noreferrer nofollow">{part.url}</a>{/if}{/each}<br />
+					{#each line as part}{#if part.type === 'text'}{part.text}{:else if part.type === 'mention'}<a href={resolve(getProfilePath(part.id) as any)} onclick={(e) => openProfile(e, part.id)}>{part.name}</a>{:else}{@const dtfTarget = parseDtfUrl(part.url)}{#if dtfTarget}<a href={resolve(dtfTargetToPath(dtfTarget) as any)} onclick={(e) => openDtfLink(e, part.url)} onauxclick={(e) => openDtfLink(e, part.url)}>{part.url}</a>{:else}<a href={part.url} target="_blank" rel="noopener noreferrer nofollow">{part.url}</a>{/if}{/if}{/each}<br />
 				{/each}
 			</p>
 		{/each}

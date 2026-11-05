@@ -38,4 +38,12 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('class="comment-item__time-badge"');
 		expect(svelteContent).toContain('cursor: pointer');
 	});
+
+	it('обрабатывает ссылки DTF внутри приложения через openDtfLink', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('openDtfLink');
+		expect(svelteContent).toContain('dtfTargetToPath');
+		expect(svelteContent).toContain('parseDtfUrl(part.url)');
+	});
 });

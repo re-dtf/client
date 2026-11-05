@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
-import { parseDtfUrl } from './dtfLinks';
+import { parseDtfUrl, dtfTargetToPath } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
 import { scrollBehavior } from './motion';
 import { markOrigin } from './pageTransition.svelte';
@@ -250,7 +250,14 @@ export function openSettings(e?: MouseEvent, page?: string, section?: string) {
  */
 export function openDtfLink(e: MouseEvent, href: string): boolean {
 	const target = parseDtfUrl(href);
-	if (!target || isNewTabClick(e)) return false;
+	if (!target) return false;
+
+	if (isNewTabClick(e)) {
+		e.preventDefault();
+		const path = resolve(dtfTargetToPath(target) as '/');
+		window.open(path, '_blank');
+		return true;
+	}
 
 	e.preventDefault();
 	markOrigin(e);

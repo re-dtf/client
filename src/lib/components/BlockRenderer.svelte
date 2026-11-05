@@ -1,13 +1,26 @@
 <script lang="ts">
 	import type { Block } from '$lib/api/types';
+	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { sanitizeHtml } from '$lib/sanitize';
 	import LazyImage from './LazyImage.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
+	import { openDtfLink } from '$lib/navigation';
+	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 
 	let { blocks }: { blocks: Block[] } = $props();
+
+	function handleContainerClick(e: MouseEvent) {
+		if (e.button !== 0 && e.button !== 1) return;
+		const anchor = (e.target as Element)?.closest?.('a');
+		if (!anchor) return;
+		const href = anchor.getAttribute('href');
+		if (href) openDtfLink(e, href);
+	}
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<div class="blocks-container" onclick={handleContainerClick} onauxclick={handleContainerClick}>
 {#each blocks as block}
 	{#if block.type === 'text' || block.type === 'header'}
 		<div class="block text-block">
@@ -34,8 +47,15 @@
 			{/each}
 		</div>
 	{:else if block.type === 'osnovaEmbed'}
+		{@const url = block.data.osnovaEmbed?.data.url}
+		{@const target = url ? parseDtfUrl(url) : undefined}
 		<div class="block embed-block">
-			<a href={block.data.osnovaEmbed?.data.url} target="_blank" rel="noopener noreferrer" class="embed-card">
+			<a
+				href={target ? resolve(dtfTargetToPath(target) as any) : url}
+				target={target ? undefined : '_blank'}
+				rel={target ? undefined : 'noopener noreferrer'}
+				class="embed-card"
+			>
 				<strong>{block.data.osnovaEmbed?.data.title || 'Ссылка'}</strong>
 				{#if block.data.osnovaEmbed?.data.description}
 					<p>{block.data.osnovaEmbed.data.description}</p>
@@ -43,8 +63,15 @@
 			</a>
 		</div>
 	{:else if block.type === 'link'}
+		{@const url = block.data.link?.data.url}
+		{@const target = url ? parseDtfUrl(url) : undefined}
 		<div class="block link-block">
-			<a href={block.data.link?.data.url} target="_blank" rel="noopener noreferrer" class="embed-card">
+			<a
+				href={target ? resolve(dtfTargetToPath(target) as any) : url}
+				target={target ? undefined : '_blank'}
+				rel={target ? undefined : 'noopener noreferrer'}
+				class="embed-card"
+			>
 				<strong>{block.data.link?.data.title || 'Ссылка'}</strong>
 				{#if block.data.link?.data.description}
 					<p>{block.data.link.data.description}</p>
@@ -55,6 +82,7 @@
 		<div class="block unknown-block">[Блок: {block.type}]</div>
 	{/if}
 {/each}
+</div>
 
 <style>
 	.text-block :global(p) {

@@ -6,7 +6,8 @@
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
+	import { getPostPath, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
+	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { ensureLogin } from '../actions.svelte';
@@ -340,7 +341,16 @@
 									{#if part.type === 'mention'}
 										<a href={resolve(getProfilePath(part.id) as any)} onclick={(e) => openProfile(e, part.id)}>{part.name}</a>
 									{:else if part.type === 'link'}
-										<a href={part.url} target="_blank" rel="noopener noreferrer nofollow">{part.url}</a>
+										{@const dtfTarget = parseDtfUrl(part.url)}
+										{#if dtfTarget}
+											<a
+												href={resolve(dtfTargetToPath(dtfTarget) as any)}
+												onclick={(e) => openDtfLink(e, part.url)}
+												onauxclick={(e) => openDtfLink(e, part.url)}
+											>{part.url}</a>
+										{:else}
+											<a href={part.url} target="_blank" rel="noopener noreferrer nofollow">{part.url}</a>
+										{/if}
 									{:else}
 										{part.text}
 									{/if}

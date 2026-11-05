@@ -15,4 +15,12 @@ describe('ProfileComment badge modal integration', () => {
 		expect(svelteContent).toContain('class="profile-comment__time-badge"');
 		expect(svelteContent).toContain('cursor: pointer');
 	});
+
+	it('обрабатывает ссылки DTF внутри приложения через openDtfLink', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'ProfileComment.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('openDtfLink');
+		expect(svelteContent).toContain('dtfTargetToPath');
+		expect(svelteContent).toContain('parseDtfUrl(part.url)');
+	});
 });
