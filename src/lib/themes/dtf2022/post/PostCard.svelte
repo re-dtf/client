@@ -2,6 +2,7 @@
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
+	import { preloadIntent } from '$lib/actions/preloadIntent';
 	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
@@ -41,7 +42,7 @@
 		<div class="post-content">
 			<PostBlocks title={post.title} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} />
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
-			<a class="post-link" href={postPath} aria-label={post.title} onclick={(e) => openPost(e, post)}></a>
+			<a class="post-link" href={postPath} aria-label={post.title} onclick={(e) => openPost(e, post)} use:preloadIntent={post}></a>
 		</div>
 
 		{#if !embed}
