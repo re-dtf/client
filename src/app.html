@@ -156,7 +156,7 @@
 			#splash .re { fill: #1693e5; }
 			#splash .dtf { fill: var(--ink); }
 
-			/* Появление: буквы всплывают по очереди, точки «падают» и дальше прыгают волной */
+			/* Появление: буквы всплывают по очереди, точки «падают» и дальше плавно парят */
 			#splash .g {
 				opacity: 0;
 				animation: splash-rise 0.7s var(--out) calc(var(--i) * 70ms + 100ms) both;
@@ -164,18 +164,18 @@
 			#splash .dot {
 				transform-box: fill-box; transform-origin: center;
 				animation: splash-drop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 70ms + 100ms) both,
-					splash-hop 1s ease-in-out calc(var(--i) * 70ms + 800ms) infinite;
+					splash-float 1.6s ease-in-out calc(var(--i) * 80ms + 800ms) infinite;
 			}
-			/* Логотип доехал до приветствия (точки стоят после прыжка): прыгать перестают, падение остаётся доигранным */
+			/* Логотип доехал до приветствия (точки стоят после парения): движение прекращается, падение остаётся доигранным */
 			#splash[data-state] .dot { animation-name: splash-drop; }
 			@keyframes splash-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 			@keyframes splash-drop {
 				from { opacity: 0; transform: translateY(-16px) scale(0.4); }
 				to { opacity: 1; transform: none; }
 			}
-			@keyframes splash-hop {
-				0%, 45%, 100% { transform: none; }
-				22% { transform: translateY(-4px); }
+			@keyframes splash-float {
+				0%, 100% { transform: none; }
+				50% { transform: translateY(-4px); }
 			}
 
 			#splash .splash-tagline {

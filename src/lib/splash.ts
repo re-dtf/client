@@ -30,7 +30,7 @@ export async function holdSplash(ready: Promise<unknown>) {
 }
 
 /**
- * Дождаться, пока точки логотипа закончат очередной прыжок: двигать логотип посреди прыжка нельзя,
+ * Дождаться, пока точки логотипа закончат очередной цикл парения: двигать логотип посреди движения нельзя,
  * он дёрнется. Без анимации (уменьшить движение) ждать нечего.
  */
 export function dotsAtRest(): Promise<void> {
@@ -42,7 +42,7 @@ export function dotsAtRest(): Promise<void> {
 			dot.removeEventListener('animationiteration', done);
 			resolve();
 		};
-		const timer = setTimeout(done, 1200);
+		const timer = setTimeout(done, 1800);
 		dot.addEventListener('animationiteration', done);
 	});
 }
