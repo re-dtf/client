@@ -39,6 +39,14 @@
 		{ value: 'subscriptions', label: 'Подписки', icon: 'v_star' }
 	];
 
+	let isMe = $derived(profile.id === currentUser.value?.id);
+
+	$effect(() => {
+		if (currentUser.value?.id) {
+			subscriptions.loadMine(currentUser.value.id);
+		}
+	});
+
 	// Подписчики приходят порциями и листаются по мере прокрутки; подписки DTF отдаёт целиком
 	let subscribers = $state.raw<ProfileListItem[]>([]);
 	let subscribersCursor: CursorData | undefined;
@@ -70,7 +78,7 @@
 	}
 </script>
 
-{#snippet personRow(person: ProfileListItem)}
+{#snippet personRow(person: ProfileListItem, isMySubscription = false)}
 	<div class="subsite-item">
 		<a href={resolve(getProfilePath(person.id) as any)} class="subsite-item__main" onclick={(e) => openProfile(e, person.id)}>
 			<div class="subsite-item__image" style:background-image={person.avatarUrl ? `url(${person.avatarUrl})` : undefined}></div>
@@ -80,8 +88,8 @@
 		</a>
 
 		{#if person.id !== currentUser.value?.id}
-			<!-- Без входа DTF присылает isSubscribed не про зрителя, поэтому верим флагу только после входа -->
-			{@const was = !!currentUser.value && !!person.isSubscribed}
+			<!-- В чужих списках и среди подписчиков DTF присылает isSubscribed не про зрителя, поэтому верим только списку своих подписок -->
+			{@const was = isMySubscription}
 			{@const subscribed = subscriptions.isSubscribed(person.id, was)}
 			<button
 				type="button"
@@ -109,11 +117,12 @@
 {#snippet overview(title: string, count: number | undefined, promise: Promise<ProfileListItem[]>, showAll: string, target: DetailsPage)}
 	{#await promise then items}
 		{#if items.length > 0}
+			{@const isMySubs = isMe && target === 'subscriptions'}
 			<div class="island">
 				{@render header(title, count)}
 				<div class="subsites subsites--columns-2">
 					{#each items.slice(0, 6) as person (person.id)}
-						{@render personRow(person)}
+						{@render personRow(person, isMySubs)}
 					{/each}
 				</div>
 				<button type="button" class="subsites__more" onclick={() => onNavigate(target)}>
@@ -150,7 +159,7 @@
 			{@render header('Подписчики', profile.subscribersCount)}
 			<div class="subsites">
 				{#each subscribers as person (person.id)}
-					{@render personRow(person)}
+					{@render personRow(person, false)}
 				{/each}
 			</div>
 
@@ -175,7 +184,7 @@
 				{#if items.length > 0}
 					<div class="subsites">
 						{#each items as person (person.id)}
-							{@render personRow(person)}
+							{@render personRow(person, isMe)}
 						{/each}
 					</div>
 				{:else}

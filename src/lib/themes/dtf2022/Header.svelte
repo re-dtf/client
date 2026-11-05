@@ -10,6 +10,7 @@
 	import NotificationsPanel from './NotificationsPanel.svelte';
 	import { notificationsPopup } from './notificationsPopup.svelte';
 	import { sidebar } from './sidebar.svelte';
+	import { subscriptions } from './actions.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 
@@ -28,6 +29,7 @@
 		} else {
 			currentUser.clear();
 			notifications.clear();
+			subscriptions.clear();
 			isUserMenuOpen = false;
 		}
 	});

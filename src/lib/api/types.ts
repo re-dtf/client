@@ -135,7 +135,7 @@ export interface ProfileListItem {
 	id: number;
 	name: string;
 	avatarUrl?: string;
-	/** Только после входа: подписан ли вошедший пользователь */
+	/** DTF присылает true для всех элементов списка (отношение к запрашиваемому подсайту, не к зрителю) */
 	isSubscribed?: boolean;
 }
 

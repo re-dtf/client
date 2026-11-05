@@ -88,10 +88,38 @@ export function sharePost(post: Pick<Post, 'title' | 'url'>) {
  */
 const subscribed = new SvelteMap<number, boolean>();
 const notified = new SvelteMap<number, boolean>();
+let userSubscriptionsLoaded = false;
+let userSubscriptionsPromise: Promise<void> | undefined;
 
 export const subscriptions = {
 	isSubscribed: (id: number, initial = false) => subscribed.get(id) ?? initial,
 	isNotified: (id: number, initial = false) => notified.get(id) ?? initial,
+
+	/** Загружает подписки текущего пользователя, чтобы верно показывать статус в списках */
+	async loadMine(userId: number) {
+		if (userSubscriptionsLoaded) return;
+		userSubscriptionsPromise ??= api
+			.getProfileSubscriptions(userId)
+			.then((items) => {
+				for (const item of items) {
+					if (!subscribed.has(item.id)) {
+						subscribed.set(item.id, true);
+					}
+				}
+				userSubscriptionsLoaded = true;
+			})
+			.catch(() => {
+				userSubscriptionsPromise = undefined;
+			});
+		return userSubscriptionsPromise;
+	},
+
+	clear() {
+		subscribed.clear();
+		notified.clear();
+		userSubscriptionsLoaded = false;
+		userSubscriptionsPromise = undefined;
+	},
 
 	async toggle(id: number, initial = false) {
 		if (!ensureLogin()) return;
