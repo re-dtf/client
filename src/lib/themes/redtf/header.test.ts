@@ -81,3 +81,25 @@ describe('Header: стили блюра верхней панели (headerBlur)
 		);
 	});
 });
+
+describe('Header: раскладка кнопок топбара при разных ширинах экрана', () => {
+	const cssContent = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf-8');
+
+	it('до 1300px скрывает кнопку Создать в колонке контента и оставляет её в header-right', () => {
+		expect(cssContent).toMatch(
+			/@media \(max-width: 1299px\) \{\s*:root\[data-theme~="redtf"\] \.header-create--column \{\s*display: none;\s*\}\s*:root\[data-theme~="redtf"\] \.header-create--side \{\s*display: flex;\s*\}/
+		);
+	});
+
+	it('от 1180px правый блок растягивается на 100% высоты для правильного выравнивания', () => {
+		expect(cssContent).toMatch(
+			/@media \(min-width: 1180px\) \{\s*:root\[data-theme~="redtf"\] \.header-container \{\s*grid-template-columns: var\(--sidebar-left-width\) 1fr 0;\s*\}\s*:root\[data-theme~="redtf"\] \.header-right \{\s*position: absolute;\s*top: 0;\s*right: 0;\s*height: 100%;/
+		);
+	});
+
+	it('от 1300px возвращает статичное позиционирование и резервирует правую колонку', () => {
+		expect(cssContent).toMatch(
+			/@media \(min-width: 1300px\) \{\s*:root\[data-theme~="redtf"\] \.header-container \{\s*grid-template-columns: var\(--sidebar-left-width\) 1fr var\(--sidebar-left-width\);\s*\}\s*:root\[data-theme~="redtf"\] \.header-right \{\s*position: static;\s*\}/
+		);
+	});
+});

@@ -10,6 +10,7 @@
 		position: absolute;
 		top: 0;
 		right: 0;
+		height: 100%;
 	}
 }
 
@@ -20,6 +21,18 @@
 
 	:root[data-theme~="redtf"] .header-right {
 		position: static;
+	}
+}
+
+/* Кнопка «Создать» переходит к колонке текста только от 1300px, когда у страницы появляется правая колонка (MainLayout.svelte).
+   До 1300px кнопка остаётся справа рядом с колокольчиком, чтобы при ширине 1180–1299px не наезжать на кнопки профиля. */
+@media (max-width: 1299px) {
+	:root[data-theme~="redtf"] .header-create--column {
+		display: none;
+	}
+
+	:root[data-theme~="redtf"] .header-create--side {
+		display: flex;
 	}
 }
 
