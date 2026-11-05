@@ -1,5 +1,6 @@
 import { api } from '$lib/api/index.svelte';
 import type { Comment, CommentTreeItem } from '$lib/api/types';
+import { cacheComments, peekComments } from '$lib/commentsCache';
 import { buildTree, formatDate } from './commentUtils';
 import { untrack } from 'svelte';
 import { PanoramaEngine } from './panoramaEngine.svelte';
@@ -113,10 +114,16 @@ export class CommentsLogic {
 
 		if (!path) {
 			this.comments.push(item);
-			return;
+		} else {
+			path[path.length - 1].children.push(item);
+			for (const node of path) node._totalReplies = (node._totalReplies ?? 0) + 1;
 		}
-		path[path.length - 1].children.push(item);
-		for (const node of path) node._totalReplies = (node._totalReplies ?? 0) + 1;
+
+		cacheComments(this.postId, this.sourceId, this.sorting, {
+			flatComments: this.flatComments,
+			cursor: this.cursor,
+			hasMore: this.hasMore
+		});
 	}
 
 	/** Текст комментария после правки */
@@ -128,10 +135,31 @@ export class CommentsLogic {
 			node.content = comment.content;
 			node.media = comment.media;
 		}
+
+		cacheComments(this.postId, this.sourceId, this.sorting, {
+			flatComments: this.flatComments,
+			cursor: this.cursor,
+			hasMore: this.hasMore
+		});
 	}
 
 	async loadComments(reset = false) {
 		if (this.loading || (!this.hasMore && !reset)) return;
+
+		if (reset) {
+			const cached = peekComments(this.postId, this.sourceId, this.sorting);
+			if (cached) {
+				this.cursor = cached.cursor;
+				this.flatComments = [...cached.flatComments];
+				const tree = buildTree(this.flatComments, this.sourceId);
+				this.comments = tree.roots;
+				this.allCommentsMap = tree.map;
+				this.hasMore = cached.hasMore;
+				this.error = null;
+				return;
+			}
+		}
+
 		this.loading = true;
 		this.error = null;
 
@@ -156,6 +184,12 @@ export class CommentsLogic {
 			} else {
 				this.hasMore = false;
 			}
+
+			cacheComments(this.postId, this.sourceId, this.sorting, {
+				flatComments: this.flatComments,
+				cursor: this.cursor,
+				hasMore: this.hasMore
+			});
 		} catch (e) {
 			this.error = (e as Error).message;
 		} finally {

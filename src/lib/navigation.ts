@@ -125,9 +125,16 @@ export function openOverlay(overlay: App.OverlayData) {
 	// Просмотр картинок остаётся на текущем адресе: это шаг истории для кнопки «Назад», а не страница.
 	// page.url тут не годится: под оверлеями он остаётся адресом нижней страницы, а не поста
 	const url = overlay.type === 'lightbox' ? location.href : resolve(overlayPath(overlay) as '/');
+	const currentOverlays = page.state.overlays ?? [];
+	const MAX_OVERLAYS = 20;
+	// При превышении лимита отбрасываем самый старый оверлей, сохраняя последние 20 слоёв
+	const nextOverlays =
+		currentOverlays.length >= MAX_OVERLAYS
+			? [...currentOverlays.slice(currentOverlays.length - (MAX_OVERLAYS - 1)), opened]
+			: [...currentOverlays, opened];
 	return goto(url, {
 		shallow: true,
-		state: { overlays: [...(page.state.overlays ?? []), opened] }
+		state: { overlays: nextOverlays }
 	});
 }
 

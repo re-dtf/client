@@ -5,7 +5,7 @@
 	import FilteredCard from './post/FilteredCard.svelte';
 	import { filterSettings, matchPostFilter } from '$lib/storage/filter.svelte';
 
-	let { post, preview = true }: { post: Post; preview?: boolean } = $props();
+	let { post, preview = true, evictMedia = false }: { post: Post; preview?: boolean; evictMedia?: boolean } = $props();
 
 	let filterMatch = $derived(preview ? matchPostFilter(post) : null);
 	let revealed = $state(false);
@@ -20,5 +20,5 @@
 		<PostCard {post} />
 	{/if}
 {:else}
-	<PostPage {post} />
+	<PostPage {post} {evictMedia} />
 {/if}

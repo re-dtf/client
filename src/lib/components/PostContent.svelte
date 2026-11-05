@@ -10,12 +10,21 @@
 	import { scrollBehavior } from '$lib/motion';
 	import { onDestroy, tick, type Snippet } from 'svelte';
 
-	let { postId, sourceId = 'dtf', commentId, focusNonce, onLoaded, backButton }: {
+	let {
+		postId,
+		sourceId = 'dtf',
+		commentId,
+		focusNonce,
+		depth = 0,
+		onLoaded,
+		backButton
+	}: {
 		postId: number;
 		sourceId?: string;
 		/** Комментарий, к которому прокрутить (из уведомления) */
 		commentId?: number;
 		focusNonce?: number;
+		depth?: number;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	} = $props();
@@ -39,6 +48,14 @@
 	// Комментарии (тысячи узлов) строятся, когда пост уже показан и его анимация закончилась
 	let postShown = $state(false);
 	let commentsBox = $state<HTMLElement>();
+	let lastCommentsHeight = $state<number>(0);
+
+	$effect(() => {
+		if (commentsBox && depth <= 1) {
+			const h = commentsBox.offsetHeight;
+			if (h > 0) lastCommentsHeight = h;
+		}
+	});
 
 	function showPost() {
 		if (commentId === undefined || postShown) return;
@@ -77,7 +94,7 @@
 		{#snippet children()}
 			{#if post}
 				{@const loaded = post}
-				<ThemeLoader componentName="Post" post={loaded} preview={false} />
+				<ThemeLoader componentName="Post" post={loaded} preview={false} evictMedia={depth >= 3} />
 				<!-- Граница поста и комментариев для статистики: сколько времени пользователь в комментариях -->
 				<div {@attach (el) => markCommentsStart(loaded, el)}></div>
 				{#if backButton}
@@ -93,11 +110,15 @@
 
 	{#if post && postShown}
 		{@const loaded = post}
-		{#await commentsTurn then}
-			<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined ? appear('feedIn') : () => {})}>
-				<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
-			</div>
-		{/await}
+		{#if depth <= 1}
+			{#await commentsTurn then}
+				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined ? appear('feedIn') : () => {})}>
+					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
+				</div>
+			{/await}
+		{:else if lastCommentsHeight > 0}
+			<div class="comments-container comments-container--placeholder" style="height: {lastCommentsHeight}px;"></div>
+		{/if}
 	{/if}
 </div>
 

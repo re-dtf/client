@@ -95,6 +95,16 @@
 	
 	// Scroll Restoration Stack
 	let scrollPositions = new Map<string, number>();
+
+	$effect(() => {
+		// Очищаем сохранённый скролл для закрытых оверлеев
+		const activeIds = new Set(overlays.map((o) => o.id));
+		for (const key of scrollPositions.keys()) {
+			if (key !== '__feed__' && !activeIds.has(key)) {
+				scrollPositions.delete(key);
+			}
+		}
+	});
 	let activeScrollId = $derived(overlays.findLast(o => o.presentation === 'page')?.id ?? '__feed__');
 	let previousScrollId = '__feed__';
 	let previousDepth = 0;
@@ -403,9 +413,9 @@
 
 <svelte:body style:overflow={hasModalActive || showWelcome ? 'hidden' : 'auto'} />
 
-{#snippet overlayContent(overlay: App.OverlayState)}
+{#snippet overlayContent(overlay: App.OverlayState, depth: number = 0)}
 	{#if overlay.type === 'post'}
-		<PostOverlay {...overlay.data} />
+		<PostOverlay {...overlay.data} {depth} />
 	{:else if overlay.type === 'profile'}
 		<ProfileContent {...overlay.data} />
 	{:else if overlay.type === 'settings'}
@@ -442,7 +452,7 @@
 					style:visibility={pageTransition.isIncoming(overlay.id) && pageTransition.incomingHidden ? 'hidden' : 'visible'}
 					out:leavePage|global
 				>
-					{@render overlayContent(overlay)}
+					{@render overlayContent(overlay, topmostPageOverlayIndex - index)}
 				</div>
 			{/if}
 		{/each}
@@ -451,10 +461,10 @@
 	{#each overlays as overlay, index (overlay.id)}
 		{#if overlay.presentation === 'modal'}
 			<ModalShell {index} preload={MODAL_COMPONENT[overlay.type]}>
-				{@render overlayContent(overlay)}
+				{@render overlayContent(overlay, 0)}
 			</ModalShell>
 		{:else if overlay.presentation === 'fullscreen'}
-			{@render overlayContent(overlay)}
+			{@render overlayContent(overlay, 0)}
 		{/if}
 	{/each}
 

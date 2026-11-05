@@ -22,7 +22,7 @@ export interface ThemeComponents {
 		period: Period;
 		switchPeriod: (period: Period) => void;
 	};
-	Post: { post: Post; preview?: boolean };
+	Post: { post: Post; preview?: boolean; evictMedia?: boolean };
 	Comments: {
 		postId: number;
 		sourceId?: string;

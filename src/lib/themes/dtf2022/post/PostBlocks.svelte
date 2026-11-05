@@ -21,7 +21,8 @@
 		title,
 		variant,
 		postId,
-		sourceId
+		sourceId,
+		evictMedia = false
 	}: {
 		blocks: Block[];
 		/** Заголовок поста — первым блоком */
@@ -29,6 +30,7 @@
 		variant: 'card' | 'page' | 'embed';
 		postId?: number | string;
 		sourceId?: string;
+		evictMedia?: boolean;
 	} = $props();
 
 	const HEADINGS = ['h2', 'h3', 'h4'];
@@ -110,25 +112,29 @@
 	<figure class={figureClass(image.data)}>
 		{#snippet content()}
 			{#if isVideo(image)}
-				<video
-					src={getLeonardoUrl(image.data.uuid, { format: 'mp4' })}
-					muted
-					loop
-					playsinline
-					preload="metadata"
-					controls={!!image.data.has_audio}
-					{@attach fromAction(lazyVideo)}
-				></video>
+				{#if !evictMedia}
+					<video
+						src={getLeonardoUrl(image.data.uuid, { format: 'mp4' })}
+						muted
+						loop
+						playsinline
+						preload="metadata"
+						controls={!!image.data.has_audio}
+						{@attach fromAction(lazyVideo)}
+					></video>
+				{/if}
 			{:else}
-				<img
-					src={getLeonardoUrl(image.data.uuid, { width: 1024 })}
-					srcset={variant === 'page' ? `${getLeonardoUrl(image.data.uuid, { width: 1024 })} 1024w, ${getLeonardoUrl(image.data.uuid, { width: 2048 })} 2048w` : undefined}
-					sizes={variant === 'page' ? '(max-width: 768px) 100vw, 1024px' : undefined}
-					alt={caption || ''}
-					loading="lazy"
-				/>
+				{#if !evictMedia}
+					<img
+						src={getLeonardoUrl(image.data.uuid, { width: 1024 })}
+						srcset={variant === 'page' ? `${getLeonardoUrl(image.data.uuid, { width: 1024 })} 1024w, ${getLeonardoUrl(image.data.uuid, { width: 2048 })} 2048w` : undefined}
+						sizes={variant === 'page' ? '(max-width: 768px) 100vw, 1024px' : undefined}
+						alt={caption || ''}
+						loading="lazy"
+					/>
+				{/if}
 				<!-- В ленте и во встроенном посте картинка открывает пост (ссылка поверх карточки), просмотр только на странице -->
-				{#if variant === 'page'}
+				{#if variant === 'page' && !evictMedia}
 					<button
 						class="media-placeholder__zoom"
 						aria-label="Открыть изображение"

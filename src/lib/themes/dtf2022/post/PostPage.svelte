@@ -12,7 +12,7 @@
 	import Reactions from './Reactions.svelte';
 	import AuthorCard from './AuthorCard.svelte';
 
-	let { post: source }: { post: Post } = $props();
+	let { post: source, evictMedia = false }: { post: Post; evictMedia?: boolean } = $props();
 
 	let post = $derived(withActions(source));
 	let score = $derived(votesOf(post));
@@ -42,7 +42,7 @@
 		<PostHeader {post} variant="page" />
 
 		<div class="post-content">
-			<PostBlocks title={post.title} blocks={blocks.slice(0, leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} />
+			<PostBlocks title={post.title} blocks={blocks.slice(0, leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
 
 			{#if showActions}
 				<div class={['post-actions', { 'post-actions--arrows': arrows }]}>
@@ -60,7 +60,7 @@
 				</div>
 			{/if}
 
-			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} />
+			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
 
 			{#if votes === 'reactions'}
 				<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />
