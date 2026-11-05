@@ -187,9 +187,119 @@ export function takeLightboxOrigin() {
 	return origin?.isConnected ? origin : undefined;
 }
 
-/** Закрыть верхний оверлей: возвращаемся на шаг назад по истории, как кнопка «Назад» */
+interface SubstateEntry {
+	overlayId: string;
+	onBack: () => void;
+}
+
+const substateStack: SubstateEntry[] = [];
+let popstateListening = false;
+
+function getCurrentTopOverlay(): App.OverlayState | undefined {
+	try {
+		const currentOverlays = page.state.overlays ?? [];
+		return currentOverlays[currentOverlays.length - 1];
+	} catch {
+		return undefined;
+	}
+}
+
+function initPopstateListener() {
+	if (popstateListening || typeof window === 'undefined') return;
+	popstateListening = true;
+	window.addEventListener('popstate', () => {
+		if (substateStack.length === 0) return;
+		const currentTop = getCurrentTopOverlay();
+		const topEntry = substateStack[substateStack.length - 1];
+
+		if (topEntry && topEntry.overlayId === (currentTop?.id ?? '')) {
+			substateStack.pop();
+			topEntry.onBack();
+		} else if (topEntry && (!currentTop || topEntry.overlayId !== currentTop.id)) {
+			// Оверлей закрылся или сменился снаружи — сбрасываем устаревшие шаги
+			substateStack.length = 0;
+		}
+	});
+}
+
+/**
+ * Зарегистрировать вложенный шаг навигации внутри текущего оверлея (раздел на мобильном, solo mode, шаг входа).
+ * При системном жесте «Назад» или кнопке браузера вызовется onBack вместо закрытия оверлея.
+ */
+export function pushSubstate(onBack: () => void) {
+	if (typeof window === 'undefined') return;
+	initPopstateListener();
+	const currentTop = getCurrentTopOverlay();
+	const overlayId = currentTop?.id ?? '';
+	substateStack.push({ overlayId, onBack });
+	let currentState: App.PageState = {};
+	try {
+		currentState = page.state;
+	} catch {}
+	return goto(window.location.href, {
+		shallow: true,
+		reset: false,
+		state: currentState
+	});
+}
+
+/**
+ * Очистить стек вложенных шагов без выполнения переходов в истории.
+ */
+export function clearSubstates() {
+	substateStack.length = 0;
+}
+
+/**
+ * Закрыть текущий вложенный шаг (для экранных кнопок возврата «Назад»).
+ * Возвращает true, если был активный вложенный шаг (и запущен шаг назад по истории).
+ */
+export function popSubstate(): boolean {
+	if (typeof window === 'undefined') return false;
+	const currentTop = getCurrentTopOverlay();
+	const topEntry = substateStack[substateStack.length - 1];
+	if (topEntry && topEntry.overlayId === (currentTop?.id ?? '')) {
+		history.back();
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Сбросить все вложенные шаги текущего оверлея в истории браузера (например, при программном возврате к началу).
+ */
+export function resetSubstates() {
+	if (typeof window === 'undefined') return;
+	const currentTop = getCurrentTopOverlay();
+	const overlayId = currentTop?.id ?? '';
+	let depth = 0;
+	while (substateStack.length > 0 && substateStack[substateStack.length - 1].overlayId === overlayId) {
+		substateStack.pop();
+		depth++;
+	}
+	if (depth > 0) {
+		history.go(-depth);
+	}
+}
+
+/**
+ * Закрыть верхний оверлей: если внутри оверлея были вложенные шаги,
+ * закрывает оверлей целиком за один переход, возвращаясь на экран под ним.
+ */
 export function closeOverlay() {
-	history.back();
+	if (typeof window === 'undefined') return;
+	const currentTop = getCurrentTopOverlay();
+	const overlayId = currentTop?.id ?? '';
+	let depth = 0;
+	while (substateStack.length > 0 && substateStack[substateStack.length - 1].overlayId === overlayId) {
+		substateStack.pop();
+		depth++;
+	}
+	if (depth > 0) {
+		history.go(-(depth + 1));
+	} else {
+		history.back();
+	}
 }
 
 /** Ctrl/Cmd/Shift/средняя кнопка: пусть браузер сам откроет ссылку в новой вкладке */
@@ -273,6 +383,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 export function openFeed(e: MouseEvent) {
 	if (page.state.overlays?.length) {
 		e.preventDefault();
+		substateStack.length = 0;
 		const feedUrl = resolve(feedPath(feed.current) as '/');
 		if (page.route.id === '/') {
 			goto(feedUrl, { shallow: true, state: { overlays: [] } });

@@ -1,5 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { getPostPath, getSettingsPath } from './navigation';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const mockPageState: { overlays: any[] } = { overlays: [] };
+vi.mock('$app/state', () => ({
+	page: {
+		get state() {
+			return mockPageState;
+		}
+	}
+}));
+
+vi.mock('$app/navigation', () => ({
+	goto: vi.fn().mockResolvedValue(undefined)
+}));
+
+import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates } from './navigation';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -42,5 +56,90 @@ describe('navigation', () => {
 		expect(content).toContain("openSettings(e, 'about')");
 		expect(content).toContain("openSettings(e, 'help')");
 		expect(content).toContain("openSettings(e, 'about', 'documents')");
+	});
+
+	describe('substate navigation', () => {
+		const listeners = new Map<string, Function[]>();
+		let backCount = 0;
+		let goDeltas: number[] = [];
+
+		beforeEach(() => {
+			clearSubstates();
+			listeners.clear();
+			backCount = 0;
+			goDeltas = [];
+
+			vi.stubGlobal('window', {
+				addEventListener: (event: string, fn: Function) => {
+					const list = listeners.get(event) ?? [];
+					list.push(fn);
+					listeners.set(event, list);
+				},
+				location: { href: 'http://localhost/settings' }
+			});
+
+			vi.stubGlobal('history', {
+				back: () => {
+					backCount++;
+					const popList = listeners.get('popstate') ?? [];
+					for (const fn of popList) fn();
+				},
+				go: (delta: number) => {
+					goDeltas.push(delta);
+					const popList = listeners.get('popstate') ?? [];
+					for (const fn of popList) fn();
+				}
+			});
+
+			// Setup an active overlay in page.state
+			mockPageState.overlays = [
+				{ id: 'settings-overlay-1', type: 'settings', presentation: 'modal' }
+			];
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it('pushSubstate регистрирует шаг, popSubstate откатывает историю и вызывает callback', () => {
+			let called = false;
+			pushSubstate(() => {
+				called = true;
+			});
+
+			expect(popSubstate()).toBe(true);
+			expect(backCount).toBe(1);
+			expect(called).toBe(true);
+		});
+
+		it('popSubstate возвращает false, если шагов нет', () => {
+			expect(popSubstate()).toBe(false);
+			expect(backCount).toBe(0);
+		});
+
+		it('closeOverlay при активных вложенных шагах откатывает историю на глубину + 1', () => {
+			pushSubstate(() => {});
+			pushSubstate(() => {});
+
+			closeOverlay();
+
+			expect(goDeltas).toEqual([-3]);
+		});
+
+		it('closeOverlay при отсутствии вложенных шагов делает обычный history.back()', () => {
+			closeOverlay();
+
+			expect(backCount).toBe(1);
+			expect(goDeltas.length).toBe(0);
+		});
+
+		it('resetSubstates откатывает вложенные шаги до корня оверлея', () => {
+			pushSubstate(() => {});
+			pushSubstate(() => {});
+
+			resetSubstates();
+
+			expect(goDeltas).toEqual([-2]);
+		});
 	});
 });

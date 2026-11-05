@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { api, ProxyError } from '$lib/api/index.svelte';
-	import { closeOverlay, openOverlay } from '$lib/navigation';
+	import { closeOverlay, openOverlay, pushSubstate, popSubstate, resetSubstates } from '$lib/navigation';
 	import {
 		settings,
 		getEnabledProxies,
@@ -42,7 +42,27 @@
 		Boolean(cloudflareProxy?.url && !cloudflareProxy?.enabled)
 	);
 
+	function performGoBack() {
+		if (mode === 'proxy' && proxyStep === 'custom_input' && DEFAULT_VALTOWN_PROXY_URL) {
+			proxyStep = 'choice';
+			error = '';
+			return;
+		}
+		pendingMode = null;
+		mode = 'selector';
+		error = '';
+		successMsg = '';
+		isProxyFailure = false;
+	}
+
+	function goBack() {
+		if (!popSubstate()) {
+			performGoBack();
+		}
+	}
+
 	function setMode(next: Mode) {
+		const wasSelector = mode === 'selector';
 		mode = next;
 		error = '';
 		successMsg = '';
@@ -58,6 +78,9 @@
 			}
 			customUrlInput = getPrimaryProxyUrl() || '';
 		}
+		if (next !== 'selector' && wasSelector) {
+			pushSubstate(performGoBack);
+		}
 	}
 
 	function chooseMethod(method: 'email' | 'token') {
@@ -68,16 +91,6 @@
 			pendingMode = null;
 			setMode(method);
 		}
-	}
-
-	function goBack() {
-		if (mode === 'proxy' && proxyStep === 'custom_input' && DEFAULT_VALTOWN_PROXY_URL) {
-			proxyStep = 'choice';
-			error = '';
-			return;
-		}
-		pendingMode = null;
-		setMode('selector');
 	}
 
 	function closeModal() {
@@ -99,10 +112,12 @@
 		if (pendingMode) {
 			const next = pendingMode;
 			pendingMode = null;
+			resetSubstates();
 			setMode(next);
 		} else {
 			successMsg = 'Стандартные настройки прокси применены';
-			setMode('selector');
+			resetSubstates();
+			mode = 'selector';
 		}
 	}
 
@@ -119,10 +134,12 @@
 			if (pendingMode) {
 				const next = pendingMode;
 				pendingMode = null;
+				resetSubstates();
 				setMode(next);
 			} else {
 				successMsg = 'Свой прокси сохранён';
-				setMode('selector');
+				resetSubstates();
+				mode = 'selector';
 			}
 		} catch (err: unknown) {
 			error = err instanceof Error ? err.message : 'Некорректный адрес URL';
@@ -397,6 +414,7 @@
 										onclick={() => {
 											proxyStep = 'custom_input';
 											error = '';
+											pushSubstate(performGoBack);
 										}}
 									/>
 								{/if}

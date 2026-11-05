@@ -26,6 +26,7 @@
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
 	import { haptics } from '$lib/haptics';
+	import { pushSubstate, popSubstate } from '$lib/navigation';
 
 	/*
 	 * Окно настроек в духе libadwaita с двухуровневой навигацией:
@@ -413,9 +414,15 @@
 		soloBackTarget = null;
 	}
 
-	function handleMobileBack() {
+	function performMobileBack() {
 		resetSolo();
 		openedByUser = false;
+	}
+
+	function handleMobileBack() {
+		if (!popSubstate()) {
+			performMobileBack();
+		}
 	}
 
 	// Клик по элементу Уровня 1
@@ -426,11 +433,15 @@
 			activeFolderId = item.id;
 			selectedPageId = null;
 			openedByUser = false;
+			pushSubstate(performBackToRoot);
 		} else {
 			selectedPageId = item.id;
 			activeFolderId = null;
 			openedByUser = true;
 			scroller?.scrollTo({ top: 0 });
+			if (currentDevice === 'mobile') {
+				pushSubstate(performMobileBack);
+			}
 		}
 	}
 
@@ -441,14 +452,23 @@
 		selectedPageId = item.id;
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		if (currentDevice === 'mobile') {
+			pushSubstate(performMobileBack);
+		}
 	}
 
-	// Возврат из подменю в главное меню сайдбара
-	function handleBackToRoot() {
+	function performBackToRoot() {
 		resetSolo();
 		activeFolderId = null;
 		selectedPageId = null;
 		openedByUser = false;
+	}
+
+	// Возврат из подменю в главное меню сайдбара
+	function handleBackToRoot() {
+		if (!popSubstate()) {
+			performBackToRoot();
+		}
 	}
 
 	// Переход в Чёрный список из Ленты и контента (с активацией Solo)
@@ -463,6 +483,7 @@
 		activeFolderId = null;
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		pushSubstate(performReturnFromSolo);
 	}
 
 	// Переход в Реестр реакций из Оценок (с активацией Solo)
@@ -477,6 +498,7 @@
 		activeFolderId = null;
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		pushSubstate(performReturnFromSolo);
 	}
 
 	// Переход в Приложение из Комментариев для настройки подписи (с активацией Solo)
@@ -491,6 +513,7 @@
 		activeFolderId = null;
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		pushSubstate(performReturnFromSolo);
 	}
 
 	// Переход в Иконку приложения из раздела Приложение (с активацией Solo)
@@ -505,6 +528,7 @@
 		activeFolderId = null;
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		pushSubstate(performReturnFromSolo);
 	}
 
 	// Переход в Ленту и контент из раздела Моя лента (с активацией Solo)
@@ -519,10 +543,10 @@
 		activeFolderId = 'interface';
 		openedByUser = true;
 		scroller?.scrollTo({ top: 0 });
+		pushSubstate(performReturnFromSolo);
 	}
 
-	// Возврат из Solo-режима
-	function handleReturnFromSolo() {
+	function performReturnFromSolo() {
 		if (soloBackTarget) {
 			activeFolderId = soloBackTarget.folderId;
 			selectedPageId = soloBackTarget.pageId;
@@ -531,6 +555,13 @@
 		}
 		soloByUser = false;
 		scroller?.scrollTo({ top: 0 });
+	}
+
+	// Возврат из Solo-режима
+	function handleReturnFromSolo() {
+		if (!popSubstate()) {
+			performReturnFromSolo();
+		}
 	}
 
 	function toggleFade() {
