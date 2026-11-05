@@ -20,6 +20,7 @@ const FAIL_SAFE_TIMEOUT = 12000; // Предохранитель от вечно
 
 let active = $state(false);
 let slow = $state(false);
+let isInstantTransition = false;
 let outgoingId = $state<string | null>(null);
 let incomingId = $state<string | null>(null);
 let incomingHidden = $state(true);
@@ -116,6 +117,7 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 
 	active = true;
 	slow = false;
+	isInstantTransition = isInstant;
 	incomingHidden = true;
 	outgoingId = fromId;
 	incomingId = toId;
@@ -189,13 +191,12 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		currentBreatheAnim = undefined;
 	}
 
-	const isFast = !slow;
 	const motion = activeTheme.motion;
 	const promises: Promise<unknown>[] = [];
 
 	// 1. Анимация ухода старого экрана
 	if (outgoingScreen) {
-		if (isFast) {
+		if (isInstantTransition) {
 			const fastDepartAnim = motion?.fastDepart ?? fluent.fastDepart;
 			if (fastDepartAnim) {
 				currentRecedeAnim?.cancel();
@@ -228,7 +229,7 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 	await tick();
 
 	// 2. Анимация появления нового экрана
-	const approachAnim = isFast ? (motion?.fastApproach ?? fluent.fastApproach) : motion?.approach;
+	const approachAnim = isInstantTransition ? (motion?.fastApproach ?? fluent.fastApproach) : motion?.approach;
 	if (approachAnim) {
 		const incomingRect = incomingScreen.getBoundingClientRect();
 		const visibleTop = Math.max(0, incomingRect.top);
@@ -241,7 +242,7 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		incomingScreen.style.transformOrigin = `50% ${originY}px`;
 
 		let keyframes: Keyframe[] = approachAnim.keyframes.map((kf) => ({ ...kf }));
-		if (!isFast && hadHoldBlur) {
+		if (hadHoldBlur) {
 			keyframes = keyframes.map((kf, i, arr) => {
 				const progress = i / (arr.length - 1);
 				const blur = Math.round(14 * (1 - progress));
@@ -356,6 +357,7 @@ function cleanup() {
 	outgoingScreen = null;
 	active = false;
 	slow = false;
+	isInstantTransition = false;
 	incomingHidden = true;
 	outgoingId = null;
 	incomingId = null;
