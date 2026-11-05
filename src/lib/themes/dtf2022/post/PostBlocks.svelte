@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { Block, Post } from '$lib/api/types';
-	import DOMPurify from 'dompurify';
+	import { sanitizeHtml } from '$lib/sanitize';
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
@@ -33,7 +33,7 @@
 
 	const HEADINGS = ['h2', 'h3', 'h4'];
 
-	const sanitize = (html: string) => DOMPurify.sanitize(html ?? '', { ADD_ATTR: ['target'] });
+	const sanitize = (html: string) => sanitizeHtml(html ?? '');
 
 	// YouTube подгружаем только по клику
 	let playingVideos = $state<Record<string, boolean>>({});

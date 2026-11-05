@@ -35,6 +35,25 @@
 	const collapsed = new SvelteSet<string>();
 	let rows = $derived(flattenComments(logic.comments, logic.maxVisualDepth, collapsed));
 
+	const CHUNK_SIZE = 40;
+	let renderedCount = $state(CHUNK_SIZE);
+	let renderedRows = $derived(rows.slice(0, renderedCount));
+	let chunkSentinel = $state<HTMLElement>();
+
+	$effect(() => {
+		if (!chunkSentinel || renderedCount >= rows.length) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0].isIntersecting) {
+					renderedCount = Math.min(rows.length, renderedCount + CHUNK_SIZE);
+				}
+			},
+			{ rootMargin: '1000px' }
+		);
+		observer.observe(chunkSentinel);
+		return () => observer.disconnect();
+	});
+
 	let replyTo = $state<string | null>(null);
 	/** Редактор под комментарием правит его, а не отвечает */
 	let editMode = $state(false);
@@ -118,6 +137,7 @@
 				const created = await api.addComment(postId, text, target?.id, media);
 				logic.addComment(created);
 				key = commentKey(created);
+				renderedCount = Math.max(renderedCount, rows.length);
 			}
 			clearDraft();
 			replyTo = null;
@@ -151,6 +171,12 @@
 
 	function scrollToTarget(key: string) {
 		tick().then(() => {
+			const targetIndex = rows.findIndex((r) => r.key === key);
+			if (targetIndex >= 0 && renderedCount <= targetIndex + 10) {
+				renderedCount = Math.min(rows.length, targetIndex + CHUNK_SIZE);
+			}
+			return tick();
+		}).then(() => {
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
 					const node = document.getElementById(`comment-${key}`);
@@ -240,8 +266,8 @@
 		// Ветка тянется вверх и вниз, пока у соседних комментариев есть линия с тем же номером
 		let from = index;
 		let to = index;
-		while (from > 0 && rows[from - 1].lines.length > line) from--;
-		while (to < rows.length - 1 && rows[to + 1].lines.length > line) to++;
+		while (from > 0 && renderedRows[from - 1]?.lines.length > line) from--;
+		while (to < renderedRows.length - 1 && renderedRows[to + 1]?.lines.length > line) to++;
 		highlight = { line, from, to };
 	}
 
@@ -318,7 +344,7 @@
 		{/if}
 
 		<div class="comments-list">
-			{#each rows as row, index (row.key)}
+			{#each renderedRows as row, index (row.key)}
 				<CommentItem
 					{row}
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
@@ -331,6 +357,9 @@
 					{editor}
 				/>
 			{/each}
+			{#if renderedCount < rows.length}
+				<div bind:this={chunkSentinel} class="comments-chunk-sentinel" style="height: 1px;"></div>
+			{/if}
 		</div>
 
 		{#if logic.error}

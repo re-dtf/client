@@ -62,11 +62,10 @@
 	let itemNode = $state<HTMLElement>();
 
 	$effect(() => {
+		if (!panObserver || !itemNode) return;
 		const node = itemNode;
-		if (panObserver && node) {
-			panObserver.observe(node);
-			return () => panObserver.unobserve(node);
-		}
+		panObserver.observe(node);
+		return () => panObserver.unobserve(node);
 	});
 
 	let comment = $derived(row.comment);

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Block } from '$lib/api/types';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
-	import DOMPurify from 'dompurify';
+	import { sanitizeHtml } from '$lib/sanitize';
 	import LazyImage from './LazyImage.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 
@@ -11,7 +11,7 @@
 {#each blocks as block}
 	{#if block.type === 'text' || block.type === 'header'}
 		<div class="block text-block">
-			{@html DOMPurify.sanitize(block.data.text)}
+			{@html sanitizeHtml(block.data.text)}
 		</div>
 	{:else if block.type === 'media'}
 		<div class="block media-block">

@@ -35,7 +35,14 @@ function parseInline(line: string): Inline[] {
 	return result;
 }
 
+const textCache = new Map<string, Paragraph[]>();
+const MAX_TEXT_CACHE = 1000;
+
 export function parseCommentText(raw: string): Paragraph[] {
+	if (!raw) return [];
+	const cached = textCache.get(raw);
+	if (cached !== undefined) return cached;
+
 	const paragraphs: Paragraph[] = [];
 	let current: Paragraph | null = null;
 
@@ -53,6 +60,12 @@ export function parseCommentText(raw: string): Paragraph[] {
 		}
 		current.lines.push(parseInline(text));
 	}
+
+	if (textCache.size >= MAX_TEXT_CACHE) {
+		const firstKey = textCache.keys().next().value;
+		if (firstKey !== undefined) textCache.delete(firstKey);
+	}
+	textCache.set(raw, paragraphs);
 
 	return paragraphs;
 }
