@@ -129,7 +129,7 @@
 		{@const loaded = post}
 		{#if depth <= 1}
 			{#await commentsTurn then}
-				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined && !toComments ? appear('feedIn') : () => {})}>
+				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined && !toComments ? appear('feedIn') : undefined)}>
 					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
 				</div>
 			{/await}
