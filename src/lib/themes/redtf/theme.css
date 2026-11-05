@@ -25,8 +25,16 @@
 
 /* Блюр верхней панели */
 :root[data-theme~="redtf"][data-header-blur="true"] .header {
-	background-color: rgba(0, 0, 0, 0.1);
+	background-color: rgba(217, 245, 255, 0.5);
 	backdrop-filter: blur(20px) saturate(180%);
+	-webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+@media (max-width: 719px) {
+	:root[data-theme~="redtf"][data-header-blur="true"] .header {
+		backdrop-filter: blur(10px) saturate(180%);
+		-webkit-backdrop-filter: blur(10px) saturate(180%);
+	}
 }
 
 /* Ширина контента меняется ползунком в настройках: регистрируем переменные как длины, чтобы переход их интерполировал.
@@ -411,6 +419,10 @@
 	:root[data-theme~="redtf"]:not([data-color-scheme="light"]) .header {
 		border-bottom: 1px solid var(--border-subtle);
 	}
+
+	:root[data-theme~="redtf"]:not([data-color-scheme="light"])[data-header-blur="true"] .header {
+		background-color: rgba(0, 0, 0, 0.1);
+	}
 }
 
 :root[data-theme~="redtf"][data-color-scheme="dark"] {
@@ -563,4 +575,8 @@
 
 :root[data-theme~="redtf"][data-color-scheme="dark"] .header {
 	border-bottom: 1px solid var(--border-subtle);
+}
+
+:root[data-theme~="redtf"][data-color-scheme="dark"][data-header-blur="true"] .header {
+	background-color: rgba(0, 0, 0, 0.1);
 }

@@ -1,9 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { render } from 'svelte/server';
 import Header from '../dtf2022/Header.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { activeTheme } from '../index.svelte';
 import { getThemeSettings } from '../settings.svelte';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Header: настройка avatarOpensMenu', () => {
 	beforeEach(() => {
@@ -49,5 +54,30 @@ describe('Header: настройка avatarOpensMenu', () => {
 		activeTheme.set('dtf2022');
 		const { body } = render(Header, { props: { avatarOpensMenu: true } });
 		expect(body).toMatch(/header-profile__btn/);
+	});
+});
+
+describe('Header: стили блюра верхней панели (headerBlur)', () => {
+	const cssContent = fs.readFileSync(path.join(__dirname, 'theme.css'), 'utf-8');
+
+	it('в светлой теме использует rgba(217, 245, 255, 0.5) и блюр 20px', () => {
+		expect(cssContent).toContain(
+			':root[data-theme~="redtf"][data-header-blur="true"] .header {\n\tbackground-color: rgba(217, 245, 255, 0.5);\n\tbackdrop-filter: blur(20px) saturate(180%);'
+		);
+	});
+
+	it('на смартфонах (max-width: 719px) использует блюр 10px saturate(180%)', () => {
+		expect(cssContent).toMatch(
+			/@media \(max-width: 719px\) \{\s*:root\[data-theme~="redtf"\]\[data-header-blur="true"\] \.header \{\s*backdrop-filter: blur\(10px\) saturate\(180%\);/
+		);
+	});
+
+	it('в тёмной теме сохраняет background-color: rgba(0, 0, 0, 0.1)', () => {
+		expect(cssContent).toContain(
+			':root[data-theme~="redtf"]:not([data-color-scheme="light"])[data-header-blur="true"] .header {\n\t\tbackground-color: rgba(0, 0, 0, 0.1);\n\t}'
+		);
+		expect(cssContent).toContain(
+			':root[data-theme~="redtf"][data-color-scheme="dark"][data-header-blur="true"] .header {\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}'
+		);
 	});
 });
