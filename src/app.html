@@ -4,8 +4,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="color-scheme" content="light dark" />
-		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f2" />
-		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141414" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#D9F5FF" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />
 		<link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/icons/fav-default.svg" id="app-favicon" />
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" id="app-manifest" />
 
@@ -36,8 +36,13 @@
 				document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
 				const meta = document.querySelector('meta[name="color-scheme"]');
 				if (meta) meta.content = supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light';
-				const darkColor = '#141414';
-				const lightColor = '#f2f2f2';
+				const themeColors = {
+					dtf2022: { light: '#D9F5FF', dark: '#202022' },
+					redtf: { light: '#D9F5FF', dark: '#202022' }
+				};
+				const currentColors = themeColors[themeId] || themeColors.redtf;
+				const darkColor = currentColors.dark;
+				const lightColor = currentColors.light;
 				const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
 				if (cs === 'dark' || (supportsDark && isDark)) {
 					themeMetas.forEach((m) => m.setAttribute('content', darkColor));
@@ -67,7 +72,7 @@
 							short_name: 're:DTF',
 							display: 'standalone',
 							background_color: '#141414',
-							theme_color: isDark ? '#141414' : '#f2f2f2',
+							theme_color: isDark ? darkColor : lightColor,
 							icons: [
 								{ src: customIcon, sizes: 'any', type: isSvg ? 'image/svg+xml' : 'image/png', purpose: 'any' },
 								{ src: customIcon, sizes: 'any', type: isSvg ? 'image/svg+xml' : 'image/png', purpose: 'maskable' }

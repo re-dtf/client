@@ -69,6 +69,13 @@ export function isFieldVisible(
 	return current === field.dependsOn.value;
 }
 
+export interface ThemeColors {
+	/** Фирменный цвет для светлого режима (например, цвет шапки) */
+	light: string;
+	/** Фирменный цвет для тёмного режима (например, цвет шапки) */
+	dark: string;
+}
+
 export interface ThemeManifest {
 	/** Совпадает с именем папки темы */
 	id: string;
@@ -81,6 +88,8 @@ export interface ThemeManifest {
 	 * так что исправления основы попадают в форк сами.
 	 */
 	extends?: string;
+	/** Фирменные цвета темы в светлом и тёмном режимах */
+	colors?: ThemeColors;
 	/**
 	 * Анимации темы (docs/architecture/motion.md), например `fluent` из `$lib/motion`. Не указаны —
 	 * тема не анимирует ничего, кроме затемнения за окном. Форк не наследует поле: dtf2022 остаётся без анимаций.

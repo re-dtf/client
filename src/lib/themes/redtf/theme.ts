@@ -153,6 +153,10 @@ export default defineTheme({
 	name: 'Re:DTF',
 	supportsDarkMode: true,
 	description: 'Основная тема. Вдохновлена DTF 2023-24 года, но лучше, и с кастомизацией.',
+	colors: {
+		light: '#D9F5FF',
+		dark: '#202022'
+	},
 	settings: [
 		{
 			key: 'votes',

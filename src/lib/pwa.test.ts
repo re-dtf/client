@@ -42,8 +42,8 @@ describe('pwa manager', () => {
 		const appHtmlPath = path.resolve(__dirname, '../app.html');
 		const html = fs.readFileSync(appHtmlPath, 'utf-8');
 
-		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f2" />');
-		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141414" />');
+		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: light)" content="#D9F5FF" />');
+		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202022" />');
 	});
 
 	it('service-worker не прекэширует /api/version.json и пропускает запросы к /api/', async () => {

@@ -308,7 +308,8 @@
 			document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
 			const metaScheme = document.querySelector('meta[name="color-scheme"]');
 			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
-			const targetColor = isDark ? '#141414' : '#f2f2f2';
+			const colors = activeTheme.colors;
+			const targetColor = isDark ? colors.dark : colors.light;
 			const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
 			if (themeMetas.length > 0) {
 				themeMetas.forEach((m) => m.setAttribute('content', targetColor));
