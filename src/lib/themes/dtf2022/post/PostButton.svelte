@@ -229,4 +229,27 @@
 			opacity: 0.12;
 		}
 	}
+
+	/* Расширенная зона нажатия оценок на мобильных / тач-экранах */
+	@media (pointer: coarse), (max-width: 859px) {
+		.post-button--like,
+		.post-button--dislike,
+		.post-button--upvote,
+		.post-button--downvote {
+			position: relative;
+		}
+
+		.post-button--like::after,
+		.post-button--dislike::after,
+		.post-button--upvote::after,
+		.post-button--downvote::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			min-width: max(100%, 44px);
+			min-height: 44px;
+		}
+	}
 </style>

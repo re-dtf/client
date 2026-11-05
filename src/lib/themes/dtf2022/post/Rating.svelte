@@ -198,6 +198,7 @@
 		position: absolute;
 		width: calc(var(--size) * var(--ratio));
 		height: calc(var(--size) * var(--ratio));
+		pointer-events: none;
 	}
 
 	.vote--content .animated-arrow {
@@ -218,6 +219,7 @@
 		line-height: 22px;
 		font-weight: 500;
 		cursor: default;
+		z-index: 1;
 	}
 
 	.vote__actual-value--hidden {
@@ -242,5 +244,18 @@
 
 	.vote--sum-negative .vote__value {
 		--color-text: var(--color-negative);
+	}
+
+	/* Расширенная зона нажатия на мобильных / тач-экранах */
+	@media (pointer: coarse), (max-width: 859px) {
+		.vote__button::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 44px;
+			height: 44px;
+		}
 	}
 </style>

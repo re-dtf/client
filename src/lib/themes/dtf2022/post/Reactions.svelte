@@ -256,4 +256,30 @@
 			background-color: var(--bg-card-hover-2);
 		}
 	}
+
+	/* Расширенная зона нажатия реакций на мобильных / тач-экранах */
+	@media (pointer: coarse), (max-width: 859px) {
+		.post-reactions__scroll {
+			padding: 8px 4px;
+			margin: -6px -4px;
+		}
+
+		.post-reaction {
+			position: relative;
+		}
+
+		.post-reaction::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			min-width: max(100%, 44px);
+			min-height: 44px;
+		}
+
+		.post-reactions__pick {
+			padding: 6px;
+		}
+	}
 </style>
