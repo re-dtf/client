@@ -91,7 +91,7 @@
 		font-size: 15px;
 		font-weight: 500;
 		line-height: 20px;
-		color: var(--text-main, #000);
+		color: var(--text-primary);
 	}
 
 	.filtered-card__badge {

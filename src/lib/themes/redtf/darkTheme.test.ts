@@ -109,6 +109,11 @@ describe('redtf dark mode configuration', () => {
 		expect(reloadPromptContent).toContain('var(--color-blue');
 		expect(reloadPromptContent).not.toContain('--island-bg');
 		expect(reloadPromptContent).not.toContain('--main-text');
+
+		const filteredCardPath = path.resolve(__dirname, '../dtf2022/post/FilteredCard.svelte');
+		const filteredCardContent = fs.readFileSync(filteredCardPath, 'utf-8');
+		expect(filteredCardContent).toContain('var(--text-primary');
+		expect(filteredCardContent).not.toContain('--text-main');
 	});
 
 	it('ensures source dialogs and error components use theme CSS variables', () => {
