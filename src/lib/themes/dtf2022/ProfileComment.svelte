@@ -23,6 +23,7 @@
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { getCommentBadge } from '$lib/clientBadge';
+	import BadgeInfoModal from './BadgeInfoModal.svelte';
 
 	/** Карточка комментария на вкладке «Комментарии» профиля, как profile_comment_favorite у DTF */
 	let { comment }: { comment: Comment } = $props();
@@ -43,6 +44,7 @@
 
 	let menuOpen = $state(false);
 	let complaining = $state(false);
+	let showBadgeModal = $state(false);
 	let menuItems = $derived([
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
 		...(comment.sourceId === 'dtf' && comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
@@ -66,6 +68,10 @@
 	<ComplaintDialog onsubmit={(reasonId) => api.complain('comment', comment.id, reasonId)} onclose={() => (complaining = false)} />
 {/if}
 
+{#if showBadgeModal && clientBadge}
+	<BadgeInfoModal badge={clientBadge} onclose={() => (showBadgeModal = false)} />
+{/if}
+
 {#if isFiltered}
 	{#if filterSettings.value.mode === 'soft'}
 		<article class="profile-comment profile-comment--filtered">
@@ -85,24 +91,42 @@
 			<span class="profile-comment__name">{comment.author.name}</span>
 		</a>
 		{#if showAuthorBadge && clientBadge}
-			<span class="profile-comment__badge profile-comment__badge--{clientBadge.type}" title={clientBadge.title}>
+			<button
+				type="button"
+				class="profile-comment__badge profile-comment__badge--{clientBadge.type}"
+				title={clientBadge.title}
+				onclick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					showBadgeModal = true;
+				}}
+			>
 				{#if 'icon' in clientBadge}
 					<svg class="icon icon--{clientBadge.type}" width="11" height="11" aria-hidden="true">
 						<use href="/icons.svg#{clientBadge.icon}"></use>
 					</svg>
 				{/if}
 				<span>{clientBadge.label}</span>
-			</span>
+			</button>
 		{/if}
 		<a class="profile-comment__date" href={postPath} onclick={(e) => openPost(e, post)}>
 			<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 		</a>
 		{#if showDateBadge && clientBadge && 'icon' in clientBadge}
-			<span class="profile-comment__time-badge" title={clientBadge.title}>
+			<button
+				type="button"
+				class="profile-comment__time-badge"
+				title={clientBadge.title}
+				onclick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					showBadgeModal = true;
+				}}
+			>
 				<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
 					<use href="/icons.svg#{clientBadge.icon}"></use>
 				</svg>
-			</span>
+			</button>
 		{/if}
 
 		<div class="profile-comment__vote">
@@ -255,8 +279,13 @@
 		line-height: 16px;
 		border-radius: 3px;
 		user-select: none;
-		cursor: default;
+		cursor: pointer;
 		white-space: nowrap;
+		transition: opacity var(--duration-base, 0.15s);
+	}
+
+	.profile-comment__badge:hover {
+		opacity: 0.85;
 	}
 
 	.profile-comment__badge .icon {
@@ -312,7 +341,7 @@
 		color: var(--text-muted);
 		opacity: 0.55;
 		user-select: none;
-		cursor: default;
+		cursor: pointer;
 		transition: opacity var(--duration-base, 0.15s);
 	}
 

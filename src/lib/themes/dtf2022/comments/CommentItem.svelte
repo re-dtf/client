@@ -27,6 +27,7 @@
 	import { settings, shouldVirtualizeComments } from '$lib/storage/settings.svelte';
 	import { getCommentBadge } from '$lib/clientBadge';
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
+	import BadgeInfoModal from '../BadgeInfoModal.svelte';
 
 	// Заглушка аватара удалённого комментария из исходной вёрстки
 	const REMOVED_AVATAR = 'https://leonardo.osnova.io/04ee6149-5c89-5a20-846d-be172c424736/-/scale_crop/64x64/-/format/webp/';
@@ -103,6 +104,7 @@
 		}
 	]);
 	let complaining = $state(false);
+	let showBadgeModal = $state(false);
 
 	function toggleMenu() {
 		menuOpen = !menuOpen;
@@ -151,6 +153,10 @@
 
 {#if complaining}
 	<ComplaintDialog onsubmit={(reasonId) => api.complain('comment', comment.id, reasonId)} onclose={() => (complaining = false)} />
+{/if}
+
+{#if showBadgeModal && clientBadge}
+	<BadgeInfoModal badge={clientBadge} onclose={() => (showBadgeModal = false)} />
 {/if}
 
 <div
@@ -210,14 +216,23 @@
 
 			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)} style="opacity: 0.7;">{comment.author.name}</a>
 			{#if showAuthorBadge && clientBadge}
-				<span class="comment-item__badge comment-item__badge--{clientBadge.type}" title={clientBadge.title}>
+				<button
+					type="button"
+					class="comment-item__badge comment-item__badge--{clientBadge.type}"
+					title={clientBadge.title}
+					onclick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						showBadgeModal = true;
+					}}
+				>
 					{#if 'icon' in clientBadge}
 						<svg class="icon" width="11" height="11" aria-hidden="true">
 							<use href="/icons.svg#{clientBadge.icon}"></use>
 						</svg>
 					{/if}
 					<span>{clientBadge.label}</span>
-				</span>
+				</button>
 			{/if}
 
 			<div class="comment-item__break"></div>
@@ -226,11 +241,20 @@
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
 			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
-				<span class="comment-item__time-badge" title={clientBadge.title}>
+				<button
+					type="button"
+					class="comment-item__time-badge"
+					title={clientBadge.title}
+					onclick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						showBadgeModal = true;
+					}}
+				>
 					<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
 						<use href="/icons.svg#{clientBadge.icon}"></use>
 					</svg>
-				</span>
+				</button>
 			{/if}
 
 			<div class="comment-item__text comment-item__text--filtered">
@@ -253,14 +277,23 @@
 
 			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)}>{comment.author.name}</a>
 			{#if showAuthorBadge && clientBadge}
-				<span class="comment-item__badge comment-item__badge--{clientBadge.type}" title={clientBadge.title}>
+				<button
+					type="button"
+					class="comment-item__badge comment-item__badge--{clientBadge.type}"
+					title={clientBadge.title}
+					onclick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						showBadgeModal = true;
+					}}
+				>
 					{#if 'icon' in clientBadge}
 						<svg class="icon" width="11" height="11" aria-hidden="true">
 							<use href="/icons.svg#{clientBadge.icon}"></use>
 						</svg>
 					{/if}
 					<span>{clientBadge.label}</span>
-				</span>
+				</button>
 			{/if}
 
 			{#if row.parent}
@@ -282,11 +315,20 @@
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
 			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
-				<span class="comment-item__time-badge" title={clientBadge.title}>
+				<button
+					type="button"
+					class="comment-item__time-badge"
+					title={clientBadge.title}
+					onclick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						showBadgeModal = true;
+					}}
+				>
 					<svg class="icon icon--{clientBadge.type}" width="10" height="10" aria-hidden="true">
 						<use href="/icons.svg#{clientBadge.icon}"></use>
 					</svg>
-				</span>
+				</button>
 			{/if}
 
 			{#if paragraphs.length}
@@ -589,8 +631,13 @@
 		line-height: 16px;
 		border-radius: 3px;
 		user-select: none;
-		cursor: default;
+		cursor: pointer;
 		white-space: nowrap;
+		transition: opacity var(--duration-base, 0.15s);
+	}
+
+	.comment-item__badge:hover {
+		opacity: 0.85;
 	}
 
 	.comment-item__badge .icon {
@@ -702,7 +749,7 @@
 		color: var(--text-muted);
 		opacity: 0.55;
 		user-select: none;
-		cursor: default;
+		cursor: pointer;
 		transition: opacity var(--duration-base, 0.15s);
 	}
 

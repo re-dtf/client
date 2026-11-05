@@ -28,4 +28,14 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('content-visibility: visible');
 		expect(svelteContent).toContain('z-index: 20');
 	});
+
+	it('содержит кликабельные кнопки бейджей и модальное окно BadgeInfoModal', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('BadgeInfoModal');
+		expect(svelteContent).toContain('showBadgeModal');
+		expect(svelteContent).toContain('class="comment-item__badge comment-item__badge--{clientBadge.type}"');
+		expect(svelteContent).toContain('class="comment-item__time-badge"');
+		expect(svelteContent).toContain('cursor: pointer');
+	});
 });
