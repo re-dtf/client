@@ -54,6 +54,7 @@
 		display: grid;
 		grid-template-columns: var(--sidebar-left-width) minmax(0, 1fr);
 		min-height: 100vh;
+		transition: grid-template-columns 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
 	}
 
 	/* Хватает места: справа резервируем столько же, сколько слева, и контент встаёт по центру окна */
@@ -77,19 +78,22 @@
 		padding-inline: var(--page-gutter);
 	}
 
-	/* Левую колонку свернули бургером: контент на всю ширину */
+	/* Левую колонку свернули бургером: плавно сжимаем боковые колонки до 0px */
 	.layout.layout--no-left {
-		grid-template-columns: minmax(0, 1fr);
+		grid-template-columns: 0px minmax(0, 1fr);
 	}
 
-	.layout--no-left > .page-content {
-		grid-column: 1;
+	@media (min-width: 1300px) {
+		.layout.layout--no-left {
+			grid-template-columns: 0px minmax(0, 1fr) 0px;
+		}
 	}
 
 	@media (max-width: 859px) {
 		.layout {
 			display: flex;
 			justify-content: center;
+			transition: none;
 		}
 
 		.page-content {
@@ -101,6 +105,12 @@
 		/* Иначе низ страницы прячется под фиксированной мобильной строкой */
 		.page-content {
 			padding-bottom: var(--mobile-bar-height);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.layout {
+			transition: none;
 		}
 	}
 </style>

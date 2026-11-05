@@ -133,20 +133,28 @@
 	.sidebar-left {
 		width: 100%;
 		max-width: var(--sidebar-left-width);
+		min-width: 0;
 		flex-shrink: 0;
+		overflow: hidden;
 
 		/* Липкая панель со своим скроллом */
 		position: sticky;
 		top: var(--header-height);
 		height: calc(100vh - var(--header-height));
 		justify-self: start;
+		transition: visibility 0.3s;
 	}
 
 	.panel {
 		display: flex;
 		flex-direction: column;
+		width: var(--sidebar-left-width);
+		min-width: var(--sidebar-left-width);
 		height: 100%;
 		overflow-y: auto;
+		transition:
+			transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1),
+			opacity 0.25s ease;
 	}
 
 	.panel-burger {
@@ -277,9 +285,17 @@
 		color: var(--text-hover);
 	}
 
-	/* Свёрнутая бургером колонка; в режиме панели ниже это правило перекрывается */
-	.sidebar-left--collapsed {
-		display: none;
+	/* Свёрнутая бургером колонка на десктопе */
+	@media (min-width: 860px) {
+		.sidebar-left--collapsed {
+			visibility: hidden;
+			pointer-events: none;
+		}
+
+		.sidebar-left--collapsed .panel {
+			transform: translateX(-100%);
+			opacity: 0;
+		}
 	}
 
 	/* Выдвижная панель: у DTF колонка уходит ≤859px, на странице профиля — ≤1219px */
@@ -288,32 +304,55 @@
 			position: fixed;
 			top: 0;
 			left: 0;
-			width: 80%;
-			max-width: 300px;
+			width: 100%;
+			max-width: none;
 			height: 100%;
 			z-index: 110;
-			display: none;
+			overflow: visible;
+			visibility: hidden;
+			pointer-events: none;
+			transition: visibility 0.3s;
 		}
 
 		.sidebar-left--open {
-			display: block;
+			visibility: visible;
+			pointer-events: auto;
+			transition: none;
 		}
 
 		.tint {
 			display: block;
-			position: absolute;
+			position: fixed;
 			top: 0;
 			left: 0;
 			width: 100vw;
 			height: 100%;
 			z-index: 1;
 			background: var(--bg-tint-overlay);
+			opacity: 0;
+			pointer-events: auto;
+			transition: opacity 0.3s ease;
+		}
+
+		.sidebar-left--open .tint {
+			opacity: 1;
 		}
 
 		.panel {
 			position: relative;
 			z-index: 2;
+			width: 80%;
+			max-width: 300px;
+			min-width: 0;
 			background: var(--bg-main);
+			transform: translateX(-100%);
+			opacity: 1;
+			pointer-events: auto;
+			transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+		}
+
+		.sidebar-left--open .panel {
+			transform: translateX(0);
 		}
 
 		.panel-header {
@@ -352,6 +391,14 @@
 
 		.panel-logo .icon {
 			width: 95px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sidebar-left,
+		.tint,
+		.panel {
+			transition: none !important;
 		}
 	}
 </style>
