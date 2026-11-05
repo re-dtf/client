@@ -76,6 +76,17 @@ class PwaManager {
 				// If a worker is already waiting when the page loads
 				if (registration.waiting) {
 					this.handleWaiting(registration.waiting);
+				} else if (registration.installing) {
+					const installing = registration.installing;
+					installing.addEventListener('statechange', () => {
+						if (installing.state === 'installed') {
+							if (navigator.serviceWorker.controller) {
+								this.handleWaiting(installing);
+							} else {
+								this.offlineReady = true;
+							}
+						}
+					});
 				}
 
 				// Detect when an update is found and installed
@@ -105,6 +116,9 @@ class PwaManager {
 						registration.update().catch(() => {});
 					}
 				});
+
+				// Also trigger an update check on startup
+				registration.update().catch(() => {});
 			})
 			.catch((err) => {
 				console.warn('[PWA] Service worker registration check failed:', err);

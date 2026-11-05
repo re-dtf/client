@@ -52,8 +52,22 @@ describe('pwa manager', () => {
 		const swPath = path.resolve(__dirname, '../service-worker/index.ts');
 		const swCode = fs.readFileSync(swPath, 'utf-8');
 
-		expect(swCode).toContain("!f.startsWith('/api/')");
+		expect(swCode).toContain("!f.path.includes('api/')");
+		expect(swCode).toContain("!f.path.includes('version.json')");
 		expect(swCode).toContain("url.pathname.includes('/api/')");
+	});
+
+	it('корректно фильтрует prerendered объекты с полем path', () => {
+		const prerendered = [
+			{ path: '/api/version.json' },
+			{ path: 'version.json' },
+			{ path: 'index.html' },
+			{ path: '/about' }
+		];
+		const filtered = prerendered.filter(
+			(f) => !f.path.includes('api/') && !f.path.includes('version.json') && !f.path.endsWith('index.html')
+		);
+		expect(filtered).toEqual([{ path: '/about' }]);
 	});
 
 	it('service-worker использует cache-first для навигации для защиты от несанкционированного обновления', async () => {

@@ -17,10 +17,11 @@ const MAX_MEDIA_ENTRIES = 120;
 const precacheUrls = Array.from(
 	new Set([
 		resolve('/'),
+		resolve('/index.html'),
 		...immutable.map((f) => resolve(f.path)),
 		...assets.map((f) => resolve(f.path)),
 		...prerendered
-			.filter((f) => !f.startsWith('/api/') && !f.endsWith('version.json') && !f.endsWith('index.html'))
+			.filter((f) => !f.path.includes('api/') && !f.path.includes('version.json') && !f.path.endsWith('index.html'))
 			.map((f) => resolve(f.path))
 	])
 );
@@ -38,10 +39,11 @@ self.addEventListener('install', (event) => {
 				)
 			);
 
-			// Populate /index.html cache key from root shell so both '/' and '/index.html' match without 404 on dev/servers
-			const rootResponse = await cache.match(resolve('/'));
+			// Populate both '/' and '/index.html' cache keys from whichever root shell succeeded
+			const rootResponse = (await cache.match(resolve('/'))) || (await cache.match(resolve('/index.html')));
 			if (rootResponse) {
 				await cache.put(resolve('/index.html'), rootResponse.clone()).catch(() => {});
+				await cache.put(resolve('/'), rootResponse.clone()).catch(() => {});
 			}
 		})()
 	);
