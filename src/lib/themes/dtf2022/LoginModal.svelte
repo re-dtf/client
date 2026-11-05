@@ -13,6 +13,8 @@
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
 
+	const COVER_IMAGE = 'https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/';
+
 	type Mode = 'selector' | 'email' | 'token' | 'proxy';
 	type ProxyStep = 'choice' | 'custom_input';
 
@@ -173,7 +175,7 @@
 
 <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
 	<!-- обложка окна входа (котик) -->
-	<div class="login-modal__cover">
+	<div class="login-modal__cover" style:background-image="url('{COVER_IMAGE}')">
 		<svg class="icon" width="100" height="16" aria-hidden="true">
 			<use href="/reIcons.svg#redtf_black_logo"></use>
 		</svg>
@@ -479,9 +481,10 @@
 	.login-modal__cover {
 		padding: 25px 30px;
 		border-radius: 8px 0 0 8px;
-		background: var(--bg-ac-modal)
-			url('https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/')
-			no-repeat 50% 50% / cover;
+		background-color: var(--bg-ac-modal);
+		background-repeat: no-repeat;
+		background-position: 50% 50%;
+		background-size: cover;
 		color: #000;
 	}
 
