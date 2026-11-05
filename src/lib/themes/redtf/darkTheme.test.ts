@@ -165,4 +165,24 @@ describe('redtf dark mode configuration', () => {
 		expect(errorStateContent).toContain('var(--border-subtle');
 		expect(errorStateContent).toContain('var(--bg-button-hover');
 	});
+
+	it('adapts comment link navigation highlight to dark theme without bright white flash', () => {
+		const cssPath = path.join(__dirname, 'theme.css');
+		const cssContent = fs.readFileSync(cssPath, 'utf-8');
+		expect(cssContent).toContain('--color-blue-tint: rgba(70, 131, 217, 0.25);');
+
+		const redtfCommentsPath = path.resolve(__dirname, 'Comments.svelte');
+		const redtfCommentsContent = fs.readFileSync(redtfCommentsPath, 'utf-8');
+		expect(redtfCommentsContent).toContain("node.style.backgroundColor = 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))';");
+		expect(redtfCommentsContent).toContain("{ backgroundColor: 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))' }");
+
+		const dtfCommentsPath = path.resolve(__dirname, '../dtf2022/Comments.svelte');
+		const dtfCommentsContent = fs.readFileSync(dtfCommentsPath, 'utf-8');
+		expect(dtfCommentsContent).toContain("node.style.backgroundColor = 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))';");
+		expect(dtfCommentsContent).toContain("{ backgroundColor: 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))' }");
+
+		const appCssPath = path.resolve(__dirname, '../../../app.css');
+		const appCssContent = fs.readFileSync(appCssPath, 'utf-8');
+		expect(appCssContent).toContain('--color-blue-tint: rgba(70, 131, 217, 0.25);');
+	});
 });

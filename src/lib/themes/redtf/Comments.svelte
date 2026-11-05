@@ -199,7 +199,7 @@
 					void node.offsetHeight;
 
 					// Подсвечиваем комментарий сразу, а угасание запускаем только по прибытии скролла
-					node.style.backgroundColor = 'var(--color-blue-tint, #e8f3ff)';
+					node.style.backgroundColor = 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))';
 					node.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
 
 					let arrived = false;
@@ -219,7 +219,7 @@
 
 						node.style.removeProperty('background-color');
 						node.animate(
-							[{ backgroundColor: 'var(--color-blue-tint, #e8f3ff)' }, { backgroundColor: 'transparent' }],
+							[{ backgroundColor: 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))' }, { backgroundColor: 'transparent' }],
 							{ duration: 2500, easing: 'ease-out' }
 						);
 					};

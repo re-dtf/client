@@ -140,6 +140,13 @@
 	color-scheme: light dark;
 	accent-color: var(--color-accent);
 	scrollbar-color: var(--text-placeholder) transparent;
+	--color-blue-tint: #e8f3ff;
+}
+
+@supports (color: light-dark(white, black)) {
+	:root[data-theme~="redtf"] {
+		--color-blue-tint: light-dark(#e8f3ff, rgba(70, 131, 217, 0.25));
+	}
 }
 
 :root[data-theme~="redtf"][data-color-scheme="light"] {
@@ -319,6 +326,7 @@
 		--bg-spoiler: rgba(255, 255, 255, 0.08);
 		--bg-spoiler-hover: rgba(255, 255, 255, 0.12);
 		--bg-highlight: rgba(70, 131, 217, 0.25);
+		--color-blue-tint: rgba(70, 131, 217, 0.25);
 		--bg-unread: #1a2636;
 		--bg-unread-hover: #223145;
 		--bg-read-hover: #27272b;
@@ -476,6 +484,7 @@
 	--bg-spoiler: rgba(255, 255, 255, 0.08);
 	--bg-spoiler-hover: rgba(255, 255, 255, 0.12);
 	--bg-highlight: rgba(70, 131, 217, 0.25);
+	--color-blue-tint: rgba(70, 131, 217, 0.25);
 	--bg-unread: #1a2636;
 	--bg-unread-hover: #223145;
 	--bg-read-hover: #27272b;

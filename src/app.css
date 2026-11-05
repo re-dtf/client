@@ -7,14 +7,29 @@
 
 :root {
 	color-scheme: light dark;
+	--color-blue-tint: #e8f3ff;
+}
+
+@supports (color: light-dark(white, black)) {
+	:root {
+		--color-blue-tint: light-dark(#e8f3ff, rgba(70, 131, 217, 0.25));
+	}
 }
 
 :root[data-theme-mode="dark"] {
 	color-scheme: dark;
+	--color-blue-tint: rgba(70, 131, 217, 0.25);
 }
 
 :root[data-theme-mode="light"] {
 	color-scheme: light;
+	--color-blue-tint: #e8f3ff;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme-mode="light"]) {
+		--color-blue-tint: rgba(70, 131, 217, 0.25);
+	}
 }
 
 html {
