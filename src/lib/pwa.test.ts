@@ -45,4 +45,14 @@ describe('pwa manager', () => {
 		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f2" />');
 		expect(html).toContain('<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141414" />');
 	});
+
+	it('service-worker не прекэширует /api/version.json и пропускает запросы к /api/', async () => {
+		const fs = await import('fs');
+		const path = await import('path');
+		const swPath = path.resolve(__dirname, '../service-worker/index.ts');
+		const swCode = fs.readFileSync(swPath, 'utf-8');
+
+		expect(swCode).toContain("!f.startsWith('/api/')");
+		expect(swCode).toContain("url.pathname.includes('/api/')");
+	});
 });

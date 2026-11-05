@@ -1,5 +1,4 @@
-import { browser } from '$app/env';
-import { version } from '$app/env';
+import { browser, dev, version } from '$app/env';
 import { resolve } from '$app/paths';
 
 class PwaManager {
@@ -11,10 +10,22 @@ class PwaManager {
 	private waitingWorker: ServiceWorker | null = null;
 	private refreshing = false;
 	private initialized = false;
+	private fetchingVersion = false;
 
 	init() {
 		if (!browser || this.initialized) return;
 		if (!('serviceWorker' in navigator)) return;
+
+		// In development mode, service workers interfere with HMR and module loading.
+		// Clean up any registered service workers on localhost to avoid stale cache or reload loops.
+		if (dev) {
+			navigator.serviceWorker.getRegistrations().then((registrations) => {
+				for (const registration of registrations) {
+					registration.unregister();
+				}
+			}).catch(() => {});
+			return;
+		}
 
 		this.initialized = true;
 
@@ -64,6 +75,9 @@ class PwaManager {
 		this.waitingWorker = worker;
 		this.needRefresh = true;
 
+		if (this.fetchingVersion) return;
+		this.fetchingVersion = true;
+
 		// Fetch version endpoint to display the new version number
 		try {
 			const res = await fetch(resolve(`/api/version.json?t=${Date.now()}`), {
@@ -77,6 +91,8 @@ class PwaManager {
 			}
 		} catch {
 			// Version fetch failed; needRefresh remains true
+		} finally {
+			this.fetchingVersion = false;
 		}
 	}
 

@@ -13,13 +13,16 @@ const CACHE_MEDIA = 'redtf-media-v1';
 const MAX_MEDIA_ENTRIES = 120;
 
 // Precache list: all immutable build chunks, static assets, prerendered routes, and the SPA index fallback
+// Dynamic endpoints (/api/*, version.json) are excluded so update checks always go to the network
 const precacheUrls = Array.from(
 	new Set([
 		resolve('/'),
 		resolve('/index.html'),
 		...immutable.map((f) => resolve(f.path)),
 		...assets.map((f) => resolve(f.path)),
-		...prerendered.map((f) => resolve(f.path))
+		...prerendered
+			.filter((f) => !f.startsWith('/api/') && !f.endsWith('version.json'))
+			.map((f) => resolve(f.path))
 	])
 );
 
@@ -70,6 +73,9 @@ self.addEventListener('fetch', (event) => {
 	// Ignore chrome extensions or non-http(s) schemes
 	if (!url.protocol.startsWith('http')) return;
 
+	// Bypass API routes completely — they must always hit network directly
+	if (url.pathname.includes('/api/')) return;
+
 	// 1. Navigation requests (loading SPA pages)
 	if (request.mode === 'navigate') {
 		event.respondWith(
@@ -118,8 +124,8 @@ self.addEventListener('fetch', (event) => {
 				if (cached) return cached;
 
 				const response = await fetch(request);
-				if (response && response.status === 200) {
-					cache.put(request, response.clone());
+				if (response && response.status === 200 && request.cache !== 'no-store') {
+					cache.put(request, response.clone()).catch(() => {});
 				}
 				return response;
 			})()
