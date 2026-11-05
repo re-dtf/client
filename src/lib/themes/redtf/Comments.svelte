@@ -160,11 +160,46 @@
 				requestAnimationFrame(() => {
 					const node = document.getElementById(`comment-${key}`);
 					if (!node) return;
-					node.scrollIntoView({ block: 'center', behavior: scrollBehavior() });
-					node.animate(
-						[{ backgroundColor: 'var(--color-blue-tint, #e8f3ff)' }, { backgroundColor: 'transparent' }],
-						{ duration: 2500, easing: 'ease-out' }
-					);
+
+					// Раскрываем геометрию предшествующих комментариев, чтобы браузер рассчитал точные высоты до цели
+					const list = node.closest('.comments-list');
+					if (list) {
+						const items = list.querySelectorAll('.comment-item');
+						for (const item of items) {
+							(item as HTMLElement).style.contentVisibility = 'visible';
+							if (item === node) break;
+						}
+					}
+					void node.offsetHeight;
+
+					// Подсвечиваем комментарий сразу, а угасание запускаем только по прибытии скролла
+					node.style.backgroundColor = 'var(--color-blue-tint, #e8f3ff)';
+					node.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+
+					let arrived = false;
+					const onArrival = () => {
+						if (arrived) return;
+						arrived = true;
+						window.removeEventListener('scrollend', onArrival);
+
+						// После завершения скролла возвращаем content-visibility: браузер уже сохранил реальные высоты через contain-intrinsic-size: auto
+						if (list) {
+							const items = list.querySelectorAll('.comment-item');
+							for (const item of items) {
+								(item as HTMLElement).style.removeProperty('content-visibility');
+								if (item === node) break;
+							}
+						}
+
+						node.style.removeProperty('background-color');
+						node.animate(
+							[{ backgroundColor: 'var(--color-blue-tint, #e8f3ff)' }, { backgroundColor: 'transparent' }],
+							{ duration: 2500, easing: 'ease-out' }
+						);
+					};
+
+					window.addEventListener('scrollend', onArrival, { once: true });
+					setTimeout(onArrival, 2500);
 				});
 			});
 		});
@@ -452,7 +487,9 @@
 	/* Статусы */
 	.comments-status {
 		display: flex;
+		align-items: center;
 		justify-content: center;
+		min-height: 35vh;
 		padding: 24px 0;
 		color: var(--text-muted);
 	}

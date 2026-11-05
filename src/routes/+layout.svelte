@@ -198,6 +198,10 @@
 			if (activeScrollId === '__feed__' && feed.consumeScrollReset()) {
 				scrollPositions.set('__feed__', 0);
 			}
+			const activeOverlay = topmostPageOverlayIndex >= 0 ? overlays[topmostPageOverlayIndex] : undefined;
+			if (activeOverlay?.type === 'post' && activeOverlay.data.commentId !== undefined) {
+				scrollPositions.delete(activeScrollId);
+			}
 			const savedScroll = scrollPositions.get(activeScrollId) || 0;
 			const layer = activeScrollId;
 			const closing = overlays.length < previousDepth;

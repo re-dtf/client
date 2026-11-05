@@ -434,7 +434,7 @@
 		font-size: 16px;
 		line-height: 1.5em;
 		/* при прокрутке к комментарию не прятать его под липкой шапкой */
-		scroll-margin-top: calc(var(--header-height) + 8px);
+		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
 	.comment-item--virtual {
