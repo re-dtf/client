@@ -37,9 +37,12 @@ export async function assetsReady(root: HTMLElement, timeout = 4000) {
 	const pending: Promise<unknown>[] = [document.fonts.ready];
 	const backgrounds = new Set<string>();
 
+	const winH = typeof window !== 'undefined' ? window.innerHeight : 800;
+	const rootTop = typeof root.getBoundingClientRect === 'function' ? root.getBoundingClientRect().top : 0;
+
 	for (const img of root.querySelectorAll<HTMLImageElement>('img')) {
 		// Ленивая картинка далеко внизу не загрузится, пока до неё не доскроллят: ждать её до таймаута незачем
-		const far = img.loading === 'lazy' && img.getBoundingClientRect().top > innerHeight + 800;
+		const far = img.loading === 'lazy' && (rootTop + (img.offsetTop || 0)) > winH + 800;
 		if (!img.complete && !far) pending.push(img.decode().catch(() => {}));
 	}
 

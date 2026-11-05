@@ -65,9 +65,11 @@ export function markOrigin(e: MouseEvent) {
 }
 
 /** Временно зафиксировать экран по размерам окна */
-export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
-	const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
-	const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+export function freeze(screen: HTMLElement, rect: DOMRect, headerBottom?: number): () => void {
+	if (headerBottom === undefined) {
+		const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
+		headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+	}
 	const top = Math.max(rect.top, headerBottom);
 	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 	const prev = {
@@ -83,7 +85,8 @@ export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
 		transformOrigin: screen.style.transformOrigin,
 		filter: screen.style.filter,
 		opacity: screen.style.opacity,
-		transform: screen.style.transform
+		transform: screen.style.transform,
+		willChange: screen.style.willChange
 	};
 
 	Object.assign(screen.style, {
@@ -95,7 +98,8 @@ export function freeze(screen: HTMLElement, rect: DOMRect): () => void {
 		overflow: 'hidden',
 		margin: '0',
 		zIndex: '10',
-		pointerEvents: 'none'
+		pointerEvents: 'none',
+		willChange: 'transform, opacity'
 	});
 	screen.scrollTop = top - rect.top;
 
@@ -119,14 +123,14 @@ export function startTransition(fromId: string, toId: string, screenEl: HTMLElem
 	hadHoldBlur = false;
 	transitionStartTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
-	const rect = screenEl.getBoundingClientRect();
-	unfreezeOutgoing = freeze(screenEl, rect);
-
 	const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
 	const headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+	const rect = screenEl.getBoundingClientRect();
 	const top = Math.max(rect.top, headerBottom);
 	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 	const visibleHeight = Math.max(100, winHeight - top);
+
+	unfreezeOutgoing = freeze(screenEl, rect, headerBottom);
 
 	// Оптический центр масштабирования по оси глубины Z
 	screenEl.style.transformOrigin = `50% ${Math.round(visibleHeight * 0.4)}px`;
@@ -220,6 +224,7 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 		parentLayer.style.visibility = 'visible';
 	}
 	incomingScreen.style.visibility = 'visible';
+	incomingScreen.style.willChange = 'transform, opacity';
 	await tick();
 
 	// 2. Анимация появления нового экрана
@@ -258,11 +263,13 @@ export async function incomingReady(layerId: string, incomingScreen: HTMLElement
 						incomingScreen.style.removeProperty('z-index');
 						incomingScreen.style.removeProperty('position');
 						incomingScreen.style.removeProperty('transform-origin');
+						incomingScreen.style.removeProperty('will-change');
 					})
 					.catch(() => {
 						incomingScreen.style.removeProperty('z-index');
 						incomingScreen.style.removeProperty('position');
 						incomingScreen.style.removeProperty('transform-origin');
+						incomingScreen.style.removeProperty('will-change');
 					})
 			);
 		}
@@ -339,6 +346,7 @@ function cleanup() {
 		outgoingScreen.style.removeProperty('transform');
 		outgoingScreen.style.removeProperty('opacity');
 		outgoingScreen.style.removeProperty('transform-origin');
+		outgoingScreen.style.removeProperty('will-change');
 	}
 
 	if (unfreezeOutgoing) {

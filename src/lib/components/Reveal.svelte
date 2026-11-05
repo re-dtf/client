@@ -72,15 +72,12 @@
 		let live = true;
 		untrack(async () => {
 			await tick();
-			if (stage) await assetsReady(stage, 700);
-			if (!live) return;
-
-			revealed = true;
-			await tick();
 
 			const currentLayer = box?.closest('[data-layer]')?.getAttribute('data-layer');
 			if (currentLayer && pageTransition.isIncoming(currentLayer)) {
-				// Экран участвует в переходе: передаем управление фазе Approach на весь экран слоя
+				// Экран участвует в переходе: передаем управление фазе Approach на весь экран слоя сразу
+				revealed = true;
+				await tick();
 				const layerEl = box?.closest('[data-layer]');
 				const screenEl = (layerEl?.firstElementChild as HTMLElement) ?? stage;
 				if (screenEl) await incomingReady(currentLayer, screenEl);
@@ -90,6 +87,12 @@
 				onreveal?.();
 				return;
 			}
+
+			if (stage) await assetsReady(stage, 700);
+			if (!live) return;
+
+			revealed = true;
+			await tick();
 
 			// Обычный показ (без перехода между страницами)
 			onshow?.();

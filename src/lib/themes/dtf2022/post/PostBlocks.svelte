@@ -120,7 +120,13 @@
 					{@attach fromAction(lazyVideo)}
 				></video>
 			{:else}
-				<img src={getLeonardoUrl(image.data.uuid, { width: variant === 'page' ? 2048 : 1024 })} alt={caption || ''} loading="lazy" />
+				<img
+					src={getLeonardoUrl(image.data.uuid, { width: 1024 })}
+					srcset={variant === 'page' ? `${getLeonardoUrl(image.data.uuid, { width: 1024 })} 1024w, ${getLeonardoUrl(image.data.uuid, { width: 2048 })} 2048w` : undefined}
+					sizes={variant === 'page' ? '(max-width: 768px) 100vw, 1024px' : undefined}
+					alt={caption || ''}
+					loading="lazy"
+				/>
 				<!-- В ленте и во встроенном посте картинка открывает пост (ссылка поверх карточки), просмотр только на странице -->
 				{#if variant === 'page'}
 					<button
