@@ -197,14 +197,20 @@
 		width: 100%;
 		max-width: 100vw;
 		height: var(--header-height);
+		padding-top: env(safe-area-inset-top, 0px);
+		box-sizing: border-box;
 		background-color: var(--bg-header);
 		z-index: 100;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
 	}
 
 	.header-container {
+		position: relative;
 		display: grid;
 		grid-template-columns: var(--sidebar-left-width) 1fr var(--sidebar-right-width);
-		height: 100%;
+		height: var(--header-height-raw, 60px);
 		width: 100%;
 	}
 
@@ -212,7 +218,7 @@
 	.header-right {
 		display: flex;
 		align-items: center;
-		align-self: stretch;
+		height: 100%;
 	}
 
 	.header-right {
@@ -223,6 +229,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		height: 100%;
 	}
 
 	.header-create {
@@ -456,6 +463,8 @@
 		.header-container {
 			display: flex;
 			justify-content: space-between;
+			align-items: center;
+			height: var(--header-height-raw, 60px);
 		}
 
 		.header-center {

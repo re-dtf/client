@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">re:DTF</string>
+    <string name="title_activity_main">re:DTF</string>
+    <string name="package_name">ru.redtf.app</string>
+    <string name="custom_url_scheme">ru.redtf.app</string>
+</resources>
