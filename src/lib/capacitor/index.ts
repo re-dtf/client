@@ -6,6 +6,7 @@ import { Browser } from '@capacitor/browser';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { page } from '$app/state';
 import { closeOverlay } from '$lib/navigation';
+import { otaUpdater } from './updater.svelte';
 
 let initialized = false;
 
@@ -86,6 +87,9 @@ export function initCapacitor(): void {
 
 	// Подтверждаем запуск для OTA
 	notifyAppReady().catch(() => {});
+
+	// Инициализируем менеджер OTA-обновлений
+	otaUpdater.init().catch(() => {});
 
 	// В нативном приложении Service Worker не нужен: файлы приложения уже находятся внутри APK.
 	// Очищаем любые зарегистрированные service workers и CacheStorage, чтобы они не удерживали

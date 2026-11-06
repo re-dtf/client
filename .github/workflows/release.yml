@@ -1,0 +1,114 @@
+name: Release App & OTA
+
+on:
+  push:
+    tags:
+      - 'v*' # Запуск по тегу версии (например, v0.1.0)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Имя тега (например, v0.1.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build web application
+        run: npm run build
+        env:
+          APP_VERSION: ${{ github.event.inputs.tag || github.ref_name }}
+          BASE_PATH: ''
+          VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
+          VITE_VALTOWN_PROXY_URL: ${{ vars.VITE_VALTOWN_PROXY_URL }}
+          VITE_CLOUDFLARE_PROXY_URL: ${{ vars.VITE_CLOUDFLARE_PROXY_URL }}
+
+      - name: Package OTA bundle (build.zip)
+        run: node scripts/bundle-ota.js
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Sign Android APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          APK_UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          APK_SIGNED="redtf-${TAG}.apk"
+
+          # Находим последний установленный apksigner в Android SDK
+          APKSIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -V | tail -n 1)
+
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            echo "Подписание APK с помощью предоставленного релизного ключа..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
+            $APKSIGNER sign --ks release.keystore \
+              --ks-pass "pass:$KEYSTORE_PASSWORD" \
+              --ks-key-alias "${KEY_ALIAS:-redtf}" \
+              --key-pass "pass:${KEY_PASSWORD:-$KEYSTORE_PASSWORD}" \
+              --out "$APK_SIGNED" \
+              "$APK_UNSIGNED"
+            rm -f release.keystore
+          else
+            echo "Релизный ключ не настроен в Secrets. Подписание с помощью debug-сертификата для тестирования..."
+            $APKSIGNER sign --ks ~/.android/debug.keystore \
+              --ks-pass pass:android \
+              --key-pass pass:android \
+              --out "$APK_SIGNED" \
+              "$APK_UNSIGNED"
+          fi
+
+          echo "APK готов: $APK_SIGNED"
+
+      - name: Publish GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          APK_SIGNED="redtf-${TAG}.apk"
+
+          echo "Публикация релиза для тега: $TAG"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release upload "$TAG" build.zip "$APK_SIGNED" --clobber

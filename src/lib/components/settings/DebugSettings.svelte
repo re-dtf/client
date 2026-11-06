@@ -6,6 +6,7 @@
 	import SettingsButton from './SettingsButton.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { isNative } from '$lib/capacitor';
+	import { otaUpdater } from '$lib/capacitor/updater.svelte';
 	import { dev } from '$app/env';
 
 	let topPx = $state(0);
@@ -200,6 +201,46 @@
 			<span class="value-tag">{dev ? 'Development' : 'Production'}</span>
 		</SettingsRow>
 	</SettingsGroup>
+
+	{#if isNative()}
+		<SettingsGroup title="Capgo OTA Updates" description="Диагностика и управление OTA-обновлениями бандла">
+			<SettingsRow title="Активный бандл">
+				<span class="value-tag">{otaUpdater.activeBundleId}</span>
+			</SettingsRow>
+			<SettingsRow title="Версия бандла">
+				<span class="value-tag">{otaUpdater.currentVersion}</span>
+			</SettingsRow>
+			<SettingsRow title="Статус OTA">
+				<span class="value-tag">{otaUpdater.status}</span>
+			</SettingsRow>
+			{#if otaUpdater.downloadProgress > 0 && otaUpdater.status === 'downloading'}
+				<SettingsRow title="Прогресс загрузки">
+					<span class="value-tag value-tag--blue">{otaUpdater.downloadProgress}%</span>
+				</SettingsRow>
+			{/if}
+			{#if otaUpdater.errorMessage}
+				<SettingsRow title="Ошибка">
+					<span class="value-tag value-tag--red">{otaUpdater.errorMessage}</span>
+				</SettingsRow>
+			{/if}
+			<SettingsRow title="Принудительная проверка" subtitle="Проверить GitHub Releases прямо сейчас">
+				<SettingsButton
+					disabled={otaUpdater.status === 'checking' || otaUpdater.status === 'downloading'}
+					onclick={() => otaUpdater.checkForUpdate(true)}
+				>
+					{otaUpdater.status === 'checking' ? 'Проверка...' : 'Проверить'}
+				</SettingsButton>
+			</SettingsRow>
+			<SettingsRow title="Откат к встроенной версии" subtitle="Удалить OTA-версии и вернуться к сборке из APK">
+				<SettingsButton
+					variant="flat"
+					onclick={() => otaUpdater.resetToBuiltin()}
+				>
+					Сбросить к APK
+				</SettingsButton>
+			</SettingsRow>
+		</SettingsGroup>
+	{/if}
 
 	<SettingsGroup title="Действия">
 		<SettingsRow title="Диагностический отчёт" subtitle="Копирует все текущие значения в буфер обмена">

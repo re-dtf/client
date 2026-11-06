@@ -159,7 +159,13 @@ class PwaManager {
 		this.needRefresh = true;
 	}
 
-	update() {
+	onUpdateAction?: (immediate: boolean) => Promise<void> | void;
+
+	async update() {
+		if (this.onUpdateAction) {
+			await this.onUpdateAction(true);
+			return;
+		}
 		if (this.waitingWorker) {
 			this.waitingWorker.postMessage({ type: 'SKIP_WAITING' });
 		} else {
@@ -167,7 +173,10 @@ class PwaManager {
 		}
 	}
 
-	dismiss() {
+	async dismiss() {
+		if (this.onUpdateAction) {
+			await this.onUpdateAction(false);
+		}
 		this.needRefresh = false;
 		this.dismissed = true;
 		this.dismissedVersion = this.newVersion;

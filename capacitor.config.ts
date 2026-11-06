@@ -8,6 +8,12 @@ const config: CapacitorConfig = {
 		androidScheme: 'https'
 	},
 	plugins: {
+		CapacitorUpdater: {
+			autoUpdate: 'off',
+			statsUrl: '',
+			resetWhenUpdate: true,
+			autoDeleteFailed: true
+		},
 		SplashScreen: {
 			launchAutoHide: false
 		},
