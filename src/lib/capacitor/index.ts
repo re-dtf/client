@@ -87,6 +87,24 @@ export function initCapacitor(): void {
 	// Подтверждаем запуск для OTA
 	notifyAppReady().catch(() => {});
 
+	// В нативном приложении Service Worker не нужен: файлы приложения уже находятся внутри APK.
+	// Очищаем любые зарегистрированные service workers и CacheStorage, чтобы они не удерживали
+	// устаревший index.html и чанки при обновлении приложения.
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.getRegistrations().then((registrations) => {
+			for (const r of registrations) {
+				r.unregister().catch(() => {});
+			}
+		}).catch(() => {});
+	}
+	if ('caches' in window) {
+		caches.keys().then((keys) => {
+			for (const k of keys) {
+				caches.delete(k).catch(() => {});
+			}
+		}).catch(() => {});
+	}
+
 	// Обработка аппаратной кнопки / системного свайпа «Назад»
 	App.addListener('backButton', ({ canGoBack }) => {
 		try {
