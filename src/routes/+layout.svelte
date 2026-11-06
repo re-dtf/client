@@ -23,6 +23,8 @@
 	import { applyAppIcon } from '$lib/icons';
 	import { pwa } from '$lib/pwa.svelte';
 	import { initCapacitor, updateStatusBar } from '$lib/capacitor';
+	import SafeAreaOverlay from '$lib/components/debug/SafeAreaOverlay.svelte';
+	import DebugHud from '$lib/components/debug/DebugHud.svelte';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -480,6 +482,13 @@
 
 {#if showWelcome}
 	<Welcome ondone={() => (showWelcome = false)} />
+{/if}
+
+{#if settings.value.debugSafeAreaOverlay}
+	<SafeAreaOverlay />
+{/if}
+{#if settings.value.debugHud}
+	<DebugHud />
 {/if}
 
 {#if dev}

@@ -46,6 +46,10 @@ export interface AppSettings {
 	appIcon: AppIconId;
 	/** Пользовательская иконка в формате data URI (image/png или image/svg+xml) */
 	customIconData?: string | null;
+	/** Показывать визуальную подсветку Safe Area и панелей поверх интерфейса */
+	debugSafeAreaOverlay?: boolean;
+	/** Показывать плавающий индикатор метрик (HUD) */
+	debugHud?: boolean;
 }
 
 /** Адрес CORS-прокси на Val Town (задаётся при сборке VITE_AUTH_PROXY_URL или VITE_VALTOWN_PROXY_URL) */
@@ -109,7 +113,9 @@ export const settings = persistedState<AppSettings>(
 		clientBadges: 'redtf_only',
 		mobileBadgesPosition: 'author',
 		appIcon: 'default',
-		customIconData: null
+		customIconData: null,
+		debugSafeAreaOverlay: false,
+		debugHud: false
 	},
 	6
 );

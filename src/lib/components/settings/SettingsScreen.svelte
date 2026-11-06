@@ -2,6 +2,7 @@
 	import AboutSettings from './AboutSettings.svelte';
 	import AccountSettings from './AccountSettings.svelte';
 	import AppIconSettings from './AppIconSettings.svelte';
+	import DebugSettings from './DebugSettings.svelte';
 	import FeedSettings from './FeedSettings.svelte';
 	import FieldControl from './FieldControl.svelte';
 	import HelpSettings from './HelpSettings.svelte';
@@ -279,6 +280,12 @@
 			items: [
 				{ id: 'help', type: 'page', title: 'Хочу помочь', icon: 'help' },
 				{ id: 'about', type: 'page', title: 'О приложении', icon: 'about' }
+			]
+		},
+		{
+			title: 'Разработка',
+			items: [
+				{ id: 'debug', type: 'page', title: 'Дебаг', icon: 'debug' }
 			]
 		}
 	];
@@ -725,6 +732,8 @@
 							<HelpSettings />
 						{:else if selectedPageId === 'about'}
 							<AboutSettings section={activeSection} />
+						{:else if selectedPageId === 'debug'}
+							<DebugSettings />
 
 						<!-- Персонализация: Прямые страницы -->
 						{:else if selectedPageId === 'theme-select'}

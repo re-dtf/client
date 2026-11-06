@@ -19,6 +19,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Сеть');
 		expect(body).toContain('Данные');
 		expect(body).toContain('О проекте');
+		expect(body).toContain('Разработка');
 
 		// Пункты меню первого уровня
 		expect(body).toContain('Профиль');
@@ -33,6 +34,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Моя статистика');
 		expect(body).toContain('Хочу помочь');
 		expect(body).toContain('О приложении');
+		expect(body).toContain('Дебаг');
 	});
 
 	it('по умолчанию открывается пустым с заглушкой по центру', () => {
@@ -111,6 +113,20 @@ describe('SettingsScreen', () => {
 
 		expect(body).toContain('Пользовательское соглашение');
 		expect(body).toContain('Политика конфиденциальности');
+	});
+
+	it('рендерит страницу «Дебаг» при передаче page: debug', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'debug'
+			}
+		});
+
+		expect(body).toContain('Подсветка Safe Area и панелей');
+		expect(body).toContain('Плавающий HUD метрик');
+		expect(body).toContain('Безопасная область (Safe Area)');
+		expect(body).toContain('Верхняя панель (--header-height)');
 	});
 
 	it('рендерит подменю раздела со стрелкой назад справа от заголовка', () => {
