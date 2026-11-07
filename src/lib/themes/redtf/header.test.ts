@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { render } from 'svelte/server';
 import Header from '../dtf2022/Header.svelte';
+import SidebarLeft from './SidebarLeft.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { activeTheme } from '../index.svelte';
 import { getThemeSettings } from '../settings.svelte';
@@ -101,5 +102,71 @@ describe('Header: раскладка кнопок топбара при разн
 		expect(cssContent).toMatch(
 			/@media \(min-width: 1400px\) \{\s*:root\[data-theme~="redtf"\] \.header-container \{\s*grid-template-columns: var\(--sidebar-left-width\) 1fr var\(--sidebar-left-width\);\s*\}\s*:root\[data-theme~="redtf"\] \.header-right \{\s*position: static;\s*\}/
 		);
+	});
+
+	it('на десктопе при header--create-sidebar скрывает обе кнопки Создать в шапке', () => {
+		expect(cssContent).toMatch(
+			/@media \(min-width: 860px\) \{\s*:root\[data-theme~="redtf"\] \.header--create-sidebar \.header-create--column,\s*:root\[data-theme~="redtf"\] \.header--create-sidebar \.header-create--side \{\s*display: none;\s*\}/
+		);
+	});
+});
+
+describe('Header: настройка createButtonPos', () => {
+	it('по умолчанию в redtf кнопка Создать отображается сверху и класс header--create-sidebar отсутствует', () => {
+		activeTheme.set('redtf');
+		const { body } = render(Header);
+		expect(body).not.toContain('header--create-sidebar');
+	});
+
+	it('при createButtonPos: sidebar шапка получает класс header--create-sidebar', () => {
+		activeTheme.set('redtf');
+		getThemeSettings('redtf').patch({ createButtonPos: 'sidebar' });
+		const { body } = render(Header);
+		expect(body).toContain('header--create-sidebar');
+		getThemeSettings('redtf').patch({ createButtonPos: 'top' });
+	});
+});
+
+describe('Header: настройка searchBarMode', () => {
+	it('по умолчанию в redtf строка поиска отображается всегда (нет header-search-toggle и нет header-search--collapsed)', () => {
+		activeTheme.set('redtf');
+		const { body } = render(Header);
+		expect(body).not.toContain('header-search-toggle');
+		expect(body).not.toContain('header-search--collapsed');
+	});
+
+	it('при searchBarMode: button отображается кнопка поиска слева от колокольчика, а строка в центре скрыта за классом header-search--collapsed', () => {
+		activeTheme.set('redtf');
+		getThemeSettings('redtf').patch({ searchBarMode: 'button' });
+		const { body } = render(Header);
+		expect(body).toContain('header-search-toggle');
+		expect(body).toContain('header-search--collapsed');
+
+		// Кнопка поиска стоит перед кнопкой уведомлений
+		const searchIndex = body.indexOf('header-search-toggle');
+		const bellIndex = body.indexOf('header-notifications');
+		expect(searchIndex).toBeGreaterThan(-1);
+		expect(bellIndex).toBeGreaterThan(-1);
+		expect(searchIndex).toBeLessThan(bellIndex);
+
+		getThemeSettings('redtf').patch({ searchBarMode: 'always' });
+	});
+});
+
+describe('SidebarLeft: настройка createButtonPos', () => {
+	it('по умолчанию в redtf кнопка в сайдбаре скрыта на десктопе (нет sidebar-write--desktop)', () => {
+		activeTheme.set('redtf');
+		const { body } = render(SidebarLeft);
+		expect(body).not.toContain('sidebar-write--desktop');
+		expect(body).toContain('Новая запись');
+	});
+
+	it('при createButtonPos: sidebar в сайдбаре активируется блок кнопки с классом sidebar-write--desktop', () => {
+		activeTheme.set('redtf');
+		getThemeSettings('redtf').patch({ createButtonPos: 'sidebar' });
+		const { body } = render(SidebarLeft);
+		expect(body).toContain('sidebar-write--desktop');
+		expect(body).toContain('Новая запись');
+		getThemeSettings('redtf').patch({ createButtonPos: 'top' });
 	});
 });

@@ -237,6 +237,30 @@ export default defineTheme({
 			default: true
 		},
 		{
+			key: 'createButtonPos',
+			type: 'radio',
+			title: 'Расположение кнопки «Создать»',
+			description: 'Сверху в шапке или в левом сайдбаре.',
+			default: 'top',
+			device: 'desktop',
+			options: [
+				{ value: 'top', title: 'Сверху', description: 'Кнопка «Создать» отображается в шапке' },
+				{ value: 'sidebar', title: 'На левом сайдбаре', description: 'Кнопка «Создать» отображается в боковой панели' }
+			]
+		},
+		{
+			key: 'searchBarMode',
+			type: 'radio',
+			title: 'Строка поиска',
+			description: 'Отображать строку поиска всегда или скрывать за кнопкой.',
+			default: 'always',
+			device: 'desktop',
+			options: [
+				{ value: 'always', title: 'Отображать всегда', description: 'Строка поиска всегда видна в шапке' },
+				{ value: 'button', title: 'Скрывать за кнопкой', description: 'Показывать кнопку поиска слева от кнопки уведомления' }
+			]
+		},
+		{
 			key: 'headerBlur',
 			type: 'toggle',
 			title: 'Блюр верхней панели',

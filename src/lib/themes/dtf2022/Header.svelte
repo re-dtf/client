@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { getProfilePath, openFeed, openOverlay, openProfile } from '$lib/navigation';
@@ -15,11 +16,23 @@
 	import { settings } from '$lib/storage/settings.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 
-	let { avatarOpensMenu: avatarOpensMenuProp }: { avatarOpensMenu?: boolean } = $props();
+	let {
+		avatarOpensMenu: avatarOpensMenuProp,
+		createButtonPos: createButtonPosProp,
+		searchBarMode: searchBarModeProp
+	}: {
+		avatarOpensMenu?: boolean;
+		createButtonPos?: 'top' | 'sidebar';
+		searchBarMode?: 'always' | 'button';
+	} = $props();
 
 	let avatarOpensMenu = $derived(avatarOpensMenuProp ?? themeSettings.avatarOpensMenu);
+	let createButtonPos = $derived(createButtonPosProp ?? themeSettings.createButtonPos);
+	let searchBarMode = $derived(searchBarModeProp ?? themeSettings.searchBarMode);
 
 	let isUserMenuOpen = $state(false);
+	let isSearchExpanded = $state(false);
+	let centerSearch = $state<{ focus: () => void }>();
 	let userNode = $state<HTMLElement>();
 	let user = $derived(currentUser.value);
 
@@ -44,12 +57,28 @@
 		openOverlay({ type: 'login' });
 	}
 
+	function toggleDesktopSearch(e?: Event) {
+		e?.stopPropagation();
+		isSearchExpanded = !isSearchExpanded;
+		if (isSearchExpanded) {
+			tick().then(() => centerSearch?.focus());
+		}
+	}
+
 	function closeOnOutsideClick(e: MouseEvent) {
 		if (notificationsPopup.open && !(e.target as Element).closest('[data-notifications]')) {
 			notificationsPopup.set(false);
 		}
 		if (isUserMenuOpen && !userNode?.contains(e.target as Node)) {
 			isUserMenuOpen = false;
+		}
+		if (
+			isSearchExpanded &&
+			searchBarMode === 'button' &&
+			!(e.target as Element).closest('.header-search--column') &&
+			!(e.target as Element).closest('.header-search-toggle')
+		) {
+			isSearchExpanded = false;
 		}
 	}
 </script>
@@ -60,11 +89,22 @@
 		if (e.key === 'Escape') {
 			notificationsPopup.set(false);
 			isUserMenuOpen = false;
+			if (isSearchExpanded && searchBarMode === 'button') {
+				isSearchExpanded = false;
+			}
 		}
 	}}
 />
 
-<header class={['header', { 'header--hidden-mobile': settings.value.disableMobileTopBar }]}>
+<header
+	class={[
+		'header',
+		{
+			'header--hidden-mobile': settings.value.disableMobileTopBar,
+			'header--create-sidebar': createButtonPos === 'sidebar'
+		}
+	]}
+>
 	<div class="header-container">
 		<div class="header-left">
 			<div
@@ -91,8 +131,20 @@
 		     Уже 1180px кнопка уходит влево от колокольчика, уже 860px поиск становится значком -->
 		<div class="header-center">
 			<div class="header-column">
-				<div class="header-search header-search--column">
-					<SearchBar />
+				<div
+					class={[
+						'header-search header-search--column',
+						{
+							'header-search--collapsed': searchBarMode === 'button' && !isSearchExpanded,
+							'header-search--expanded': searchBarMode === 'button' && isSearchExpanded
+						}
+					]}
+				>
+					<SearchBar
+						bind:this={centerSearch}
+						autofocus={searchBarMode === 'button' && isSearchExpanded}
+						onclose={() => (isSearchExpanded = false)}
+					/>
 				</div>
 				<div class="header-create header-create--column">
 					<CreateButton />
@@ -108,6 +160,22 @@
 			<div class="header-create header-create--side">
 				<CreateButton />
 			</div>
+
+			{#if searchBarMode === 'button'}
+				<div
+					class={['header-search-toggle', { 'header-search-toggle--active': isSearchExpanded }]}
+					aria-label="Поиск"
+					aria-expanded={isSearchExpanded}
+					role="button"
+					tabindex="0"
+					onclick={toggleDesktopSearch}
+					onkeydown={clickOnKey}
+				>
+					<svg class="icon" width="28" height="28" aria-hidden="true">
+						<use href="/icons.svg#v_search"></use>
+					</svg>
+				</div>
+			{/if}
 
 			<div
 				class={['header-notifications', { 'header-notifications--active': notificationsPopup.open }]}
@@ -299,6 +367,58 @@
 	@media (max-width: 1179px) {
 		.header-create--column {
 			display: none;
+		}
+	}
+
+	@media (min-width: 860px) {
+		.header--create-sidebar .header-create--column,
+		.header--create-sidebar .header-create--side {
+			display: none !important;
+		}
+
+		.header-search--collapsed {
+			display: none;
+		}
+	}
+
+	.header-search--expanded {
+		animation: header-search-in 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+	}
+
+	@keyframes header-search-in {
+		from {
+			opacity: 0;
+			transform: scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	.header-search-toggle {
+		display: flex;
+		align-items: center;
+		padding: 0 16px;
+		cursor: pointer;
+		height: 100%;
+		color: inherit;
+	}
+
+	.header-search-toggle:hover .icon,
+	.header-search-toggle--active .icon {
+		fill: var(--color-accent);
+	}
+
+	@media (max-width: 859px) {
+		.header-search-toggle {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.header-search--expanded {
+			animation: none;
 		}
 	}
 

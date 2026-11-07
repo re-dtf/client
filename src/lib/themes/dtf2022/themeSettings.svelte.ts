@@ -22,5 +22,13 @@ export const themeSettings = {
 	/** Клик на аватар в шапке открывает меню вместо перехода в профиль */
 	get avatarOpensMenu(): boolean {
 		return activeThemeSettings().value.avatarOpensMenu === true;
+	},
+	/** Расположение кнопки «Создать»: 'top' (в шапке) или 'sidebar' (на левом сайдбаре) */
+	get createButtonPos(): 'top' | 'sidebar' {
+		return (activeThemeSettings().value.createButtonPos as 'top' | 'sidebar') ?? 'top';
+	},
+	/** Режим строки поиска: 'always' (всегда) или 'button' (скрывать за кнопкой) */
+	get searchBarMode(): 'always' | 'button' {
+		return (activeThemeSettings().value.searchBarMode as 'always' | 'button') ?? 'always';
 	}
 };

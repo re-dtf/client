@@ -7,6 +7,14 @@
 	import { formatNumber, plural } from './format';
 	import Preloader from './ui/Preloader.svelte';
 
+	let {
+		autofocus = false,
+		onclose
+	}: {
+		autofocus?: boolean;
+		onclose?: () => void;
+	} = $props();
+
 	/*
 	 * Поиск в шапке. На широком экране — поле в колонке записей (до 380px), с 859px и уже — кнопка, под шапкой раскрывается поле.
 	 * Пока печатают, под полем плавают быстрые результаты: пользователи с блогами и темы (запросы `search/subsites`).
@@ -33,6 +41,16 @@
 	let ready = $derived(query.length >= MIN_LENGTH);
 	let open = $derived(focused && ready);
 	let nothing = $derived(answered === query && !loading && !blogs.length && !topics.length);
+
+	export function focus() {
+		input?.focus();
+	}
+
+	$effect(() => {
+		if (autofocus && input) {
+			input.focus();
+		}
+	});
 
 	function find(text: string) {
 		const id = ++requestId;
@@ -61,6 +79,7 @@
 		focused = false;
 		active = false;
 		input?.blur();
+		onclose?.();
 	}
 
 	function submit(e: SubmitEvent) {
@@ -82,8 +101,10 @@
 
 	function closeOnOutside(e: MouseEvent) {
 		if (!root?.contains(e.target as Node)) {
+			if ((e.target as Element)?.closest?.('.header-search-toggle')) return;
 			focused = false;
 			active = false;
+			onclose?.();
 		}
 	}
 </script>

@@ -11,6 +11,7 @@
 	import { sidebar } from '../dtf2022/sidebar.svelte';
 	import { Button } from '../dtf2022/ui';
 	import { pushDrawer } from './pushDrawer';
+	import { themeSettings } from './themeSettings.svelte';
 
 	const feeds: { id: FeedName; label: string; icon: string }[] = [
 		{ id: 'popular', label: 'Популярное', icon: 'ui_sidebar_feed' },
@@ -137,8 +138,7 @@
 					{/each}
 				</nav>
 
-				<!-- Только в выдвижной панели: на широком экране «Создать» есть в шапке -->
-				<div class="sidebar-write">
+				<div class={['sidebar-write', { 'sidebar-write--desktop': themeSettings.createButtonPos === 'sidebar' }]}>
 					<Button label="Новая запись" fullWidth onclick={startWriting} />
 				</div>
 
@@ -237,6 +237,12 @@
 		--btn-font-size: 18px;
 		padding: 0 15px;
 		margin: 1px 0 20px;
+	}
+
+	@media (min-width: 860px) {
+		.sidebar-write--desktop {
+			display: block;
+		}
 	}
 
 	.feed-switcher {

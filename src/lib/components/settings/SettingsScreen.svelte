@@ -195,7 +195,7 @@
 	let themeValues = $derived(activeThemeSettings());
 
 	// Группировка динамических полей темы по разделам интерфейса и приложения
-	const TOP_BAR_KEYS = new Set(['headerBlur', 'avatarOpensMenu']);
+	const TOP_BAR_KEYS = new Set(['headerBlur', 'avatarOpensMenu', 'createButtonPos', 'searchBarMode']);
 	const MOBILE_BAR_KEYS = new Set(['mobileBarBlur', 'mobileBarFloating']);
 	const CONTENT_KEYS = new Set(['contentWidth']);
 	const VOTE_KEYS = new Set(['votes', 'arrowsSide', 'arrowsOrder']);

@@ -39,27 +39,40 @@ describe('настройки темы', () => {
 		expect(activeThemeSettings()).toBe(getThemeSettings('dtf2022'));
 	});
 
-	it('настройка headerBlur, mobileBarBlur, mobileBarFloating и avatarOpensMenu есть только у темы redtf', () => {
+	it('настройка headerBlur, mobileBarBlur, mobileBarFloating, avatarOpensMenu, createButtonPos и searchBarMode есть только у темы redtf', () => {
 		const redtfSettings = getThemeSettings('redtf').value;
 		expect(redtfSettings.headerBlur).toBe(false);
 		expect(redtfSettings.mobileBarBlur).toBe(false);
 		expect(redtfSettings.mobileBarFloating).toBe(false);
 		expect(redtfSettings.avatarOpensMenu).toBe(true);
+		expect(redtfSettings.createButtonPos).toBe('top');
+		expect(redtfSettings.searchBarMode).toBe('always');
 
 		const dtfSettings = getThemeSettings('dtf2022').value;
 		expect(dtfSettings.headerBlur).toBeUndefined();
 		expect(dtfSettings.mobileBarBlur).toBeUndefined();
 		expect(dtfSettings.mobileBarFloating).toBeUndefined();
 		expect(dtfSettings.avatarOpensMenu).toBeUndefined();
+		expect(dtfSettings.createButtonPos).toBeUndefined();
+		expect(dtfSettings.searchBarMode).toBeUndefined();
 	});
 
 	it('геттеры themeSettings корректно отражают mobileBarBlur и mobileBarFloating', () => {
 		activeTheme.set('redtf');
 		expect(redtfThemeSettings.mobileBarBlur).toBe(false);
 		expect(redtfThemeSettings.mobileBarFloating).toBe(false);
+		expect(redtfThemeSettings.createButtonPos).toBe('top');
+		expect(redtfThemeSettings.searchBarMode).toBe('always');
 
-		getThemeSettings('redtf').patch({ mobileBarBlur: true, mobileBarFloating: true });
+		getThemeSettings('redtf').patch({
+			mobileBarBlur: true,
+			mobileBarFloating: true,
+			createButtonPos: 'sidebar',
+			searchBarMode: 'button'
+		});
 		expect(redtfThemeSettings.mobileBarBlur).toBe(true);
 		expect(redtfThemeSettings.mobileBarFloating).toBe(true);
+		expect(redtfThemeSettings.createButtonPos).toBe('sidebar');
+		expect(redtfThemeSettings.searchBarMode).toBe('button');
 	});
 });

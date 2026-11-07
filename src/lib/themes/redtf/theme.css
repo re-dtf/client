@@ -36,6 +36,14 @@
 	}
 }
 
+/* Кнопка «Создать» на десктопе скрывается из шапки, если в настройках выбрано отображение на левом сайдбаре */
+@media (min-width: 860px) {
+	:root[data-theme~="redtf"] .header--create-sidebar .header-create--column,
+	:root[data-theme~="redtf"] .header--create-sidebar .header-create--side {
+		display: none;
+	}
+}
+
 /* Блюр верхней панели */
 :root[data-theme~="redtf"][data-header-blur="true"] .header {
 	background-color: rgba(217, 245, 255, 0.5);
