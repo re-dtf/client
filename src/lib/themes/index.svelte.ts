@@ -15,6 +15,10 @@ export const activeTheme = {
 	get supportsDarkMode(): boolean {
 		return getTheme(activeTheme.id)?.supportsDarkMode === true;
 	},
+	/** Включены ли у выбранной темы жесты (свайп лент и «назад») */
+	get gestures(): boolean {
+		return getTheme(activeTheme.id)?.gestures === true;
+	},
 	get id(): string {
 		return getTheme(settings.value.theme) ? settings.value.theme : DEFAULT_THEME;
 	},
