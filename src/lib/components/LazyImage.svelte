@@ -93,6 +93,11 @@
 		opacity: 0;
 	}
 
+	/* Прозрачный шиммер не должен перерисовываться каждый кадр */
+	.loaded .shimmer {
+		animation: none;
+	}
+
 	.loaded .full-image {
 		opacity: 1;
 	}

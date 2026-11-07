@@ -208,9 +208,9 @@
 	$effect(() => {
 		// Restore scroll of the incoming layer after DOM shows it
 		if (activeScrollId !== previousScrollId) {
-			if (activeScrollId === '__feed__' && feed.consumeScrollReset()) {
-				scrollPositions.set('__feed__', 0);
-			}
+			// Ленту выбрали из-под страницы: у неё своя прокрутка (или начало, если это была та же лента)
+			const feedScroll = activeScrollId === '__feed__' ? feed.consumeScrollTarget() : undefined;
+			if (feedScroll !== undefined) scrollPositions.set('__feed__', feedScroll);
 			const activeOverlay = topmostPageOverlayIndex >= 0 ? overlays[topmostPageOverlayIndex] : undefined;
 			if (activeOverlay?.type === 'post' && (activeOverlay.data.commentId !== undefined || activeOverlay.data.toComments)) {
 				scrollPositions.delete(activeScrollId);
