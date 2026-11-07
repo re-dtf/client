@@ -3,7 +3,7 @@
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsTile from './SettingsTile.svelte';
-	import { resolve } from '$app/paths';
+	import { shareApp } from '$lib/shareApp';
 
 	/* Страница «Хочу помочь»: сначала поддержка (донат, рассказать другу, звезда), потом участие в разработке */
 	const DONATE_RU_URL = 'https://pay.cloudtips.ru/p/2fa64784';
@@ -13,20 +13,10 @@
 
 	let copied = $state(false);
 
-	// Системное окно «Поделиться», если оно есть, иначе копируем адрес приложения
 	async function share() {
-		const url = new URL(resolve('/'), location.origin).href;
-		try {
-			if (navigator.share) {
-				await navigator.share({ title: 'reDTF', text: 'reDTF — неофициальный клиент DTF', url });
-			} else {
-				await navigator.clipboard.writeText(url);
-				copied = true;
-				setTimeout(() => (copied = false), 2000);
-			}
-		} catch {
-			// Пользователь закрыл окно «Поделиться» или буфер недоступен: ничего не делаем
-		}
+		if ((await shareApp()) !== 'copied') return;
+		copied = true;
+		setTimeout(() => (copied = false), 2000);
 	}
 </script>
 

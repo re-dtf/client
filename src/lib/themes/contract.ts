@@ -8,6 +8,7 @@ import type { Period } from '$lib/feed.svelte';
  *
  * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
  * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, LoginModal.
+ * Необязательные без запасного варианта (у темы нет — не показывается): FeedNotice.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
 export interface ThemeComponents {
@@ -15,6 +16,13 @@ export interface ThemeComponents {
 	/** Каркас страницы, в него вставляется содержимое */
 	MainLayout: { children?: Snippet };
 	EditorialNews: {};
+	/** Плашка между постами ленты с просьбой поддержать проект; её показом управляет ядро (`feedNotice`) */
+	FeedNotice: {
+		/** «Показать позже» */
+		onlater: () => void;
+		/** «Больше не показывать» */
+		onnever: () => void;
+	};
 	FeedTabs: {
 		currentFeed: 'popular' | 'new' | 'my';
 		switchFeed: (feed: 'popular' | 'new' | 'my') => void;

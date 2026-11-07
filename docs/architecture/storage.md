@@ -27,6 +27,7 @@
 | `redtf:secrets:source-tokens` | secrets | токены подключённых источников по их id | `storage/sources.svelte.ts` |
 | `redtf:data:sources` | data | подключённые источники: манифесты, разрешения, включён ли | `storage/sources.svelte.ts` |
 | `redtf:data:bio-cleanup` | data | отложенная очистка «О себе» после проверки владения аккаунтом | `storage/sources.svelte.ts` |
+| `redtf:data:feedNotice` | data | когда начали пользоваться, отложена ли и отключена ли плашка поддержки в ленте | `feedNotice.svelte.ts` |
 | `redtf:data:stats` | data | локальная статистика: время, прочитанные посты, реакции, топы авторов | `storage/stats.svelte.ts` |
 | `redtf:cache:current-user` | cache | вошедший пользователь, чтобы аватар в шапке был сразу | `api/currentUser.svelte.ts` |
 | `redtf:setup:completed` | вне слоёв | пройдено ли приветствие первого запуска | `storage/setup.svelte.ts` |

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { api } from '$lib/api/index.svelte';
 	import type { PaginatedResult, Post } from '$lib/api/types';
-	import ThemeLoader, { preloadThemeComponent } from '$lib/themes/ThemeLoader.svelte';
+	import ThemeLoader, { hasThemeComponent, preloadThemeComponent } from '$lib/themes/ThemeLoader.svelte';
+	import { feedNotice, NOTICE_AFTER_POST } from '$lib/feedNotice.svelte';
 	import Reveal from '$lib/components/Reveal.svelte';
 	import NetworkErrorState from '$lib/components/NetworkErrorState.svelte';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -119,6 +120,8 @@
 		if (untrack(() => active)) untrack(() => loadInitial(true));
 	});
 
+	let showNotice = $derived(feedNotice.due && hasThemeComponent(activeTheme.chain, 'FeedNotice'));
+
 	let loaderNode = $state<HTMLElement>();
 
 	// Подгрузка вниз только у открытой ленты. Новый наблюдатель при возврате сразу сообщает, виден ли низ списка
@@ -162,7 +165,10 @@
 						{#if name === 'popular' && period === 'now'}
 							<ThemeLoader componentName="EditorialNews" />
 						{/if}
-						{#each feedResult.items as post (post.sourceId + '_' + post.id)}
+						{#each feedResult.items as post, i (post.sourceId + '_' + post.id)}
+							{#if i === NOTICE_AFTER_POST && showNotice}
+								<ThemeLoader componentName="FeedNotice" onlater={feedNotice.later} onnever={feedNotice.never} />
+							{/if}
 							<ThemeLoader componentName="Post" {post} />
 						{/each}
 
