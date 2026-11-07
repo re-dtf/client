@@ -4,10 +4,12 @@ import { neighborFeed, type FeedName } from './feed.svelte';
 import { reducedMotion } from './motion';
 import { getCurrentDevice } from './themes/types';
 import { EASE, glide, settle, swipe, translate } from './swipe';
+import { pullDrawer, type DrawerPull } from './drawerSwipe';
 
 /*
  * Свайп между лентами главной. Палец тянет дорожку с лентами, соседняя лента стоит рядом сразу на своей прокрутке,
  * а после отпускания дорожка доезжает до неё или возвращается. Палец ведёт общий жест из `swipe.ts`.
+ * Слева от первой ленты соседа нет: там свайп выдвигает боковую панель, если тема её дала (`drawerSwipe.ts`).
  */
 
 export interface FeedSwipeOptions {
@@ -40,6 +42,8 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 		let width = 0;
 		// Соседи, выставленные рядом с дорожкой (null — соседа нет)
 		const sides = new Map<-1 | 1, HTMLElement | null>();
+		// Жест достался боковой панели: дорожка стоит
+		let pull: DrawerPull | undefined;
 
 		const shift = () => (sides.get(offset > 0 ? -1 : 1) ? offset : rubber(offset, width));
 
@@ -68,18 +72,26 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 
 		return swipe({
 			start: () => options.enabled() && swipeAllowed(),
-			begin() {
+			begin(dx) {
 				from = options.current();
+				pull = dx > 0 && !neighborFeed(from, -1) ? pullDrawer() : undefined;
+				if (pull) return true;
 				width = track.clientWidth;
 				track.style.willChange = 'transform';
 				return true;
 			},
 			move(x) {
+				if (pull) return pull.move(x);
 				offset = x;
 				if (offset) place(offset > 0 ? -1 : 1);
 				track.style.transform = translate(shift());
 			},
-			end(_, v) {
+			end(x, v) {
+				if (pull) {
+					pull.end(x, v);
+					pull = undefined;
+					return;
+				}
 				const dir = v === null ? 0 : settle(offset, v, width);
 				const target = dir && sides.get(dir) ? neighborFeed(from, dir) : undefined;
 				const begin = shift();

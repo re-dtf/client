@@ -135,6 +135,8 @@
 /* Раскладка. --page-gutter — поля области контента, --text-gap — минимальное поле у колонки текста внутри белых блоков
    поста и комментариев. На узком экране блоки идут от края до края, как у DTF (на ≤639px поле текста задают сами блоки) */
 :root[data-theme~="redtf"] {
+	/* Подложка боковой панели на смартфоне: темнее фона, страница уезжает с неё вправо */
+	--bg-sidebar-deep: color-mix(in srgb, var(--bg-main) 96%, #000);
 	--page-gutter: 0px;
 	--text-gap: 0px;
 	color-scheme: light dark;
@@ -314,6 +316,7 @@
 	:root[data-theme~="redtf"]:not([data-color-scheme="light"]) {
 		/* Фоны */
 		--bg-main: #141414;
+		--bg-sidebar-deep: #0f0f10;
 		--bg-card: #202022;
 		--bg-card-hover: rgba(255, 255, 255, 0.05);
 		--bg-card-hover-2: rgba(255, 255, 255, 0.08);
@@ -472,6 +475,7 @@
 :root[data-theme~="redtf"][data-color-scheme="dark"] {
 	/* Фоны */
 	--bg-main: #141414;
+	--bg-sidebar-deep: #0f0f10;
 	--bg-card: #202022;
 	--bg-card-hover: rgba(255, 255, 255, 0.05);
 	--bg-card-hover-2: rgba(255, 255, 255, 0.08);
