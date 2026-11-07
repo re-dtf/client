@@ -324,6 +324,11 @@
 		--bg-secondary: #28282b;
 		--bg-tertiary: #2d2d32;
 		--bg-header: #202022;
+		--bg-search-field: rgba(255, 255, 255, 0.1);
+		--bg-search-field-focus: #2d2d32;
+		--border-search-hover: rgba(70, 131, 217, 0.6);
+		--shadow-search-ring: rgba(70, 131, 217, 0.25);
+		--text-search-placeholder: rgba(255, 255, 255, 0.5);
 		--bg-sidebar-hover: rgba(255, 255, 255, 0.08);
 		--bg-media-frame: rgba(255, 255, 255, 0.08);
 		--bg-spoiler: rgba(255, 255, 255, 0.08);
@@ -483,6 +488,11 @@
 	--bg-secondary: #28282b;
 	--bg-tertiary: #2d2d32;
 	--bg-header: #202022;
+	--bg-search-field: rgba(255, 255, 255, 0.1);
+	--bg-search-field-focus: #2d2d32;
+	--border-search-hover: rgba(70, 131, 217, 0.6);
+	--shadow-search-ring: rgba(70, 131, 217, 0.25);
+	--text-search-placeholder: rgba(255, 255, 255, 0.5);
 	--bg-sidebar-hover: rgba(255, 255, 255, 0.08);
 	--bg-media-frame: rgba(255, 255, 255, 0.08);
 	--bg-spoiler: rgba(255, 255, 255, 0.08);

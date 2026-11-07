@@ -5,6 +5,7 @@
 	import { clickOnKey } from './a11y';
 	import AccountMenu from './AccountMenu.svelte';
 	import CreateButton from './CreateButton.svelte';
+	import SearchBar from './SearchBar.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { notifications } from '$lib/api/notifications.svelte';
 	import NotificationsPanel from './NotificationsPanel.svelte';
@@ -86,14 +87,24 @@
 			</a>
 		</div>
 
-		<!-- От 1180px кнопка у правого края колонки текста, уже — слева от колокольчика -->
+		<!-- Поиск и (от 1180px) кнопка «Создать» стоят в колонке текста: поиск у левого края, кнопка у правого.
+		     Уже 1180px кнопка уходит влево от колокольчика, уже 860px поиск становится значком -->
 		<div class="header-center">
-			<div class="header-create header-create--column">
-				<CreateButton />
+			<div class="header-column">
+				<div class="header-search header-search--column">
+					<SearchBar />
+				</div>
+				<div class="header-create header-create--column">
+					<CreateButton />
+				</div>
 			</div>
 		</div>
 
 		<div class="header-right">
+			<div class="header-search header-search--side">
+				<SearchBar />
+			</div>
+
 			<div class="header-create header-create--side">
 				<CreateButton />
 			</div>
@@ -237,10 +248,42 @@
 		align-items: center;
 	}
 
-	.header-create--column {
+	.header-column {
+		display: flex;
+		align-items: center;
 		width: 100%;
 		max-width: var(--content-width);
-		justify-content: flex-end;
+		height: 100%;
+	}
+
+	.header-search {
+		display: flex;
+		align-items: center;
+		height: 100%;
+	}
+
+	.header-search--column {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.header-search--side {
+		display: none;
+	}
+
+	.header-create--column {
+		margin-left: auto;
+		padding-left: 20px;
+	}
+
+	@media (max-width: 859px) {
+		.header-search--column {
+			display: none;
+		}
+
+		.header-search--side {
+			display: flex;
+		}
 	}
 
 	.header-create--side {

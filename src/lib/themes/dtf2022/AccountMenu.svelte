@@ -9,7 +9,7 @@
 	// Пункты меню DTF на десктопе (default-view.vue → itemGroupsDesktop).
 	// «Создать сообщество» не добавлен — в re:DTF нет создания сообществ
 	const ITEMS: { icon: string; label: string; url?: string; action?: () => void }[] = [
-		{ icon: 'v_pen', label: 'Черновики', url: 'https://dtf.ru/u/me/drafts' },
+		{ icon: 'v_pen', label: 'Черновики', action: () => openOverlay({ type: 'drafts' }) },
 		{ icon: 'v_rouble', label: 'Донаты', url: 'https://dtf.ru/u/me/donates' },
 		{ icon: 'v_gear', label: 'Настройки', action: () => openOverlay({ type: 'settings' }) },
 		{ icon: 'v_logout', label: 'Выйти', action: () => authStorage.logout() }
