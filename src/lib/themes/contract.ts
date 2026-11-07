@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { Post, Profile, ProfileListItem, ProfileSorting, SearchSorting, SearchSubsite } from '$lib/api/types';
+import type { Post, Profile, ProfileListItem, ProfileSorting, SearchFilters, SearchSorting, SearchSubsite } from '$lib/api/types';
 import type { Period } from '$lib/feed.svelte';
 
 export type SearchTab = 'posts' | 'blogs' | 'topics';
@@ -73,6 +73,8 @@ export interface ThemeComponents {
 		onTabChange: (tab: SearchTab) => void;
 		sorting: SearchSorting;
 		onSortingChange: (sorting: SearchSorting) => void;
+		filters: SearchFilters;
+		onFiltersChange: (filters: SearchFilters) => void;
 		posts: Post[];
 		subsites: SearchSubsite[];
 		/** Сколько всего нашлось на вкладке */

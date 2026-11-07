@@ -154,6 +154,13 @@ export interface SearchSubsite {
 /** Порядок выдачи поиска по записям */
 export type SearchSorting = 'relevance' | 'date';
 
+/** Уточнения поиска по записям: только заголовки, только редакция, точное совпадение */
+export interface SearchFilters {
+	title: boolean;
+	editorial: boolean;
+	strict: boolean;
+}
+
 export interface ProfileListItem {
 	id: number;
 	name: string;
@@ -397,7 +404,7 @@ export interface ApiProvider {
 
 	// Теги, поиск, черновики
 	getTagPosts?(tag: string): Promise<Post[]>;
-	searchPosts?(query: string, sorting: SearchSorting, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }>;
+	searchPosts?(query: string, sorting: SearchSorting, filters: SearchFilters, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }>;
 	searchSubsites?(query: string, communities: boolean): Promise<{ items: SearchSubsite[]; total: number }>;
 	getDrafts?(offset?: number): Promise<Post[]>;
 

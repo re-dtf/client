@@ -21,6 +21,7 @@ import type {
 	ProfileListItem,
 	ProfileSorting,
 	Reactions,
+	SearchFilters,
 	SearchSorting,
 	SearchSubsite,
 	SubsiteItem,
@@ -243,9 +244,16 @@ export const dtfApiProvider = {
 		return entriesOf((await response.json()).result?.items).map(mapEntryToPost);
 	},
 
-	/** Поиск записей. У каждой записи `meta.highlight` — фрагмент текста с найденным в `<mark>`; страницы — по курсору */
-	async searchPosts(query: string, sorting: SearchSorting, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }> {
-		const params = new URLSearchParams({ markdown: 'false', sorting, q: query, title: 'false', editorial: 'false', strict: 'false' });
+	/** Поиск записей: `title` — искать только в заголовках, `editorial` — только у редакции, `strict` — точное совпадение. У каждой записи `meta.highlight` — фрагмент текста с найденным в `<mark>`; страницы — по курсору */
+	async searchPosts(query: string, sorting: SearchSorting, filters: SearchFilters, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }> {
+		const params = new URLSearchParams({
+			markdown: 'false',
+			sorting,
+			q: query,
+			title: String(filters.title),
+			editorial: String(filters.editorial),
+			strict: String(filters.strict)
+		});
 		const response = await fetchWithAuth(`${COMMENTS_API_URL}/search/posts?${params}${cursorQuery(cursor)}`);
 		const result = (await response.json()).result;
 

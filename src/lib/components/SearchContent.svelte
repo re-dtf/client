@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { api } from '$lib/api/index.svelte';
-	import type { CursorData, Post, SearchSorting, SearchSubsite } from '$lib/api/types';
+	import type { CursorData, Post, SearchFilters, SearchSorting, SearchSubsite } from '$lib/api/types';
 	import type { SearchTab } from '$lib/themes/contract';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 	import Reveal from './Reveal.svelte';
@@ -15,6 +15,7 @@
 
 	let tab = $state<SearchTab>('posts');
 	let sorting = $state<SearchSorting>('relevance');
+	let filters = $state<SearchFilters>({ title: false, editorial: false, strict: false });
 	let posts = $state.raw<Post[]>([]);
 	let subsites = $state.raw<SearchSubsite[]>([]);
 	let total = $state<number>();
@@ -40,7 +41,7 @@
 		}
 		try {
 			if (tab === 'posts') {
-				const result = await api.searchPosts(query, sorting, cursor);
+				const result = await api.searchPosts(query, sorting, $state.snapshot(filters), cursor);
 				if (id !== requestId) return;
 				posts = more ? [...posts, ...result.items] : result.items;
 				total = result.total;
@@ -67,7 +68,7 @@
 	}
 
 	$effect(() => {
-		void query, tab, sorting;
+		void query, tab, sorting, filters;
 		untrack(() => load());
 	});
 </script>
@@ -81,6 +82,8 @@
 			onTabChange={(value: SearchTab) => (tab = value)}
 			{sorting}
 			onSortingChange={(value: SearchSorting) => (sorting = value)}
+			{filters}
+			onFiltersChange={(value: SearchFilters) => (filters = value)}
 			{posts}
 			{subsites}
 			{total}
