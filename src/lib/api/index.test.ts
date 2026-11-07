@@ -100,7 +100,7 @@ describe('ранжирование по реакциям', () => {
 		vi.clearAllMocks();
 		clearPostCache();
 		mocks.registry.activeSources = [];
-		reactionSettings.value = { rules: {}, like: 1, dislike: 23, rank: true };
+		reactionSettings.value = { rules: {}, like: 1, dislike: 23, favorites: [], rank: true };
 	});
 
 	it('популярное: задизлайканный пост уходит вниз, свежее не трогается', async () => {

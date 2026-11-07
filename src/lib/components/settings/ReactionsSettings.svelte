@@ -4,7 +4,8 @@
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsSegmented from './SettingsSegmented.svelte';
 	import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS, type ReactionKind } from '$lib/config/reactions';
-	import { reactionSettings, resetRules, ruleOf, setRule, voteReaction } from '$lib/storage/reactions.svelte';
+	import { MAX_FAVORITES, reactionSettings, resetRules, ruleOf, setRule, toggleFavorite, voteReaction } from '$lib/storage/reactions.svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
 
 	/*
 	 * Страница «Реакции». DTF считает любую реакцию плюсом, поэтому здесь пользователь решает, какие реакции
@@ -62,6 +63,39 @@
 	{@render picker('Лайк', 'Среди плюсовых реакций', 'positive', voteReaction(1), (like) => reactionSettings.patch({ like }))}
 	{@render picker('Дизлайк', 'Среди минусовых реакций', 'negative', voteReaction(-1), (dislike) => reactionSettings.patch({ dislike }))}
 </SettingsGroup>
+
+{#if activeTheme.gestures}
+	{@const favorites = reactionSettings.value.favorites}
+	<SettingsGroup
+		title="Любимые реакции"
+		description="До {MAX_FAVORITES} реакций для свайпа по комментарию: потяните комментарий влево и, не отпуская, ведите палец вниз. Пока не выбраны — лайк и дизлайк."
+	>
+		<SettingsRow title="Свайп по комментарию" subtitle="Под ответом в том порядке, в каком выбраны">
+			<div class="picks">
+				{#each [FREE_REACTION_IDS, PLUS_REACTION_IDS] as group, g (g)}
+					{#if g > 0}
+						<div class="picks-divider" role="separator" aria-orientation="horizontal"></div>
+					{/if}
+					{#each group as id (id)}
+						{@const place = favorites.indexOf(id)}
+						<button
+							class="pick"
+							type="button"
+							title={REACTIONS[id].name}
+							aria-label={REACTIONS[id].name}
+							aria-pressed={place >= 0}
+							disabled={place < 0 && favorites.length >= MAX_FAVORITES}
+							onclick={() => toggleFavorite(id)}
+						>
+							<img src={REACTIONS[id].url} width="28" height="28" alt="" />
+							{#if place >= 0}<span class="pick__place">{place + 1}</span>{/if}
+						</button>
+					{/each}
+				{/each}
+			</div>
+		</SettingsRow>
+	</SettingsGroup>
+{/if}
 
 <!-- Название короткое: пусть переключатели стоят справа и уходят под него, только когда совсем не помещаются -->
 <div class="all" style:--row-text-basis="110px">
@@ -123,6 +157,7 @@
 	}
 
 	.pick {
+		position: relative;
 		display: grid;
 		place-items: center;
 		width: 44px;
@@ -132,7 +167,26 @@
 		transition: background-color var(--duration-base);
 	}
 
-	.pick:hover {
+	.pick:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+
+	.pick__place {
+		position: absolute;
+		top: 2px;
+		right: 2px;
+		min-width: 16px;
+		height: 16px;
+		border-radius: 8px;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 16px;
+		color: #fff;
+		background: var(--st-accent);
+	}
+
+	.pick:hover:not(:disabled) {
 		background: var(--st-button-hover);
 	}
 

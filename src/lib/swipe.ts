@@ -11,8 +11,8 @@ export interface SwipeHooks {
 	start: (e: PointerEvent) => boolean;
 	/** Палец пошёл по горизонтали на `dx`: `false` — жест не наш, палец остаётся браузеру */
 	begin: (dx: number) => boolean;
-	/** Сдвиг от точки, где жест начался; не чаще кадра */
-	move: (offset: number) => void;
+	/** Сдвиг от точки, где жест начался (`dy` — по вертикали от касания); не чаще кадра */
+	move: (offset: number, dy: number) => void;
 	/**
 	 * Палец отпущен со скоростью `velocity` (px/мс) или жест отменён (`null`: второй палец, система).
 	 * Возвращает функцию, которая мгновенно завершает доезд: её вызовет новое касание
@@ -54,6 +54,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 		let pointer = -1;
 		let dragging = false;
 		let offset = 0;
+		let dy = 0;
 		let samples: { x: number; t: number }[] = [];
 		let frame = 0;
 		// Доезд после отпускания. Новое касание завершает его сразу, чтобы жесты шли подряд
@@ -61,7 +62,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 
 		function render() {
 			frame = 0;
-			hooks.move(offset);
+			hooks.move(offset, dy);
 		}
 
 		const stopClick = (e: Event) => {
@@ -102,6 +103,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 			if (e.clientX < EDGE || e.clientX > innerWidth - EDGE || !hooks.start(e)) return;
 			start = { x: e.clientX, y: e.clientY };
 			pointer = e.pointerId;
+			dy = 0;
 			samples = [];
 		}
 
@@ -127,6 +129,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 				start.x = e.clientX;
 			}
 			offset = e.clientX - start.x;
+			dy = e.clientY - start.y;
 			samples.push({ x: e.clientX, t: e.timeStamp });
 			if (samples.length > 8) samples.shift();
 			frame ||= requestAnimationFrame(render);
