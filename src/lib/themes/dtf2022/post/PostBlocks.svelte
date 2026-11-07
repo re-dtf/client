@@ -3,6 +3,7 @@
 	import type { Block } from '$lib/api/types';
 	import { embedToPost } from '$lib/api/embed';
 	import { sanitizeHtml } from '$lib/sanitize';
+	import { linkifyHashtags } from '$lib/hashtags';
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { getLeonardoUrl } from '$lib/api/utils';
@@ -39,6 +40,8 @@
 	const HEADINGS = ['h2', 'h3', 'h4'];
 
 	const sanitize = (html: string) => sanitizeHtml(html ?? '');
+	/** Текст записи: `#теги` в нём — ссылки на страницу тега */
+	const withTags = (html: string) => linkifyHashtags(sanitize(html));
 
 	function handleContainerClick(e: MouseEvent) {
 		if (e.button !== 0 && e.button !== 1) return;
@@ -153,7 +156,7 @@
 
 {#snippet renderBlock(block: Block)}
 	{#if block.type === 'text'}
-		<div class="post-block post-block--text">{@html sanitize(block.data.text)}</div>
+		<div class="post-block post-block--text">{@html withTags(block.data.text)}</div>
 	{:else if block.type === 'header'}
 		<svelte:element this={HEADINGS.includes(block.data.style) ? block.data.style : 'h2'} class="post-block post-block--header">
 			{@html sanitize(block.data.text)}
@@ -205,7 +208,7 @@
 		{:else if block.type === 'list'}
 			<svelte:element this={block.data.type === 'OL' ? 'ol' : 'ul'} class="post-block post-block--list">
 				{#each block.data.items ?? [] as item}
-					<li>{@html sanitize(item)}</li>
+					<li>{@html withTags(item)}</li>
 				{/each}
 			</svelte:element>
 		{:else if block.type === 'delimiter'}
