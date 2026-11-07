@@ -75,6 +75,12 @@ export function toggleFavoritePost(post: Post) {
 		});
 }
 
+/** «Сделать репост»: у DTF репост — ответ на пост, его пишут в редакторе */
+export function repostPost(post: Pick<Post, 'id' | 'sourceId'>) {
+	if (post.sourceId !== 'dtf' || !ensureLogin()) return;
+	openOverlay({ type: 'editor', data: { repostId: post.id } });
+}
+
 /** «Поделиться»: системное окно, а где его нет — ссылка в буфер */
 export function sharePost(post: Pick<Post, 'title' | 'url'>) {
 	if (!post.url) return;

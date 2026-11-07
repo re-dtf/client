@@ -42,7 +42,8 @@
 		iconSize = 20,
 		active = false,
 		right = false,
-		onclick
+		onclick,
+		onvalueclick
 	}: {
 		kind: PostButtonKind;
 		title: string;
@@ -54,6 +55,8 @@
 		/** Прижать к правому краю flex-строки */
 		right?: boolean;
 		onclick?: (e: MouseEvent) => void;
+		/** Клик по числу вместо `onclick` (у репоста число открывает список) */
+		onvalueclick?: () => void;
 	} = $props();
 
 	// У лайка и дизлайка в активном состоянии своя иконка (v_like_active), а не обводка
@@ -75,6 +78,7 @@
 
 	/** Анимация при постановке оценки (не при снятии) — только у кнопок с обработчиком */
 	function handleClick(e: MouseEvent) {
+		if (onvalueclick && (e.target as Element).closest('.post-button__value')) return onvalueclick();
 		if (onclick && !active && !animating && (kind === 'like' || kind === 'dislike')) {
 			animation = kind === 'like' && Math.random() < RARE_LIKE_CHANCE ? LOTTIE.likeRare : LOTTIE[kind];
 		}

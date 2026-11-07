@@ -3,6 +3,7 @@
 	import Editor from '$lib/components/editor/Editor.svelte';
 	import { Button, Popover } from './ui';
 	import Select from './ui/Select.svelte';
+	import PostCard from './post/PostCard.svelte';
 
 	// windowed и barExtra — точки расширения для форков: класс на корне и место в панели рядом с кнопкой закрытия
 	let { session, windowed = false, barExtra }: { session: any; windowed?: boolean; barExtra?: Snippet } = $props();
@@ -112,6 +113,12 @@
 		<textarea class="writing__title" rows="1" placeholder="Заголовок" bind:value={session.title} onkeydown={titleKeydown}></textarea>
 
 		<Editor bind:editorInstance={session.editorInstance} initialData={session.initialData} onChange={session.queueSave} />
+
+		{#if session.repostOf}
+			<div class="writing__repost">
+				<PostCard post={session.repostOf} embed subscribe={false} />
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -256,6 +263,11 @@
 		margin: 0 auto;
 		padding: 16px 16px 120px;
 		box-sizing: border-box;
+	}
+
+	/* Исходный пост только для контекста: по нему нельзя ни кликнуть, ни проголосовать */
+	.writing__repost {
+		pointer-events: none;
 	}
 
 	.writing__title {

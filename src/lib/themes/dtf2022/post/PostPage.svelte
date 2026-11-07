@@ -1,13 +1,16 @@
 <script lang="ts">
 	import { scrollBehavior } from '$lib/motion';
 	import type { Post } from '$lib/api/types';
-	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
+	import { reactToPost, repostPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatNumber, plural } from '../format';
 	import PostHeader from './PostHeader.svelte';
 	import PostBlocks from './PostBlocks.svelte';
 	import PostButton from './PostButton.svelte';
+	import PostCard from './PostCard.svelte';
+	import RepostLabel from './RepostLabel.svelte';
+	import RepostsDialog from './RepostsDialog.svelte';
 	import Rating from './Rating.svelte';
 	import Reactions from './Reactions.svelte';
 	import AuthorCard from './AuthorCard.svelte';
@@ -30,6 +33,7 @@
 	let arrows = $derived(votes === 'rating');
 	let arrowsLeft = $derived(arrows && themeSettings.arrowsSide === 'left');
 	let iconSize = $derived(arrows ? 22 : 20);
+	let showReposts = $state(false);
 
 	function scrollToComments(e: MouseEvent) {
 		e.preventDefault();
@@ -39,6 +43,10 @@
 
 <div class="post-page">
 	<div class="post-container">
+		{#if post.repost}
+			<RepostLabel variant="page" />
+		{/if}
+
 		<PostHeader {post} variant="page" />
 
 		<div class="post-content">
@@ -62,6 +70,10 @@
 
 			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
 
+			{#if post.repost?.original}
+				<PostCard post={post.repost.original} embed />
+			{/if}
+
 			{#if votes === 'reactions'}
 				<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />
 			{/if}
@@ -72,7 +84,14 @@
 						<PostButton kind="like" title="Лайк" value={score.up || undefined} active={score.myVote === 1} onclick={() => votePost(post, 1)} />
 					{/if}
 					<PostButton kind="comments" title="Комментарии" href="#comments" {iconSize} value={post.commentsCount} onclick={scrollToComments} />
-					<PostButton kind="repost" title="Сделать репост" {iconSize} />
+					<PostButton
+						kind="repost"
+						title="Сделать репост"
+						{iconSize}
+						value={post.repostsCount}
+						onclick={() => repostPost(post)}
+						onvalueclick={() => (showReposts = true)}
+					/>
 					<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} onclick={() => toggleFavoritePost(post)} />
 					{#if arrows}
 						<PostButton kind="share" title="Поделиться" {iconSize} onclick={() => sharePost(post)} />
@@ -91,6 +110,10 @@
 			<AuthorCard author={post.author} />
 		</div>
 	</div>
+
+	{#if showReposts}
+		<RepostsDialog postId={post.id} onclose={() => (showReposts = false)} />
+	{/if}
 </div>
 
 <style>

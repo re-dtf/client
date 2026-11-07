@@ -3,12 +3,15 @@
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { preloadIntent } from '$lib/actions/preloadIntent';
-	import { reactToPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
+	import { reactToPost, repostPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
 	import PostHeader from './PostHeader.svelte';
 	import PostBlocks from './PostBlocks.svelte';
 	import PostButton from './PostButton.svelte';
+	import PostCard from './PostCard.svelte';
+	import RepostLabel from './RepostLabel.svelte';
+	import RepostsDialog from './RepostsDialog.svelte';
 	import Rating from './Rating.svelte';
 	import Reactions from './Reactions.svelte';
 
@@ -34,10 +37,15 @@
 	let iconSize = $derived(arrows ? 22 : 20);
 	let postPath = $derived(resolve(getPostPath(post) as any));
 	let commentsPath = $derived(resolve(getPostPath(post, 'comments') as any));
+	let showReposts = $state(false);
 </script>
 
 <article class={['feed-item', { 'feed-item--embed': embed }]}>
 	<div class={['post-card', { 'post-card--embed': embed }]}>
+		{#if post.repost && !embed}
+			<RepostLabel />
+		{/if}
+
 		<PostHeader {post} variant="card" {subscribe} />
 
 		<div class="post-content">
@@ -45,6 +53,12 @@
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
 			<a class="post-link" href={postPath} aria-label={post.title || undefined} onclick={(e) => openPost(e, post)} use:preloadIntent={post}></a>
 		</div>
+
+		{#if post.repost?.original && !embed}
+			<div class="post-block post-repost">
+				<PostCard post={post.repost.original} embed />
+			</div>
+		{/if}
 
 		{#if !embed}
 			{#if votes === 'reactions'}
@@ -71,7 +85,13 @@
 						<PostButton kind="bookmark" title="В закладки" {iconSize} active={post.isFavorited} onclick={() => toggleFavoritePost(post)} />
 						<PostButton kind="share" title="Поделиться" {iconSize} onclick={() => sharePost(post)} />
 					{:else}
-						<PostButton kind="repost" title="Сделать репост" />
+						<PostButton
+							kind="repost"
+							title="Сделать репост"
+							value={post.repostsCount}
+							onclick={() => repostPost(post)}
+							onvalueclick={() => (showReposts = true)}
+						/>
 						<PostButton kind="bookmark" title="В закладки" active={post.isFavorited} onclick={() => toggleFavoritePost(post)} />
 					{/if}
 				</div>
@@ -86,6 +106,10 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if showReposts}
+		<RepostsDialog postId={post.id} onclose={() => (showReposts = false)} />
+	{/if}
 </article>
 
 <style>
@@ -109,6 +133,11 @@
 		content-visibility: visible;
 		position: relative;
 		z-index: 20;
+	}
+
+	/* Диалог с fixed внутри карточки: content-visibility: auto обрезал бы его по границам карточки */
+	.feed-item:has(:global([role='dialog'])) {
+		content-visibility: visible;
 	}
 
 	.post-card {
@@ -136,6 +165,11 @@
 	.post-link {
 		position: absolute;
 		inset: 0;
+	}
+
+	/* Исходный пост репоста: та же рамка, что у встроенного поста на странице, отступ только сверху */
+	.post-repost :global(.feed-item--embed) {
+		margin: 12px 0 0;
 	}
 
 	.post-block {

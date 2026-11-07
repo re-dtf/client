@@ -1,7 +1,7 @@
 import { untrack } from 'svelte';
 import { closeOverlay } from '$lib/navigation';
 import { api } from '$lib/api/index.svelte';
-import type { SubsiteItem, PostHistoryVersion } from '$lib/api/types';
+import type { Post, SubsiteItem, PostHistoryVersion } from '$lib/api/types';
 import { editorJsToDtf, dtfToEditorJs } from './mapper';
 import type { OutputData } from '@editorjs/editorjs';
 
@@ -14,6 +14,8 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 	let initialData: OutputData | undefined = $state(undefined);
 	let subsites: SubsiteItem[] = $state([]);
 	let selectedSubsiteId = $state(0);
+	/** Пост, на который пишется репост: показывается в редакторе, чтобы было видно, к чему ответ */
+	let repostOf = $state<Post>();
 	let isAdult = $state(false);
 	let title = $state('');
 	let commentPermission = $state<'everyone' | 'nobody' | 'only_plus' | 'only_subscribers'>('everyone');
@@ -46,6 +48,7 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 		} catch (e) {
 			console.error("Failed to load initial data", e);
 		}
+		if (repostId) repostOf = await api.getPost(repostId).catch(() => undefined);
 	}
 
 	function destroy() {
@@ -199,6 +202,7 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 	return {
 		get postId() { return postId; },
 		get repostId() { return repostId; },
+		get repostOf() { return repostOf; },
 		get initialData() { return initialData; },
 		get subsites() { return subsites; },
 		get selectedSubsiteId() { return selectedSubsiteId; },
