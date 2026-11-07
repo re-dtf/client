@@ -27,10 +27,22 @@
 		subscribe && !!post.subsite && post.subsite.id !== currentUser.value?.id && !subscriptions.isSubscribed(post.subsite.id, post.subsite.isSubscribed)
 	);
 
-	// Меню «⋯»: пока в нём только жалоба, на свой пост её нет
+	// Меню «⋯»: открытие на DTF, жалоба (на свой пост жалобы нет)
 	let menuOpen = $state(false);
 	let complaining = $state(false);
-	let showMenu = $derived(post.sourceId === 'dtf' && post.author.id !== currentUser.value?.id);
+	let showMenu = $derived(post.sourceId === 'dtf');
+	let menuItems = $derived([
+		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' },
+		...(post.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
+	]);
+
+	function selectMenuItem(item: 'open_dtf' | 'complain') {
+		if (item === 'open_dtf') {
+			window.open(`https://dtf.ru/${post.id}`, '_blank', 'noopener,noreferrer');
+		} else if (item === 'complain') {
+			complaining = ensureLogin();
+		}
+	}
 </script>
 
 {#if complaining}
@@ -118,8 +130,8 @@
 		<div class="post-header__item post-header__etc">
 			<Popover
 				bind:open={menuOpen}
-				items={[{ value: 'complain', label: 'Пожаловаться', icon: 'v_flag' }]}
-				onselect={() => (complaining = ensureLogin())}
+				items={menuItems}
+				onselect={selectMenuItem}
 				width="max-content"
 				label="Действия с постом"
 			>

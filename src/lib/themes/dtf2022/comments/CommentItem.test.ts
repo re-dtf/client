@@ -46,4 +46,12 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('dtfTargetToPath');
 		expect(svelteContent).toContain('parseDtfUrl(part.url)');
 	});
+
+	it('содержит пункт меню "Открыть на DTF" со ссылкой на комментарий DTF', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain("label: 'Открыть на DTF'");
+		expect(svelteContent).toContain("icon: 'v_external'");
+		expect(svelteContent).toContain('https://dtf.ru/${comment.postId}?comment=${comment.id}');
+	});
 });

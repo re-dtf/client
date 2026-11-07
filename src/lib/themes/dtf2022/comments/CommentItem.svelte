@@ -95,6 +95,7 @@
 	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, жалоба, закладка
 	let menuItems = $derived([
 		...(canEdit ? [{ value: 'edit' as const, label: 'Редактировать', icon: 'v_pen' }] : []),
+		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' },
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
 		...(comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : []),
 		{
@@ -112,8 +113,9 @@
 		api.getCommentControls(comment.id).then((controls) => (canEdit = controls.edit)).catch(() => (canEdit = false));
 	}
 
-	function selectMenuItem(item: 'edit' | 'copy' | 'favorite' | 'complain') {
+	function selectMenuItem(item: 'edit' | 'open_dtf' | 'copy' | 'favorite' | 'complain') {
 		if (item === 'edit') onedit();
+		else if (item === 'open_dtf') window.open(`https://dtf.ru/${comment.postId}?comment=${comment.id}`, '_blank', 'noopener,noreferrer');
 		else if (item === 'copy') copyLink();
 		else if (item === 'complain') complaining = ensureLogin();
 		else toggleCommentFavorite(comment);

@@ -47,11 +47,16 @@
 	let complaining = $state(false);
 	let showBadgeModal = $state(false);
 	let menuItems = $derived([
+		...(comment.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
 		...(comment.sourceId === 'dtf' && comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
 	]);
 
-	async function selectMenuItem(item: 'copy' | 'complain') {
+	async function selectMenuItem(item: 'open_dtf' | 'copy' | 'complain') {
+		if (item === 'open_dtf') {
+			window.open(`https://dtf.ru/${comment.postId}?comment=${comment.id}`, '_blank', 'noopener,noreferrer');
+			return;
+		}
 		if (item === 'complain') {
 			complaining = ensureLogin();
 			return;
