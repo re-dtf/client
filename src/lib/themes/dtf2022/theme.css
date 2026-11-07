@@ -12,7 +12,8 @@
 
 :root[data-theme~="dtf2022"] {
     /* Размеры */
-    --header-height: 60px;
+    --header-height-raw: 60px;
+    --header-height: calc(var(--header-height-raw) + env(safe-area-inset-top, 0px));
     --content-width: 640px;
     /* Колонка текста поста и комментариев: 600px, на широких экранах — --content-width */
     --inner-content-width: 600px;

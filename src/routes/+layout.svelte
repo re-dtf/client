@@ -22,6 +22,9 @@
 	import { settings } from '$lib/storage/settings.svelte';
 	import { applyAppIcon } from '$lib/icons';
 	import { pwa } from '$lib/pwa.svelte';
+	import { initCapacitor, updateStatusBar } from '$lib/capacitor';
+	import SafeAreaOverlay from '$lib/components/debug/SafeAreaOverlay.svelte';
+	import DebugHud from '$lib/components/debug/DebugHud.svelte';
 	
 	import '../app.css';
 	import { activeTheme } from '$lib/themes/index.svelte';
@@ -316,6 +319,7 @@
 					typeof window !== 'undefined' &&
 					window.matchMedia?.('(prefers-color-scheme: dark)').matches === true));
 			document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
+			updateStatusBar(isDark);
 			const metaScheme = document.querySelector('meta[name="color-scheme"]');
 			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
 			const colors = activeTheme.colors;
@@ -378,6 +382,7 @@
 	});
 
 	onMount(() => {
+		initCapacitor();
 		cleanupHangingBio(true);
 		pwa.init();
 		const stopTracking = startTracking(() => statsContext);
@@ -477,6 +482,13 @@
 
 {#if showWelcome}
 	<Welcome ondone={() => (showWelcome = false)} />
+{/if}
+
+{#if settings.value.debugSafeAreaOverlay}
+	<SafeAreaOverlay />
+{/if}
+{#if settings.value.debugHud}
+	<DebugHud />
 {/if}
 
 {#if dev}

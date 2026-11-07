@@ -1,5 +1,6 @@
 import { browser, dev, version } from '$app/env';
 import { resolve } from '$app/paths';
+import { isNative } from '$lib/capacitor';
 
 class PwaManager {
 	needRefresh = $state(false);
@@ -42,6 +43,7 @@ class PwaManager {
 	init() {
 		if (!browser || this.initialized) return;
 		if (!('serviceWorker' in navigator)) return;
+		if (isNative()) return;
 
 		// In development mode, service workers interfere with HMR and module loading.
 		// Clean up any registered service workers on localhost to avoid stale cache or reload loops.
@@ -157,7 +159,13 @@ class PwaManager {
 		this.needRefresh = true;
 	}
 
-	update() {
+	onUpdateAction?: (immediate: boolean) => Promise<void> | void;
+
+	async update() {
+		if (this.onUpdateAction) {
+			await this.onUpdateAction(true);
+			return;
+		}
 		if (this.waitingWorker) {
 			this.waitingWorker.postMessage({ type: 'SKIP_WAITING' });
 		} else {
@@ -165,7 +173,10 @@ class PwaManager {
 		}
 	}
 
-	dismiss() {
+	async dismiss() {
+		if (this.onUpdateAction) {
+			await this.onUpdateAction(false);
+		}
 		this.needRefresh = false;
 		this.dismissed = true;
 		this.dismissedVersion = this.newVersion;

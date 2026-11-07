@@ -50,7 +50,9 @@ describe('settings & shouldVirtualizeComments', () => {
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
 			commentVirtualization: 'auto',
-			appIcon: 'default'
+			appIcon: 'default',
+			debugSafeAreaOverlay: false,
+			debugHud: false
 		};
 	});
 

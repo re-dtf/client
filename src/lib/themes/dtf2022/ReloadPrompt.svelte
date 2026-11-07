@@ -1,5 +1,13 @@
 <script lang="ts">
 	import { pwa } from '$lib/pwa.svelte';
+	import { isNative, openExternalUrl } from '$lib/capacitor';
+
+	function handleLinkClick(e: MouseEvent) {
+		if (isNative()) {
+			e.preventDefault();
+			openExternalUrl(pwa.changesUrl);
+		}
+	}
 </script>
 
 {#if pwa.needRefresh}
@@ -23,6 +31,7 @@
 				target="_blank"
 				rel="noopener noreferrer"
 				class="pwa-prompt__link"
+				onclick={handleLinkClick}
 			>
 				Посмотреть изменения на GitHub &nearr;
 			</a>
@@ -148,7 +157,7 @@
 		.pwa-prompt {
 			left: 16px;
 			right: 16px;
-			bottom: 72px; /* Выше мобильного бара */
+			bottom: calc(var(--mobile-bar-height, 50px) + 16px);
 			max-width: none;
 		}
 	}

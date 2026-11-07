@@ -5,6 +5,9 @@
 	import SettingsTile from './SettingsTile.svelte';
 	import { asset } from '$app/paths';
 	import { version } from '$app/env';
+	import { isNative } from '$lib/capacitor';
+	import { otaUpdater } from '$lib/capacitor/updater.svelte';
+	import { pwa } from '$lib/pwa.svelte';
 
 	let { section }: { section?: string } = $props();
 
@@ -38,7 +41,7 @@
 	<p class="hero__description">
 		Лёгкий, быстрый и настраиваемый неофициальный клиент. Без нежеланных редизайнов и шпионских метрик.
 	</p>
-	<span class="hero__version">Версия {version}</span>
+	<span class="hero__version">Версия {isNative() && otaUpdater.activeBundleId !== 'builtin' ? `${otaUpdater.currentVersion} (OTA)` : version}</span>
 </section>
 
 <ul class="principles">
@@ -50,6 +53,45 @@
 		</li>
 	{/each}
 </ul>
+
+<SettingsGroup title="Обновления" description="Проверка новых версий и OTA-обновлений">
+	<SettingsRow
+		title={isNative() ? otaUpdater.statusTitle : (pwa.needRefresh ? 'Доступно обновление' : 'Обновление приложения')}
+		subtitle={isNative() ? otaUpdater.statusSubtitle : (pwa.needRefresh ? `Новая версия ${pwa.newVersion ?? ''}` : `Текущая версия ${version}`)}
+	>
+		{#snippet prefix()}{@render icon('M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', '#1693e5')}{/snippet}
+		{#if isNative()}
+			{#if otaUpdater.status === 'ready'}
+				<span class="action">
+					<SettingsButton variant="suggested" onclick={() => otaUpdater.applyUpdate(true)}>
+						Применить
+					</SettingsButton>
+				</span>
+			{:else}
+				<span class="action">
+					<SettingsButton
+						disabled={otaUpdater.status === 'checking' || otaUpdater.status === 'downloading'}
+						onclick={() => otaUpdater.checkForUpdate(true)}
+					>
+						{otaUpdater.status === 'checking' || otaUpdater.status === 'downloading' ? 'Загрузка...' : 'Проверить'}
+					</SettingsButton>
+				</span>
+			{/if}
+		{:else if pwa.needRefresh}
+			<span class="action">
+				<SettingsButton variant="suggested" onclick={() => pwa.update()}>
+					Обновить
+				</SettingsButton>
+			</span>
+		{:else}
+			<span class="action">
+				<SettingsButton href="{CLIENT_URL}/releases">
+					Релизы
+				</SettingsButton>
+			</span>
+		{/if}
+	</SettingsRow>
+</SettingsGroup>
 
 <SettingsGroup title="Проект" description="Новости, исходный код и разработка">
 	<SettingsRow title="Telegram-канал" subtitle="Анонсы, обновления и обсуждение разработки">
