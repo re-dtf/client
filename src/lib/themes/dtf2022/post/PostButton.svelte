@@ -59,8 +59,10 @@
 		onvalueclick?: () => void;
 	} = $props();
 
-	// У лайка и дизлайка в активном состоянии своя иконка (v_like_active), а не обводка
-	let iconName = $derived(active && (kind === 'like' || kind === 'dislike') ? `${ICONS[kind]}_active` : ICONS[kind]);
+	// В активном состоянии у лайка и дизлайка своя иконка (v_like_active), у закладки — залитая (v_bookmark_solid), а не обводка
+	let iconName = $derived(
+		!active ? ICONS[kind] : kind === 'bookmark' ? 'v_bookmark_solid' : kind === 'like' || kind === 'dislike' ? `${ICONS[kind]}_active` : ICONS[kind]
+	);
 
 	$effect(() => {
 		if (kind === 'like' || kind === 'dislike') preloadLottie(...Object.values(LOTTIE));
@@ -194,6 +196,11 @@
 		--text-hover: var(--color-dislike);
 		--text-active: var(--color-dislike-active);
 		--bg-hover: var(--color-dislike);
+	}
+
+	/* Закладка в активном состоянии синяя, как .bookmark--active у DTF */
+	.post-button--bookmark {
+		--text-active: var(--color-blue);
 	}
 
 	.post-button--like .icon,

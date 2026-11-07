@@ -72,9 +72,11 @@
 			<div class="news-item" in:slide={{ duration: reducedMotion() ? 0 : 350, easing: cubicOut }}>
 				<a {href} class="news-item__title" onclick={(e) => openPost(e, item)}>{item.title}</a>
 				<a href={commentsHref} class="comments-counter" aria-label="Комментарии: {item.commentsCount}" onclick={(e) => openPost(e, item, { toComments: true })}>
-					<svg class="icon" width="16" height="16" aria-hidden="true">
-						<use href="/icons.svg#v_comments"></use>
-					</svg>
+					<span class="comments-counter__icon">
+						<svg class="icon" width="16" height="16" aria-hidden="true">
+							<use href="/icons.svg#v_comments"></use>
+						</svg>
+					</span>
 					<span class="comments-counter__number">{formatNumber(item.commentsCount)}</span>
 				</a>
 			</div>
@@ -134,6 +136,26 @@
 		color: var(--text-muted);
 	}
 
+	.comments-counter__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		/* Делает иконку контейнером для круга ::before */
+		transform: translateZ(0);
+	}
+
+	/* Круг подсветки при наведении, как у «малого» счётчика DTF */
+	.comments-counter__icon::before {
+		content: '';
+		position: absolute;
+		z-index: 1;
+		width: 22px;
+		height: 22px;
+		border-radius: 100%;
+		background-color: var(--color-comments-hover-bg);
+		opacity: 0;
+	}
+
 	.comments-counter__number {
 		margin-left: 4px;
 		font-size: 12px;
@@ -188,6 +210,14 @@
 		.news-item__title:hover,
 		.news-widget__load-more:hover {
 			color: var(--text-link);
+		}
+
+		.comments-counter:hover {
+			color: var(--color-comments-hover);
+		}
+
+		.comments-counter:hover .comments-counter__icon::before {
+			opacity: 0.12;
 		}
 	}
 </style>
