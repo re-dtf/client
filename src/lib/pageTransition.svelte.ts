@@ -65,12 +65,14 @@ export function markOrigin(e: MouseEvent) {
 	};
 }
 
-/** Временно зафиксировать экран по размерам окна */
-export function freeze(screen: HTMLElement, rect: DOMRect, headerBottom?: number): () => void {
-	if (headerBottom === undefined) {
-		const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
-		headerBottom = headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
-	}
+/** Нижняя граница шапки: зафиксированный экран не заходит под неё */
+export function headerBottomOf(): number {
+	const headerEl = typeof document !== 'undefined' ? (document.querySelector('header.header') ?? document.querySelector('header')) : null;
+	return headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
+}
+
+/** Временно зафиксировать экран по размерам окна. `headerBottom` можно передать, если он уже прочитан */
+export function freeze(screen: HTMLElement, rect: DOMRect, headerBottom = headerBottomOf()): () => void {
 	const top = Math.max(rect.top, headerBottom);
 	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 	const prev = {
@@ -341,9 +343,7 @@ function cleanup() {
 
 	if (outgoingScreen) {
 		const parentLayer = outgoingScreen.closest('[data-layer]') as HTMLElement | null;
-		if (parentLayer) {
-			parentLayer.style.display = 'none';
-		}
+		parentLayer?.toggleAttribute('data-hidden', true);
 		outgoingScreen.style.removeProperty('filter');
 		outgoingScreen.style.removeProperty('transform');
 		outgoingScreen.style.removeProperty('opacity');
