@@ -2,7 +2,7 @@
 	import { scrollBehavior } from '$lib/motion';
 	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { CommentMedia } from '$lib/api/types';
+	import type { Comment, CommentMedia } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
@@ -14,6 +14,12 @@
 	import CommentEditor from '../dtf2022/comments/CommentEditor.svelte';
 	import CommentItem from '../dtf2022/comments/CommentItem.svelte';
 	import { commentKey, flattenComments } from '../dtf2022/comments/flatten';
+	import { toggleCommentReaction, voteComment } from '../dtf2022/comments/votes.svelte';
+	import { REACTIONS } from '$lib/config/reactions';
+	import { quickReactions } from '$lib/storage/reactions.svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
+	import { themeSettings } from './themeSettings.svelte';
+	import { commentSwipe, type SwipeView } from './comments/commentSwipe';
 
 	let {
 		postId,
@@ -281,6 +287,36 @@
 		if (node && node.getBoundingClientRect().top < 0) node.scrollIntoView({ block: 'start' });
 	}
 
+	/* Свайп влево по комментарию: ответ, а под ним по порядку — оценка или любимые реакции */
+	type SwipeAction = { label: string; icon?: string; image?: string; run: (key: string) => void };
+	// Комментарий из реактивного дерева, как у строки списка: в карте лежат копии, правка по ним не видна
+	const withComment = (key: string, act: (comment: Comment) => void) => {
+		const comment = rows.find((row) => row.key === key)?.comment;
+		if (comment) act(comment);
+	};
+	let swipeActions = $derived.by((): SwipeAction[] => {
+		const extra: SwipeAction[] =
+			themeSettings.votes === 'reactions'
+				? quickReactions().map((id) => ({ label: REACTIONS[id]?.name ?? '', image: REACTIONS[id]?.url, run: (key) => withComment(key, (c) => toggleCommentReaction(c, id)) }))
+				: ([1, -1] as const).map((sign) => ({
+						label: sign > 0 ? 'Плюс' : 'Минус',
+						icon: themeSettings.votes === 'likes' ? (sign > 0 ? 'v_like' : 'v_dislike') : sign > 0 ? 'v_arrow_up' : 'v_arrow_down',
+						run: (key) => withComment(key, (c) => voteComment(c, sign))
+					}));
+		return [{ label: 'Ответить', icon: 'v_reply', run: reply }, ...extra];
+	});
+	let swipeView = $state<SwipeView | null>(null);
+	let swipeLayer = $state<HTMLElement>();
+	const swipeComment = commentSwipe({
+		enabled: () => activeTheme.gestures,
+		// Кнопка «Ответить» есть только у обычного комментария: у удалённого и скрытого фильтром свайпа нет
+		keyOf: (item) => (item.querySelector(':scope > .comment-item__content > .comment-item__action') ? item.id.replace('comment-', '') : undefined),
+		count: () => swipeActions.length,
+		column: () => swipeLayer,
+		show: (view) => (swipeView = view),
+		run: (key, slot) => swipeActions[slot]?.run(key)
+	});
+
 	// Сброс горизонтального смещения и ширины при переключении режима
 	$effect(() => {
 		if (!isAutopan && logic.viewportElement) {
@@ -356,7 +392,7 @@
 		{/if}
 
 		<div class="comments-viewport" bind:this={logic.viewportElement}>
-			<div class="comments-list">
+			<div class={['comments-list', { 'comments-list--swipe': activeTheme.gestures }]} {@attach swipeComment}>
 				{#each renderedRows as row, index (row.key)}
 					<CommentItem
 						{row}
@@ -375,6 +411,27 @@
 					<div bind:this={chunkSentinel} class="comments-chunk-sentinel" style="height: 1px;"></div>
 				{/if}
 			</div>
+			{#if activeTheme.gestures}
+				<div class="comment-swipe" bind:this={swipeLayer} aria-hidden="true">
+					{#if swipeView}
+						<div class={['comment-swipe__column', { 'comment-swipe__column--armed': swipeView.armed }]}>
+							{#each swipeActions as action, slot}
+								<span
+									class={['comment-swipe__action', { 'comment-swipe__action--extra': slot > 0, 'comment-swipe__action--selected': swipeView.armed && slot === swipeView.slot }]}
+									style:--slot={slot}
+									title={action.label}
+								>
+									{#if action.image}
+										<img src={action.image} width="24" height="24" alt="" />
+									{:else}
+										<svg class="icon" width="20" height="20"><use href="/icons.svg#{action.icon}"></use></svg>
+									{/if}
+								</span>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		{#if logic.error}
@@ -411,6 +468,63 @@
 	.comments-viewport {
 		position: relative;
 		width: 100%;
+	}
+
+	/* Горизонтальный жест по комментарию — свайп ответа (влево) или «назад» (вправо), вертикальный остаётся прокрутке */
+	.comments-list--swipe {
+		touch-action: pan-y pinch-zoom;
+	}
+
+	/* Колонка действий свайпа: выезжает справа вслед за пальцем (--swipe от 0 до 1), ответ — на высоте пальца, остальные под ним */
+	.comment-swipe {
+		position: absolute;
+		inset: 0;
+		z-index: 21;
+		pointer-events: none;
+	}
+
+	.comment-swipe__column {
+		position: absolute;
+		top: var(--swipe-y, 0);
+		right: 8px;
+		width: 36px;
+		opacity: var(--swipe, 0);
+		transform: translateX(calc((1 - var(--swipe, 0)) * 24px)) scale(calc(0.6 + 0.4 * var(--swipe, 0)));
+	}
+
+	.comment-swipe__action {
+		position: absolute;
+		top: calc(var(--slot) * 44px - 18px);
+		left: 0;
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		color: var(--text-secondary);
+		background: var(--bg-secondary);
+		box-shadow: var(--shadow-dropdown);
+		transition:
+			opacity var(--duration-base, 0.15s),
+			transform var(--duration-base, 0.15s),
+			background-color var(--duration-base, 0.15s),
+			color var(--duration-base, 0.15s);
+	}
+
+	/* Остальные действия показываются, когда ответ готов: палец может уйти к ним вниз */
+	.comment-swipe__column:not(.comment-swipe__column--armed) .comment-swipe__action--extra {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+
+	.comment-swipe__action--selected {
+		color: var(--text-on-accent, #fff);
+		background: var(--color-blue);
+		transform: scale(1.15);
+	}
+
+	.comment-swipe__action img {
+		object-fit: contain;
 	}
 
 	.comments-section.autopan .comments-viewport {

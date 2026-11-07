@@ -34,6 +34,7 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { abortTransition, incomingReady, pageTransition, shouldTransition, startTransition } from '$lib/pageTransition.svelte';
 	import { api } from '$lib/api/index.svelte';
+	import { swipeBack, swipeBackGesture } from '$lib/swipeBack.svelte';
 	
 	let { children } = $props();
 	let showWelcome = $state(false);
@@ -60,6 +61,8 @@
 	 * которая проявляется под ней. Без анимации темы работает короткий `deferDestroy`.
 	 */
 	function leavePage(node: HTMLElement) {
+		// Страницу увёл свайп «назад»: она уже за краем экрана
+		if (swipeBack.swiped(node.dataset.layer)) return deferDestroy(node);
 		const anim = activeTheme.motion?.pageOut;
 		const screen = node.firstElementChild as HTMLElement | null;
 		const from = leaving && leaving.layer === node.dataset.layer ? leaving.rect : undefined;
@@ -92,6 +95,10 @@
 
 	// Determine the topmost 'page' overlay. Layers beneath it should be hidden.
 	let topmostPageOverlayIndex = $derived(overlays.findLastIndex(o => o.presentation === 'page'));
+
+	// Слой прямо под верхней страницей: его показывают закрытие и свайп «назад», поэтому только он хранит раскладку
+	let underLayer = $derived(topmostPageOverlayIndex < 0 ? undefined : (overlays.slice(0, topmostPageOverlayIndex).findLast(o => o.presentation === 'page')?.id ?? '__feed__'));
+	const hiddenAs = (layer: string, shown: boolean) => (shown ? undefined : layer === underLayer ? 'under' : 'deep');
 
 	// Модалки и просмотр картинок закрывают страницу целиком: она под ними не прокручивается
 	let hasModalActive = $derived(overlays.some(o => o.presentation !== 'page'));
@@ -208,18 +215,21 @@
 	$effect(() => {
 		// Restore scroll of the incoming layer after DOM shows it
 		if (activeScrollId !== previousScrollId) {
-			if (activeScrollId === '__feed__' && feed.consumeScrollReset()) {
-				scrollPositions.set('__feed__', 0);
-			}
+			// Ленту выбрали из-под страницы: у неё своя прокрутка (или начало, если это была та же лента)
+			const feedScroll = activeScrollId === '__feed__' ? feed.consumeScrollTarget() : undefined;
+			if (feedScroll !== undefined) scrollPositions.set('__feed__', feedScroll);
+			const closing = overlays.length < previousDepth;
+			// Пост открыли на комментарии: прокрутку к ним ставит сам пост. При возврате на него — его прокрутка
 			const activeOverlay = topmostPageOverlayIndex >= 0 ? overlays[topmostPageOverlayIndex] : undefined;
-			if (activeOverlay?.type === 'post' && (activeOverlay.data.commentId !== undefined || activeOverlay.data.toComments)) {
+			if (!closing && activeOverlay?.type === 'post' && (activeOverlay.data.commentId !== undefined || activeOverlay.data.toComments)) {
 				scrollPositions.delete(activeScrollId);
 			}
 			const savedScroll = scrollPositions.get(activeScrollId) || 0;
 			const layer = activeScrollId;
-			const closing = overlays.length < previousDepth;
 			previousScrollId = layer;
 			stopPendingScroll();
+			// Слой показал свайп «назад»: он уже стоит на месте, анимация появления не нужна
+			const landed = swipeBack.land(layer);
 			// Сразу, до первой отрисовки слоя: иначе на кадр виден верх страницы. После tick позиция ставится ещё раз —
 			// SvelteKit при возврате по истории прокручивает сам и может перебить
 			if (Math.abs(window.scrollY - savedScroll) > 1) {
@@ -235,6 +245,8 @@
 				if (savedScroll > 0 && Math.abs(window.scrollY - savedScroll) > 1) {
 					startPendingScroll(layer, savedScroll);
 				}
+
+				if (landed) return;
 
 				// Если для входящего слоя запущен универсальный переход, анимацией занимается pageTransition
 				if (pageTransition.isIncoming(layer)) {
@@ -381,6 +393,16 @@
 		applyAppIcon(settings.value.appIcon ?? 'default', settings.value.customIconData);
 	});
 
+	// Прокрутка, на которую слой встанет после закрытия страницы над ним. Ленту могли выбрать из-под страницы:
+	// её прокрутку забираем сейчас, тогда восстановление при закрытии возьмёт то же значение
+	const backSwipe = swipeBackGesture({
+		scrollOf(layer) {
+			const feedScroll = layer === '__feed__' ? feed.consumeScrollTarget() : undefined;
+			if (feedScroll !== undefined) scrollPositions.set('__feed__', feedScroll);
+			return scrollPositions.get(layer) || 0;
+		}
+	});
+
 	onMount(() => {
 		initCapacitor();
 		cleanupHangingBio(true);
@@ -436,14 +458,15 @@
 	{/if}
 {/snippet}
 
-<div class="app" inert={showWelcome}>
+<div class="app" inert={showWelcome} data-gestures={activeTheme.gestures || undefined} {@attach activeTheme.gestures ? backSwipe : undefined}>
 	<ThemeLoader componentName="Header" />
 
 	<ThemeLoader componentName="MainLayout">
 		<!-- display: contents — обёртки не должны ломать раскладку темы (flex/grid в MainLayout) -->
 		<div
+			class="layer"
 			data-layer="__feed__"
-			style:display={pageTransition.isOutgoing('__feed__') || topmostPageOverlayIndex < 0 ? 'contents' : 'none'}
+			data-hidden={hiddenAs('__feed__', pageTransition.isOutgoing('__feed__') || topmostPageOverlayIndex < 0 || swipeBack.preview === '__feed__')}
 		>
 			{@render children()}
 		</div>
@@ -451,9 +474,9 @@
 		{#each overlays as overlay, index (overlay.id)}
 			{#if overlay.presentation === 'page'}
 				<div
-					class="overlay-wrapper"
+					class="layer overlay-wrapper"
 					data-layer={overlay.id}
-					style:display={pageTransition.isOutgoing(overlay.id) || index >= topmostPageOverlayIndex ? 'contents' : 'none'}
+					data-hidden={hiddenAs(overlay.id, pageTransition.isOutgoing(overlay.id) || index >= topmostPageOverlayIndex || swipeBack.preview === overlay.id)}
 					style:visibility={pageTransition.isIncoming(overlay.id) && pageTransition.incomingHidden ? 'hidden' : 'visible'}
 					out:leavePage|global
 				>
@@ -507,6 +530,39 @@
 <style>
 	.app {
 		min-height: 100vh;
+	}
+
+	.layer {
+		display: contents;
+	}
+
+	/* Слой прямо под страницей не рисуется и не занимает места, но браузер хранит его раскладку: закрытие страницы
+	   показывает его без пересчёта. Из потока он выведен, чтобы его поля не сдвигали страницу; раскладка содержимого
+	   при этом не пересчитывается, пока слой скрыт. Слои глубже раскладку не держат: её память на каждый слой не нужна */
+	.layer[data-hidden] > :global(*) {
+		content-visibility: hidden;
+		position: absolute;
+	}
+
+	.layer[data-hidden='deep'] {
+		display: none;
+	}
+
+	@supports not (content-visibility: hidden) {
+		.layer[data-hidden] {
+			display: none;
+		}
+	}
+
+	/* Горизонтальный жест по странице — свайп «назад», вертикальный и щипок остаются браузеру */
+	.app[data-gestures] .overlay-wrapper > :global(*) {
+		touch-action: pan-y pinch-zoom;
+	}
+
+	/* Сдвинутая жестом страница вылезает за правый край. Обрезка у body уходит окну и этого не держит: документ становится
+	   шире экрана, мобильный браузер раздвигает окно, и фиксированная нижняя панель уезжает за низ. Обрезаем своим элементом */
+	.app[data-gestures] {
+		overflow-x: clip;
 	}
 
 	.transition-wait {

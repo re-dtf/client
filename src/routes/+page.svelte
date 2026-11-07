@@ -1,117 +1,114 @@
 <script lang="ts">
-	import { api } from '$lib/api/index.svelte';
-	import type { PaginatedResult, Post } from '$lib/api/types';
-	import ThemeLoader, { preloadThemeComponent } from '$lib/themes/ThemeLoader.svelte';
-	import Reveal from '$lib/components/Reveal.svelte';
-	import NetworkErrorState from '$lib/components/NetworkErrorState.svelte';
+	import { page, navigating } from '$app/state';
+	import { disableScrollHandling } from '$app/navigation';
+	import { flushSync, onMount, untrack } from 'svelte';
+	import FeedList from '$lib/components/FeedList.svelte';
+	import { FEEDS, feed, feedFromUrl, neighborFeed, openFeedTab, periodFromUrl, type FeedName } from '$lib/feed.svelte';
+	import { feedSwipe, swipeAllowed } from '$lib/feedSwipe';
+	import { pullRefresh } from '$lib/pullRefresh';
 	import { activeTheme } from '$lib/themes/index.svelte';
-	import { loadFeed, peekFeed, sortingOf } from '$lib/feedCache';
-	import { feed, feedFromUrl, openFeedTab, periodFromUrl, type Period } from '$lib/feed.svelte';
-	import { untrack } from 'svelte';
-	import { appear } from '$lib/themes/appear';
-	import { markFeedLoaded } from '$lib/ready';
+	import { play } from '$lib/motion';
+	import { pageReady } from '$lib/ready';
 
-	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
-	let loading = $state(true);
-	let loadingMore = $state(false);
-	let refreshing = $state(false);
-	let error = $state<unknown | null>(null);
-	// Растёт, когда показана новая первая страница: список пересоздаётся и проигрывает появление (подгрузка вниз его не трогает)
-	let epoch = $state(0);
-
-	// Лента лежит в адресе (/?feed=new), так что на неё можно дать ссылку
-	let currentFeed = $derived(feedFromUrl());
-	let currentPeriod = $derived(periodFromUrl());
-
-	// Номер запроса: ответ прежней ленты не должен перетереть новую
-	let requestId = 0;
-
-	const sameFirstPage = (a: PaginatedResult<Post>, b: PaginatedResult<Post>) =>
-		a.items.length === b.items.length && a.items.every((post, i) => post.id === b.items[i].id && post.sourceId === b.items[i].sourceId);
-
-	/**
-	 * Показать ленту. Уже виденная лента открывается сразу из кэша, свежие посты подтягиваются следом
-	 * (список меняется под пальцем, только пока пользователь не отошёл от верха). `isRefresh` — явное обновление:
-	 * старый список остаётся, пока идёт запрос.
+	/*
+	 * Главная держит открытые ленты все сразу: неактивные скрыты, но со своими постами, раскладкой и прокруткой.
+	 * Смена ленты показывает нужную там, где её оставили; на сенсорном экране ленты листаются свайпом.
 	 */
-	async function loadInitial(isRefresh = false) {
-		const id = ++requestId;
-		const cached = isRefresh ? undefined : peekFeed(currentFeed, currentPeriod);
-		error = null;
-		if (isRefresh) refreshing = true;
-		else {
-			feedResult = cached ?? null;
-			loading = !cached;
-			epoch++;
-		}
-		try {
-			// Компонент поста догружается вместе с данными: иначе каждая карточка ленты на миг покажет заглушку
-			const [result] = await Promise.all([loadFeed(currentFeed, currentPeriod, isRefresh), preloadThemeComponent(activeTheme.chain, 'Post')]);
-			if (id !== requestId) return;
-			if (!cached || (window.scrollY < 100 && !sameFirstPage(cached, result))) {
-				feedResult = result;
-				epoch++;
-			}
-		} catch (e: any) {
-			// Показанный из кэша список остаётся, даже если обновить его не вышло
-			if (id === requestId && !cached) error = e;
-			console.error('Failed to load posts:', e);
-		} finally {
-			if (id === requestId) loading = refreshing = false;
-			markFeedLoaded();
-		}
-	}
 
-	async function loadMore() {
-		if (loading || loadingMore || !feedResult?.cursors || Object.keys(feedResult.cursors).length === 0) return;
-		const id = requestId;
-		try {
-			loadingMore = true;
-			const next = await api.getPosts({
-				pageName: currentFeed,
-				sorting: sortingOf(currentFeed, currentPeriod),
-				cursors: feedResult.cursors
-			});
-			if (id === requestId) {
-				feedResult = { items: [...feedResult.items, ...next.items], cursors: next.cursors };
-			}
-		} catch (e: any) {
-			console.error('Failed to load more posts:', e);
-		} finally {
-			loadingMore = false;
-		}
-	}
-
-	// Открыли другую ленту (или зашли на главную): загружаем её с начала
+	// Адрес задаёт ленту при входе, по ссылке и кнопкой «Назад». Нажатие и свайп меняют её сразу, адрес догоняет
+	feed.setCurrent(feedFromUrl(), periodFromUrl());
+	feed.reset();
 	$effect(() => {
-		feed.setCurrent(currentFeed, currentPeriod);
-		untrack(() => loadInitial());
+		const name = feedFromUrl();
+		const period = periodFromUrl();
+		untrack(() => {
+			// «Назад» на другую ленту: прокрутку ставим сами, SvelteKit поставил бы прокрутку старого шага истории
+			if (name !== feed.current && navigating.type) disableScrollHandling();
+			feed.setCurrent(name, period);
+		});
 	});
 
-	// Клик по логотипу на самой ленте: обновить без сброса списка
-	let handledRefresh = feed.refreshCount;
+	let track = $state<HTMLElement>();
+	const slotOf = (name: FeedName) => track?.querySelector<HTMLElement>(`:scope > [data-feed="${name}"]`) ?? null;
+
+	// Лента на экране: над ней нет страницы (пост, профиль). Окна её не прячут
+	const feedVisible = () => !page.state.overlays?.some((o) => o.presentation === 'page');
+
+	// Прокрутка открытой ленты. Пока сверху страница, окно прокручивает её, а не ленту
+	function rememberScroll() {
+		if (feedVisible()) feed.rememberScroll(feed.current, scrollY);
+	}
+
+	// Там, где листают свайпом, соседние ленты готовятся заранее, в простое: свайп сразу показывает посты, а не загрузку
+	const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	function warmNeighbors() {
+		if (!touch || !swipeAllowed()) return;
+		(window.requestIdleCallback ?? setTimeout)(() => {
+			for (const dir of [-1, 1] as const) {
+				const name = neighborFeed(feed.current, dir);
+				if (name) feed.keep(name);
+			}
+		});
+	}
+
+	// Смена ленты: прежняя прячется со своей прокруткой, новая встаёт на свою
+	let shown = untrack(() => feed.current);
+	let animateNext = false;
+	let swiped = false;
+
+	$effect.pre(() => {
+		const next = feed.current;
+		untrack(() => {
+			if (next === shown || !feedVisible()) return;
+			feed.rememberScroll(shown, scrollY);
+			// Сохранённую ленту выводит анимация темы; новая проиграет своё появление сама, когда загрузится. После свайпа ничего не нужно
+			animateNext = !swiped && slotOf(next) !== null;
+		});
+	});
+
 	$effect(() => {
-		if (feed.refreshCount !== handledRefresh) {
-			handledRefresh = feed.refreshCount;
-			untrack(() => loadInitial(true));
+		const next = feed.current;
+		untrack(() => {
+			if (next === shown) return;
+			shown = next;
+			// Под страницей лента сменилась скрыто: прокрутку поставит слой, когда страницу закроют
+			if (feedVisible()) {
+				const top = feed.scrollOf(next);
+				window.scrollTo({ top, behavior: 'instant' });
+				const slot = slotOf(next);
+				// На проскролленной ленте сдвиг многотысячепиксельного слоя рвёт кадры: там только проявление
+				if (animateNext && slot) play(slot, top < 300 ? activeTheme.motion?.feedIn : activeTheme.motion?.pageIn);
+			}
+			animateNext = swiped = false;
+			warmNeighbors();
+		});
+	});
+
+	const swipe = feedSwipe({
+		enabled: () => !page.state.overlays?.length,
+		current: () => feed.current,
+		slot(name) {
+			if (!feed.kept.includes(name)) {
+				feed.keep(name);
+				flushSync();
+			}
+			return slotOf(name);
+		},
+		scrollOf: feed.scrollOf,
+		commit(name) {
+			swiped = true;
+			flushSync(() => openFeedTab(name));
 		}
 	});
 
-	let loaderNode = $state<HTMLElement>();
+	// Потянуть ленту вниз от самого верха — обновить её (если тема рисует этот жест)
+	const pull = pullRefresh({
+		enabled: () => !page.state.overlays?.length,
+		refresh: () => feed.refresh(true)
+	});
 
-	$effect(() => {
-		if (!loaderNode) return;
-		const observer = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) {
-				loadMore();
-			}
-		}, { rootMargin: '1000px' });
-		
-		observer.observe(loaderNode);
-		
-		return () => {
-			observer.disconnect();
-		};
+	onMount(() => {
+		pageReady().then(warmNeighbors);
 	});
 </script>
 
@@ -119,93 +116,49 @@
 	<title>reDTF - Лента</title>
 </svelte:head>
 
-<div class={['feed', { 'feed--refreshing': refreshing }]}>
-	{#if refreshing}
-		<div class="refresh"><ThemeLoader componentName="Spinner" inline={true} /></div>
-	{/if}
+<svelte:window onscroll={rememberScroll} />
 
-	{#if error}
-		<NetworkErrorState {error} onretry={() => loadInitial()} />
-	{:else}
-		<Reveal ready={!loading} block>
-			{#if feedResult?.items.length === 0}
-				<div class="empty">Нет постов</div>
-			{:else if feedResult}
-				{#key epoch}
-					<div class="list" {@attach appear('feedIn')}>
-						<ThemeLoader
-							componentName="FeedTabs"
-							{currentFeed}
-							switchFeed={openFeedTab}
-							period={currentPeriod}
-							switchPeriod={(period: Period) => openFeedTab('popular', period)}
-						/>
-						{#if currentFeed === 'popular' && currentPeriod === 'now'}
-							<ThemeLoader componentName="EditorialNews" />
-						{/if}
-						{#each feedResult.items as post (post.sourceId + '_' + post.id)}
-							<ThemeLoader componentName="Post" {post} />
-						{/each}
-
-						{#if feedResult.cursors && Object.keys(feedResult.cursors).length > 0}
-							<div bind:this={loaderNode} class="infinite-loader">
-								{#if loadingMore}
-									<ThemeLoader componentName="Spinner" inline={true} />
-								{/if}
-							</div>
-						{/if}
-					</div>
-				{/key}
+<div class="feeds">
+	<div class={['feeds__track', { 'feeds__track--swipe': activeTheme.gestures }]} bind:this={track} {@attach activeTheme.gestures ? swipe : undefined} {@attach activeTheme.gestures ? pull : undefined}>
+		{#each FEEDS as name (name)}
+			{#if feed.kept.includes(name)}
+				<div class={['feeds__slot', { 'feeds__slot--active': name === feed.current }]} data-feed={name}>
+					<FeedList {name} period={feed.periodOf(name)} active={name === feed.current} />
+				</div>
 			{/if}
-		</Reveal>
-	{/if}
+		{/each}
+	</div>
 </div>
 
 <style>
-	/* В темах с flex-раскладкой (dtf2022) иначе лента сжимается по контенту */
-	.feed {
+	/* В темах с flex-раскладкой (dtf2022) иначе ленты сжимаются по контенту. Вбок ленты едут только внутри своей полосы */
+	.feeds {
+		width: 100%;
+		overflow-x: clip;
+	}
+
+	.feeds__track {
 		position: relative;
-		width: 100%;
 	}
-	/* Обновление по нажатию: старый список остаётся, но притухает, а сверху крутится индикатор */
-	.list {
-		width: 100%;
-		transition: opacity 0.2s ease;
+
+	/* Горизонтальный жест — свайп лент, вертикальный и щипок остаются браузеру */
+	.feeds__track--swipe {
+		touch-action: pan-y pinch-zoom;
 	}
-	.feed--refreshing .list {
-		opacity: 0.55;
-	}
-	.refresh {
+
+	/* Скрытая лента не рисуется и не занимает места, но браузер хранит её раскладку: возврат на неё мгновенный.
+	   Абсолютной она стоит заранее: жест только сдвигает её и делает видимой, без смены позиционирования в первом кадре */
+	.feeds__slot:not(.feeds__slot--active) {
+		content-visibility: hidden;
 		position: absolute;
-		top: 8px;
-		left: 50%;
-		z-index: 5;
-		translate: -50% 0;
-		border-radius: 999px;
-		background: var(--bg-card, #fff);
-		color: var(--text-primary, inherit);
-		border: 1px solid var(--border-subtle, transparent);
-		box-shadow: var(--shadow-popup, 0 2px 12px rgba(0, 0, 0, 0.18));
-		animation: refresh-in 0.25s cubic-bezier(0.165, 0.84, 0.44, 1) backwards;
-		pointer-events: none;
+		top: 0;
+		left: 0;
+		width: 100%;
 	}
-	@keyframes refresh-in {
-		from {
-			opacity: 0;
-			translate: -50% -12px;
-			scale: 0.8;
+
+	@supports not (content-visibility: hidden) {
+		.feeds__slot:not(.feeds__slot--active) {
+			display: none;
 		}
-	}
-	.empty, .infinite-loader {
-		text-align: center;
-		padding: 40px;
-		color: var(--text-muted, #666);
-		font-size: 1.1em;
-	}
-	.infinite-loader {
-		padding: 20px;
-		min-height: 50px;
-		display: flex;
-		justify-content: center;
 	}
 </style>

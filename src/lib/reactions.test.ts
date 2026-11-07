@@ -9,7 +9,7 @@ import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS } from './config/reacti
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 beforeEach(() => {
-	reactionSettings.value = { rules: {}, like: 1, dislike: 23, rank: true };
+	reactionSettings.value = { rules: {}, like: 1, dislike: 23, favorites: [], rank: true };
 });
 
 describe('applyReaction', () => {

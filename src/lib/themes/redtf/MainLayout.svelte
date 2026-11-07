@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import SidebarLeft from './SidebarLeft.svelte';
+	import PullRefresh from './PullRefresh.svelte';
 	import MobileBar from '../dtf2022/MobileBar.svelte';
 	import { sidebar } from '../dtf2022/sidebar.svelte';
 	import Toasts from '../dtf2022/ui/Toasts.svelte';
@@ -39,6 +40,8 @@
 		{@render children?.()}
 	</main>
 </div>
+
+<PullRefresh />
 
 <MobileBar />
 

@@ -12,6 +12,8 @@ export interface ReactionSettings {
 	/** Какие реакции ставят кнопки «лайк» и «дизлайк» */
 	like: number;
 	dislike: number;
+	/** Любимые реакции (до трёх, по порядку): их ставит свайп по комментарию в темах с жестами */
+	favorites: number[];
 	/** Сортировать посты и комментарии по рейтингу из реакций, а не так, как отдал сервер */
 	rank: boolean;
 }
@@ -20,6 +22,7 @@ export const reactionSettings = persistedState<ReactionSettings>('redtf:settings
 	rules: {},
 	like: 1,
 	dislike: 23,
+	favorites: [],
 	rank: true
 });
 
@@ -47,4 +50,19 @@ export function voteReaction(sign: 1 | -1): number {
 	const kind: ReactionKind = sign > 0 ? 'positive' : 'negative';
 	if (ruleOf(chosen).kind === kind) return chosen;
 	return Object.keys(REACTIONS).map(Number).find((id) => ruleOf(id).kind === kind) ?? chosen;
+}
+
+export const MAX_FAVORITES = 3;
+
+/** Добавить реакцию в любимые или убрать из них. Сверх лимита новая не добавляется */
+export function toggleFavorite(id: number) {
+	const { favorites } = reactionSettings.value;
+	if (favorites.includes(id)) reactionSettings.patch({ favorites: favorites.filter((f) => f !== id) });
+	else if (favorites.length < MAX_FAVORITES) reactionSettings.patch({ favorites: [...favorites, id] });
+}
+
+/** Реакции для быстрых действий: любимые, а пока их не выбрали — лайк и дизлайк */
+export function quickReactions(): number[] {
+	const { favorites } = reactionSettings.value;
+	return favorites.length ? favorites : [voteReaction(1), voteReaction(-1)];
 }
