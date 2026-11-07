@@ -17,7 +17,7 @@ declare global {
 			| { type: 'notifications' }
 			| { type: 'login' }
 			| { type: 'editor'; data?: { postId?: number | null; repostId?: number } }
-			| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number }[]; index: number } };
+			| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number; type?: string }[]; index: number } };
 
 		/** Оверлей в стеке: то, что открыли, плюс служебные поля */
 		type OverlayState = OverlayData & {

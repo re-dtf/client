@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getLeonardoUrl } from '$lib/api/utils';
+	import { downloadImage, getLeonardoOriginalUrl, getLeonardoUrl } from '$lib/api/utils';
 	import { closeOverlay, preloadLightbox, takeLightboxOrigin } from '$lib/navigation';
 
 	/** Просмотр картинок на весь экран. PhotoSwipe рисует себя сам, поэтому здесь только запуск и закрытие */
-	let { images, index }: { images: { uuid: string; width: number; height: number }[]; index: number } = $props();
+	let {
+		images,
+		index
+	}: {
+		images: { uuid: string; width: number; height: number; type?: string }[];
+		index: number;
+	} = $props();
 
 	const MAX_WIDTH = 2048;
 
@@ -12,6 +18,16 @@
 		const origin = takeLightboxOrigin();
 		let closed = false;
 		let pswp: import('photoswipe').default | undefined;
+		let downloadBtn: HTMLButtonElement | undefined;
+		const downloading = new Set<string>();
+
+		const updateButtonState = () => {
+			if (!downloadBtn || !pswp) return;
+			const current = images[pswp.currIndex];
+			const isBusy = !!current?.uuid && downloading.has(current.uuid);
+			downloadBtn.disabled = isBusy;
+			downloadBtn.style.display = current?.uuid ? '' : 'none';
+		};
 
 		// Библиотека тяжёлая и нужна не всем: грузим при первом открытии (или берём из preload)
 		(async () => {
@@ -37,6 +53,48 @@
 						};
 					})
 				});
+
+				// Кнопка скачивания оригинала в полном качестве
+				pswp.on('uiRegister', () => {
+					pswp?.ui?.registerElement({
+						name: 'download',
+						ariaLabel: 'Скачать оригинал',
+						title: 'Скачать оригинал',
+						order: 15,
+						isButton: true,
+						html: {
+							isCustomSVG: true,
+							inner: '<path d="M15 6h2v9h4l-5 5-5-5h4V6zM7 21v4h18v-4h2v6H5v-6h2z" id="pswp__icn-download"/>',
+							outlineID: 'pswp__icn-download'
+						},
+						onInit: (el) => {
+							downloadBtn = el as HTMLButtonElement;
+							updateButtonState();
+						},
+						onClick: async (e) => {
+							e.stopPropagation();
+							if (!pswp) return;
+							const current = images[pswp.currIndex];
+							if (!current?.uuid || downloading.has(current.uuid)) return;
+
+							downloading.add(current.uuid);
+							updateButtonState();
+
+							try {
+								const originalUrl = getLeonardoOriginalUrl(current.uuid);
+								await downloadImage(originalUrl, current.uuid, current.type);
+							} finally {
+								downloading.delete(current.uuid);
+								updateButtonState();
+							}
+						}
+					});
+				});
+
+				pswp.on('change', () => {
+					updateButtonState();
+				});
+
 				// Закрыли крестиком, Esc или свайпом: шаг истории назад
 				pswp.on('destroy', () => {
 					if (closed) return;
