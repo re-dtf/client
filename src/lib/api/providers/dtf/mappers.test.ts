@@ -27,9 +27,16 @@ describe('mapEntryToPost', () => {
 	it('подставляет значения по умолчанию для пустой записи', () => {
 		const post = mapEntryToPost({ id: 7 });
 
-		expect(post).toMatchObject({ id: 7, sourceId: 'dtf', title: 'Без заголовка', commentsCount: 0, blocks: [] });
+		expect(post).toMatchObject({ id: 7, sourceId: 'dtf', title: '', commentsCount: 0, blocks: [] });
 		expect(post.author.name).toBe('Аноним');
 		expect(post.unreadCommentsCount).toBeUndefined();
+	});
+
+	it('оставляет заголовок пустым, если он не указан', () => {
+		expect(mapEntryToPost({ id: 1, title: '' }).title).toBe('');
+		expect(mapEntryToPost({ id: 2, title: '   ' }).title).toBe('');
+		expect(mapEntryToPost({ id: 3, title: undefined }).title).toBe('');
+		expect(mapEntryToPost({ id: 4, title: 'Нормальный заголовок' }).title).toBe('Нормальный заголовок');
 	});
 
 	it('считает непрочитанные комментарии', () => {

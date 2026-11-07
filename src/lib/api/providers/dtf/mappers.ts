@@ -60,7 +60,7 @@ export function mapEntryToPost(entry: any): Post {
 	return {
 		id: entry.id,
 		sourceId: 'dtf',
-		title: entry.title || 'Без заголовка',
+		title: entry.title?.trim() || '',
 		blocks: entry.blocks || [],
 		author: mapUser(entry.author),
 		commentsCount,

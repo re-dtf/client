@@ -16,4 +16,11 @@ describe('PostBlocks DTF link handling', () => {
 		expect(svelteContent).toContain('dtfTargetToPath');
 		expect(svelteContent).toContain('parseDtfUrl(link.url)');
 	});
+
+	it('не отображает блок заголовка для пустых заголовков', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostBlocks.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('{#if title?.trim()}');
+		expect(svelteContent).toContain('post-block post-block--title');
+	});
 });

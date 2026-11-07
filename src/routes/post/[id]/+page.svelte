@@ -17,7 +17,7 @@
 	<title>{pageTitle}</title>
 </svelte:head>
 
-<PostContent postId={id} {sourceId} {commentId} {toComments} onLoaded={(title) => pageTitle = `${title} - reDTF`}>
+<PostContent postId={id} {sourceId} {commentId} {toComments} onLoaded={(title) => pageTitle = title ? `${title} - reDTF` : 'reDTF'}>
 	{#snippet backButton()}
 		<a href={resolve('/')} class="back-link">← Вернуться в ленту</a>
 	{/snippet}

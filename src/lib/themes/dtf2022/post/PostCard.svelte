@@ -43,7 +43,7 @@
 		<div class="post-content">
 			<PostBlocks title={post.title} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} />
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
-			<a class="post-link" href={postPath} aria-label={post.title} onclick={(e) => openPost(e, post)} use:preloadIntent={post}></a>
+			<a class="post-link" href={postPath} aria-label={post.title || undefined} onclick={(e) => openPost(e, post)} use:preloadIntent={post}></a>
 		</div>
 
 		{#if !embed}

@@ -87,7 +87,9 @@
 	{/if}
 {:else}
 <article class="profile-comment">
-	<a class="profile-comment__title" href={postPath} onclick={(e) => openPost(e, post)}>{comment.postTitle}</a>
+	{#if comment.postTitle}
+		<a class="profile-comment__title" href={postPath} onclick={(e) => openPost(e, post)}>{comment.postTitle}</a>
+	{/if}
 
 	<div class="profile-comment__header">
 		<a class="profile-comment__user" href={resolve(getProfilePath(comment.author.id) as any)} onclick={(e) => openProfile(e, comment.author.id)}>

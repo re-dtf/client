@@ -258,8 +258,8 @@
 	onclick={handleContainerClick}
 	onauxclick={handleContainerClick}
 >
-	{#if title}
-		<div class="post-block post-block--title">{title}</div>
+	{#if title?.trim()}
+		<div class="post-block post-block--title">{title.trim()}</div>
 	{/if}
 
 	{#each segments as segment}
