@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { settle } from './swipe';
+import { settle, spring } from './swipe';
+
+describe('spring', () => {
+	it('стартует с места, доезжает до цели и не перелетает её даже от сильного броска', () => {
+		const at = spring(-100, -400, -8);
+		expect(at(0)).toBe(-100);
+		for (let t = 0; t <= 600; t += 4) expect(at(t)).toBeGreaterThanOrEqual(-400);
+		expect(Math.abs(at(400) + 400)).toBeLessThan(0.5);
+	});
+});
 
 describe('settle', () => {
 	const width = 400;

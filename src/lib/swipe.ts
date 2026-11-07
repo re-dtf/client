@@ -18,6 +18,11 @@ export interface SwipeHooks {
 	 * Возвращает функцию, которая мгновенно завершает доезд: её вызовет новое касание
 	 */
 	end: (offset: number, velocity: number | null) => (() => void) | void;
+	/**
+	 * Палец коснулся посреди доезда: остановить его на месте и вернуть сдвиг, с которого жест продолжится без нового `begin`.
+	 * Если палец так и не повёл, доезд продолжится оттуда (`end` со скоростью 0). Без хука или с `undefined` касание завершает доезд
+	 */
+	grab?: () => number | undefined;
 }
 
 /** У краёв экрана жест принадлежит системе («назад» в Android и iOS) */
@@ -47,6 +52,19 @@ export const glide = (distance: number, velocity: number) => Math.min(360, Math.
 
 export const translate = (x: number) => `translate3d(${x}px, 0, 0)`;
 
+/** Жёсткость пружины доезда, 1/мс: доезд почти весь укладывается в 300 мс */
+const OMEGA = 0.025;
+
+/**
+ * Доезд пружиной без колебаний (критическое затухание) от `from` к `to` со скоростью пальца `velocity` (px/мс):
+ * положение через `t` мс. Скорость к цели урезана до той, с которой пружина не перелетает цель
+ */
+export function spring(from: number, to: number, velocity: number) {
+	const x0 = from - to;
+	const v0 = x0 * velocity < 0 ? Math.sign(velocity) * Math.min(Math.abs(velocity), OMEGA * Math.abs(x0)) : velocity;
+	return (t: number) => to + (x0 + (v0 + OMEGA * x0) * t) * Math.exp(-OMEGA * t);
+}
+
 export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 	return (node) => {
 		let start: { x: number; y: number } | undefined;
@@ -57,8 +75,10 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 		let dy = 0;
 		let samples: { x: number; t: number }[] = [];
 		let frame = 0;
-		// Доезд после отпускания. Новое касание завершает его сразу, чтобы жесты шли подряд
+		// Доезд после отпускания. Новое касание подхватывает его (`grab`) или завершает сразу, чтобы жесты шли подряд
 		let finish: (() => void) | void;
+		// Касание подхватило доезд, но палец ещё не повёл: сдвиг, на котором доезд остановлен
+		let held: number | undefined;
 
 		function render() {
 			frame = 0;
@@ -88,19 +108,29 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 			finish = hooks.end(offset, v);
 		}
 
+		/** Касание кончилось, не став жестом. Подхваченный доезд продолжается с места, где его остановили */
+		function letGo() {
+			start = undefined;
+			if (held === undefined) return;
+			offset = held;
+			held = undefined;
+			release(0);
+		}
+
 		function onDown(e: PointerEvent) {
 			if (e.pointerType !== 'touch') return;
 			// Второй палец — это щипок, а не свайп. Палец без отпускания — потерянный прошлый жест: он отменяется
 			if (dragging) release(null);
-			if (!e.isPrimary) {
-				start = undefined;
-				return;
-			}
+			else letGo();
+			if (!e.isPrimary) return;
+			node.removeEventListener('click', stopClick, true);
+			held = finish ? hooks.grab?.() : undefined;
 			const done = finish;
 			finish = undefined;
-			done?.();
-			node.removeEventListener('click', stopClick, true);
-			if (e.clientX < EDGE || e.clientX > innerWidth - EDGE || !hooks.start(e)) return;
+			if (held === undefined) {
+				done?.();
+				if (e.clientX < EDGE || e.clientX > innerWidth - EDGE || !hooks.start(e)) return;
+			}
 			start = { x: e.clientX, y: e.clientY };
 			pointer = e.pointerId;
 			dy = 0;
@@ -113,10 +143,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 				const dx = e.clientX - start.x;
 				const dy = e.clientY - start.y;
 				if (Math.abs(dx) < SLOP && Math.abs(dy) < SLOP) return;
-				if (Math.abs(dy) >= Math.abs(dx) || !hooks.begin(dx)) {
-					start = undefined;
-					return;
-				}
+				if (Math.abs(dy) >= Math.abs(dx) || (held === undefined && !hooks.begin(dx))) return letGo();
 				dragging = true;
 				// Дальше палец ведёт сам узел жеста: иначе события идут элементу под пальцем, и если его пересоздали
 				// (лента подменила посты свежими), Firefox шлёт их удалённому узлу и жест замирает. Раньше нельзя: клик по ссылке ушёл бы узлу
@@ -125,8 +152,9 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 				} catch {
 					// Палец уже отпущен: отпускание придёт следом
 				}
-				// Жест трогается с места захвата, а не прыгает на величину порога
-				start.x = e.clientX;
+				// Жест трогается с места захвата, а не прыгает на величину порога; подхваченный — с места, где остановлен доезд
+				start.x = e.clientX - (held ?? 0);
+				held = undefined;
 			}
 			offset = e.clientX - start.x;
 			dy = e.clientY - start.y;
@@ -137,10 +165,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 
 		function onUp(e: PointerEvent) {
 			if (e.pointerId !== pointer) return;
-			if (!dragging) {
-				start = undefined;
-				return;
-			}
+			if (!dragging) return letGo();
 			samples.push({ x: e.clientX, t: e.timeStamp });
 			release(e.type === 'pointerup' ? velocity(e.timeStamp) : null);
 		}

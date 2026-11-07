@@ -3,12 +3,13 @@ import { activeTheme } from './themes/index.svelte';
 import { neighborFeed, type FeedName } from './feed.svelte';
 import { reducedMotion } from './motion';
 import { getCurrentDevice } from './themes/types';
-import { EASE, glide, settle, swipe, translate } from './swipe';
+import { settle, spring, swipe, translate } from './swipe';
 import { pullDrawer, type DrawerPull } from './drawerSwipe';
 
 /*
  * Свайп между лентами главной. Палец тянет дорожку с лентами, соседняя лента стоит рядом сразу на своей прокрутке,
- * а после отпускания дорожка доезжает до неё или возвращается. Палец ведёт общий жест из `swipe.ts`.
+ * а после отпускания дорожка доезжает до неё или возвращается. Касание посреди доезда подхватывает дорожку с места.
+ * Палец ведёт общий жест из `swipe.ts`.
  * Слева от первой ленты соседа нет: там свайп выдвигает боковую панель, если тема её дала (`drawerSwipe.ts`).
  */
 
@@ -44,6 +45,8 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 		const sides = new Map<-1 | 1, HTMLElement | null>();
 		// Жест достался боковой панели: дорожка стоит
 		let pull: DrawerPull | undefined;
+		// Идущий доезд: остановить его там, где он сейчас
+		let halt: (() => void) | undefined;
 
 		const shift = () => (sides.get(offset > 0 ? -1 : 1) ? offset : rubber(offset, width));
 
@@ -94,22 +97,37 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 				}
 				const dir = v === null ? 0 : settle(offset, v, width);
 				const target = dir && sides.get(dir) ? neighborFeed(from, dir) : undefined;
-				const begin = shift();
-				const end = target ? -dir * width : 0;
-				let animation: Animation | undefined;
-				let settled = false;
+				const to = target ? -dir * width : 0;
+				// Доезд ведёт тот же сдвиг, что и палец, по кадрам: касание останавливает его где угодно и ведёт дальше
+				const at = spring(offset, to, v ?? 0);
+				const t0 = performance.now();
+				let frame = 0;
+				const stop = () => {
+					cancelAnimationFrame(frame);
+					if (halt === stop) halt = undefined;
+				};
 				const done = () => {
-					if (settled) return;
-					settled = true;
-					animation?.cancel();
+					stop();
 					clear();
 					if (target) options.commit(target);
 				};
-				if (reducedMotion() || Math.abs(end - begin) < 1) return done();
-				animation = track.animate([{ transform: translate(begin) }, { transform: translate(end) }], { duration: glide(end - begin, v ?? 0), easing: EASE, fill: 'forwards' });
-				// Отменённая анимация (новое касание уже завершило доезд) отклоняет промис: там делать нечего
-				animation.finished.then(done, () => {});
-				return done;
+				halt = stop;
+				if (reducedMotion() || Math.abs(to - offset) < 1) return done();
+				const tick = (now: number) => {
+					offset = at(Math.max(0, now - t0));
+					if (Math.abs(to - offset) < 0.5) return done();
+					track.style.transform = translate(shift());
+					frame = requestAnimationFrame(tick);
+				};
+				frame = requestAnimationFrame(tick);
+				return () => {
+					if (halt === stop) done();
+				};
+			},
+			grab() {
+				if (!halt) return;
+				halt();
+				return offset;
 			}
 		})(track);
 	};
