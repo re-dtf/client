@@ -41,6 +41,10 @@ let popularPeriod = $state<Period>(DEFAULT_PERIOD);
 // Открытые ленты остаются в памяти страницы со своими постами, чтобы возврат и свайп были мгновенными
 let kept = $state<FeedName[]>([DEFAULT_FEED]);
 let refreshCount = $state(0);
+// Обновление начато жестом: индикатор рисует жест, у ленты своего не нужно
+let refreshQuiet = $state(false);
+// Кто ждёт конца обновления (жест держит загрузку, пока лента не обновится)
+let refreshWaiters: (() => void)[] = [];
 
 // Прокрутка каждой ленты. Не состояние: её пишет прокрутка окна, а читают только при смене ленты
 const scrolls = new Map<FeedName, number>();
@@ -107,13 +111,24 @@ export const feed = {
 		pendingScroll = undefined;
 		return target;
 	},
-	/** Увеличивается, когда ленту просят перезагрузить (клик по логотипу на самой ленте) */
+	/** Увеличивается, когда ленту просят перезагрузить (клик по логотипу на самой ленте, жест) */
 	get refreshCount() {
 		return refreshCount;
 	},
-	refresh() {
-		haptics.double();
+	/** Обновление начато жестом: лента не показывает своего индикатора */
+	get refreshQuiet() {
+		return refreshQuiet;
+	},
+	/** Перезагрузить открытую ленту. Промис выполняется, когда она обновилась или не смогла */
+	refresh(quiet = false): Promise<void> {
+		if (!quiet) haptics.double();
+		refreshQuiet = quiet;
 		refreshCount++;
+		return new Promise((done) => refreshWaiters.push(done));
+	},
+	/** Открытая лента закончила обновление */
+	refreshed() {
+		for (const done of refreshWaiters.splice(0)) done();
 	}
 };
 
@@ -128,6 +143,7 @@ export function openFeedTab(name: FeedName, period?: Period) {
 	const onFeed = page.route.id === '/' && !page.state.overlays?.length;
 	if (onFeed && name === current && nextPeriod === popularPeriod) {
 		window.scrollTo({ top: 0, behavior: scrollBehavior() });
+		refreshQuiet = false;
 		refreshCount++;
 		return Promise.resolve();
 	}

@@ -5,6 +5,7 @@
 	import FeedList from '$lib/components/FeedList.svelte';
 	import { FEEDS, feed, feedFromUrl, neighborFeed, openFeedTab, periodFromUrl, type FeedName } from '$lib/feed.svelte';
 	import { feedSwipe, swipeAllowed } from '$lib/feedSwipe';
+	import { pullRefresh } from '$lib/pullRefresh';
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { play } from '$lib/motion';
 	import { pageReady } from '$lib/ready';
@@ -100,6 +101,12 @@
 		}
 	});
 
+	// Потянуть ленту вниз от самого верха — обновить её (если тема рисует этот жест)
+	const pull = pullRefresh({
+		enabled: () => !page.state.overlays?.length,
+		refresh: () => feed.refresh(true)
+	});
+
 	onMount(() => {
 		pageReady().then(warmNeighbors);
 	});
@@ -112,7 +119,7 @@
 <svelte:window onscroll={rememberScroll} />
 
 <div class="feeds">
-	<div class={['feeds__track', { 'feeds__track--swipe': activeTheme.gestures }]} bind:this={track} {@attach activeTheme.gestures ? swipe : undefined}>
+	<div class={['feeds__track', { 'feeds__track--swipe': activeTheme.gestures }]} bind:this={track} {@attach activeTheme.gestures ? swipe : undefined} {@attach activeTheme.gestures ? pull : undefined}>
 		{#each FEEDS as name (name)}
 			{#if feed.kept.includes(name)}
 				<div class={['feeds__slot', { 'feeds__slot--active': name === feed.current }]} data-feed={name}>

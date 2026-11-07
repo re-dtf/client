@@ -65,6 +65,7 @@
 			console.error('Failed to load posts:', e);
 		} finally {
 			if (id === requestId) loading = refreshing = false;
+			if (isRefresh) feed.refreshed();
 			markFeedLoaded();
 		}
 	}
@@ -110,7 +111,7 @@
 		wasActive = active;
 	});
 
-	// Клик по логотипу на открытой ленте: обновить без сброса списка
+	// Клик по логотипу или жест на открытой ленте: обновить без сброса списка
 	let handledRefresh = feed.refreshCount;
 	$effect(() => {
 		if (feed.refreshCount === handledRefresh) return;
@@ -136,8 +137,9 @@
 	};
 </script>
 
-<div class={['feed', { 'feed--refreshing': refreshing }]}>
-	{#if refreshing}
+<!-- Обновление жестом рисует сам жест: тогда список не притухает и своего индикатора нет -->
+<div class={['feed', { 'feed--refreshing': refreshing && !feed.refreshQuiet }]}>
+	{#if refreshing && !feed.refreshQuiet}
 		<div class="refresh"><ThemeLoader componentName="Spinner" inline={true} /></div>
 	{/if}
 
