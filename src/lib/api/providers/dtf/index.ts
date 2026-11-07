@@ -21,6 +21,8 @@ import type {
 	ProfileListItem,
 	ProfileSorting,
 	Reactions,
+	SearchSorting,
+	SearchSubsite,
 	SubsiteItem,
 	UploadResult
 } from '../../types';
@@ -30,7 +32,7 @@ import { untrack } from 'svelte';
 import { addWatermark } from '$lib/watermark';
 import { settings } from '$lib/storage/settings.svelte';
 import { login, loginByToken } from './auth';
-import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapReactions } from './mappers';
+import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapReactions, mapSearchSnippet, mapSearchSubsite } from './mappers';
 
 /** Загружает файл в хранилище DTF; возвращает запись как есть (`{ type, data }`): в таком виде её принимают поля вроде avatar и cover */
 async function uploadItem(file: File): Promise<any> {
@@ -230,6 +232,50 @@ export const dtfApiProvider = {
 	async getReposts(postId: number): Promise<Post[]> {
 		const response = await fetchWithAuth(`${COMMENTS_API_URL}/content/${postId}/reposts?markdown=false`);
 		return entriesOf((await response.json()).result?.items).map(mapEntryToPost);
+	},
+
+	/**
+	 * Записи по тегу (без `#`). Адрес версии 2.10: на 2.31 ответ другой формы. Отдаёт одну страницу (около дюжины записей),
+	 * параметров постраничности у метода нет: `lastId`, `offset`, `page`, `sorting` игнорируются
+	 */
+	async getTagPosts(tag: string): Promise<Post[]> {
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/tag/${encodeURIComponent(tag)}?markdown=false`);
+		return entriesOf((await response.json()).result?.items).map(mapEntryToPost);
+	},
+
+	/** Поиск записей. У каждой записи `meta.highlight` — фрагмент текста с найденным в `<mark>`; страницы — по курсору */
+	async searchPosts(query: string, sorting: SearchSorting, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }> {
+		const params = new URLSearchParams({ markdown: 'false', sorting, q: query, title: 'false', editorial: 'false', strict: 'false' });
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/search/posts?${params}${cursorQuery(cursor)}`);
+		const result = (await response.json()).result;
+
+		return {
+			items: (result?.items || []).flatMap((item: any) => {
+				const entry = item.data || item;
+				if (entry.id === undefined) return [];
+				const post = mapEntryToPost(entry);
+				return [{ ...post, searchSnippet: mapSearchSnippet(item.meta?.highlight, post.title) }];
+			}),
+			lastId: result?.lastId,
+			lastSortingValue: result?.lastSortingValue,
+			total: result?.total
+		};
+	},
+
+	/** Поиск пользователей и блогов (`communities` — false) или тем (true). Отдаёт только первую дюжину: `page` метод не читает */
+	async searchSubsites(query: string, communities: boolean): Promise<{ items: SearchSubsite[]; total: number }> {
+		const params = new URLSearchParams({ q: query, type: communities ? '2' : '1', page: '0' });
+		const response = await fetchWithAuth(`${apiV('2.51')}/search/subsites?${params}`);
+		const result = (await response.json()).result;
+
+		return { items: (result?.items || []).map((item: any) => mapSearchSubsite(item.data || item)), total: result?.total ?? 0 };
+	},
+
+	/** Черновики вошедшего пользователя; постранично по `offset` (на странице 20) */
+	async getDrafts(offset = 0): Promise<Post[]> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.10')}/new/posts/drafts?markdown=false&offset=${offset}&limit=20`);
+		return entriesOf((await resultOf(response, 'Не удалось получить черновики')).items).map(mapEntryToPost);
 	},
 
 	async getComments(postId: number, cursor?: CursorData, sorting: string = 'date'): Promise<PaginatedResult<Comment>> {

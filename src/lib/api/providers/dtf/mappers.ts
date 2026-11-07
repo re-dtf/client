@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
+import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, SearchSubsite, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 import { embedToPost } from '../../embed';
 import { extractWatermark } from '$lib/watermark';
@@ -7,6 +7,9 @@ import { extractWatermark } from '$lib/watermark';
  * Превращают ответы API DTF в наши типы (см. api/types.ts). Ответы приходят без схемы,
  * поэтому сырые данные здесь any, а наружу выходят уже типизированные объекты.
  */
+
+const HTML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' };
+const decodeEntities = (s: string) => s.replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, name) => HTML_ENTITIES[name]);
 
 export function mapAvatarUrl(subsite: any, size = '64x64'): string | undefined {
 	return subsite?.avatar?.url
@@ -37,6 +40,44 @@ export function mapIgnoredSubsite(subsite: any): IgnoredSubsite {
 		// type: 1 — пользователь, 2 — тема
 		isCommunity: subsite.type === 2
 	};
+}
+
+export function mapSearchSubsite(subsite: any): SearchSubsite {
+	return {
+		id: subsite.id,
+		name: subsite.name || 'Аноним',
+		description: subsite.description || undefined,
+		avatarUrl: mapAvatarUrl(subsite, '108x108'),
+		isCommunity: subsite.type === 2,
+		subscribersCount: subsite.counters?.subscribers,
+		isSubscribed: subsite.isSubscribed
+	};
+}
+
+/**
+ * Фрагмент выдачи поиска (`meta.highlight`) начинается с заголовка записи, а дальше без разделителя идёт текст.
+ * Заголовок показывают отдельно, поэтому из начала фрагмента он убирается; если фрагмент им не начинается, остаётся как есть.
+ */
+export function mapSearchSnippet(highlight: unknown, title: string): string | undefined {
+	if (typeof highlight !== 'string' || !highlight) return undefined;
+	const wanted = title.trim();
+	if (!wanted) return highlight;
+
+	// Символы без разметки: тег — пустое место, `&amp;` — один символ
+	const parts = highlight.match(/<[^>]*>|&#?\w+;|[\s\S]/g) ?? [];
+	let matched = 0;
+	let end = 0;
+	for (const [index, part] of parts.entries()) {
+		if (matched === wanted.length) break;
+		end = index + 1;
+		if (part.startsWith('<')) continue;
+		const char = part.length > 1 ? HTML_ENTITIES[part.slice(1, -1)] ?? '' : part;
+		if (char !== wanted[matched]) return highlight;
+		matched++;
+	}
+	if (matched < wanted.length) return highlight;
+	const rest = parts.slice(end).join('').trim();
+	return rest.replace(/<\/?mark>/g, '') ? rest : undefined;
 }
 
 export function mapLikes(likes: any): Likes | undefined {
@@ -83,7 +124,8 @@ export function mapEntryToPost(entry: any): Post {
 		isFavorited: !!entry.isFavorited,
 		repostsCount: entry.counters?.reposts || undefined,
 		repost: mapRepost(entry),
-		isSubscribedToComments: entry.subscribedToTreads
+		isSubscribedToComments: entry.subscribedToTreads,
+		isDraft: entry.isPublished === false || undefined
 	};
 }
 
@@ -132,9 +174,6 @@ export function mapComment(item: any, postId: number): Comment {
 		postTitle: item.entry?.title
 	};
 }
-
-const HTML_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", nbsp: ' ' };
-const decodeEntities = (s: string) => s.replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (_, name) => HTML_ENTITIES[name]);
 
 /** Из html уведомления остаются только текст, `<b>` и `<a href>`; ссылки — только https */
 export function parseNotificationHtml(html: string): NotificationPart[] {

@@ -246,6 +246,21 @@ export const api = {
 		return items;
 	},
 
+	// --- Теги, поиск, черновики (только DTF) ---
+
+	async getTagPosts(tag: string) {
+		const items = await dtfApiProvider.getTagPosts(tag);
+		cachePosts(items);
+		return items;
+	},
+	async searchPosts(...args: Parameters<typeof dtfApiProvider.searchPosts>) {
+		const res = await dtfApiProvider.searchPosts(...args);
+		cachePosts(res.items);
+		return res;
+	},
+	searchSubsites: dtfApiProvider.searchSubsites,
+	getDrafts: dtfApiProvider.getDrafts,
+
 	// --- Редактор (только DTF) ---
 
 	saveDraft: dtfApiProvider.saveDraft,

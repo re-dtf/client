@@ -76,6 +76,10 @@ export interface Post {
 	repost?: { id: number; original?: Post };
 	/** Подписан ли пользователь на новые комментарии поста (колокольчик) */
 	isSubscribedToComments?: boolean;
+	/** Не опубликован: черновик */
+	isDraft?: boolean;
+	/** Фрагмент текста с найденными словами в `<mark>`; приходит только в выдаче поиска */
+	searchSnippet?: string;
 }
 
 export interface User {
@@ -134,6 +138,21 @@ export interface Profile {
 
 /** Сортировка постов в профиле */
 export type ProfileSorting = 'popular' | 'new';
+
+/** Пользователь, блог или тема (сообщество) из выдачи поиска */
+export interface SearchSubsite {
+	id: number;
+	name: string;
+	description?: string;
+	avatarUrl?: string;
+	/** Тема (сообщество), а не пользователь или блог */
+	isCommunity: boolean;
+	subscribersCount?: number;
+	isSubscribed?: boolean;
+}
+
+/** Порядок выдачи поиска по записям */
+export type SearchSorting = 'relevance' | 'date';
 
 export interface ProfileListItem {
 	id: number;
@@ -375,6 +394,12 @@ export interface ApiProvider {
 
 	// Репосты (ответы на пост)
 	getReposts?(postId: number): Promise<Post[]>;
+
+	// Теги, поиск, черновики
+	getTagPosts?(tag: string): Promise<Post[]>;
+	searchPosts?(query: string, sorting: SearchSorting, cursor?: CursorData): Promise<PaginatedResult<Post> & { total?: number }>;
+	searchSubsites?(query: string, communities: boolean): Promise<{ items: SearchSubsite[]; total: number }>;
+	getDrafts?(offset?: number): Promise<Post[]>;
 
 	// Редактор
 	saveDraft?(entry: DtfEditorEntry): Promise<DtfEditorEntry>;

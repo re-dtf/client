@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { REDTF_WATERMARK } from '$lib/watermark';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, parseNotificationHtml } from './mappers';
+import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, mapSearchSnippet, parseNotificationHtml } from './mappers';
 
 describe('mapLikes', () => {
 	it('нет данных — нет лайков', () => {
@@ -141,5 +141,24 @@ describe('mapIgnoredSubsite', () => {
 	it('отличает тему от пользователя по type', () => {
 		expect(mapIgnoredSubsite({ id: 1, name: 'Кино', type: 2, avatar: { data: { uuid: 'abc' } } })).toMatchObject({ id: 1, isCommunity: true });
 		expect(mapIgnoredSubsite({ id: 2, type: 1 })).toMatchObject({ name: 'Аноним', isCommunity: false });
+	});
+});
+
+describe('mapSearchSnippet', () => {
+	it('убирает из начала фрагмента заголовок записи вместе с его выделением', () => {
+		expect(mapSearchSnippet('<mark>Xbox</mark> представила контроллер Nano<mark>Xbox</mark> анонсировала геймпад', 'Xbox представила контроллер Nano')).toBe(
+			'<mark>Xbox</mark> анонсировала геймпад'
+		);
+		expect(mapSearchSnippet('Ник &amp; Ко: итогиТекст про <mark>итоги</mark>', 'Ник & Ко: итоги')).toBe('Текст про <mark>итоги</mark>');
+	});
+
+	it('фрагмент без заголовка в начале и запись без заголовка остаются как есть', () => {
+		expect(mapSearchSnippet('Совсем другой <mark>текст</mark>', 'Заголовок')).toBe('Совсем другой <mark>текст</mark>');
+		expect(mapSearchSnippet('Текст <mark>без</mark> заголовка', '')).toBe('Текст <mark>без</mark> заголовка');
+	});
+
+	it('если кроме заголовка ничего нет, фрагмента нет', () => {
+		expect(mapSearchSnippet('<mark>Заголовок</mark>', 'Заголовок')).toBeUndefined();
+		expect(mapSearchSnippet(undefined, 'Заголовок')).toBeUndefined();
 	});
 });
