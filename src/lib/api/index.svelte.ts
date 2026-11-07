@@ -240,6 +240,12 @@ export const api = {
 	getProfileSubscriptions: dtfApiProvider.getProfileSubscriptions,
 	getProfileComments: dtfApiProvider.getProfileComments,
 
+	async getReposts(postId: number) {
+		const items = await dtfApiProvider.getReposts(postId);
+		cachePosts(items);
+		return items;
+	},
+
 	// --- Редактор (только DTF) ---
 
 	saveDraft: dtfApiProvider.saveDraft,

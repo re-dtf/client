@@ -226,6 +226,12 @@ export const dtfApiProvider = {
 		return mapEntryToPost((await response.json()).result);
 	},
 
+	/** Репосты поста — записи-ответы. Снято на v2.10 (адрес `COMMENTS_API_URL`), постраничности в ответе нет */
+	async getReposts(postId: number): Promise<Post[]> {
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/content/${postId}/reposts?markdown=false`);
+		return entriesOf((await response.json()).result?.items).map(mapEntryToPost);
+	},
+
 	async getComments(postId: number, cursor?: CursorData, sorting: string = 'date'): Promise<PaginatedResult<Comment>> {
 		const response = await fetchWithAuth(`${COMMENTS_API_URL}/comments?contentId=${postId}&sorting=${sorting}${cursorQuery(cursor)}`);
 		const { result } = await response.json();

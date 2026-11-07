@@ -70,6 +70,10 @@ export interface Post {
 	viewsCount?: number;
 	isPinned?: boolean;
 	isFavorited?: boolean;
+	/** Сколько раз на пост написали репост (ответ) */
+	repostsCount?: number;
+	/** Пост — репост другого: `original` нет, если исходный удалён или недоступен */
+	repost?: { id: number; original?: Post };
 	/** Подписан ли пользователь на новые комментарии поста (колокольчик) */
 	isSubscribedToComments?: boolean;
 }
@@ -368,6 +372,9 @@ export interface ApiProvider {
 	getProfileSubscribers?(id: number, cursor?: CursorData): Promise<PaginatedResult<ProfileListItem>>;
 	getProfileSubscriptions?(id: number): Promise<ProfileListItem[]>;
 	getProfileComments?(id: number, cursor?: CursorData): Promise<PaginatedResult<Comment>>;
+
+	// Репосты (ответы на пост)
+	getReposts?(postId: number): Promise<Post[]>;
 
 	// Редактор
 	saveDraft?(entry: DtfEditorEntry): Promise<DtfEditorEntry>;

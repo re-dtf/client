@@ -1,5 +1,6 @@
 import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
+import { embedToPost } from '../../embed';
 import { extractWatermark } from '$lib/watermark';
 
 /*
@@ -80,8 +81,18 @@ export function mapEntryToPost(entry: any): Post {
 		viewsCount: entry.hitsCount || entry.counters?.views || entry.counters?.total || undefined,
 		isPinned: !!entry.isPinned,
 		isFavorited: !!entry.isFavorited,
+		repostsCount: entry.counters?.reposts || undefined,
+		repost: mapRepost(entry),
 		isSubscribedToComments: entry.subscribedToTreads
 	};
+}
+
+/** Репост у DTF — ответ на пост: исходный лежит в `repostData` (osnovaEmbed) */
+function mapRepost(entry: any): Post['repost'] {
+	const embed = entry.repostData?.data;
+	const id = entry.repostId || embed?.original_id;
+	if (!id) return undefined;
+	return { id, original: embed && !embed.isNotAvailable ? embedToPost(embed) : undefined };
 }
 
 export function mapComment(item: any, postId: number): Comment {

@@ -45,6 +45,19 @@ describe('mapEntryToPost', () => {
 		expect(post.commentsCount).toBe(10);
 		expect(post.unreadCommentsCount).toBe(6);
 	});
+
+	it('репост: исходная запись из repostData, недоступная — только id', () => {
+		const embed = { original_id: 55, title: 'Оригинал', author: { id: 3, name: 'Автор' }, blocks: [{ type: 'text' }] };
+		const repost = mapEntryToPost({ id: 1, repostId: 55, repostData: { type: 'osnovaEmbed', data: embed }, counters: { reposts: 2 } });
+
+		expect(repost.repost?.id).toBe(55);
+		expect(repost.repost?.original).toMatchObject({ id: 55, title: 'Оригинал', author: { name: 'Автор' } });
+		expect(repost.repostsCount).toBe(2);
+
+		const hidden = mapEntryToPost({ id: 2, repostId: 55, repostData: { data: { original_id: 55, isNotAvailable: true } } });
+		expect(hidden.repost).toEqual({ id: 55, original: undefined });
+		expect(mapEntryToPost({ id: 3, repostId: null, repostData: null }).repost).toBeUndefined();
+	});
 });
 
 describe('mapComment', () => {
