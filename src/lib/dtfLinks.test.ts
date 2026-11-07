@@ -48,6 +48,19 @@ describe('parseDtfUrl', () => {
 	});
 });
 
+describe('теги', () => {
+	it('ссылка на страницу тега, в том числе «Лучшие» и закодированная', () => {
+		expect(parseDtfUrl('https://dtf.ru/tag/xbox')).toEqual({ type: 'tag', tag: 'xbox' });
+		expect(parseDtfUrl('https://dtf.ru/tag/%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8/popular')).toEqual({ type: 'tag', tag: 'новости' });
+		expect(parseDtfUrl('https://dtf.ru/tag/123')).toEqual({ type: 'tag', tag: '123' });
+		expect(parseDtfUrl('https://dtf.ru/tag/')).toBeUndefined();
+	});
+
+	it('локальный адрес тега кодируется', () => {
+		expect(dtfTargetToPath({ type: 'tag', tag: 'новости' })).toBe('/tag/%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8');
+	});
+});
+
 describe('dtfTargetToPath и dtfUrlToPath', () => {
 	it('превращает цель в локальный адрес', () => {
 		expect(dtfTargetToPath({ type: 'post', postId: 5394366 })).toBe('/post/5394366');

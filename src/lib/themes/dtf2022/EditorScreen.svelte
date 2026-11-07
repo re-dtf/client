@@ -112,7 +112,9 @@
 	<div class="writing__body">
 		<textarea class="writing__title" rows="1" placeholder="Заголовок" bind:value={session.title} onkeydown={titleKeydown}></textarea>
 
-		<Editor bind:editorInstance={session.editorInstance} initialData={session.initialData} onChange={session.queueSave} />
+		{#if session.ready}
+			<Editor bind:editorInstance={session.editorInstance} initialData={session.initialData} onChange={session.queueSave} />
+		{/if}
 
 		{#if session.repostOf}
 			<div class="writing__repost">

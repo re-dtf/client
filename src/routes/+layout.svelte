@@ -5,6 +5,9 @@
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
 	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
 	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
+	import TagContent from '$lib/components/TagContent.svelte';
+	import SearchContent from '$lib/components/SearchContent.svelte';
+	import DraftsContent from '$lib/components/DraftsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
 	import { preloadLightbox } from '$lib/navigation';
@@ -449,6 +452,12 @@
 		<SettingsOverlay {...overlay.data} />
 	{:else if overlay.type === 'notifications'}
 		<NotificationsContent />
+	{:else if overlay.type === 'tag'}
+		<TagContent {...overlay.data} />
+	{:else if overlay.type === 'search'}
+		<SearchContent {...overlay.data} />
+	{:else if overlay.type === 'drafts'}
+		<DraftsContent />
 	{:else if overlay.type === 'login'}
 		<LoginOverlay />
 	{:else if overlay.type === 'editor'}

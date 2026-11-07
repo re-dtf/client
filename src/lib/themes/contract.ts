@@ -1,13 +1,15 @@
 import type { Snippet } from 'svelte';
-import type { Post, Profile, ProfileListItem, ProfileSorting } from '$lib/api/types';
+import type { Post, Profile, ProfileListItem, ProfileSorting, SearchSorting, SearchSubsite } from '$lib/api/types';
 import type { Period } from '$lib/feed.svelte';
+
+export type SearchTab = 'posts' | 'blogs' | 'topics';
 
 /**
  * Какие компоненты есть у темы и какие пропсы им передают.
  * Каждый лежит в корне папки темы: `<тема>/<Имя>.svelte`.
  *
  * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
- * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, LoginModal.
+ * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, TagPage, SearchPage, DraftsPage, LoginModal.
  * Необязательные без запасного варианта (у темы нет — не показывается): FeedNotice.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
@@ -59,6 +61,41 @@ export interface ThemeComponents {
 	};
 	/** Страница уведомлений (оверлей notifications) */
 	Notifications: {};
+	/** Записи с тегом `tag` (без `#`): одна страница без подгрузки */
+	TagPage: {
+		tag: string;
+		posts: Post[];
+	};
+	/** Результаты поиска: записи (с подгрузкой), блоги или темы (только первая страница) */
+	SearchPage: {
+		query: string;
+		tab: SearchTab;
+		onTabChange: (tab: SearchTab) => void;
+		sorting: SearchSorting;
+		onSortingChange: (sorting: SearchSorting) => void;
+		posts: Post[];
+		subsites: SearchSubsite[];
+		/** Сколько всего нашлось на вкладке */
+		total?: number;
+		/** Первая страница уже пришла */
+		loaded: boolean;
+		loading: boolean;
+		error: unknown;
+		hasMore: boolean;
+		loadMore: () => void;
+		onretry: () => void;
+	};
+	/** Черновики вошедшего пользователя; открывают их в редакторе */
+	DraftsPage: {
+		posts: Post[];
+		loaded: boolean;
+		loading: boolean;
+		error: unknown;
+		hasMore: boolean;
+		loadMore: () => void;
+		onretry: () => void;
+		onopen: (post: Post) => void;
+	};
 	LoginModal: {};
 	NetworkErrorModal: {
 		error: unknown;

@@ -263,6 +263,7 @@ export const api = {
 
 	// --- Редактор (только DTF) ---
 
+	getEditorEntry: dtfApiProvider.getEditorEntry,
 	saveDraft: dtfApiProvider.saveDraft,
 	uploadMedia: dtfApiProvider.uploadMedia,
 	getSubsites: dtfApiProvider.getSubsites,

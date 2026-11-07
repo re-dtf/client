@@ -12,6 +12,8 @@ import type { OutputData } from '@editorjs/editorjs';
 export function createEditorSession(initialPostId: number | null = null, repostId?: number) {
 	let postId = $state(initialPostId);
 	let initialData: OutputData | undefined = $state(undefined);
+	/** Данные загружены, редактор можно создавать */
+	let ready = $state(false);
 	let subsites: SubsiteItem[] = $state([]);
 	let selectedSubsiteId = $state(0);
 	/** Пост, на который пишется репост: показывается в редакторе, чтобы было видно, к чему ответ */
@@ -48,6 +50,20 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 		} catch (e) {
 			console.error("Failed to load initial data", e);
 		}
+		// Существующую запись читаем до показа редактора: его содержимое задаётся только при создании
+		if (postId) {
+			try {
+				const entry = await api.getEditorEntry(postId);
+				initialData = dtfToEditorJs(entry);
+				title = entry.title || '';
+				isAdult = entry.is_adult || false;
+				if (entry.subsite_id) selectedSubsiteId = entry.subsite_id;
+			} catch (e: any) {
+				saveMessage = 'Ошибка: ' + e.message;
+				console.error(e);
+			}
+		}
+		ready = true;
 		if (repostId) repostOf = await api.getPost(repostId).catch(() => undefined);
 	}
 
@@ -204,6 +220,7 @@ export function createEditorSession(initialPostId: number | null = null, repostI
 		get repostId() { return repostId; },
 		get repostOf() { return repostOf; },
 		get initialData() { return initialData; },
+		get ready() { return ready; },
 		get subsites() { return subsites; },
 		get selectedSubsiteId() { return selectedSubsiteId; },
 		set selectedSubsiteId(v) { selectedSubsiteId = v; },

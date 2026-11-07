@@ -492,6 +492,13 @@ export const dtfApiProvider = {
 
 	// --- Редактор ---
 
+	/** Запись для редактора: черновик или опубликованный пост (`id=0` — новая запись, её тут не просят) */
+	async getEditorEntry(postId: number): Promise<DtfEditorEntry> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/editor/${postId}`);
+		return (await resultOf(response, 'Не удалось открыть черновик')).entry;
+	},
+
 	async saveDraft(entry: DtfEditorEntry): Promise<DtfEditorEntry> {
 		requireAuth();
 

@@ -25,6 +25,9 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	profile: 'page',
 	settings: 'modal',
 	notifications: 'page',
+	tag: 'page',
+	search: 'page',
+	drafts: 'page',
 	login: 'modal',
 	editor: 'modal',
 	lightbox: 'fullscreen'
@@ -42,6 +45,14 @@ export function getPostPath(post: { id: number; sourceId: string }, target?: num
 
 export function getProfilePath(id: number) {
 	return `/u/${id}`;
+}
+
+export function getTagPath(tag: string) {
+	return `/tag/${encodeURIComponent(tag)}`;
+}
+
+export function getSearchPath(query: string) {
+	return `/search?q=${encodeURIComponent(query)}`;
 }
 
 export function getSettingsPath(page?: string, section?: string): string {
@@ -65,6 +76,12 @@ function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): s
 			return getSettingsPath(overlay.data?.page, overlay.data?.section);
 		case 'notifications':
 			return '/notifications';
+		case 'tag':
+			return getTagPath(overlay.data.tag);
+		case 'search':
+			return getSearchPath(overlay.data.query);
+		case 'drafts':
+			return '/drafts';
 		case 'login':
 			return '/login';
 		case 'editor':
@@ -135,6 +152,20 @@ export function openOverlay(overlay: App.OverlayData) {
 				shallow: true,
 				replace: true,
 				state: page.state
+			});
+		}
+	}
+
+	// Новый поиск из открытого поиска заменяет его: в «Назад» не копятся запросы
+	if (overlay.type === 'search') {
+		const currentOverlays = page.state.overlays ?? [];
+		const top = currentOverlays.at(-1);
+		if (top?.type === 'search') {
+			const updated: App.OverlayState = { ...top, data: overlay.data };
+			return goto(resolve(overlayPath(overlay) as '/'), {
+				shallow: true,
+				replace: true,
+				state: { overlays: [...currentOverlays.slice(0, -1), updated] }
 			});
 		}
 	}
@@ -345,6 +376,22 @@ export function openProfile(e: MouseEvent, id: number) {
 	openFromLink(e, { type: 'profile', data: { profileId: id } });
 }
 
+/** Открыть записи с тегом (без `#`) */
+export function openTag(e: MouseEvent, tag: string) {
+	openFromLink(e, { type: 'tag', data: { tag } });
+}
+
+/** Открыть поиск; пустой запрос не ищется */
+export function openSearch(query: string) {
+	const trimmed = query.trim();
+	if (trimmed) openOverlay({ type: 'search', data: { query: trimmed } });
+}
+
+/** Открыть черновики */
+export function openDrafts(e: MouseEvent) {
+	openFromLink(e, { type: 'drafts' });
+}
+
 /** Открыть окно настроек (опционально конкретную страницу или секцию) */
 export function openSettings(e?: MouseEvent, page?: string, section?: string) {
 	if (e) {
@@ -372,6 +419,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 	e.preventDefault();
 	markOrigin(e);
 	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId, toComments: target.toComments } });
+	else if (target.type === 'tag') openOverlay({ type: 'tag', data: { tag: target.tag } });
 	else openOverlay({ type: 'profile', data: { profileId: target.profileId } });
 	return true;
 }

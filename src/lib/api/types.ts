@@ -402,6 +402,7 @@ export interface ApiProvider {
 	getDrafts?(offset?: number): Promise<Post[]>;
 
 	// Редактор
+	getEditorEntry?(postId: number): Promise<DtfEditorEntry>;
 	saveDraft?(entry: DtfEditorEntry): Promise<DtfEditorEntry>;
 	uploadMedia?(file: File): Promise<UploadResult>;
 	getSubsites?(): Promise<SubsiteItem[]>;

@@ -1,13 +1,15 @@
 /** Куда ведёт ссылка на dtf.ru, если это место есть в приложении */
 export type DtfTarget =
 	| { type: 'post'; postId: number; commentId?: number; toComments?: boolean }
-	| { type: 'profile'; profileId: number };
+	| { type: 'profile'; profileId: number }
+	| { type: 'tag'; tag: string };
 
 /**
  * Ссылки DTF:
  * - пост: `/<раздел или id автора>/<id>-<слаг>`, `/s/<раздел>/<id>-<слаг>`, `/<id>-<слаг>` или `/post/<id>`
  *   (параметры `?comment=`, `#comment-`, `#comments` — комментарии),
- * - профиль: `/id<N>`, `/u/<N>-<имя>`, `/s/<N>`.
+ * - профиль: `/id<N>`, `/u/<N>-<имя>`, `/s/<N>`,
+ * - тег: `/tag/<тег>` (и `/tag/<тег>/popular`).
  * Остальное (правила, разделы без id) остаётся на dtf.ru.
  */
 export function parseDtfUrl(href: string): DtfTarget | undefined {
@@ -22,6 +24,12 @@ export function parseDtfUrl(href: string): DtfTarget | undefined {
 		!/^(?:(?:www|m)\.)?dtf\.ru$/i.test(url.hostname)
 	) {
 		return undefined;
+	}
+
+	const tag = /^\/tag\/([^/]+)(?:\/popular)?\/?$/i.exec(url.pathname);
+	if (tag) {
+		const name = safeDecode(tag[1]).replace(/^#/, '');
+		return name ? { type: 'tag', tag: name } : undefined;
 	}
 
 	const profile = /^\/(?:id(\d+)\/?|(?:u|s)\/(\d+)(?:-[^/]*)?(?:\/(?:entries|comments|favorites|subscribers|subscriptions)?)?\/?)$/i.exec(url.pathname);
@@ -42,8 +50,17 @@ export function parseDtfUrl(href: string): DtfTarget | undefined {
 	};
 }
 
+function safeDecode(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
 /** Внутренний путь приложения для найденной цели DTF */
 export function dtfTargetToPath(target: DtfTarget): string {
+	if (target.type === 'tag') return `/tag/${encodeURIComponent(target.tag)}`;
 	if (target.type === 'post') {
 		const hash = target.toComments ? '#comments' : '';
 		const query = target.commentId ? `?comment=${target.commentId}` : '';
