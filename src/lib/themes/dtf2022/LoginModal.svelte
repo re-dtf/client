@@ -282,12 +282,15 @@
 						{/if}
 					</div>
 				{:else if mode === 'email'}
-					<form onsubmit={handleEmailLogin}>
+					<form onsubmit={handleEmailLogin} method="post">
 						<Input
 							type="email"
 							placeholder="Почта"
-							name="email"
-							autocomplete="email"
+							name="username"
+							autocomplete="username"
+							spellcheck="false"
+							autocapitalize="none"
+							autocorrect="off"
 							bind:value={email}
 							required
 							disabled={isLoading}
@@ -321,6 +324,7 @@
 							placeholder="Токен (auth-refresh-remember)"
 							name="auth-token-manual"
 							autocomplete="off"
+							spellcheck="false"
 							bind:value={token}
 							required
 							disabled={isLoading}

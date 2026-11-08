@@ -3,7 +3,9 @@ package ru.redtf.app;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import androidx.core.content.pm.PackageInfoCompat;
@@ -17,6 +19,10 @@ public class MainActivity extends BridgeActivity {
         try {
             WebView webView = getBridge() != null ? getBridge().getWebView() : null;
             if (webView != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    webView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_YES);
+                }
+
                 boolean isDebug = (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
                 PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
                 long currentVersion = PackageInfoCompat.getLongVersionCode(pInfo);

@@ -298,17 +298,21 @@
 	{/if}
 
 	{#if loginMethod === 'email'}
-		<form onsubmit={handleEmailSubmit} class="login-form">
+		<form onsubmit={handleEmailSubmit} class="login-form" method="post">
 			<div class="form-group">
 				<label for="email">Электронная почта</label>
 				<input
 					type="email"
 					id="email"
+					name="username"
 					bind:value={email}
 					required
 					disabled={isLoading}
 					placeholder="name@example.com"
-					autocomplete="email"
+					autocomplete="username"
+					spellcheck="false"
+					autocapitalize="none"
+					autocorrect="off"
 				/>
 			</div>
 
@@ -317,6 +321,7 @@
 				<input
 					type="password"
 					id="password"
+					name="password"
 					bind:value={password}
 					required
 					disabled={isLoading}
@@ -370,7 +375,8 @@
 					type="text"
 					id="device_secret"
 					name="auth-token-manual"
-					autocomplete="new-password"
+					autocomplete="off"
+					spellcheck="false"
 					bind:value={token}
 					required
 					disabled={isLoading}
