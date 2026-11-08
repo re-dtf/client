@@ -87,7 +87,6 @@
 		z-index: 99995;
 		background: rgba(17, 24, 39, 0.88);
 		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
 		border: 1px solid rgba(255, 255, 255, 0.15);
 		border-radius: 8px;
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);

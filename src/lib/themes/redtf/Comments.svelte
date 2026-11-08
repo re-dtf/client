@@ -530,7 +530,6 @@
 	.comments-section.autopan .comments-viewport {
 		overflow: hidden;
 		mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
-		-webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
 	}
 
 	.comments-section.autopan .comments-list {

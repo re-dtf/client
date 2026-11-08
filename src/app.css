@@ -113,7 +113,6 @@ button, a, input, [role="button"] {
 /* 4. Запрещаем выделение текста на элементах интерфейса (шапки, меню, табы, кнопки) */
 button, nav, .header, .tabs, .mobile-bar, .icon {
 	user-select: none;
-	-webkit-user-select: none;
 }
 
 /* Отключение верхнего бара в мобильной версии */

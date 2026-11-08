@@ -69,7 +69,6 @@
 		align-items: center;
 		background: var(--modal-backdrop, rgba(0, 0, 0, 0.4));
 		backdrop-filter: var(--modal-backdrop-filter, blur(4px));
-		-webkit-backdrop-filter: var(--modal-backdrop-filter, blur(4px));
 		padding: var(--modal-padding, 20px);
 		overflow-x: hidden;
 		overflow-y: var(--modal-overflow-y, visible);
@@ -84,14 +83,12 @@
 	.modal:has(:global([data-fade='active'])) {
 		background-color: transparent;
 		backdrop-filter: none;
-		-webkit-backdrop-filter: none;
 		scrollbar-color: transparent transparent;
 	}
 
 	.modal:has(:global([data-fade='peek'])) {
 		background-color: color-mix(in srgb, var(--modal-backdrop, rgba(0, 0, 0, 0.4)) 35%, transparent);
 		backdrop-filter: blur(1.5px);
-		-webkit-backdrop-filter: blur(1.5px);
 	}
 
 	.wait {

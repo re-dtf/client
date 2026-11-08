@@ -63,7 +63,6 @@
 		justify-content: center;
 		-webkit-tap-highlight-color: transparent;
 		user-select: none;
-		-webkit-user-select: none;
 		-webkit-touch-callout: none;
 	}
 	
