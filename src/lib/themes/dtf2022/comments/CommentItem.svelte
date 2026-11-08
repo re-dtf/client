@@ -496,7 +496,8 @@
 	}
 
 	.comment-item:has(:global(.post-reactions__picker)),
-	.comment-item:has(:global(.popover)) {
+	.comment-item:has(:global(.popover)),
+	.comment-item:has(:global(.comment-editor-container)) {
 		content-visibility: visible;
 		position: relative;
 		z-index: 20;

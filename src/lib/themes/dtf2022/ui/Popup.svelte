@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import type { Attachment } from 'svelte/attachments';
 
 	/**
 	 * Окно поверх страницы, как v-popup у DTF: заголовок с крестиком, тело и подвал с кнопками.
@@ -18,13 +19,21 @@
 		children: Snippet;
 		footer?: Snippet;
 	} = $props();
+
+	/** Переносим подложку в <body>, чтобы предки с content-visibility / transform / containment не обрезали модалку */
+	const portal: Attachment<HTMLElement> = (node) => {
+		document.body.appendChild(node);
+		return () => {
+			node.remove();
+		};
+	};
 </script>
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && onclose()} />
 
 <!-- Закрытие кликом по фону; с клавиатуры закрывает Escape -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="popup-overlay" onclick={(e) => e.target === e.currentTarget && onclose()}>
+<div class="popup-overlay" {@attach portal} onclick={(e) => e.target === e.currentTarget && onclose()}>
 	<div class="popup" role="dialog" aria-modal="true" aria-label={title} style:max-width="{width}px">
 		<div class="popup__header">
 			{title}
@@ -56,6 +65,7 @@
 		padding: 36px 16px;
 		overflow-x: hidden;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		background-color: var(--modal-backdrop);
 	}
 
