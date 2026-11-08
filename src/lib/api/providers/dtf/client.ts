@@ -1,6 +1,8 @@
 import { untrack } from 'svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings, getEnabledProxies, type ProxyItem } from '$lib/storage/settings.svelte';
+import { isNative } from '$lib/capacitor';
+import { CapacitorHttp } from '@capacitor/core';
 import { ApiError, ProxyError } from '../../errors';
 
 /** Адреса и версии API DTF */
@@ -109,9 +111,78 @@ export function refreshSession(force = false): Promise<boolean> {
 	return refreshPromise;
 }
 
+async function refreshSessionNative(session: NonNullable<typeof authStorage.session>): Promise<boolean> {
+	try {
+		const res = await CapacitorHttp.post({
+			url: `${AUTH_URL}/auth/refresh`,
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			data: new URLSearchParams({ token: session.refreshToken }).toString(),
+			connectTimeout: 10000,
+			readTimeout: 15000
+		});
+
+		if (res.status < 200 || res.status >= 300) return false;
+
+		const headers = res.headers || {};
+		const getHeader = (name: string) => {
+			const lower = name.toLowerCase();
+			const entry = Object.entries(headers).find(([k]) => k.toLowerCase() === lower);
+			return entry?.[1];
+		};
+
+		return applyRefreshedSession(session, parseJsonResponse(res.data), getHeader);
+	} catch {
+		return false;
+	}
+}
+
+/** Безопасный парсинг JSON из тела ответа или строки */
+export function parseJsonResponse(data: unknown): any {
+	if (typeof data !== 'string') return data || {};
+	try {
+		return JSON.parse(data);
+	} catch {
+		return {};
+	}
+}
+
+function applyRefreshedSession(
+	session: NonNullable<typeof authStorage.session>,
+	data: any,
+	getHeader: (name: string) => string | null | undefined
+): boolean {
+	const sessionData = data?.data || data || {};
+	const newAccessToken =
+		sessionData.accessToken ||
+		getHeader('x-auth-token') ||
+		getHeader('jwtauthorization');
+	const newRefreshToken =
+		sessionData.refreshToken ||
+		getHeader('x-refresh-token') ||
+		session.refreshToken;
+
+	if (!newAccessToken) return false;
+
+	authStorage.session = {
+		...session,
+		accessToken: String(newAccessToken).replace('Bearer ', ''),
+		refreshToken: newRefreshToken,
+		accessExpTimestamp: sessionData.accessExpTimestamp ?? session.accessExpTimestamp,
+		refreshExpTimestamp: sessionData.refreshExpTimestamp ?? session.refreshExpTimestamp
+	};
+	return true;
+}
+
 async function doRefreshSession(): Promise<boolean> {
 	const session = untrack(() => authStorage.session);
 	if (!session || !session.refreshToken) return false;
+
+	if (isNative()) {
+		return refreshSessionNative(session);
+	}
 
 	const enabled = getEnabledProxies();
 	if (enabled.length === 0) {
@@ -125,24 +196,7 @@ async function doRefreshSession(): Promise<boolean> {
 			});
 			if (!res.ok) return false;
 			const json = await res.json().catch(() => ({}));
-			const sessionData = json.data || json;
-			const newAccessToken =
-				sessionData.accessToken ||
-				res.headers.get('x-auth-token') ||
-				res.headers.get('jwtauthorization');
-			const newRefreshToken =
-				sessionData.refreshToken ||
-				res.headers.get('x-refresh-token') ||
-				session.refreshToken;
-			if (!newAccessToken) return false;
-			authStorage.session = {
-				...session,
-				accessToken: newAccessToken.replace('Bearer ', ''),
-				refreshToken: newRefreshToken,
-				accessExpTimestamp: sessionData.accessExpTimestamp ?? session.accessExpTimestamp,
-				refreshExpTimestamp: sessionData.refreshExpTimestamp ?? session.refreshExpTimestamp
-			};
-			return true;
+			return applyRefreshedSession(session, json, (k) => res.headers.get(k));
 		} catch {
 			return false;
 		}
@@ -162,27 +216,7 @@ async function doRefreshSession(): Promise<boolean> {
 		if (!response.ok) return false;
 
 		const json = await response.json().catch(() => ({}));
-		const sessionData = json.data || json;
-
-		const newAccessToken =
-			sessionData.accessToken ||
-			response.headers.get('x-auth-token') ||
-			response.headers.get('jwtauthorization');
-		const newRefreshToken =
-			sessionData.refreshToken ||
-			response.headers.get('x-refresh-token') ||
-			session.refreshToken;
-
-		if (!newAccessToken) return false;
-
-		authStorage.session = {
-			...session,
-			accessToken: newAccessToken.replace('Bearer ', ''),
-			refreshToken: newRefreshToken,
-			accessExpTimestamp: sessionData.accessExpTimestamp ?? session.accessExpTimestamp,
-			refreshExpTimestamp: sessionData.refreshExpTimestamp ?? session.refreshExpTimestamp
-		};
-		return true;
+		return applyRefreshedSession(session, json, (k) => response.headers.get(k));
 	} catch {
 		return false;
 	}

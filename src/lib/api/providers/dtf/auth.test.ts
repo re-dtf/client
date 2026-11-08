@@ -1,8 +1,25 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { parseRefreshToken, login } from './auth';
+import { parseRefreshToken, login, loginByToken } from './auth';
 import { refreshSession, fetchWithAuth, resetRefreshCooldown } from './client';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings, DEFAULT_PROXIES } from '$lib/storage/settings.svelte';
+import { ApiError, ProxyError } from '../../errors';
+import { CapacitorHttp, Capacitor } from '@capacitor/core';
+
+vi.mock('@capacitor/core', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('@capacitor/core')>();
+	return {
+		...actual,
+		Capacitor: {
+			...actual.Capacitor,
+			isNativePlatform: vi.fn(() => false)
+		},
+		CapacitorHttp: {
+			...actual.CapacitorHttp,
+			post: vi.fn()
+		}
+	};
+});
 
 describe('auth & proxy failover', () => {
 	beforeEach(() => {
@@ -223,5 +240,162 @@ describe('auth & proxy failover', () => {
 
 		expect(authStorage.session?.accessToken).toBe('');
 		expect(authStorage.session?.refreshToken).toBe('saved-refresh-token');
+	});
+
+	describe('Capacitor native auth (без прокси)', () => {
+		beforeEach(() => {
+			vi.stubGlobal('window', {});
+			vi.mocked(Capacitor.isNativePlatform).mockReturnValue(true);
+			// В нативном режиме прокси отсутствуют
+			settings.value = {
+				...settings.value,
+				proxies: []
+			};
+		});
+
+		it('login выполняет прямой вызов через CapacitorHttp.post без внешнего прокси', async () => {
+			const postMock = vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 200,
+				data: {
+					data: {
+						type: 'Bearer',
+						accessToken: 'native-acc-token',
+						refreshToken: 'native-ref-token',
+						accessExpTimestamp: 1234,
+						refreshExpTimestamp: 5678
+					}
+				},
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/email/login'
+			});
+
+			const fetchSpy = vi.fn();
+			vi.stubGlobal('fetch', fetchSpy);
+
+			const session = await login('user@test.com', 'secret-pass');
+
+			expect(session.accessToken).toBe('native-acc-token');
+			expect(session.refreshToken).toBe('native-ref-token');
+			expect(postMock).toHaveBeenCalledTimes(1);
+
+			const callArgs = postMock.mock.calls[0][0];
+			expect(callArgs.url).toBe('https://api.dtf.ru/v3.4/auth/email/login');
+			expect(callArgs.data).toContain('email=user%40test.com');
+			expect(callArgs.data).toContain('password=secret-pass');
+
+			// Никаких запросов fetch / внешний прокси не вызывались
+			expect(fetchSpy).not.toHaveBeenCalled();
+		});
+
+		it('login при ошибке 400 выбрасывает ApiError без утечки пароля в сообщении', async () => {
+			vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 400,
+				data: { message: 'Invalid login or password', code: 104, data: null },
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/email/login'
+			});
+
+			try {
+				await login('user@test.com', 'super-secret-password-123');
+				expect.unreachable('Должна была выброситься ошибка');
+			} catch (err: any) {
+				expect(err.message).toBe('Invalid login or password');
+				expect(err.status).toBe(400);
+				expect(err.message).not.toContain('super-secret-password-123');
+			}
+		});
+
+		it('refreshSession выполняет прямой нативный вызов и обновляет сессию', async () => {
+			authStorage.session = {
+				type: 'Bearer',
+				accessToken: 'old-native-acc',
+				refreshToken: 'old-native-ref',
+				accessExpTimestamp: 100,
+				refreshExpTimestamp: 200
+			};
+
+			const postMock = vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 200,
+				data: {
+					data: {
+						accessToken: 'refreshed-native-acc',
+						refreshToken: 'refreshed-native-ref',
+						accessExpTimestamp: 500,
+						refreshExpTimestamp: 1000
+					}
+				},
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/refresh'
+			});
+
+			const success = await refreshSession();
+
+			expect(success).toBe(true);
+			expect(postMock).toHaveBeenCalledTimes(1);
+			expect(postMock.mock.calls[0][0].url).toBe('https://api.dtf.ru/v3.4/auth/refresh');
+			expect(postMock.mock.calls[0][0].data).toContain('token=old-native-ref');
+			expect(authStorage.session?.accessToken).toBe('refreshed-native-acc');
+			expect(authStorage.session?.refreshToken).toBe('refreshed-native-ref');
+		});
+
+		it('loginByToken успешно входит без прокси при валидном ответе нативного refresh', async () => {
+			vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 200,
+				data: {
+					data: {
+						accessToken: 'token-login-acc',
+						refreshToken: 'token-login-ref',
+						accessExpTimestamp: 999,
+						refreshExpTimestamp: 888
+					}
+				},
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/refresh'
+			});
+
+			const session = await loginByToken('raw-refresh-cookie-string');
+
+			expect(session.accessToken).toBe('token-login-acc');
+			expect(session.refreshToken).toBe('token-login-ref');
+			expect(authStorage.dtfToken).toBe('token-login-acc');
+		});
+
+		it('loginByToken при ошибке refresh в нативном режиме выбрасывает ApiError (а не ProxyError)', async () => {
+			vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 404,
+				data: { message: 'Refresh session not found', code: 105, data: null },
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/refresh'
+			});
+
+			try {
+				await loginByToken('bad-token');
+				expect.unreachable('Должна была выброситься ошибка');
+			} catch (err: unknown) {
+				expect(err instanceof ApiError).toBe(true);
+				expect(err instanceof ProxyError).toBe(false);
+				expect((err as ApiError).status).toBe(401);
+			}
+		});
+
+		it('refreshSession при 404 возвращает false без падений', async () => {
+			authStorage.session = {
+				type: 'Bearer',
+				accessToken: 'acc',
+				refreshToken: 'expired-ref',
+				accessExpTimestamp: 100,
+				refreshExpTimestamp: 200
+			};
+
+			vi.mocked(CapacitorHttp.post).mockResolvedValue({
+				status: 404,
+				data: { message: 'Refresh session not found', code: 105, data: null },
+				headers: {},
+				url: 'https://api.dtf.ru/v3.4/auth/refresh'
+			});
+
+			const success = await refreshSession();
+			expect(success).toBe(false);
+		});
 	});
 });

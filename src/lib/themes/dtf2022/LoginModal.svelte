@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, ProxyError } from '$lib/api/index.svelte';
 	import { closeOverlay, openOverlay, pushSubstate, popSubstate, resetSubstates } from '$lib/navigation';
+	import { isNative } from '$lib/capacitor';
 	import {
 		settings,
 		getEnabledProxies,
@@ -84,7 +85,7 @@
 	}
 
 	function chooseMethod(method: 'email' | 'token') {
-		if (getEnabledProxies().length === 0) {
+		if (!isNative() && getEnabledProxies().length === 0) {
 			pendingMode = method;
 			setMode('proxy');
 		} else {
@@ -269,14 +270,16 @@
 					<div class="auth__methods">
 						<Button icon="v_email" label="Почта" onclick={() => chooseMethod('email')} />
 						<Button icon="v_lock_full" label="Токен" onclick={() => chooseMethod('token')} />
-						<Button
-							icon="v_gear"
-							label="Настройки прокси"
-							onclick={() => {
-								pendingMode = null;
-								setMode('proxy');
-							}}
-						/>
+						{#if !isNative()}
+							<Button
+								icon="v_gear"
+								label="Настройки прокси"
+								onclick={() => {
+									pendingMode = null;
+									setMode('proxy');
+								}}
+							/>
+						{/if}
 					</div>
 				{:else if mode === 'email'}
 					<form onsubmit={handleEmailLogin}>

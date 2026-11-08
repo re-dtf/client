@@ -1,5 +1,6 @@
 import { untrack } from 'svelte';
 import { persistedState } from './persisted.svelte';
+import { isNative } from '$lib/capacitor';
 import type { AppIconId } from '$lib/icons';
 
 export type NestingMode = 'flatten' | 'autopan';
@@ -67,7 +68,7 @@ export const DEFAULT_CLOUDFLARE_PROXY_URL: string = (
 
 export const DEFAULT_PROXIES: ProxyItem[] = [];
 
-if (DEFAULT_VALTOWN_PROXY_URL) {
+if (!isNative() && DEFAULT_VALTOWN_PROXY_URL) {
 	DEFAULT_PROXIES.push({
 		id: 'valtown',
 		name: 'Val Town (открытый)',
@@ -81,7 +82,7 @@ if (DEFAULT_VALTOWN_PROXY_URL) {
 	});
 }
 
-if (DEFAULT_CLOUDFLARE_PROXY_URL) {
+if (!isNative() && DEFAULT_CLOUDFLARE_PROXY_URL) {
 	DEFAULT_PROXIES.push({
 		id: 'cloudflare',
 		name: 'Cloudflare Workers (резервный)',
@@ -92,8 +93,6 @@ if (DEFAULT_CLOUDFLARE_PROXY_URL) {
 		isPreset: true
 	});
 }
-
-export const DEFAULT_PROXY_URL: string = DEFAULT_VALTOWN_PROXY_URL;
 
 export const DEFAULT_THEME = 'redtf';
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, ProxyError } from '$lib/api/index.svelte';
 	import { openOverlay } from '$lib/navigation';
+	import { isNative } from '$lib/capacitor';
 	import {
 		settings,
 		getEnabledProxies,
@@ -79,7 +80,7 @@
 
 	async function handleEmailSubmit(event: Event) {
 		event.preventDefault();
-		if (getEnabledProxies().length === 0) {
+		if (!isNative() && getEnabledProxies().length === 0) {
 			if (!handleApplyChoice()) {
 				error = 'Настройте и включите прокси перед авторизацией.';
 				showAdvanced = true;
@@ -109,7 +110,7 @@
 
 	async function handleTokenSubmit(event: Event) {
 		event.preventDefault();
-		if (getEnabledProxies().length === 0) {
+		if (!isNative() && getEnabledProxies().length === 0) {
 			if (!handleApplyChoice()) {
 				error = 'Настройте и включите прокси: обновление токена заблокировано CORS.';
 				showAdvanced = true;
@@ -324,7 +325,9 @@
 				/>
 			</div>
 
-			{@render proxySection()}
+			{#if !isNative()}
+				{@render proxySection()}
+			{/if}
 
 			{#if error}
 				<div class="error-message">
@@ -375,7 +378,9 @@
 				/>
 			</div>
 
-			{@render proxySection()}
+			{#if !isNative()}
+				{@render proxySection()}
+			{/if}
 
 			{#if error}
 				<div class="error-message">

@@ -2,6 +2,7 @@
 	import SettingsButton from './SettingsButton.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsSwitch from './SettingsSwitch.svelte';
+	import { isNative } from '$lib/capacitor';
 	import {
 		settings,
 		toggleProxy,
@@ -92,17 +93,31 @@
 
 <SettingsGroup
 	title="CORS-прокси для авторизации"
-	description="DTF блокирует запросы авторизации из браузера. Прокси используется только для входа по паролю и обновления токена. Если первый прокси в списке не отвечает или перегружен, запрос автоматически уходит на следующий активный."
+	description={isNative()
+		? 'В мобильном приложении (Capacitor) запросы авторизации отправляются напрямую через нативный сетевой стек без CORS-ограничений браузера. Внешний прокси не требуется.'
+		: 'DTF блокирует запросы авторизации из браузера. Прокси используется только для входа по паролю и обновления токена. Если первый прокси в списке не отвечает или перегружен, запрос автоматически уходит на следующий активный.'}
 >
-	<div class="proxy-list">
-		{#if proxies.length === 0}
-			<div class="empty-proxies">
-				<p class="empty-proxies__title">Встроенные прокси не настроены в сборке</p>
-				<p class="empty-proxies__desc">
-					В этой сборке нет предустановленных прокси. Добавьте собственный прокси-сервер кнопкой ниже. Для развёртывания своего сервера ознакомьтесь с <a href="https://github.com/re-dtf/proxy" target="_blank" rel="noopener noreferrer">инструкцией re-dtf/proxy</a>.
+	{#if isNative()}
+		<div class="proxy-list">
+			<div class="native-box">
+				<div class="native-box__header">
+					<span class="badge badge--open">Нативное прямое подключение</span>
+				</div>
+				<p class="native-box__desc">
+					Приложение отправляет запросы к DTF API напрямую через системный стек Android без ограничений CORS. Пароль и токены не проходят через внешние серверы.
 				</p>
 			</div>
-		{/if}
+		</div>
+	{:else}
+		<div class="proxy-list">
+			{#if proxies.length === 0}
+				<div class="empty-proxies">
+					<p class="empty-proxies__title">Встроенные прокси не настроены в сборке</p>
+					<p class="empty-proxies__desc">
+						В этой сборке нет предустановленных прокси. Добавьте собственный прокси-сервер кнопкой ниже. Для развёртывания своего сервера ознакомьтесь с <a href="https://github.com/re-dtf/proxy" target="_blank" rel="noopener noreferrer">инструкцией re-dtf/proxy</a>.
+					</p>
+				</div>
+			{/if}
 
 		{#each proxies as proxy, i (proxy.id)}
 			{@const queueNum = getQueueNumber(proxy)}
@@ -327,6 +342,7 @@
 			</form>
 		{/if}
 	</div>
+	{/if}
 </SettingsGroup>
 
 <style>
@@ -335,6 +351,29 @@
 		flex-direction: column;
 		gap: 12px;
 		padding: 16px 20px;
+	}
+
+	.native-box {
+		padding: 16px 20px;
+		background: var(--st-card);
+		border: 1px solid rgba(31, 138, 59, 0.25);
+		border-radius: 12px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+
+	.native-box__header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.native-box__desc {
+		font-size: 13px;
+		line-height: 1.5;
+		color: var(--st-muted);
+		margin: 0;
 	}
 
 	.empty-proxies {

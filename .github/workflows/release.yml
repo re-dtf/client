@@ -51,9 +51,11 @@ jobs:
         env:
           APP_VERSION: ${{ github.event.inputs.tag || github.ref_name }}
           BASE_PATH: ''
-          VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
-          VITE_VALTOWN_PROXY_URL: ${{ vars.VITE_VALTOWN_PROXY_URL }}
-          VITE_CLOUDFLARE_PROXY_URL: ${{ vars.VITE_CLOUDFLARE_PROXY_URL }}
+          # В сборку Capacitor и OTA-пакет прокси из переменных репозитория попадать не должны:
+          # нативный слой отправляет запросы авторизации напрямую в api.dtf.ru без CORS.
+          VITE_AUTH_PROXY_URL: ''
+          VITE_VALTOWN_PROXY_URL: ''
+          VITE_CLOUDFLARE_PROXY_URL: ''
 
       - name: Package OTA bundle (build.zip)
         run: node scripts/bundle-ota.js
