@@ -14,4 +14,12 @@ describe('resist', () => {
 	it('подхват посреди доезда ставит палец туда, где страница сейчас', () => {
 		for (const y of [0, 20, 56, 120]) expect(resist(unresist(y))).toBeCloseTo(y);
 	});
+
+	it('субпиксельные значения скролла укладываются в верх страницы', () => {
+		for (const y of [0, 0.25, 0.4, 0.5, 0.8, 1, -2]) {
+			expect(y <= 1).toBe(true);
+		}
+		expect(1.5 <= 1).toBe(false);
+		expect(2 <= 1).toBe(false);
+	});
 });

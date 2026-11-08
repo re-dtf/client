@@ -108,7 +108,18 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 			if (start) return finish(false);
 			const t = e.touches[0];
 			p = puller;
-			if (e.touches.length > 1 || busy || scrollY > 0 || !p || !allowed() || !options.enabled() || p.grab() === undefined) return;
+			const el = e.target instanceof Element ? e.target : (e.target as Node | null)?.parentElement;
+			if (
+				e.touches.length > 1 ||
+				busy ||
+				scrollY > 1 ||
+				!p ||
+				!allowed() ||
+				!options.enabled() ||
+				el?.closest('.mobile-bar') ||
+				p.grab() === undefined
+			)
+				return;
 			start = { x: t.clientX, y: t.clientY, id: t.identifier };
 			target = e.target;
 			listen(true);
@@ -123,17 +134,17 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 				if (Math.abs(dx) < SLOP && Math.abs(dy) < SLOP) {
 					// Браузер начинает свою пружину раньше нашего порога, и потом её уже не отменить: движение вниз придерживаем сразу.
 					// Свайпу лент это не мешает, он ведётся pointer-событиями
-					if (dy > 0 && dy >= Math.abs(dx) && e.cancelable) e.preventDefault();
+					if (dy > 0 && e.cancelable) e.preventDefault();
 					return;
 				}
 				// Вверх — прокрутка, вбок — свайп лент: жест не наш
-				const from = dy > Math.abs(dx) && scrollY <= 0 && e.cancelable ? p!.grab() : undefined;
+				const from = dy > Math.abs(dx) && scrollY <= 1 ? p!.grab() : undefined;
 				if (from === undefined) return finish(false);
 				pulling = true;
 				// Страница трогается с места захвата, а не прыгает на величину порога; посреди доезда — с того места, где она сейчас
 				start.y = t.clientY - unresist(from);
 			}
-			e.preventDefault();
+			if (e.cancelable) e.preventDefault();
 			y = resist(t.clientY - start.y);
 			const next = y >= THRESHOLD;
 			if (next && !armed) haptics.tick();
@@ -152,10 +163,10 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 			finish(e.type === 'touchend' && armed);
 		}
 
-		node.addEventListener('touchstart', onStart, { passive: true });
+		window.addEventListener('touchstart', onStart, { passive: true });
 		return () => {
 			finish(false);
-			node.removeEventListener('touchstart', onStart);
+			window.removeEventListener('touchstart', onStart);
 		};
 	};
 }

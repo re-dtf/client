@@ -102,7 +102,7 @@ a {
 
 /* 2. Запрещаем системный pull-to-refresh браузера и резиновую прокрутку страницы */
 html, body {
-	overscroll-behavior-y: contain;
+	overscroll-behavior-y: none;
 }
 
 /* 3. Убираем 300мс задержку клика на контролах */
