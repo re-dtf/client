@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { REDTF_WATERMARK } from '$lib/watermark';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, mapSearchSnippet, parseNotificationHtml } from './mappers';
+import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, mapQuizResult, mapSearchSnippet, parseNotificationHtml } from './mappers';
+
+describe('mapQuizResult', () => {
+	it('неизвестный hash приходит пустым массивом — это пустой опрос', () => {
+		expect(mapQuizResult({ items: [], userVoted: null })).toEqual({ items: {}, userVoted: null });
+	});
+
+	it('оставляет результаты и выбор пользователя', () => {
+		const items = { o1: { count: 3, total: 4, percentage: 75, isWinner: true } };
+		expect(mapQuizResult({ items, userVoted: 'o1' })).toEqual({ items, userVoted: 'o1' });
+	});
+});
 
 describe('mapLikes', () => {
 	it('нет данных — нет лайков', () => {

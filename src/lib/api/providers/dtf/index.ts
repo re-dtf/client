@@ -20,6 +20,7 @@ import type {
 	Profile,
 	ProfileListItem,
 	ProfileSorting,
+	QuizResult,
 	Reactions,
 	SearchFilters,
 	SearchSorting,
@@ -33,7 +34,7 @@ import { untrack } from 'svelte';
 import { addWatermark } from '$lib/watermark';
 import { settings } from '$lib/storage/settings.svelte';
 import { login, loginByToken } from './auth';
-import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapReactions, mapSearchSnippet, mapSearchSubsite } from './mappers';
+import { mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapNotification, mapProfile, mapProfileListItem, mapQuizResult, mapReactions, mapSearchSnippet, mapSearchSubsite } from './mappers';
 
 /** Загружает файл в хранилище DTF; возвращает запись как есть (`{ type, data }`): в таком виде её принимают поля вроде avatar и cover */
 async function uploadItem(file: File): Promise<any> {
@@ -310,6 +311,19 @@ export const dtfApiProvider = {
 		requireAuth();
 		const response = await fetchWithAuth(`${COMMENTS_API_URL}/content/${postId}/react`, { method: 'POST', body: formOf({ type: reactionId }) });
 		return mapReactions(await resultOf(response, 'Не удалось поставить реакцию')) ?? { counters: [], reactionId: 0 };
+	},
+
+	/** Результаты опроса по hash из блока quiz. Отвечает и без токена (тогда userVoted пуст) */
+	async getQuizResults(hash: string): Promise<QuizResult> {
+		const response = await fetchWithAuth(`${apiV('2.1')}/quiz/${hash}/results`);
+		return mapQuizResult(await resultOf(response, 'Не удалось загрузить результаты опроса'));
+	},
+
+	/** Голос за вариант; без itemId снимает свой голос. Тело запроса пустое, сайт шлёт пустой multipart */
+	async voteQuiz(hash: string, postId: number, itemId?: string): Promise<QuizResult> {
+		requireAuth();
+		const response = await fetchWithAuth(`${apiV('2.1')}/quiz/${hash}/contentId/${postId}/vote${itemId ? '/' + encodeURIComponent(itemId) : ''}`, { method: 'POST', body: formOf({}) });
+		return mapQuizResult(await resultOf(response, 'Не удалось проголосовать'));
 	},
 
 	async setFavorite(id: number, kind: 'post' | 'comment', favorite: boolean): Promise<number> {

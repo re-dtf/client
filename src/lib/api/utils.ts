@@ -22,6 +22,11 @@ export function getLeonardoUrl(
 	return url;
 }
 
+/** Файл блока audio: Leonardo отдаёт его с Range, плееру этого хватает */
+export function getAudioUrl(uuid: string, filename: string): string {
+	return `https://leonardo.osnova.io/audio/${uuid}/${encodeURIComponent(filename)}`;
+}
+
 /** Получить прямую ссылку на оригинал изображения без сжатия и ресайза */
 export function getLeonardoOriginalUrl(uuid: string): string {
 	return getLeonardoUrl(uuid, { original: true });

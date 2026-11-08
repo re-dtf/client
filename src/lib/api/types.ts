@@ -111,6 +111,13 @@ export interface Reactions {
 	reactionId: number;
 }
 
+/** Результат опроса (блок quiz); ключи items — id вариантов из данных блока */
+export interface QuizResult {
+	items: Record<string, { count: number; total: number; percentage: number; isWinner: boolean }>;
+	/** Вариант, за который проголосовал текущий пользователь */
+	userVoted: string | null;
+}
+
 /** Профиль пользователя или подсайта */
 export interface Profile {
 	id: number;
@@ -355,6 +362,9 @@ export interface ApiProvider {
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 	/** reactionId 0 снимает свою реакцию; отвечает актуальными реакциями */
 	reactToPost?(postId: number, reactionId: number): Promise<Reactions>;
+	getQuizResults?(hash: string): Promise<QuizResult>;
+	/** Без itemId снимает свой голос; отвечает актуальными результатами */
+	voteQuiz?(hash: string, postId: number, itemId?: string): Promise<QuizResult>;
 	/** Отвечает, сколько теперь в закладках у объекта */
 	setFavorite?(id: number, kind: 'post' | 'comment', favorite: boolean): Promise<number>;
 	addComment?(postId: number, text: string, replyTo?: number, media?: CommentMedia[]): Promise<Comment>;
