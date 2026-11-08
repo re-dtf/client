@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
+	getAudioUrl,
 	getLeonardoUrl,
 	getLeonardoOriginalUrl,
 	resolveImageExtension,
@@ -40,6 +41,12 @@ describe('api/utils', () => {
 			expect(getLeonardoUrl('test-uuid-4', { original: true })).toBe(
 				'https://leonardo.osnova.io/test-uuid-4/'
 			);
+		});
+	});
+
+	describe('getAudioUrl', () => {
+		it('кодирует имя файла', () => {
+			expect(getAudioUrl('u-1', 'my track.mp3')).toBe('https://leonardo.osnova.io/audio/u-1/my%20track.mp3');
 		});
 	});
 

@@ -214,6 +214,8 @@ export const api = {
 		return comment;
 	},
 	editComment: dtfApiProvider.editComment,
+	getQuizResults: dtfApiProvider.getQuizResults,
+	voteQuiz: dtfApiProvider.voteQuiz,
 	getCommentControls: dtfApiProvider.getCommentControls,
 	complain: dtfApiProvider.complain,
 	createDonation: dtfApiProvider.createDonation,

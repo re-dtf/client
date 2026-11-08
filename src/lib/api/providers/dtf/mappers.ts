@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, Reactions, SearchSubsite, User } from '../../types';
+import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, QuizResult, Reactions, SearchSubsite, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 import { embedToPost } from '../../embed';
 import { extractWatermark } from '$lib/watermark';
@@ -93,6 +93,12 @@ export function mapLikes(likes: any): Likes | undefined {
 export function mapReactions(reactions: any): Reactions | undefined {
 	if (!reactions) return undefined;
 	return { counters: reactions.counters || [], reactionId: reactions.reactionId || 0 };
+}
+
+/** Для неизвестного hash сервер отдаёт `items: []`, это тот же пустой опрос */
+export function mapQuizResult(result: any): QuizResult {
+	const items = Array.isArray(result?.items) ? {} : (result?.items ?? {});
+	return { items, userVoted: result?.userVoted ?? null };
 }
 
 export function mapEntryToPost(entry: any): Post {
