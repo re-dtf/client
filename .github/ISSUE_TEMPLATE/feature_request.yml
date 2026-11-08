@@ -1,0 +1,56 @@
+name: Новая идея / Улучшение
+description: Предложить новую возможность или улучшение клиента, не связанное с переносом оригинального DTF
+title: "[Feature]: "
+labels: ["kind: enhancement", "status: needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        > Если вы хотите сообщить о блоке или механике **из оригинального DTF**, пожалуйста, используйте шаблон **[«Отсутствующий функционал (DTF)»](https://github.com/re-dtf/client/issues/new?template=missing_feature.yml)**.
+        > Этот шаблон предназначен для **новых фич клиента**
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую проблему или задачу это решает?
+      placeholder: Опишите ситуацию: в чём неудобство или какой возможности не хватает.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Предлагаемое решение
+      placeholder: Подробно опишите, как именно должна работать предлагаемая функция.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Область применения
+      options:
+        - Лента и посты
+        - Комментарии
+        - Подключаемые источники данных (Data Sources)
+        - Темы оформления и кастомизация
+        - Настройки
+        - Навигация
+        - PWA
+        - Приложение
+        - Другое
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Альтернативные варианты
+      description: Рассматривали ли вы другие пути решения этой проблемы?
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительный контекст или макеты
+      placeholder: Скриншоты, примеры из других приложений, ссылки.

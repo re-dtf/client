@@ -1,0 +1,69 @@
+name: Отсутствующий функционал (DTF)
+description: Сообщить о нереализованном блоке поста или комментария, механике или элементе оригинального DTF
+title: "[Missing]: "
+labels: ["kind: missing feature", "status: needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Политика в отношении bloatware
+        В **reDTF** намеренно не реализуется и не поддерживается раздутый функционал:
+        - Подарки, ачивки и значки в профиле
+        - Рекламные и промо-блоки (`game`, `rawhtml`, `special_button`, см. [ADR 0011](https://github.com/re-dtf/client/blob/dev/decisions/0011-skipped-post-blocks.md))
+        - Навязчивые социальные и геймификационные механики
+        
+        Пожалуйста, оформляйте заявки только на полезный контентный и пользовательский функционал.
+
+  - type: input
+    id: feature_name
+    attributes:
+      label: Название функционала или блока статьи
+      placeholder: Например: Блок опроса (quiz), личные сообщения...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Категория
+      options:
+        - Блоки постов
+        - Комментарии
+        - Лента и навигация
+        - Профили
+        - Редактор
+        - Поиск
+        - Взаимодействия пользователей
+        - Другое
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание функционала
+      placeholder: Подробно опишите, как эта механика или блок работали в оригинальном DTF и как они должны работать в клиенте.
+    validations:
+      required: true
+
+  - type: input
+    id: example_url
+    attributes:
+      label: Ссылка на пример (если есть)
+      placeholder: Ссылка на пост в веб-архиве Wayback Machine или на DTF, где встречается этот элемент.
+
+  - type: textarea
+    id: visuals
+    attributes:
+      label: Скриншоты или визуальные примеры
+      placeholder: Перетащите изображения сюда (как это выглядело в оригинале).
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Подтверждение
+      options:
+        - label: "Я подтверждаю, что это не bloatware (не подарки, не ачивки, не донаты, не реклама)"
+          required: true
+        - label: "Я проверил, что такого тикета ещё нет среди существующих issues"
+          required: true
