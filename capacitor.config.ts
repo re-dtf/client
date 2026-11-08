@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-	appId: 'ru.redtf.app',
+	appId: 'org.redtf.app',
 	appName: 're:DTF',
 	webDir: 'build',
 	server: {

@@ -1,4 +1,4 @@
-package ru.redtf.app;
+package org.redtf.app;
 
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
