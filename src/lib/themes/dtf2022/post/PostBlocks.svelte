@@ -12,6 +12,9 @@
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import PostCard from './PostCard.svelte';
 	import UnknownBlock from '../UnknownBlock.svelte';
+	import AudioBlock from './AudioBlock.svelte';
+	import PersonBlock from './PersonBlock.svelte';
+	import QuizBlock from './QuizBlock.svelte';
 	import { FEED_MEDIA_MAX_HEIGHT, isWideMedia, mediaMaxWidth, mediaPreviewUrl } from '../media';
 
 	/*
@@ -233,6 +236,12 @@
 			{#if variant === 'page' && !block.data.osnovaEmbed.data.isNotAvailable}
 				<PostCard post={embedToPost(block.data.osnovaEmbed.data)} embed />
 			{/if}
+		{:else if block.type === 'audio'}
+			<div class="post-block post-block--audio"><AudioBlock data={block.data} /></div>
+		{:else if block.type === 'quiz'}
+			<div class="post-block post-block--quiz"><QuizBlock data={block.data} {postId} {sourceId} /></div>
+		{:else if block.type === 'person'}
+			<div class="post-block post-block--person"><PersonBlock data={block.data} /></div>
 		{:else if variant === 'page'}
 			<div class="post-block">
 				<UnknownBlock type={block.type} {postId} {sourceId} />
@@ -293,8 +302,8 @@
 	}
 
 	/* Карточки (лента и встроенный пост) — с внутренними отступами; медиа — на всю ширину карточки */
-	.post-blocks--card > .post-block:not(.post-block--media),
-	.post-blocks--embed > .post-block {
+	.post-blocks--card > .post-block:not(.post-block--media, .post-block--audio, .post-block--quiz),
+	.post-blocks--embed > .post-block:not(.post-block--audio, .post-block--quiz) {
 		padding-left: 20px;
 		padding-right: 20px;
 	}
@@ -430,6 +439,27 @@
 		padding: 0 20px;
 	}
 
+	/* Плеер и опрос интерактивны: поднимаем над ссылкой на пост в карточке, иначе клик открывает пост */
+	.post-block--audio,
+	.post-block--quiz {
+		position: relative;
+		z-index: 2;
+	}
+
+	.post-blocks--card > .post-block--audio :global(.audio-block),
+	.post-blocks--embed > .post-block--audio :global(.audio-block) {
+		border-left: 0;
+		border-right: 0;
+	}
+
+	.post-blocks--card > .post-block--audio,
+	.post-blocks--card > .post-block--quiz,
+	.post-blocks--card > .post-block--person,
+	.post-blocks--embed > .post-block--audio,
+	.post-blocks--embed > .post-block--quiz {
+		margin-top: 12px;
+	}
+
 	/* Блоки, которых нет в исходной вёрстке */
 	.post-block--header {
 		font-size: 20px;
@@ -514,8 +544,8 @@
 	}
 
 	@media (max-width: 639px) {
-		.post-blocks--card > .post-block:not(.post-block--media),
-		.post-blocks--embed > .post-block {
+		.post-blocks--card > .post-block:not(.post-block--media, .post-block--audio, .post-block--quiz),
+		.post-blocks--embed > .post-block:not(.post-block--audio, .post-block--quiz) {
 			padding-left: 16px;
 			padding-right: 16px;
 		}
