@@ -18,6 +18,11 @@ describe('parseDtfUrl', () => {
 			postId: 5394366,
 			commentId: 69664424
 		});
+		expect(parseDtfUrl('https://dtf.ru/games/5370998#sobytiya')).toEqual({
+			type: 'post',
+			postId: 5370998,
+			anchor: 'sobytiya'
+		});
 	});
 
 	it('посты с префиксом /s/, короткие ссылки и http/мобильные домены', () => {
@@ -66,12 +71,14 @@ describe('dtfTargetToPath и dtfUrlToPath', () => {
 		expect(dtfTargetToPath({ type: 'post', postId: 5394366 })).toBe('/post/5394366');
 		expect(dtfTargetToPath({ type: 'post', postId: 5394366, commentId: 69664424 })).toBe('/post/5394366?comment=69664424');
 		expect(dtfTargetToPath({ type: 'post', postId: 5394366, toComments: true })).toBe('/post/5394366#comments');
+		expect(dtfTargetToPath({ type: 'post', postId: 5370998, anchor: 'sobytiya' })).toBe('/post/5370998#sobytiya');
 		expect(dtfTargetToPath({ type: 'profile', profileId: 3512753 })).toBe('/u/3512753');
 	});
 
 	it('dtfUrlToPath преобразует URL на dtf.ru в путь приложения', () => {
 		expect(dtfUrlToPath('https://dtf.ru/games/5394366-remejk-the-legend-of-zelda-ocarina-of-time')).toBe('/post/5394366');
 		expect(dtfUrlToPath('https://dtf.ru/games/5394366-remejk?comment=69664424')).toBe('/post/5394366?comment=69664424');
+		expect(dtfUrlToPath('https://dtf.ru/games/5370998#sobytiya')).toBe('/post/5370998#sobytiya');
 		expect(dtfUrlToPath('https://dtf.ru/id3512753')).toBe('/u/3512753');
 		expect(dtfUrlToPath('https://dtf.ru/rules')).toBeUndefined();
 	});

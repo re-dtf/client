@@ -22,9 +22,11 @@ describe('navigation', () => {
 		expect(getPostPath({ id: 123, sourceId: 'dtf' })).toBe('/post/123');
 		expect(getPostPath({ id: 123, sourceId: 'dtf' }, 456)).toBe('/post/123?comment=456');
 		expect(getPostPath({ id: 123, sourceId: 'dtf' }, 'comments')).toBe('/post/123#comments');
+		expect(getPostPath({ id: 123, sourceId: 'dtf' }, 'sobytiya')).toBe('/post/123#sobytiya');
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' })).toBe('/post/123?source=sourceX');
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 456)).toBe('/post/123?source=sourceX&comment=456');
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 'comments')).toBe('/post/123?source=sourceX#comments');
+		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 'sobytiya')).toBe('/post/123?source=sourceX#sobytiya');
 	});
 
 	it('getSettingsPath строит правильные адреса для настроек', () => {

@@ -23,4 +23,11 @@ describe('PostBlocks DTF link handling', () => {
 		expect(svelteContent).toContain('{#if title?.trim()}');
 		expect(svelteContent).toContain('post-block post-block--title');
 	});
+
+	it('поддерживает якоря блоков и отступ прокрутки под шапку', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostBlocks.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('anchorId');
+		expect(svelteContent).toContain('scroll-margin-top: calc(var(--header-height, 60px) + 8px)');
+	});
 });

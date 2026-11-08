@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
-import { parseDtfUrl, dtfTargetToPath } from './dtfLinks';
+import { parseDtfUrl, dtfTargetToPath, safeDecode } from './dtfLinks';
 import { feed, feedPath } from './feed.svelte';
 import { scrollBehavior } from './motion';
 import { markOrigin } from './pageTransition.svelte';
@@ -33,8 +33,12 @@ const PRESENTATION: Record<App.OverlayData['type'], App.OverlayState['presentati
 	lightbox: 'fullscreen'
 };
 
-export function getPostPath(post: { id: number; sourceId: string }, target?: number | 'comments') {
-	const hash = target === 'comments' ? '#comments' : '';
+export function getPostPath(post: { id: number; sourceId: string }, target?: number | 'comments' | string) {
+	const hash = target === 'comments'
+		? '#comments'
+		: typeof target === 'string' && target
+			? (target.startsWith('#') ? `#${encodeURIComponent(target.slice(1))}` : `#${encodeURIComponent(target)}`)
+			: '';
 	const commentId = typeof target === 'number' ? target : undefined;
 	if (post.sourceId !== 'dtf') {
 		const query = commentId ? `?source=${post.sourceId}&comment=${commentId}` : `?source=${post.sourceId}`;
@@ -68,7 +72,7 @@ function overlayPath(overlay: Exclude<App.OverlayData, { type: 'lightbox' }>): s
 		case 'post':
 			return getPostPath(
 				{ id: overlay.data.postId, sourceId: overlay.data.sourceId },
-				overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : undefined)
+				overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : overlay.data.anchor)
 			);
 		case 'profile':
 			return getProfilePath(overlay.data.profileId);
@@ -124,6 +128,7 @@ export function openOverlay(overlay: App.OverlayData) {
 					...existing.data,
 					commentId: overlay.data.commentId,
 					toComments: overlay.data.toComments,
+					anchor: overlay.data.anchor,
 					focusNonce: Date.now()
 				}
 			};
@@ -145,7 +150,7 @@ export function openOverlay(overlay: App.OverlayData) {
 			const url = resolve(
 				getPostPath(
 					{ id: overlay.data.postId, sourceId },
-					overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : undefined)
+					overlay.data.commentId ?? (overlay.data.toComments ? 'comments' : overlay.data.anchor)
 				) as '/'
 			);
 			return goto(url, {
@@ -350,7 +355,7 @@ function openFromLink(e: MouseEvent, overlay: App.OverlayData) {
 export function openPost(
 	e: MouseEvent,
 	post: { id: number; sourceId: string } & Partial<Post>,
-	options?: { commentId?: number; toComments?: boolean }
+	options?: { commentId?: number; toComments?: boolean; anchor?: string }
 ) {
 	if ('blocks' in post && Array.isArray((post as Post).blocks)) {
 		cachePost(post as Post);
@@ -361,7 +366,8 @@ export function openPost(
 			postId: post.id,
 			sourceId: post.sourceId,
 			commentId: options?.commentId,
-			toComments: options?.toComments
+			toComments: options?.toComments,
+			anchor: options?.anchor
 		}
 	});
 }
@@ -406,6 +412,30 @@ export function openSettings(e?: MouseEvent, page?: string, section?: string) {
  * Возвращает true, если открыли у себя.
  */
 export function openDtfLink(e: MouseEvent, href: string): boolean {
+	if (href.startsWith('#')) {
+		const hash = href.slice(1);
+		if (!hash) return false;
+		const currentOverlays = page.state.overlays ?? [];
+		const top = currentOverlays.findLast((o) => o.presentation === 'page');
+		const isStandalone = page.route.id === '/post/[id]';
+		if (top?.type !== 'post' && !isStandalone) return false;
+		if (isNewTabClick(e)) return false;
+		e.preventDefault();
+
+		const postId = top?.type === 'post' ? top.data.postId : Number(page.params.id);
+		const sourceId = (top?.type === 'post' ? top.data.sourceId : page.url.searchParams.get('source')) || 'dtf';
+		const commentParam = /^comment[=-](\d+)$/i.exec(hash);
+		const commentId = commentParam ? Number(commentParam[1]) : undefined;
+		const toComments = hash === 'comments' || hash === 'comment';
+		const anchor = !commentId && !toComments ? safeDecode(hash) : undefined;
+
+		openOverlay({
+			type: 'post',
+			data: { postId, sourceId, commentId, toComments, anchor }
+		});
+		return true;
+	}
+
 	const target = parseDtfUrl(href);
 	if (!target) return false;
 
@@ -418,9 +448,22 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 
 	e.preventDefault();
 	markOrigin(e);
-	if (target.type === 'post') openOverlay({ type: 'post', data: { postId: target.postId, sourceId: 'dtf', commentId: target.commentId, toComments: target.toComments } });
-	else if (target.type === 'tag') openOverlay({ type: 'tag', data: { tag: target.tag } });
-	else openOverlay({ type: 'profile', data: { profileId: target.profileId } });
+	if (target.type === 'post') {
+		openOverlay({
+			type: 'post',
+			data: {
+				postId: target.postId,
+				sourceId: 'dtf',
+				commentId: target.commentId,
+				toComments: target.toComments,
+				anchor: target.anchor
+			}
+		});
+	} else if (target.type === 'tag') {
+		openOverlay({ type: 'tag', data: { tag: target.tag } });
+	} else {
+		openOverlay({ type: 'profile', data: { profileId: target.profileId } });
+	}
 	return true;
 }
 

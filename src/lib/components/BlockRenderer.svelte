@@ -22,12 +22,13 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="blocks-container" onclick={handleContainerClick} onauxclick={handleContainerClick}>
 {#each blocks as block}
+	{@const anchorId = (block.anchor || block.data?.anchor)?.trim() || undefined}
 	{#if block.type === 'text' || block.type === 'header'}
-		<div class="block text-block">
+		<div class="block text-block" id={anchorId}>
 			{@html sanitizeHtml(block.data.text)}
 		</div>
 	{:else if block.type === 'media'}
-		<div class="block media-block">
+		<div class="block media-block" id={anchorId}>
 			<!-- TODO: Карусель -->
 			{#each block.data.items as item}
 				{#if item.image}
@@ -49,7 +50,7 @@
 	{:else if block.type === 'osnovaEmbed'}
 		{@const url = block.data.osnovaEmbed?.data.url}
 		{@const target = url ? parseDtfUrl(url) : undefined}
-		<div class="block embed-block">
+		<div class="block embed-block" id={anchorId}>
 			<a
 				href={target ? resolve(dtfTargetToPath(target) as any) : url}
 				target={target ? undefined : '_blank'}
@@ -65,7 +66,7 @@
 	{:else if block.type === 'link'}
 		{@const url = block.data.link?.data.url}
 		{@const target = url ? parseDtfUrl(url) : undefined}
-		<div class="block link-block">
+		<div class="block link-block" id={anchorId}>
 			<a
 				href={target ? resolve(dtfTargetToPath(target) as any) : url}
 				target={target ? undefined : '_blank'}
@@ -79,12 +80,15 @@
 			</a>
 		</div>
 	{:else}
-		<div class="block unknown-block">[Блок: {block.type}]</div>
+		<div class="block unknown-block" id={anchorId}>[Блок: {block.type}]</div>
 	{/if}
 {/each}
 </div>
 
 <style>
+	.block {
+		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
+	}
 	.text-block :global(p) {
 		margin: 0.5em 0;
 	}

@@ -1,13 +1,13 @@
 /** Куда ведёт ссылка на dtf.ru, если это место есть в приложении */
 export type DtfTarget =
-	| { type: 'post'; postId: number; commentId?: number; toComments?: boolean }
+	| { type: 'post'; postId: number; commentId?: number; toComments?: boolean; anchor?: string }
 	| { type: 'profile'; profileId: number }
 	| { type: 'tag'; tag: string };
 
 /**
  * Ссылки DTF:
  * - пост: `/<раздел или id автора>/<id>-<слаг>`, `/s/<раздел>/<id>-<слаг>`, `/<id>-<слаг>` или `/post/<id>`
- *   (параметры `?comment=`, `#comment-`, `#comments` — комментарии),
+ *   (параметры `?comment=`, `#comment-`, `#comments` — комментарии, `#...` — якорные блоки поста),
  * - профиль: `/id<N>`, `/u/<N>-<имя>`, `/s/<N>`,
  * - тег: `/tag/<тег>` (и `/tag/<тег>/popular`).
  * Остальное (правила, разделы без id) остаётся на dtf.ru.
@@ -42,15 +42,18 @@ export function parseDtfUrl(href: string): DtfTarget | undefined {
 	const commentHash = /^#(?:comment[=-]|comments?-)(\d+)$/i.exec(url.hash);
 	const commentId = Number(commentParam || commentHash?.[1]);
 	const toComments = url.hash === '#comments' || url.hash === '#comment' || url.searchParams.get('to') === 'comments';
+	const rawAnchor = !commentId && !toComments && url.hash.length > 1 ? url.hash.slice(1) : undefined;
+	const anchor = rawAnchor ? safeDecode(rawAnchor) : undefined;
 	return {
 		type: 'post',
 		postId: Number(post[1]),
 		...(commentId > 0 && { commentId }),
-		...(toComments && !commentId && { toComments: true })
+		...(toComments && !commentId && { toComments: true }),
+		...(anchor && { anchor })
 	};
 }
 
-function safeDecode(value: string): string {
+export function safeDecode(value: string): string {
 	try {
 		return decodeURIComponent(value);
 	} catch {
@@ -62,7 +65,11 @@ function safeDecode(value: string): string {
 export function dtfTargetToPath(target: DtfTarget): string {
 	if (target.type === 'tag') return `/tag/${encodeURIComponent(target.tag)}`;
 	if (target.type === 'post') {
-		const hash = target.toComments ? '#comments' : '';
+		const hash = target.toComments
+			? '#comments'
+			: target.anchor
+				? `#${encodeURIComponent(target.anchor)}`
+				: '';
 		const query = target.commentId ? `?comment=${target.commentId}` : '';
 		return `/post/${target.postId}${query}${hash}`;
 	}

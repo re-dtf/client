@@ -45,9 +45,8 @@
 
 	function handleContainerClick(e: MouseEvent) {
 		if (e.button !== 0 && e.button !== 1) return;
-		const anchor = (e.target as Element)?.closest?.('a');
-		if (!anchor) return;
-		const href = anchor.getAttribute('href');
+		const a = (e.target as Element)?.closest?.('a');
+		const href = a?.getAttribute('href');
 		if (href) openDtfLink(e, href);
 	}
 
@@ -106,8 +105,8 @@
 	</div>
 {/snippet}
 
-{#snippet figure(image: any, caption: string | undefined, gallery: any[])}
-	<figure class={figureClass(image.data)}>
+{#snippet figure(image: any, caption: string | undefined, gallery: any[], anchorId?: string)}
+	<figure class={figureClass(image.data)} id={anchorId}>
 		{#snippet content()}
 			{#if isVideo(image)}
 				{#if !evictMedia}
@@ -155,24 +154,27 @@
 {/snippet}
 
 {#snippet renderBlock(block: Block)}
+	{@const anchorId = variant === 'page' ? (block.anchor || block.data?.anchor)?.trim() || undefined : undefined}
 	{#if block.type === 'text'}
-		<div class="post-block post-block--text">{@html withTags(block.data.text)}</div>
+		<div class="post-block post-block--text" id={anchorId}>{@html withTags(block.data.text)}</div>
 	{:else if block.type === 'header'}
-		<svelte:element this={HEADINGS.includes(block.data.style) ? block.data.style : 'h2'} class="post-block post-block--header">
+		<svelte:element this={HEADINGS.includes(block.data.style) ? block.data.style : 'h2'} class="post-block post-block--header" id={anchorId}>
 			{@html sanitize(block.data.text)}
 		</svelte:element>
 	{:else if block.type === 'media'}
 		<!-- Галерея просмотра — картинки этого блока (видео в неё не входят) -->
 		{@const gallery = (block.data.items ?? []).map((item: any) => item.image).filter((image: any) => image?.data?.uuid && !isVideo(image))}
-		{#each block.data.items ?? [] as item}
-			{#if item.image?.data?.uuid}
-				{@render figure(item.image, item.title, gallery)}
-			{/if}
+		{@const validItems = (block.data.items ?? []).filter((item: any) => item.image?.data?.uuid)}
+		{#if anchorId && validItems.length === 0}
+			<div id={anchorId} class="post-block post-anchor"></div>
+		{/if}
+		{#each validItems as item, i}
+			{@render figure(item.image, item.title, gallery, i === 0 ? anchorId : undefined)}
 		{/each}
 	{:else if block.type === 'video' && block.data.video?.data}
 		{@const video = block.data.video.data}
 		{@const youtubeId = video.external_service?.name === 'youtube' ? video.external_service.id : null}
-		<figure class={figureClass(video.thumbnail?.data ?? video)}>
+		<figure class={figureClass(video.thumbnail?.data ?? video)} id={anchorId}>
 			{#snippet content()}
 				{#if youtubeId && playingVideos[youtubeId]}
 					<iframe
@@ -199,26 +201,26 @@
 				{@render placeholder(video.thumbnail?.data ?? video, 'video', content)}
 			</figure>
 		{:else if block.type === 'quote'}
-			<blockquote class="post-block post-block--quote">
+			<blockquote class="post-block post-block--quote" id={anchorId}>
 				{@html sanitize(block.data.text)}
 				{#if block.data.subline1}
 					<footer class="post-block__subline">{@html sanitize(block.data.subline1)}</footer>
 				{/if}
 			</blockquote>
 		{:else if block.type === 'list'}
-			<svelte:element this={block.data.type === 'OL' ? 'ol' : 'ul'} class="post-block post-block--list">
+			<svelte:element this={block.data.type === 'OL' ? 'ol' : 'ul'} class="post-block post-block--list" id={anchorId}>
 				{#each block.data.items ?? [] as item}
 					<li>{@html withTags(item)}</li>
 				{/each}
 			</svelte:element>
 		{:else if block.type === 'delimiter'}
-			<div class="post-block post-block--delimiter" role="separator">***</div>
+			<div class="post-block post-block--delimiter" id={anchorId} role="separator">***</div>
 		{:else if block.type === 'code'}
-			<pre class="post-block post-block--code"><code>{block.data.text}</code></pre>
+			<pre class="post-block post-block--code" id={anchorId}><code>{block.data.text}</code></pre>
 		{:else if block.type === 'link' && block.data.link?.data}
 			{@const link = block.data.link.data}
 			{@const dtfTarget = parseDtfUrl(link.url)}
-			<div class="post-block post-block--link">
+			<div class="post-block post-block--link" id={anchorId}>
 				{#if dtfTarget}
 					<a
 						href={resolve(dtfTargetToPath(dtfTarget) as any)}
@@ -231,10 +233,12 @@
 			</div>
 		{:else if block.type === 'osnovaEmbed' && block.data.osnovaEmbed?.data}
 			{#if variant === 'page' && !block.data.osnovaEmbed.data.isNotAvailable}
-				<PostCard post={embedToPost(block.data.osnovaEmbed.data)} embed />
+				<div class="post-block post-block--embed" id={anchorId}>
+					<PostCard post={embedToPost(block.data.osnovaEmbed.data)} embed />
+				</div>
 			{/if}
 		{:else if variant === 'page'}
-			<div class="post-block">
+			<div class="post-block" id={anchorId}>
 				<UnknownBlock type={block.type} {postId} {sourceId} />
 			</div>
 		{/if}
@@ -275,6 +279,7 @@
 	 */
 	.post-block {
 		max-width: var(--content-width);
+		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
 	.post-block :global(a) {
@@ -350,6 +355,7 @@
 	.media-figure {
 		display: flex;
 		flex-direction: column;
+		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
 	/*

@@ -8,6 +8,7 @@
 	import { nextPaint } from '$lib/ready';
 	import { appear } from '$lib/themes/appear';
 	import { scrollBehavior } from '$lib/motion';
+	import { safeDecode } from '$lib/dtfLinks';
 	import { onDestroy, tick, type Snippet } from 'svelte';
 
 	let {
@@ -16,6 +17,7 @@
 		commentId,
 		focusNonce,
 		toComments,
+		anchor,
 		depth = 0,
 		onLoaded,
 		backButton
@@ -28,6 +30,8 @@
 		depth?: number;
 		/** Прокрутить сразу к комментариям после загрузки */
 		toComments?: boolean;
+		/** Якорь в посте, к которому прокрутить */
+		anchor?: string;
 		onLoaded?: (title: string) => void;
 		backButton?: Snippet;
 	} = $props();
@@ -60,14 +64,37 @@
 		}
 	});
 
+	function scrollToAnchor(targetAnchor: string, attempts = 5) {
+		const decoded = safeDecode(targetAnchor);
+		const el =
+			document.getElementById(targetAnchor) ||
+			document.getElementById(decoded) ||
+			document.getElementById(decoded.toLowerCase());
+		if (el) {
+			el.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+			return;
+		}
+		if (attempts > 0) {
+			requestAnimationFrame(() => scrollToAnchor(targetAnchor, attempts - 1));
+		}
+	}
+
 	function showPost() {
-		if ((commentId === undefined && !toComments) || postShown) return;
+		if ((commentId === undefined && !toComments && !anchor) || postShown) return;
 		postShown = true;
-		commentsTurn.then(tick).then(() => {
-			requestAnimationFrame(() => {
-				commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+		if (toComments || commentId !== undefined) {
+			commentsTurn.then(tick).then(() => {
+				requestAnimationFrame(() => {
+					commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+				});
 			});
-		});
+		} else if (anchor) {
+			tick().then(() => {
+				requestAnimationFrame(() => {
+					scrollToAnchor(anchor);
+				});
+			});
+		}
 	}
 
 	let lastScrollNonce = 0;
@@ -77,6 +104,22 @@
 			tick().then(() => {
 				requestAnimationFrame(() => {
 					commentsBox?.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
+				});
+			});
+		}
+	});
+
+	let lastAnchorNonce = 0;
+	let lastAnchorScrolled = '';
+	$effect(() => {
+		if (!anchor || !post) return;
+		const nonce = focusNonce ?? 0;
+		if (postShown && (nonce !== lastAnchorNonce || anchor !== lastAnchorScrolled)) {
+			lastAnchorNonce = nonce;
+			lastAnchorScrolled = anchor;
+			tick().then(() => {
+				requestAnimationFrame(() => {
+					scrollToAnchor(anchor);
 				});
 			});
 		}

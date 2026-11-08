@@ -2,6 +2,7 @@ export interface Block {
 	type: string;
 	cover?: boolean;
 	hidden?: boolean;
+	anchor?: string;
 	data: any;
 }
 
