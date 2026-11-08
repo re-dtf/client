@@ -2,7 +2,7 @@ import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { page } from '$app/state';
 import { parseDtfUrl, dtfTargetToPath, safeDecode } from './dtfLinks';
-import { feed, feedPath } from './feed.svelte';
+import { feed, feedPath, openFeedTab } from './feed.svelte';
 import { scrollBehavior } from './motion';
 import { markOrigin } from './pageTransition.svelte';
 import { cachePost } from './postCache';
@@ -143,9 +143,9 @@ export function openOverlay(overlay: App.OverlayData) {
 
 		if (
 			currentOverlays.length === 0 &&
-			page.route.id === '/post/[id]' &&
-			Number(page.params.id) === overlay.data.postId &&
-			(page.url.searchParams.get('source') || 'dtf') === sourceId
+			page.route?.id === '/post/[id]' &&
+			Number(page.params?.id) === overlay.data.postId &&
+			(page.url?.searchParams?.get('source') || 'dtf') === sourceId
 		) {
 			const url = resolve(
 				getPostPath(
@@ -408,7 +408,50 @@ export function openSettings(e?: MouseEvent, page?: string, section?: string) {
 }
 
 /**
- * Клик по ссылке на dtf.ru: пост и профиль открываем у себя, остальное оставляем браузеру.
+ * Открыть ссылку или целевой объект dtf.ru внутри приложения (для deep links и программных переходов).
+ * Возвращает true, если цель поддерживается и открыта.
+ */
+export function openDtfUrl(href: string): boolean {
+	const target = parseDtfUrl(href);
+	if (!target) return false;
+
+	if (target.type === 'feed') {
+		if (page.state.overlays?.length) {
+			clearSubstates();
+			const feedUrl = resolve((target.feed && target.feed !== 'popular' ? `/?feed=${target.feed}` : '/') as '/');
+			goto(feedUrl, { shallow: true, state: { overlays: [] } });
+		} else if (target.feed) {
+			openFeedTab(target.feed);
+		}
+		return true;
+	}
+
+	if (target.type === 'notifications') {
+		openOverlay({ type: 'notifications' });
+		return true;
+	}
+
+	if (target.type === 'post') {
+		openOverlay({
+			type: 'post',
+			data: {
+				postId: target.postId,
+				sourceId: 'dtf',
+				commentId: target.commentId,
+				toComments: target.toComments,
+				anchor: target.anchor
+			}
+		});
+	} else if (target.type === 'tag') {
+		openOverlay({ type: 'tag', data: { tag: target.tag } });
+	} else {
+		openOverlay({ type: 'profile', data: { profileId: target.profileId } });
+	}
+	return true;
+}
+
+/**
+ * Клик по ссылке на dtf.ru: поддерживаемые цели открываем у себя, остальное оставляем браузеру.
  * Возвращает true, если открыли у себя.
  */
 export function openDtfLink(e: MouseEvent, href: string): boolean {
@@ -448,23 +491,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 
 	e.preventDefault();
 	markOrigin(e);
-	if (target.type === 'post') {
-		openOverlay({
-			type: 'post',
-			data: {
-				postId: target.postId,
-				sourceId: 'dtf',
-				commentId: target.commentId,
-				toComments: target.toComments,
-				anchor: target.anchor
-			}
-		});
-	} else if (target.type === 'tag') {
-		openOverlay({ type: 'tag', data: { tag: target.tag } });
-	} else {
-		openOverlay({ type: 'profile', data: { profileId: target.profileId } });
-	}
-	return true;
+	return openDtfUrl(href);
 }
 
 /**

@@ -23,14 +23,29 @@ describe('parseDtfUrl', () => {
 			postId: 5370998,
 			anchor: 'sobytiya'
 		});
+		expect(parseDtfUrl('https://dtf.ru/games/5220898-atomic-heart/comments')).toEqual({
+			type: 'post',
+			postId: 5220898,
+			toComments: true
+		});
 	});
 
-	it('посты с префиксом /s/, короткие ссылки и http/мобильные домены', () => {
+	it('ленты и уведомления', () => {
+		expect(parseDtfUrl('https://dtf.ru')).toEqual({ type: 'feed' });
+		expect(parseDtfUrl('https://dtf.ru/')).toEqual({ type: 'feed' });
+		expect(parseDtfUrl('https://dtf.ru/popular')).toEqual({ type: 'feed', feed: 'popular' });
+		expect(parseDtfUrl('https://dtf.ru/new')).toEqual({ type: 'feed', feed: 'new' });
+		expect(parseDtfUrl('https://dtf.ru/my')).toEqual({ type: 'feed', feed: 'my' });
+		expect(parseDtfUrl('https://dtf.ru/?feed=new')).toEqual({ type: 'feed', feed: 'new' });
+		expect(parseDtfUrl('https://dtf.ru/notifications')).toEqual({ type: 'notifications' });
+	});
+
+	it('посты с префиксом /s/, короткие ссылки, www и http', () => {
 		expect(parseDtfUrl('https://dtf.ru/s/cinema/5394366-remejk')).toEqual({ type: 'post', postId: 5394366 });
 		expect(parseDtfUrl('https://dtf.ru/5394366-remejk')).toEqual({ type: 'post', postId: 5394366 });
 		expect(parseDtfUrl('https://dtf.ru/5394366')).toEqual({ type: 'post', postId: 5394366 });
 		expect(parseDtfUrl('http://dtf.ru/5394366')).toEqual({ type: 'post', postId: 5394366 });
-		expect(parseDtfUrl('https://m.dtf.ru/games/5394366-remejk')).toEqual({ type: 'post', postId: 5394366 });
+		expect(parseDtfUrl('https://www.dtf.ru/games/5394366-remejk')).toEqual({ type: 'post', postId: 5394366 });
 		expect(parseDtfUrl('/games/5394366-remejk')).toEqual({ type: 'post', postId: 5394366 });
 		expect(parseDtfUrl('/post/5394366?comment=123')).toEqual({ type: 'post', postId: 5394366, commentId: 123 });
 	});
@@ -48,6 +63,7 @@ describe('parseDtfUrl', () => {
 		expect(parseDtfUrl('https://dtf.ru/rules#8')).toBeUndefined();
 		expect(parseDtfUrl('https://dtf.ru/gameindustry')).toBeUndefined();
 		expect(parseDtfUrl('https://dtf.ru/s/cinema')).toBeUndefined();
+		expect(parseDtfUrl('https://m.dtf.ru/games/5394366-remejk')).toBeUndefined();
 		expect(parseDtfUrl('https://evil.example/games/5220898-x')).toBeUndefined();
 		expect(parseDtfUrl('javascript:alert(1)')).toBeUndefined();
 	});
@@ -73,6 +89,9 @@ describe('dtfTargetToPath и dtfUrlToPath', () => {
 		expect(dtfTargetToPath({ type: 'post', postId: 5394366, toComments: true })).toBe('/post/5394366#comments');
 		expect(dtfTargetToPath({ type: 'post', postId: 5370998, anchor: 'sobytiya' })).toBe('/post/5370998#sobytiya');
 		expect(dtfTargetToPath({ type: 'profile', profileId: 3512753 })).toBe('/u/3512753');
+		expect(dtfTargetToPath({ type: 'feed' })).toBe('/');
+		expect(dtfTargetToPath({ type: 'feed', feed: 'new' })).toBe('/?feed=new');
+		expect(dtfTargetToPath({ type: 'notifications' })).toBe('/notifications');
 	});
 
 	it('dtfUrlToPath преобразует URL на dtf.ru в путь приложения', () => {
@@ -80,6 +99,8 @@ describe('dtfTargetToPath и dtfUrlToPath', () => {
 		expect(dtfUrlToPath('https://dtf.ru/games/5394366-remejk?comment=69664424')).toBe('/post/5394366?comment=69664424');
 		expect(dtfUrlToPath('https://dtf.ru/games/5370998#sobytiya')).toBe('/post/5370998#sobytiya');
 		expect(dtfUrlToPath('https://dtf.ru/id3512753')).toBe('/u/3512753');
+		expect(dtfUrlToPath('https://dtf.ru/notifications')).toBe('/notifications');
+		expect(dtfUrlToPath('https://dtf.ru/new')).toBe('/?feed=new');
 		expect(dtfUrlToPath('https://dtf.ru/rules')).toBeUndefined();
 	});
 });

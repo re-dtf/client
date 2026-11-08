@@ -5,7 +5,10 @@ vi.mock('$app/state', () => ({
 	page: {
 		get state() {
 			return mockPageState;
-		}
+		},
+		route: { id: '/' },
+		params: {},
+		url: new URL('http://localhost/')
 	}
 }));
 
@@ -13,7 +16,8 @@ vi.mock('$app/navigation', () => ({
 	goto: vi.fn().mockResolvedValue(undefined)
 }));
 
-import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates } from './navigation';
+import { goto } from '$app/navigation';
+import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openDtfUrl, openDtfLink } from './navigation';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -142,6 +146,73 @@ describe('navigation', () => {
 			resetSubstates();
 
 			expect(goDeltas).toEqual([-2]);
+		});
+	});
+
+	describe('openDtfUrl и openDtfLink', () => {
+		beforeEach(() => {
+			vi.clearAllMocks();
+			mockPageState.overlays = [];
+		});
+
+		it('openDtfUrl открывает оверлей для ссылок на посты, профили и теги', () => {
+			expect(openDtfUrl('https://dtf.ru/games/5394366-remejk')).toBe(true);
+			expect(goto).toHaveBeenCalledWith(
+				'/post/5394366',
+				expect.objectContaining({
+					shallow: true,
+					state: expect.objectContaining({
+						overlays: expect.arrayContaining([
+							expect.objectContaining({
+								type: 'post',
+								data: expect.objectContaining({ postId: 5394366 })
+							})
+						])
+					})
+				})
+			);
+
+			expect(openDtfUrl('https://dtf.ru/u/120658-dzhamil')).toBe(true);
+			expect(openDtfUrl('https://dtf.ru/tag/xbox')).toBe(true);
+			expect(openDtfUrl('https://dtf.ru/notifications')).toBe(true);
+		});
+
+		it('openDtfUrl возвращает false для неподдерживаемых адресов', () => {
+			expect(openDtfUrl('https://dtf.ru/rules')).toBe(false);
+			expect(openDtfUrl('https://example.com/test')).toBe(false);
+		});
+
+		it('openDtfLink отменяет стандартный клик и вызывает открытие', () => {
+			const preventDefault = vi.fn();
+			const event = {
+				button: 0,
+				ctrlKey: false,
+				metaKey: false,
+				shiftKey: false,
+				preventDefault
+			} as unknown as MouseEvent;
+
+			expect(openDtfLink(event, 'https://dtf.ru/post/5394366')).toBe(true);
+			expect(preventDefault).toHaveBeenCalled();
+		});
+
+		it('openDtfLink при клике с новой вкладкой открывает window.open', () => {
+			const preventDefault = vi.fn();
+			const openMock = vi.fn();
+			vi.stubGlobal('window', { open: openMock });
+
+			const event = {
+				button: 1, // средняя кнопка мыши
+				ctrlKey: false,
+				metaKey: false,
+				shiftKey: false,
+				preventDefault
+			} as unknown as MouseEvent;
+
+			expect(openDtfLink(event, 'https://dtf.ru/post/5394366')).toBe(true);
+			expect(preventDefault).toHaveBeenCalled();
+			expect(openMock).toHaveBeenCalledWith('/post/5394366', '_blank');
+			vi.unstubAllGlobals();
 		});
 	});
 });

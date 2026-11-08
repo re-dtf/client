@@ -5,7 +5,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { Browser } from '@capacitor/browser';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { page } from '$app/state';
-import { closeOverlay } from '$lib/navigation';
+import { closeOverlay, openDtfLink, openDtfUrl } from '$lib/navigation';
 import { otaUpdater } from './updater.svelte';
 
 let initialized = false;
@@ -78,8 +78,67 @@ export async function notifyAppReady(): Promise<void> {
 	}
 }
 
+let lastHandledUrl = '';
+let lastHandledTime = 0;
+
 /**
- * Инициализация нативных обработчиков Capacitor (кнопка «Назад», StatusBar, SplashScreen).
+ * Обработка внешнего URL (App Links, Deep Links), полученного от Capacitor.
+ * Возвращает true, если URL был обработан.
+ */
+export async function handleAppUrl(url: string): Promise<boolean> {
+	if (!url) return false;
+	const now = Date.now();
+	if (lastHandledUrl === url && now - lastHandledTime < 1500) {
+		return true;
+	}
+	lastHandledUrl = url;
+	lastHandledTime = now;
+
+	// Игнорируем адреса, не относящиеся к dtf.ru
+	if (
+		!/^https?:\/\/(?:www\.)?dtf\.ru/i.test(url) &&
+		!/^\/(?:post|u|tag|notifications|popular|new|my|\d+)/i.test(url)
+	) {
+		return false;
+	}
+
+	// Ссылки на dtf.ru открываем внутри приложения, если цель поддерживается
+	if (openDtfUrl(url)) {
+		return true;
+	}
+
+	// Неподдерживаемые разделы dtf.ru открываем во внешнем браузере, чтобы не терять контекст
+	if (/^https?:\/\/(?:www\.)?dtf\.ru/i.test(url)) {
+		await openExternalUrl(url);
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Обработка клика по ссылкам внутри WebView нативного приложения.
+ */
+export function handleNativeLinkClick(e: MouseEvent): void {
+	if (e.defaultPrevented || e.button !== 0) return;
+	const anchor = (e.target as Element | null)?.closest?.('a');
+	if (!anchor) return;
+	const href = anchor.getAttribute('href');
+	if (!href) return;
+
+	if (openDtfLink(e, href)) {
+		return;
+	}
+
+	const origin = typeof window !== 'undefined' ? window.location?.origin : undefined;
+	if (/^https?:\/\//i.test(href) && (!origin || !href.startsWith(origin))) {
+		e.preventDefault();
+		openExternalUrl(href).catch(() => {});
+	}
+}
+
+/**
+ * Инициализация нативных обработчиков Capacitor (кнопка «Назад», StatusBar, SplashScreen, App Links).
  */
 export function initCapacitor(): void {
 	if (typeof window === 'undefined' || !isNative() || initialized) return;
@@ -127,6 +186,21 @@ export function initCapacitor(): void {
 		// Если на главном экране без оверлеев — сворачиваем приложение
 		App.minimizeApp().catch(() => {});
 	});
+
+	// Обработка входящих ссылок (App Links / Deep Links) при открытии свернутого/активного приложения
+	App.addListener('appUrlOpen', (event) => {
+		handleAppUrl(event.url).catch(() => {});
+	});
+
+	// Обработка ссылки при холодном запуске
+	App.getLaunchUrl().then((launchUrl) => {
+		if (launchUrl?.url) {
+			handleAppUrl(launchUrl.url).catch(() => {});
+		}
+	}).catch(() => {});
+
+	// Перехват кликов по ссылкам внутри приложения
+	document.addEventListener('click', handleNativeLinkClick);
 
 	// Применение статус-бара в зависимости от текущего режима темы
 	const isDark = document.documentElement.dataset.themeMode === 'dark';
