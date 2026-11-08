@@ -91,14 +91,25 @@
 		background: var(--bg-card);
 	}
 
+	.news-item {
+		position: relative;
+	}
+
 	.news-item__title {
 		margin-right: 4px;
 		font-size: 17px;
 		line-height: 26px;
 	}
 
+	.news-item__title::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
 	.comments-counter {
 		position: relative;
+		z-index: 1;
 		top: 3px;
 		display: inline-flex;
 		align-items: center;
