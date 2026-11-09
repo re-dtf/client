@@ -51,7 +51,8 @@ describe('settings & shouldVirtualizeComments', () => {
 			commentVirtualization: 'auto',
 			appIcon: 'default',
 			debugSafeAreaOverlay: false,
-			debugHud: false
+			debugHud: false,
+			devMode: false
 		};
 	});
 

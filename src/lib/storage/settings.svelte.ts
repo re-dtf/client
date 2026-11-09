@@ -50,6 +50,8 @@ export interface AppSettings {
 	debugSafeAreaOverlay?: boolean;
 	/** Показывать плавающий индикатор метрик (HUD) */
 	debugHud?: boolean;
+	/** Режим разработчика (показывает раздел «Разработка» в настройках) */
+	devMode?: boolean;
 }
 
 /** Адрес CORS-прокси на Val Town (задаётся при сборке VITE_AUTH_PROXY_URL или VITE_VALTOWN_PROXY_URL) */
@@ -111,7 +113,8 @@ export const settings = persistedState<AppSettings>(
 		appIcon: 'default',
 		customIconData: null,
 		debugSafeAreaOverlay: false,
-		debugHud: false
+		debugHud: false,
+		devMode: false
 	},
 	SETTINGS_VERSION
 );

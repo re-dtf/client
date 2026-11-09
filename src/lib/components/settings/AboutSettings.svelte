@@ -4,10 +4,12 @@
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsTile from './SettingsTile.svelte';
 	import { asset } from '$app/paths';
-	import { version } from '$app/env';
+	import { version, dev } from '$app/env';
 	import { isNative } from '$lib/capacitor';
 	import { otaUpdater } from '$lib/capacitor/updater.svelte';
 	import { pwa } from '$lib/pwa.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
+	import { haptics } from '$lib/haptics';
 
 	let { section }: { section?: string } = $props();
 
@@ -22,6 +24,57 @@
 		{ title: 'Открытый код', text: 'Собирается на Github Actions, можно проверить и форкнуть', path: 'M8 7l-5 5 5 5M16 7l5 5-5 5', tint: '#1693e5' },
 		{ title: 'Без слежки', text: 'Ни аналитики, ни сбора данных: всё хранится у вас', path: 'M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3', tint: '#8e4ec6' }
 	];
+
+	const CLICKS_TO_ACTIVATE = 10;
+	let devClicks = $state(0);
+	let clickTimer: ReturnType<typeof setTimeout> | null = null;
+	let devFeedback = $state<string | null>(null);
+	let feedbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function showFeedback(text: string) {
+		devFeedback = text;
+		if (feedbackTimer) clearTimeout(feedbackTimer);
+		feedbackTimer = setTimeout(() => {
+			devFeedback = null;
+		}, 3000);
+	}
+
+	function handleVersionClick() {
+		haptics.tick();
+
+		if (clickTimer) clearTimeout(clickTimer);
+		clickTimer = setTimeout(() => {
+			devClicks = 0;
+		}, 2000);
+
+		devClicks++;
+
+		if (devClicks >= CLICKS_TO_ACTIVATE) {
+			devClicks = 0;
+			if (dev) {
+				showFeedback('Режим разработчика активен (среда разработки)');
+				return;
+			}
+			const nextState = !settings.value.devMode;
+			// Выключая режим, гасим и отладочные оверлеи: иначе их нечем будет отключить
+			settings.patch(nextState ? { devMode: true } : { devMode: false, debugSafeAreaOverlay: false, debugHud: false });
+			haptics.double();
+			showFeedback(
+				nextState
+					? 'Режим разработчика включён!'
+					: 'Режим разработчика выключен'
+			);
+		} else if (devClicks >= 4) {
+			const remaining = CLICKS_TO_ACTIVATE - devClicks;
+			showFeedback(
+				remaining === 1
+					? 'Остался 1 клик для режима разработчика'
+					: remaining < 5
+					? `Осталось ${remaining} клика для режима разработчика`
+					: `Осталось ${remaining} кликов для режима разработчика`
+			);
+		}
+	}
 
 	$effect(() => {
 		if (section === 'documents' || section === 'legal') {
@@ -41,7 +94,16 @@
 	<p class="hero__description">
 		Лёгкий, быстрый и настраиваемый неофициальный клиент. Без нежеланных редизайнов и шпионских метрик.
 	</p>
-	<span class="hero__version">Версия {isNative() && otaUpdater.activeBundleId !== 'builtin' ? `${otaUpdater.currentVersion} (OTA)` : version}</span>
+	<button
+		type="button"
+		class="hero__version"
+		onclick={handleVersionClick}
+	>
+		Версия {isNative() && otaUpdater.activeBundleId !== 'builtin' ? `${otaUpdater.currentVersion} (OTA)` : version}
+	</button>
+	{#if devFeedback}
+		<span class="hero__hint" role="status">{devFeedback}</span>
+	{/if}
 </section>
 
 <ul class="principles">
@@ -174,12 +236,34 @@
 	.hero__version {
 		margin-top: 18px;
 		padding: 4px 14px;
+		border: none;
 		border-radius: 14px;
 		background: color-mix(in srgb, #1693e5 14%, transparent);
 		color: var(--color-blue, #0f6fb0);
+		font-family: inherit;
 		font-size: 13px;
 		font-weight: 500;
 		line-height: 20px;
+		cursor: pointer;
+		user-select: none;
+		-webkit-tap-highlight-color: transparent;
+		transition: transform 0.1s ease, background 0.15s ease;
+	}
+
+	.hero__version:hover {
+		background: color-mix(in srgb, #1693e5 22%, transparent);
+	}
+
+	.hero__version:active {
+		transform: scale(0.96);
+	}
+
+	.hero__hint {
+		margin-top: 8px;
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--st-accent, #1693e5);
+		text-align: center;
 	}
 
 	.principles {

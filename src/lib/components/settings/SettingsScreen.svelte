@@ -29,6 +29,7 @@
 	import { paletteSelection } from '$lib/themes/palette';
 	import { haptics } from '$lib/haptics';
 	import { pushSubstate, popSubstate } from '$lib/navigation';
+	import { dev } from '$app/env';
 
 	/*
 	 * Окно настроек в духе libadwaita с двухуровневой навигацией:
@@ -236,7 +237,7 @@
 		items: RootNavItem[];
 	}
 
-	const ROOT_NAVIGATION: RootNavSection[] = [
+	const BASE_ROOT_NAVIGATION: RootNavSection[] = [
 		{
 			title: 'Аккаунт',
 			items: [
@@ -274,14 +275,24 @@
 				{ id: 'help', type: 'page', title: 'Хочу помочь', icon: 'help' },
 				{ id: 'about', type: 'page', title: 'О приложении', icon: 'about' }
 			]
-		},
-		{
-			title: 'Разработка',
-			items: [
-				{ id: 'debug', type: 'page', title: 'Дебаг', icon: 'debug' }
-			]
 		}
 	];
+
+	const isDevVisible = $derived(dev || Boolean(settings.value.devMode));
+
+	const rootNavigation = $derived<RootNavSection[]>(
+		isDevVisible
+			? [
+					...BASE_ROOT_NAVIGATION,
+					{
+						title: 'Разработка',
+						items: [
+							{ id: 'debug', type: 'page', title: 'Дебаг', icon: 'debug' }
+						]
+					}
+			  ]
+			: BASE_ROOT_NAVIGATION
+	);
 
 	// --- Структура навигации Уровня 2 ---
 	interface SubNavItem {
@@ -357,6 +368,9 @@
 		if (targetPage === 'proxy') {
 			return { folderId: null, pageId: 'network', section: targetSection };
 		}
+		if (targetPage === 'debug' && !isDevVisible) {
+			return { folderId: null, pageId: null, section: targetSection };
+		}
 		if (targetPage) {
 			return { folderId: null, pageId: targetPage, section: targetSection };
 		}
@@ -397,7 +411,7 @@
 	// Заголовок текущей страницы
 	let pageTitle = $derived.by(() => {
 		if (!selectedPageId) return folderTitle;
-		for (const s of ROOT_NAVIGATION) {
+		for (const s of rootNavigation) {
 			const found = s.items.find((i) => i.id === selectedPageId);
 			if (found) return found.title;
 		}
@@ -610,7 +624,7 @@
 				<!-- Уровень 1: Главное меню -->
 				<div class={['nav-layer', { 'nav-layer--hidden': activeFolderId !== null }]}>
 					<div class="nav">
-						{#each ROOT_NAVIGATION as group (group.title)}
+						{#each rootNavigation as group (group.title)}
 							<section class="nav__section">
 								<h3 class="nav__group">{group.title}</h3>
 								<div class="nav__list">
@@ -725,8 +739,8 @@
 							<HelpSettings />
 						{:else if selectedPageId === 'about'}
 							<AboutSettings section={activeSection} />
-						{:else if selectedPageId === 'debug'}
-							<DebugSettings />
+						{:else if selectedPageId === 'debug' && isDevVisible}
+							<DebugSettings ondisable={() => { selectedPageId = null; handleMobileBack(); }} />
 
 						<!-- Персонализация: Прямые страницы -->
 						{:else if selectedPageId === 'theme-select'}

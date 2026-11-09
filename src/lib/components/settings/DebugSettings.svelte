@@ -9,6 +9,8 @@
 	import { otaUpdater } from '$lib/capacitor/updater.svelte';
 	import { dev } from '$app/env';
 
+	let { ondisable }: { ondisable?: () => void } = $props();
+
 	let topPx = $state(0);
 	let bottomPx = $state(0);
 	let leftPx = $state(0);
@@ -256,6 +258,19 @@
 				Отключить
 			</SettingsButton>
 		</SettingsRow>
+		{#if !dev}
+			<SettingsRow title="Режим разработчика" subtitle="Скрыть раздел «Разработка» из настроек">
+				<SettingsButton
+					variant="flat"
+					onclick={() => {
+						settings.patch({ devMode: false, debugSafeAreaOverlay: false, debugHud: false });
+						ondisable?.();
+					}}
+				>
+					Скрыть
+				</SettingsButton>
+			</SettingsRow>
+		{/if}
 	</SettingsGroup>
 </div>
 
