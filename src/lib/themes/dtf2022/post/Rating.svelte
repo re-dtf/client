@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { cubicOut } from 'svelte/easing';
+	import { customVoteIconOf } from '$lib/reactions';
+	import type { Reactions } from '$lib/api/types';
+	import ReactionPopup from './ReactionPopup.svelte';
 	import { themeSettings } from '../themeSettings.svelte';
 	import { lottie, preloadLottie, type LottieLoader } from './lottie';
 
@@ -13,14 +16,18 @@
 		value,
 		myVote = 0,
 		compact = false,
-		onvote
+		reactions,
+		onvote,
+		onreact
 	}: {
 		value: number;
 		myVote?: number;
 		/** Вариант для комментария: стрелки 16px */
 		compact?: boolean;
+		reactions?: Reactions;
 		/** Вернуть false, если голос не принят — тогда анимации клика не будет */
 		onvote?: (vote: 1 | -1) => boolean | void;
+		onreact?: (id: number) => void;
 	} = $props();
 
 	let reversed = $derived(themeSettings.arrowsOrder === 'up-down');
@@ -51,10 +58,10 @@
 	$effect(() => () => clearTimeout(valueTimer));
 
 	const format = (n: number) => String(n).replace('-', '−');
+	const isVoted = (sign: 1 | -1) => (sign < 0 ? myVote < 0 : myVote > 0) || !!customVoteIconOf(reactions, sign);
 
 	function vote(sign: 1 | -1) {
-		// Читаем до onvote: он меняет myVote синхронно, и снятый голос выглядел бы как новый
-		const unvote = myVote === sign;
+		const unvote = isVoted(sign);
 		const accepted = onvote?.(sign) !== false;
 		if (accepted && onvote && !arrow && !unvote) arrow = { vote: sign, load: ARROWS[String(sign) as '1' | '-1'] };
 	}
@@ -73,47 +80,55 @@
 	}
 </script>
 
-<!-- Оценка стрелками, как у DTF осенью 2022 (.vote) -->
-<div
-	class={[
-		'vote',
-		compact ? 'vote--comment' : 'vote--content',
-		{
-			'vote--sum-positive': value > 0,
-			'vote--sum-negative': value < 0,
-			'vote--voted-positive': myVote > 0,
-			'vote--voted-negative': myVote < 0,
-			'vote--animating-button-click': !!arrow
-		}
-	]}
-	role="group"
-	aria-label="Оценка"
->
-	{@render button(reversed ? 1 : -1)}
+<ReactionPopup {reactions} {onreact}>
+	<!-- Оценка стрелками, как у DTF осенью 2022 (.vote) -->
+	<div
+		class={[
+			'vote',
+			compact ? 'vote--comment' : 'vote--content',
+			{
+				'vote--sum-positive': value > 0,
+				'vote--sum-negative': value < 0,
+				'vote--voted-positive': isVoted(1),
+				'vote--voted-negative': isVoted(-1),
+				'vote--animating-button-click': !!arrow
+			}
+		]}
+		role="group"
+		aria-label="Оценка"
+	>
+		{@render button(reversed ? 1 : -1)}
 
-	<span class="vote__value" aria-live="polite">
-		<span class={['vote__actual-value', { 'vote__actual-value--hidden': valueChanging }]}>{format(value)}</span>
-		{#if valueChanging && previous !== undefined}
-			<span class="vote__virtual-value vote__prev-value" in:fade>{format(previous)}</span>
-			<span class="vote__virtual-value" in:slide={{ up: value > previous }}>{format(value)}</span>
-		{/if}
-	</span>
+		<span class="vote__value" aria-live="polite">
+			<span class={['vote__actual-value', { 'vote__actual-value--hidden': valueChanging }]}>{format(value)}</span>
+			{#if valueChanging && previous !== undefined}
+				<span class="vote__virtual-value vote__prev-value" in:fade>{format(previous)}</span>
+				<span class="vote__virtual-value" in:slide={{ up: value > previous }}>{format(value)}</span>
+			{/if}
+		</span>
 
-	{@render button(reversed ? -1 : 1)}
-</div>
+		{@render button(reversed ? -1 : 1)}
+	</div>
+</ReactionPopup>
 
 {#snippet button(sign: 1 | -1)}
+	{@const custom = customVoteIconOf(reactions, sign)}
+	{@const active = isVoted(sign)}
+	{@const label = custom?.name ?? (sign < 0 ? 'Голос против' : 'Голос за')}
 	<button
 		type="button"
 		class={['vote__button', sign < 0 ? 'vote__button--minus' : 'vote__button--plus']}
-		title={sign < 0 ? 'Голос против' : 'Голос за'}
-		aria-label={sign < 0 ? 'Голос против' : 'Голос за'}
-		aria-pressed={sign < 0 ? myVote < 0 : myVote > 0}
+		title={label}
+		aria-label={label}
+		aria-pressed={active}
 		onclick={() => vote(sign)}
 	>
 		<svg class={['icon', { 'icon--hidden': arrow?.vote === sign }]} aria-hidden="true">
 			<use href="/icons.svg#{sign < 0 ? 'v_arrow_down' : 'v_arrow_up'}"></use>
 		</svg>
+		{#if custom}
+			<img src={custom.url} class="vote__mini-badge" alt="" />
+		{/if}
 		{#if arrow?.vote === sign}
 			<span class="animated-arrow" aria-hidden="true" use:lottie={{ load: arrow.load, oncomplete: () => (arrow = undefined) }}></span>
 		{/if}
@@ -193,6 +208,26 @@
 
 	.vote__button .icon--hidden {
 		display: none;
+	}
+
+	.vote__mini-badge {
+		position: absolute;
+		bottom: -2px;
+		right: -3px;
+		width: 14px;
+		height: 14px;
+		border-radius: 50%;
+		background-color: var(--bg-card);
+		box-shadow: 0 0 0 1px var(--bg-card);
+		object-fit: contain;
+		pointer-events: none;
+		z-index: 2;
+	}
+
+	.vote--comment .vote__mini-badge {
+		width: 11px;
+		height: 11px;
+		right: -2px;
 	}
 
 	/* Анимация больше иконки: 32px в комментарии, 44px у поста; по центру кнопки */

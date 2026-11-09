@@ -88,6 +88,7 @@
 
 	// Голос «за» и «против» — выбранные в настройках реакции; false — голос не принят, анимации клика не будет
 	const rate = (vote: 1 | -1) => voteComment(comment, vote);
+	const react = (id: number) => toggleCommentReaction(comment, id);
 
 	// Меню комментария: что можно править, сервер говорит при открытии
 	let menuOpen = $state(false);
@@ -141,7 +142,14 @@
 
 {#snippet vote()}
 	<div class={['comment-item__vote', { 'comment-item__vote--left': arrowsLeft }]}>
-		<Rating compact value={score.up - score.down} myVote={score.myVote} onvote={rate} />
+		<Rating
+			compact
+			value={score.up - score.down}
+			myVote={score.myVote}
+			reactions={comment.reactions}
+			onvote={rate}
+			onreact={react}
+		/>
 	</div>
 {/snippet}
 
@@ -420,14 +428,16 @@
 			{/if}
 
 			{#if votes === 'reactions'}
-				<Reactions compact reactions={comment.reactions} onreact={(id) => toggleCommentReaction(comment, id)} />
+				<Reactions compact reactions={comment.reactions} onreact={react} />
 			{:else if votes === 'likes'}
 				<PostButton
 					kind="like"
 					title="Лайк"
 					value={score.up || undefined}
 					active={score.myVote === 1}
-					onclick={() => voteComment(comment, 1)}
+					reactions={comment.reactions}
+					onreact={react}
+					onclick={() => rate(1)}
 				/>
 			{/if}
 
@@ -451,7 +461,15 @@
 			{#if votes === 'rating' && !arrowsLeft}
 				{@render vote()}
 			{:else if votes === 'likes'}
-				<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => voteComment(comment, -1)} />
+				<PostButton
+					kind="dislike"
+					title="Дизлайк"
+					right
+					value={score.down || undefined}
+					active={score.myVote === -1}
+					reactions={comment.reactions}
+					onclick={() => rate(-1)}
+				/>
 			{/if}
 
 			<div class="comment-item__break"></div>

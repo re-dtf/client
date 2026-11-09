@@ -3,8 +3,7 @@ import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { openOverlay } from '$lib/navigation';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { applyReaction, nextReactionId } from '$lib/reactions';
-import { voteReaction } from '$lib/storage/reactions.svelte';
+import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from './ui/notify.svelte';
 import { haptics } from '$lib/haptics';
 
@@ -57,8 +56,9 @@ export function reactToPost(post: Post, reactionId: number): boolean {
 	return true;
 }
 
-/** Голос «за» или «против» — реакции, которые пользователь выбрал для лайка и дизлайка в настройках */
-export const votePost = (post: Post, sign: 1 | -1) => reactToPost(post, voteReaction(sign));
+/** Голос «за» или «против» — реакции, которые пользователь выбрал для лайка и дизлайка в настройках (или снятие уже поставленной реакции того же знака) */
+export const votePost = (post: Post, sign: 1 | -1) =>
+	reactToPost(post, nextVoteReactionId(withActions(post).reactions, sign));
 
 export function toggleFavoritePost(post: Post) {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return;

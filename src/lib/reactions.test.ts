@@ -2,7 +2,7 @@ import { beforeEach, describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { applyReaction, nextReactionId, rankByScore, scoreOf, votesOf } from './reactions';
+import { applyReaction, customVoteIconOf, nextReactionId, nextVoteReactionId, rankByScore, scoreOf, votesOf } from './reactions';
 import { reactionSettings, resetRules, setRule, voteReaction } from './storage/reactions.svelte';
 import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS } from './config/reactions';
 
@@ -125,5 +125,66 @@ describe('free vs plus reactions', () => {
 
 		const settingsSvelte = fs.readFileSync(path.resolve(__dirname, 'components/settings/ReactionsSettings.svelte'), 'utf8');
 		expect(settingsSvelte).toContain('picks-divider');
+	});
+});
+
+describe('customVoteIconOf', () => {
+	it('возвращает undefined без реакции или для основной реакции лайка/дизлайка', () => {
+		expect(customVoteIconOf(undefined, 1)).toBeUndefined();
+		expect(customVoteIconOf(undefined, -1)).toBeUndefined();
+		expect(customVoteIconOf({ counters: [], reactionId: 0 }, 1)).toBeUndefined();
+		expect(customVoteIconOf({ counters: [], reactionId: 1 }, 1)).toBeUndefined();
+		expect(customVoteIconOf({ counters: [], reactionId: 23 }, -1)).toBeUndefined();
+	});
+
+	it('возвращает иконку для другой позитивной реакции у плюса', () => {
+		const r = customVoteIconOf({ counters: [], reactionId: 2 }, 1);
+		expect(r?.name).toBe('Огонь');
+		expect(r?.url).toBe('/reactions/2.png');
+		expect(customVoteIconOf({ counters: [], reactionId: 2 }, -1)).toBeUndefined();
+	});
+
+	it('возвращает иконку для другой негативной реакции у минуса', () => {
+		const r = customVoteIconOf({ counters: [], reactionId: 25 }, -1);
+		expect(r?.name).toBe('Клоун');
+		expect(r?.url).toBe('/reactions/25.webp');
+		expect(customVoteIconOf({ counters: [], reactionId: 25 }, 1)).toBeUndefined();
+	});
+
+	it('возвращает иконку для нейтральной реакции у плюса', () => {
+		const r = customVoteIconOf({ counters: [], reactionId: 4 }, 1);
+		expect(r?.name).toBe('Смех');
+		expect(r?.url).toBe('/reactions/4.png');
+		expect(customVoteIconOf({ counters: [], reactionId: 4 }, -1)).toBeUndefined();
+	});
+});
+
+describe('nextVoteReactionId', () => {
+	it('возвращает стандартный лайк/дизлайк без реакции', () => {
+		expect(nextVoteReactionId(undefined, 1)).toBe(1);
+		expect(nextVoteReactionId(undefined, -1)).toBe(23);
+		expect(nextVoteReactionId({ counters: [], reactionId: 0 }, 1)).toBe(1);
+		expect(nextVoteReactionId({ counters: [], reactionId: 0 }, -1)).toBe(23);
+	});
+
+	it('возвращает текущий id при клике на тот же знак (для снятия голоса)', () => {
+		// Если стоит 2 (Огонь, позитивная), клик по лайку (1) возвращает 2 для снятия через nextReactionId
+		expect(nextVoteReactionId({ counters: [], reactionId: 2 }, 1)).toBe(2);
+		// Если стоит 25 (Клоун, негативная), клик по дизлайку (-1) возвращает 25 для снятия
+		expect(nextVoteReactionId({ counters: [], reactionId: 25 }, -1)).toBe(25);
+	});
+
+	it('возвращает текущий id при клике на лайк для нейтральной реакции (снятие голоса)', () => {
+		// 4 — Смех (нейтральная по умолчанию), клик по лайку снимает
+		expect(nextVoteReactionId({ counters: [], reactionId: 4 }, 1)).toBe(4);
+		// При клике на дизлайк переключает на дизлайк
+		expect(nextVoteReactionId({ counters: [], reactionId: 4 }, -1)).toBe(23);
+	});
+
+	it('переключает на дефолтную реакцию другого знака при клике на противоположную кнопку', () => {
+		// Если стоит 2 (Огонь, позитивная), клик по дизлайку (-1) переключает на дизлайк (23)
+		expect(nextVoteReactionId({ counters: [], reactionId: 2 }, -1)).toBe(23);
+		// Если стоит 25 (Клоун, негативная), клик по лайку (1) переключает на лайк (1)
+		expect(nextVoteReactionId({ counters: [], reactionId: 25 }, 1)).toBe(1);
 	});
 });

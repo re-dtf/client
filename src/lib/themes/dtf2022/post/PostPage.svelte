@@ -33,6 +33,7 @@
 	let arrows = $derived(votes === 'rating');
 	let arrowsLeft = $derived(arrows && themeSettings.arrowsSide === 'left');
 	let iconSize = $derived(arrows ? 22 : 20);
+	let onreact = $derived(post.sourceId === 'dtf' ? (id: number) => reactToPost(post, id) : undefined);
 	let showReposts = $state(false);
 
 	function scrollToComments(e: MouseEvent) {
@@ -75,13 +76,21 @@
 			{/if}
 
 			{#if votes === 'reactions'}
-				<Reactions reactions={post.reactions} onreact={(id) => reactToPost(post, id)} />
+				<Reactions reactions={post.reactions} {onreact} />
 			{/if}
 
 			<div class={['post-footer', { 'post-footer--arrows': arrows, 'post-footer--arrows-left': arrowsLeft }]}>
 				<div class="post-footer__controls">
 					{#if votes === 'likes'}
-						<PostButton kind="like" title="Лайк" value={score.up || undefined} active={score.myVote === 1} onclick={() => votePost(post, 1)} />
+						<PostButton
+							kind="like"
+							title="Лайк"
+							value={score.up || undefined}
+							active={score.myVote === 1}
+							reactions={post.reactions}
+							{onreact}
+							onclick={() => votePost(post, 1)}
+						/>
 					{/if}
 					<PostButton kind="comments" title="Комментарии" href="#comments" {iconSize} value={post.commentsCount} onclick={scrollToComments} />
 					<PostButton
@@ -99,10 +108,24 @@
 				</div>
 
 				{#if votes === 'likes'}
-					<PostButton kind="dislike" title="Дизлайк" right value={score.down || undefined} active={score.myVote === -1} onclick={() => votePost(post, -1)} />
+					<PostButton
+						kind="dislike"
+						title="Дизлайк"
+						right
+						value={score.down || undefined}
+						active={score.myVote === -1}
+						reactions={post.reactions}
+						onclick={() => votePost(post, -1)}
+					/>
 				{:else if votes === 'rating'}
 					<div class="post-footer__rating">
-						<Rating value={score.up - score.down} myVote={score.myVote} onvote={(sign) => votePost(post, sign)} />
+						<Rating
+							value={score.up - score.down}
+							myVote={score.myVote}
+							reactions={post.reactions}
+							onvote={(sign) => votePost(post, sign)}
+							{onreact}
+						/>
 					</div>
 				{/if}
 			</div>

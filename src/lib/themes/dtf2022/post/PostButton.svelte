@@ -27,6 +27,9 @@
 </script>
 
 <script lang="ts">
+	import type { Reactions } from '$lib/api/types';
+	import { customVoteIconOf } from '$lib/reactions';
+	import ReactionPopup from './ReactionPopup.svelte';
 	import { formatNumber } from '../format';
 	import { lottie, preloadLottie } from './lottie';
 
@@ -42,8 +45,10 @@
 		iconSize = 20,
 		active = false,
 		right = false,
+		reactions,
 		onclick,
-		onvalueclick
+		onvalueclick,
+		onreact
 	}: {
 		kind: PostButtonKind;
 		title: string;
@@ -54,14 +59,20 @@
 		active?: boolean;
 		/** Прижать к правому краю flex-строки */
 		right?: boolean;
+		reactions?: Reactions;
 		onclick?: (e: MouseEvent) => void;
 		/** Клик по числу вместо `onclick` (у репоста число открывает список) */
 		onvalueclick?: () => void;
+		onreact?: (id: number) => void;
 	} = $props();
+
+	let custom = $derived(kind === 'like' ? customVoteIconOf(reactions, 1) : kind === 'dislike' ? customVoteIconOf(reactions, -1) : undefined);
+	let isVoteActive = $derived(active || !!custom);
+	let resolvedTitle = $derived(custom?.name ?? title);
 
 	// В активном состоянии у лайка и дизлайка своя иконка (v_like_active), у закладки — залитая (v_bookmark_solid), а не обводка
 	let iconName = $derived(
-		!active ? ICONS[kind] : kind === 'bookmark' ? 'v_bookmark_solid' : kind === 'like' || kind === 'dislike' ? `${ICONS[kind]}_active` : ICONS[kind]
+		!isVoteActive ? ICONS[kind] : kind === 'bookmark' ? 'v_bookmark_solid' : kind === 'like' || kind === 'dislike' ? `${ICONS[kind]}_active` : ICONS[kind]
 	);
 
 	$effect(() => {
@@ -74,14 +85,14 @@
 	let className = $derived([
 		'post-button',
 		`post-button--${kind}`,
-		{ 'post-button--active': active, 'post-button--right': right, 'post-button--lottie-animated': animating }
+		{ 'post-button--active': isVoteActive, 'post-button--right': right, 'post-button--lottie-animated': animating }
 	]);
-	let ariaLabel = $derived(value === undefined ? title : `${title}: ${value}`);
+	let ariaLabel = $derived(value === undefined ? resolvedTitle : `${resolvedTitle}: ${value}`);
 
 	/** Анимация при постановке оценки (не при снятии) — только у кнопок с обработчиком */
 	function handleClick(e: MouseEvent) {
 		if (onvalueclick && (e.target as Element).closest('.post-button__value')) return onvalueclick();
-		if (onclick && !active && !animating && (kind === 'like' || kind === 'dislike')) {
+		if (onclick && !isVoteActive && !animating && (kind === 'like' || kind === 'dislike')) {
 			animation = kind === 'like' && Math.random() < RARE_LIKE_CHANCE ? LOTTIE.likeRare : LOTTIE[kind];
 		}
 		onclick?.(e);
@@ -90,9 +101,13 @@
 
 {#snippet content()}
 	<span class="post-button__icon">
-		<svg height={iconSize} width={iconSize} class="icon" aria-hidden="true">
-			<use href="/icons.svg#{iconName}"></use>
-		</svg>
+		{#if custom}
+			<img src={custom.url} width={iconSize} height={iconSize} class="post-button__custom-icon" alt="" />
+		{:else}
+			<svg height={iconSize} width={iconSize} class="icon" aria-hidden="true">
+				<use href="/icons.svg#{iconName}"></use>
+			</svg>
+		{/if}
 	</span>
 	{#if value !== undefined}
 		<span class="post-button__value">{formatNumber(value)}</span>
@@ -102,13 +117,15 @@
 	{/if}
 {/snippet}
 
-{#if href}
-	<a {href} class={className} {title} aria-label={ariaLabel} {onclick}>{@render content()}</a>
-{:else}
-	<button class={className} {title} aria-label={ariaLabel} aria-pressed={TOGGLES.has(kind) ? active : undefined} onclick={handleClick}>
-		{@render content()}
-	</button>
-{/if}
+<ReactionPopup {reactions} {onreact}>
+	{#if href}
+		<a {href} class={className} title={resolvedTitle} aria-label={ariaLabel} {onclick}>{@render content()}</a>
+	{:else}
+		<button class={className} title={resolvedTitle} aria-label={ariaLabel} aria-pressed={TOGGLES.has(kind) ? isVoteActive : undefined} onclick={handleClick}>
+			{@render content()}
+		</button>
+	{/if}
+</ReactionPopup>
 
 <style>
 	.post-button {
@@ -133,11 +150,18 @@
 	}
 
 	.post-button__icon {
+		position: relative;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		/* Делает иконку контейнером для круга ::before */
 		transform: translateZ(0);
+	}
+
+	.post-button__custom-icon {
+		display: block;
+		object-fit: contain;
+		pointer-events: none;
 	}
 
 	/* Круг подсветки при наведении */

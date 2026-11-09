@@ -1,5 +1,6 @@
 import type { Likes, Reactions } from '$lib/api/types';
-import { ruleOf } from '$lib/storage/reactions.svelte';
+import { ruleOf, voteReaction } from '$lib/storage/reactions.svelte';
+import { REACTIONS } from '$lib/config/reactions';
 
 /*
  * Лайков и дизлайков на DTF больше нет, только реакции. «Оценка» поста или комментария строится из них
@@ -69,4 +70,20 @@ export function applyReaction(reactions: Reactions | undefined, id: number): Rea
 /** Какую реакцию отправить при нажатии на `id`: повторное нажатие снимает */
 export function nextReactionId(reactions: Reactions | undefined, id: number): number {
 	return reactions?.reactionId === id ? 0 : id;
+}
+
+/**
+ * Реакция для отправки при клике на лайк (+1) или дизлайк (-1).
+ * Если на кнопке уже висит своя реакция (того же знака или нейтральная у плюса),
+ * возвращает её id — чтобы `nextReactionId` снял голос (toggle off).
+ */
+export function nextVoteReactionId(reactions: Reactions | undefined, sign: 1 | -1): number {
+	const id = reactions?.reactionId;
+	return id && (ruleOf(id).kind === 'negative') === (sign < 0) ? id : voteReaction(sign);
+}
+
+/** Иконка реакции, если поставлена отличная от основной (лайк/дизлайк) */
+export function customVoteIconOf(reactions: Reactions | undefined, sign: 1 | -1) {
+	const id = nextVoteReactionId(reactions, sign);
+	return id !== voteReaction(sign) ? REACTIONS[id] : undefined;
 }

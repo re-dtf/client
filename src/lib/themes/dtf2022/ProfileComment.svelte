@@ -31,6 +31,7 @@
 
 	let votes = $derived(themeSettings.votes);
 	let score = $derived(votesOf(comment));
+	const react = (id: number) => toggleCommentReaction(comment, id);
 	let filterMatch = $derived(matchCommentFilter(comment));
 	let revealed = $state(false);
 	let isFiltered = $derived(!!filterMatch && !revealed);
@@ -139,11 +140,26 @@
 
 		<div class="profile-comment__vote">
 			{#if votes === 'reactions'}
-				<Reactions compact reactions={comment.reactions} onreact={(id) => toggleCommentReaction(comment, id)} />
+				<Reactions compact reactions={comment.reactions} onreact={react} />
 			{:else if votes === 'likes'}
-				<PostButton kind="like" title="Лайк" value={score.up || undefined} active={score.myVote === 1} onclick={() => voteComment(comment, 1)} />
+				<PostButton
+					kind="like"
+					title="Лайк"
+					value={score.up || undefined}
+					active={score.myVote === 1}
+					reactions={comment.reactions}
+					onreact={react}
+					onclick={() => voteComment(comment, 1)}
+				/>
 			{:else}
-				<Rating compact value={score.up - score.down} myVote={score.myVote} onvote={(vote) => voteComment(comment, vote)} />
+				<Rating
+					compact
+					value={score.up - score.down}
+					myVote={score.myVote}
+					reactions={comment.reactions}
+					onvote={(vote) => voteComment(comment, vote)}
+					onreact={react}
+				/>
 			{/if}
 		</div>
 	</div>
@@ -215,6 +231,11 @@
 		padding: 9px 20px 5px;
 		background-color: var(--bg-card);
 		overflow-wrap: anywhere;
+	}
+
+	.profile-comment:has(:global(.post-reactions__picker)),
+	.profile-comment:has(:global(.popover)) {
+		z-index: 20;
 	}
 
 	.profile-comment--filtered {

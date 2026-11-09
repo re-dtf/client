@@ -1,8 +1,7 @@
 import type { Comment } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { ensureLogin } from '../actions.svelte';
-import { applyReaction, nextReactionId } from '$lib/reactions';
-import { voteReaction } from '$lib/storage/reactions.svelte';
+import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from '../ui/notify.svelte';
 import { haptics } from '$lib/haptics';
 
@@ -25,8 +24,9 @@ export function toggleCommentReaction(comment: Comment, reactionId: number): boo
 	return true;
 }
 
-/** Голос «за» или «против» — реакции, которые пользователь выбрал для лайка и дизлайка в настройках */
-export const voteComment = (comment: Comment, sign: 1 | -1) => toggleCommentReaction(comment, voteReaction(sign));
+/** Голос «за» или «против» — реакции, которые пользователь выбрал для лайка и дизлайка в настройках (или снятие уже поставленной реакции того же знака) */
+export const voteComment = (comment: Comment, sign: 1 | -1) =>
+	toggleCommentReaction(comment, nextVoteReactionId(comment.reactions, sign));
 
 export async function toggleCommentFavorite(comment: Comment) {
 	if (!ensureLogin()) return;
