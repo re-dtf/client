@@ -11,7 +11,12 @@
 import { untrack } from 'svelte';
 import { readPersisted } from './readPersisted';
 
-export function persistedState<T>(key: string, defaults: T, version = 1) {
+export function persistedState<T>(
+	key: string,
+	defaults: T,
+	version = 1,
+	migrate?: (saved: unknown, oldVersion: number) => T
+) {
 	// localStorage может быть недоступен (приватный режим, запрет cookies)
 	const storage = (): Storage | null => {
 		try {
@@ -21,7 +26,7 @@ export function persistedState<T>(key: string, defaults: T, version = 1) {
 		}
 	};
 
-	const read = () => readPersisted(key, defaults, version);
+	const read = () => readPersisted(key, defaults, version, migrate);
 
 	function write(next: T) {
 		try {
@@ -31,7 +36,19 @@ export function persistedState<T>(key: string, defaults: T, version = 1) {
 		}
 	}
 
-	let value = $state.raw<T>(read());
+	const initial = read();
+	let value = $state.raw<T>(initial);
+
+	// Если при чтении выполнилась миграция данных старой версии, перезаписываем актуальной версией
+	try {
+		const raw = storage()?.getItem(key);
+		if (raw) {
+			const saved = JSON.parse(raw);
+			if (saved?.v !== version && migrate) {
+				write(initial);
+			}
+		}
+	} catch {}
 
 	// Значение изменили в другой вкладке — подхватываем
 	globalThis.addEventListener?.('storage', (e: StorageEvent) => {

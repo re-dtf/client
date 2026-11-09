@@ -48,10 +48,29 @@ describe('persistedState', () => {
 		expect(persistedState('redtf:test:d', { a: 1, b: 2 }).value).toEqual({ a: 5, b: 2 });
 	});
 
-	it('при другой версии формата берёт значение по умолчанию', () => {
+	it('при другой версии формата берёт значение по умолчанию без функции migrate', () => {
 		persistedState('redtf:test:e', 'old', 1).value = 'saved';
 
 		expect(persistedState('redtf:test:e', 'new', 2).value).toBe('new');
+	});
+
+	it('при наличии функции migrate успешно переносит данные старой версии и сохраняет новую версию', () => {
+		persistedState('redtf:test:migrate', { count: 10 }, 1).value = { count: 10 };
+
+		const migrated = persistedState(
+			'redtf:test:migrate',
+			{ count: 0, multiplier: 1 },
+			2,
+			(oldData: any, oldVersion: number) => {
+				expect(oldVersion).toBe(1);
+				return { count: oldData.count * 2, multiplier: 2 };
+			}
+		);
+
+		expect(migrated.value).toEqual({ count: 20, multiplier: 2 });
+		// Проверяем, что в localStorage записалась версия 2 с новыми данными
+		const stored = JSON.parse(localStorage.getItem('redtf:test:migrate')!);
+		expect(stored).toEqual({ v: 2, d: { count: 20, multiplier: 2 } });
 	});
 
 	it('при битом JSON берёт значение по умолчанию', () => {
