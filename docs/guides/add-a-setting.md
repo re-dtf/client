@@ -46,7 +46,7 @@
 2. Добавьте поле на подходящую страницу в `components/settings/SettingsScreen.svelte` (новая страница — это новый пункт в `navigation` и ветка в разметке). Для выбора из вариантов и переключателя опишите поле и используйте `FieldControl`, для остального — `SettingsGroup` с обычным `input` и функциональной привязкой (образец — `ProxySettings.svelte`):
 
    ```svelte
-   <input bind:value={() => settings.value.proxyUrl, (v) => settings.patch({ proxyUrl: v })} />
+   <input type="checkbox" bind:checked={() => settings.value.collectStats, (v) => settings.patch({ collectStats: v })} />
    ```
 
 3. Читайте через `settings.value.<поле>`.

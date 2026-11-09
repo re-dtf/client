@@ -8,16 +8,16 @@
 
 ```ts
 type OverlayData =
-	| { type: 'post'; data: { postId: number; sourceId: string } }
+	| { type: 'post'; data: { postId: number; sourceId: string; commentId?: number; focusNonce?: number; toComments?: boolean; anchor?: string } }
 	| { type: 'profile'; data: { profileId: number | string } }
-	| { type: 'settings' }
+	| { type: 'settings'; data?: { page?: string; section?: string; solo?: boolean } }
 	| { type: 'notifications' }
 	| { type: 'tag'; data: { tag: string } }
 	| { type: 'search'; data: { query: string } }
 	| { type: 'drafts' }
 	| { type: 'login' }
-	| { type: 'editor'; data?: { postId?: number | null } }
-	| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number }[]; index: number } };
+	| { type: 'editor'; data?: { postId?: number | null; repostId?: number } }
+	| { type: 'lightbox'; data: { images: { uuid: string; width: number; height: number; type?: string }[]; index: number } };
 
 type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' | 'fullscreen' };
 ```
@@ -41,9 +41,11 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' |
 | `openPost(e, post)` | обработчик клика по ссылке на пост |
 | `openProfile(e, id)` | то же для профиля |
 | `openFeed(e)` | обработчик клика по логотипу и «Главной» |
+| `openNotifications(e?)`, `openTag(tag, e?)`, `openSearch(query, e?)`, `openDrafts(e?)`, `openSettings(page?, solo?, e?)` | быстрые обработчики открытия соответствующих оверлеев |
 | `openDtfUrl(url)` | открыть ссылку на DTF внутри приложения (для deep links и переходов). Возвращает `true`, если цель поддержана |
 | `openDtfLink(e, href)` | обработчик клика по ссылке на dtf.ru: открывает поддерживаемые адреса оверлеями, остальное оставляет браузеру |
-| `getPostPath(post)`, `getProfilePath(id)` | адрес для `href` |
+| `getPostPath(post)`, `getProfilePath(id)`, `getTagPath(tag)`, `getSearchPath(query)`, `getSettingsPath(page?)` | адреса для `href` |
+| `pushSubstate(key, value)`, `popSubstate()` | управление промежуточными внутренними состояниями окон (навигация по подменю без смены URL) |
 
 Ссылки на посты и профили остаются обычными `<a href>`: `openPost`/`openProfile` перехватывают только обычный клик, а клик с Ctrl, Cmd, Shift и средней кнопкой браузер откроет в новой вкладке. Так же работают открытие по прямой ссылке и «копировать адрес».
 
