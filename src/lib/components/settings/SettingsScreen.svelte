@@ -961,26 +961,26 @@
 <style>
 	/* Окно в духе libadwaita: светлое, карточки приподняты мягкими тенями, отступы широкие */
 	.window {
-		--st-bg: #fafafb;
-		--st-side: #f3f3f5;
-		--st-side-border: rgba(0, 0, 6, 0.07);
-		--st-header: 48px;
-		--st-card: #fff;
-		--st-card-shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05);
-		--st-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 2px 6px 2px rgba(0, 0, 0, 0.03);
-		--st-separator: rgba(0, 0, 0, 0.06);
-		--st-hover: rgba(0, 0, 0, 0.035);
-		--st-button: rgba(0, 0, 0, 0.05);
-		--st-button-hover: rgba(0, 0, 0, 0.09);
-		--st-field: rgba(0, 0, 0, 0.045);
-		--st-track: #d6d6d6;
-		--st-text: var(--text-primary, #1e1e1e);
-		--st-muted: var(--text-muted, #66646b);
-		--st-accent: var(--color-blue, #3584e4);
-		--st-danger: #c01c28;
-		--st-ok: #1f8a3b;
-		--st-nav-active-bg: var(--st-card);
-		--st-nav-active-shadow: var(--st-card-shadow-soft);
+		--st-bg: var(--theme-st-bg, #fafafb);
+		--st-side: var(--theme-st-side, #f3f3f5);
+		--st-side-border: var(--theme-st-side-border, rgba(0, 0, 6, 0.07));
+		--st-header: var(--theme-st-header, 48px);
+		--st-card: var(--theme-st-card, #fff);
+		--st-card-shadow-soft: var(--theme-st-card-shadow-soft, 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05));
+		--st-card-shadow: var(--theme-st-card-shadow, 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 3px 1px rgba(0, 0, 0, 0.07), 0 2px 6px 2px rgba(0, 0, 0, 0.03));
+		--st-separator: var(--theme-st-separator, rgba(0, 0, 0, 0.06));
+		--st-hover: var(--theme-st-hover, rgba(0, 0, 0, 0.035));
+		--st-button: var(--theme-st-button, rgba(0, 0, 0, 0.05));
+		--st-button-hover: var(--theme-st-button-hover, rgba(0, 0, 0, 0.09));
+		--st-field: var(--theme-st-field, rgba(0, 0, 0, 0.045));
+		--st-track: var(--theme-st-track, #d6d6d6);
+		--st-text: var(--theme-st-text, var(--text-primary, #1e1e1e));
+		--st-muted: var(--theme-st-muted, var(--text-muted, #66646b));
+		--st-accent: var(--theme-st-accent, var(--color-blue, #3584e4));
+		--st-danger: var(--theme-st-danger, #c01c28);
+		--st-ok: var(--theme-st-ok, #1f8a3b);
+		--st-nav-active-bg: var(--theme-st-nav-active-bg, var(--st-card));
+		--st-nav-active-shadow: var(--theme-st-nav-active-shadow, var(--st-card-shadow-soft));
 
 		position: relative;
 		container-type: inline-size;
@@ -998,56 +998,30 @@
 
 	/* Тёмная тема окна настроек (Libadwaita Dark) */
 	:global(html[data-theme-mode='dark']) .window {
-		--st-bg: #242424;
-		--st-side: #2e2e2e;
-		--st-side-border: rgba(255, 255, 255, 0.08);
-		--st-card: #303030;
-		--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
-		--st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
-		--st-separator: rgba(255, 255, 255, 0.08);
-		--st-hover: rgba(255, 255, 255, 0.06);
-		--st-button: rgba(255, 255, 255, 0.08);
-		--st-button-hover: rgba(255, 255, 255, 0.12);
-		--st-field: rgba(255, 255, 255, 0.06);
-		--st-track: #4a4a4d;
-		--st-muted: #9a9996;
-		--st-text: #ffffff;
-		--st-accent: var(--color-blue, #78aeed);
-		--st-danger: #e01b24;
-		--st-ok: #2ec27e;
-		--st-nav-active-bg: rgba(255, 255, 255, 0.12);
-		--st-nav-active-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.25);
+		--st-bg: var(--theme-st-bg, #242424);
+		--st-side: var(--theme-st-side, #2e2e2e);
+		--st-side-border: var(--theme-st-side-border, rgba(255, 255, 255, 0.08));
+		--st-card: var(--theme-st-card, #303030);
+		--st-card-shadow-soft: var(--theme-st-card-shadow-soft, 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2));
+		--st-card-shadow: var(--theme-st-card-shadow, 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px 1px rgba(0, 0, 0, 0.3));
+		--st-separator: var(--theme-st-separator, rgba(255, 255, 255, 0.08));
+		--st-hover: var(--theme-st-hover, rgba(255, 255, 255, 0.06));
+		--st-button: var(--theme-st-button, rgba(255, 255, 255, 0.08));
+		--st-button-hover: var(--theme-st-button-hover, rgba(255, 255, 255, 0.12));
+		--st-field: var(--theme-st-field, rgba(255, 255, 255, 0.06));
+		--st-track: var(--theme-st-track, #4a4a4d);
+		--st-muted: var(--theme-st-muted, #9a9996);
+		--st-text: var(--theme-st-text, #ffffff);
+		--st-accent: var(--theme-st-accent, var(--color-blue, #78aeed));
+		--st-danger: var(--theme-st-danger, #e01b24);
+		--st-ok: var(--theme-st-ok, #2ec27e);
+		--st-nav-active-bg: var(--theme-st-nav-active-bg, rgba(255, 255, 255, 0.12));
+		--st-nav-active-shadow: var(--theme-st-nav-active-shadow, 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.25));
 		box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.1);
 		color: var(--st-text);
 	}
 
-	@media (prefers-color-scheme: dark) {
-		:global(html:not([data-theme-mode='light'])) .window {
-			--st-bg: #242424;
-			--st-side: #2e2e2e;
-			--st-side-border: rgba(255, 255, 255, 0.08);
-			--st-card: #303030;
-			--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.2);
-			--st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
-			--st-separator: rgba(255, 255, 255, 0.08);
-			--st-hover: rgba(255, 255, 255, 0.06);
-			--st-button: rgba(255, 255, 255, 0.08);
-			--st-button-hover: rgba(255, 255, 255, 0.12);
-			--st-field: rgba(255, 255, 255, 0.06);
-			--st-track: #4a4a4d;
-			--st-muted: #9a9996;
-		--st-text: #ffffff;
-			--st-accent: var(--color-blue, #78aeed);
-			--st-danger: #e01b24;
-			--st-ok: #2ec27e;
-			--st-nav-active-bg: rgba(255, 255, 255, 0.12);
-			--st-nav-active-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.25);
-			box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.4), 0 12px 48px rgba(0, 0, 0, 0.6);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-			color: var(--st-text);
-		}
-	}
 
 	.panes {
 		display: flex;

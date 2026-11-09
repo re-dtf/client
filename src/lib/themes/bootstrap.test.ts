@@ -34,6 +34,7 @@ describe('синхронное оформление до загрузки при
 	it.each([
 		['redtf', 'auto', true, 'dark', '#141414'],
 		['redtf', 'dark', false, 'dark', '#141414'],
+		['redtf', 'amoled', false, 'dark', '#000000'],
 		['redtf', 'light', true, 'light', '#f2f2f2'],
 		['dtf2022', 'auto', true, 'light', '#f2f2f2'],
 		['redtf', 'removed', true, 'light', '#f2f2f2'],

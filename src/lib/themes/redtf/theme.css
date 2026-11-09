@@ -446,18 +446,18 @@
 	--focus-ring: 0 0 0 3px rgba(70, 131, 217, 0.3);
 
 	/* Настройки libadwaita */
-	--st-bg: #242426;
-	--st-side: #1c1c1e;
-	--st-side-border: rgba(255, 255, 255, 0.08);
-	--st-card: #2c2c30;
-	--st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2);
-	--st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
-	--st-separator: rgba(255, 255, 255, 0.08);
-	--st-hover: rgba(255, 255, 255, 0.06);
-	--st-button: rgba(255, 255, 255, 0.08);
-	--st-button-hover: rgba(255, 255, 255, 0.12);
-	--st-field: rgba(255, 255, 255, 0.06);
-	--st-track: #484850;
+	--theme-st-bg: #242426;
+	--theme-st-side: #1c1c1e;
+	--theme-st-side-border: rgba(255, 255, 255, 0.08);
+	--theme-st-card: #2c2c30;
+	--theme-st-card-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 1px 2px rgba(0, 0, 0, 0.2);
+	--theme-st-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 3px 1px rgba(0, 0, 0, 0.3);
+	--theme-st-separator: rgba(255, 255, 255, 0.08);
+	--theme-st-hover: rgba(255, 255, 255, 0.06);
+	--theme-st-button: rgba(255, 255, 255, 0.08);
+	--theme-st-button-hover: rgba(255, 255, 255, 0.12);
+	--theme-st-field: rgba(255, 255, 255, 0.06);
+	--theme-st-track: #484850;
 }
 
 :root[data-theme~="redtf"][data-theme-mode="dark"] .header {
@@ -466,4 +466,31 @@
 
 :root[data-theme~="redtf"][data-theme-mode="dark"][data-header-blur="true"] .header {
 	background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* AMOLED использует тёмные тексты и состояния, меняя поверхности и их разделение. */
+:root[data-theme~="redtf"][data-palette="amoled"] {
+	--bg-main: #000000;
+	--bg-sidebar-deep: #000000;
+	--bg-card: #000000;
+	--bg-header: #000000;
+	--bg-secondary: #101012;
+	--bg-tertiary: #18181b;
+	--bg-modal: #08080a;
+	--bg-search-field-focus: #18181b;
+	--bg-read-hover: #141416;
+	--bg-editor-dragover-preview: #18181b;
+	--bg-button: #18181b;
+	--border-color: #2c2c30;
+	--border-subtle: rgba(255, 255, 255, 0.12);
+	--shadow-card: 0 0 0 1px var(--border-subtle);
+	--shadow-popup: 0 0 0 1px var(--border-color), 0 8px 24px rgba(0, 0, 0, 0.6);
+	--shadow-dropdown: var(--shadow-popup);
+	--shadow-picker: var(--shadow-popup);
+	--shadow-toast: var(--shadow-popup);
+	--theme-st-bg: #000000;
+	--theme-st-side: #08080a;
+	--theme-st-card: #101012;
+	--theme-st-side-border: var(--border-subtle);
+	--theme-st-track: #303034;
 }

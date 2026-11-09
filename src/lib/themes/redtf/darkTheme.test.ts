@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('redtf dark mode configuration', () => {
 	it('тема определяет доступные палитры и системный выбор', () => {
-		expect(redtfTheme.palettes?.options.map(p => p.id)).toEqual(['light', 'dark']);
+		expect(redtfTheme.palettes?.options.map(p => p.id)).toEqual(['light', 'dark', 'amoled']);
 		expect(dtf2022Theme.palettes?.options.map(p => p.id)).toEqual(['light']);
 		activeTheme.set('redtf');
 		expect(activeThemeSettings().value.palette).toBe('auto');
