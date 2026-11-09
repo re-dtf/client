@@ -13,6 +13,10 @@
 
 	let index = $derived(Math.max(0, steps.indexOf(value)));
 	let last = $derived(steps.length - 1);
+
+	function preview(input: HTMLInputElement, active: boolean) {
+		input.closest('.window, .welcome')?.toggleAttribute('data-slider-drag', active);
+	}
 </script>
 
 <div class="slider">
@@ -28,11 +32,16 @@
 			aria-valuetext="{value}{unit}"
 			oninput={(e) => onchange(steps[+e.currentTarget.value])}
 			onpointerdown={(e) => {
-				// Пока ползунок зажат, окно (SettingsScreen) гасит всё остальное; захват указателя гарантирует lostpointercapture при отпускании и отмене
+				// Контейнер гасит окружение; захват гарантирует завершение предпросмотра при отпускании и отмене
 				e.currentTarget.setPointerCapture(e.pointerId);
-				e.currentTarget.closest('.window')?.setAttribute('data-slider-drag', '');
+				preview(e.currentTarget, true);
 			}}
-			onlostpointercapture={(e) => e.currentTarget.closest('.window')?.removeAttribute('data-slider-drag')}
+			onlostpointercapture={(e) => preview(e.currentTarget, false)}
+			onkeydown={(e) => {
+				if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) preview(e.currentTarget, true);
+			}}
+			onkeyup={(e) => preview(e.currentTarget, false)}
+			onblur={(e) => preview(e.currentTarget, false)}
 		/>
 		<div class="slider__marks" aria-hidden="true">
 			{#each steps as step, i (step)}

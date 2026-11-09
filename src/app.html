@@ -156,7 +156,12 @@
 				background: rgb(var(--paper) / 0.8);
 				-webkit-backdrop-filter: blur(12.5px); backdrop-filter: blur(12.5px);
 			}
-			#splash[data-leaving] .splash-bg {
+			html:has(.welcome .preferences) #splash .splash-bg {
+				transition-duration: 0.45s;
+				transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+			}
+			#splash[data-leaving] .splash-bg,
+			html:has(.welcome[data-slider-drag]) #splash .splash-bg {
 				background: rgb(var(--paper) / 0);
 				-webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px);
 				opacity: 0;
@@ -171,6 +176,7 @@
 				transition: transform 1.1s var(--inOut), opacity 0.5s ease;
 			}
 			#splash[data-state='welcome'] { --ty: 0px; --s: 1; }
+			html:has(.welcome[data-slider-drag]) #splash .splash-logo { opacity: 0; }
 			#splash[data-leaving] .splash-logo {
 				opacity: 0;
 				transform: translate(-50%, var(--ty)) scale(calc(var(--s) * 1.08));
