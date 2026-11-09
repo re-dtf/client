@@ -7,6 +7,7 @@
 	import { ensureLogin, subscriptions } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import Popover from '../ui/Popover.svelte';
+	import { notify } from '../ui/notify.svelte';
 	import { formatFullDate, formatTime } from '../format';
 
 	let {
@@ -27,18 +28,31 @@
 		subscribe && !!post.subsite && post.subsite.id !== currentUser.value?.id && !subscriptions.isSubscribed(post.subsite.id, post.subsite.isSubscribed)
 	);
 
-	// Меню «⋯»: открытие на DTF, жалоба (на свой пост жалобы нет)
+	// Меню «⋯»: открытие на DTF, ссылка, жалоба (на свой пост жалобы нет)
 	let menuOpen = $state(false);
 	let complaining = $state(false);
-	let showMenu = $derived(post.sourceId === 'dtf');
 	let menuItems = $derived([
-		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' },
-		...(post.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
+		...(post.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
+		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
+		...(post.sourceId === 'dtf' && post.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
 	]);
+	let showMenu = $derived(menuItems.length > 0);
 
-	function selectMenuItem(item: 'open_dtf' | 'complain') {
+	async function copyLink() {
+		const url = new URL(resolve(getPostPath(post) as any), location.href);
+		try {
+			await navigator.clipboard.writeText(url.href);
+			notify.success('Ссылка скопирована');
+		} catch {
+			notify.error('Не удалось скопировать ссылку');
+		}
+	}
+
+	function selectMenuItem(item: 'open_dtf' | 'copy' | 'complain') {
 		if (item === 'open_dtf') {
 			window.open(`https://dtf.ru/${post.id}`, '_blank', 'noopener,noreferrer');
+		} else if (item === 'copy') {
+			copyLink();
 		} else if (item === 'complain') {
 			complaining = ensureLogin();
 		}

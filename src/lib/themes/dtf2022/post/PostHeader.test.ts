@@ -13,4 +13,14 @@ describe('PostHeader menu items', () => {
 		expect(svelteContent).toContain("icon: 'v_external'");
 		expect(svelteContent).toContain('https://dtf.ru/${post.id}');
 	});
+
+	it('содержит пункт меню "Копировать ссылку"', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostHeader.svelte'), 'utf8');
+
+		expect(svelteContent).toContain("label: 'Копировать ссылку'");
+		expect(svelteContent).toContain("icon: 'v_link'");
+		expect(svelteContent).toContain('navigator.clipboard.writeText');
+		expect(svelteContent).toContain("notify.success('Ссылка скопирована')");
+		expect(svelteContent).toContain("notify.error('Не удалось скопировать ссылку')");
+	});
 });
