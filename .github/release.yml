@@ -1,10 +1,19 @@
 changelog:
+  template: |
+    ### Главное в этом выпуске
+    <!-- Краткое описание релиза и ключевые изменения -->
+
+    $CHANGES
   categories:
     - title: "Новые возможности"
       labels:
         - "feature"
         - "enhancement"
         - "dtf-parity"
+    - title: "Улучшения"
+      labels:
+        - "improvement"
+        - "improvment"
     - title: "Исправления ошибок"
       labels:
         - "bug"
