@@ -198,7 +198,7 @@ describe('SettingsScreen', () => {
 		});
 
 		const themeIndex = body.indexOf('Выбор темы');
-		const colorSchemeIndex = body.indexOf('Тема оформления');
+		const colorSchemeIndex = body.indexOf('Цветовая палитра');
 		expect(themeIndex).toBeGreaterThan(-1);
 		expect(colorSchemeIndex).toBeGreaterThan(-1);
 		expect(themeIndex).toBeLessThan(colorSchemeIndex);

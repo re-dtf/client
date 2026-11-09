@@ -140,7 +140,6 @@
 	--bg-sidebar-deep: color-mix(in srgb, var(--bg-main) 96%, #000);
 	--page-gutter: 0px;
 	--text-gap: 0px;
-	color-scheme: light dark;
 	accent-color: var(--color-accent);
 	scrollbar-color: var(--text-placeholder) transparent;
 	--color-blue-tint: #e8f3ff;
@@ -150,14 +149,6 @@
 	:root[data-theme~="redtf"] {
 		--color-blue-tint: light-dark(#e8f3ff, rgba(70, 131, 217, 0.25));
 	}
-}
-
-:root[data-theme~="redtf"][data-color-scheme="light"] {
-	color-scheme: light;
-}
-
-:root[data-theme~="redtf"][data-theme-mode="dark"] {
-	color-scheme: dark;
 }
 
 @media (min-width: 640px) {

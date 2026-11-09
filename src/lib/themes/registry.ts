@@ -1,4 +1,5 @@
-import type { SettingField, ThemeColors, ThemeManifest } from './types';
+import { DEFAULT_PALETTES } from './palette';
+import type { SettingField, ThemePalettes, ThemeManifest } from './types';
 
 // Манифесты маленькие, поэтому грузятся сразу. Компоненты и стили тем грузятся лениво.
 const modules = import.meta.glob<{ default: ThemeManifest }>('./*/theme.ts', { eager: true });
@@ -37,16 +38,13 @@ export function themeChain(id: string, all: Map<string, ThemeManifest> = byId): 
 	return chain;
 }
 
-/**
- * Фирменные цвета темы с учётом наследования от основы.
- * Если у форка цвета не заданы, они берутся у темы-основы.
- */
-export function themeColors(id: string, all: Map<string, ThemeManifest> = byId): ThemeColors | undefined {
+/** Форк наследует набор палитр целиком, если не объявляет собственный. */
+export function themePalettes(id: string, all: Map<string, ThemeManifest> = byId): ThemePalettes {
 	for (const themeId of themeChain(id, all)) {
-		const colors = all.get(themeId)?.colors;
-		if (colors) return colors;
+		const palettes = all.get(themeId)?.palettes;
+		if (palettes) return palettes;
 	}
-	return undefined;
+	return DEFAULT_PALETTES;
 }
 
 /** Настройки темы вместе с настройками её основ. Поле форка с тем же key заменяет поле основы. */

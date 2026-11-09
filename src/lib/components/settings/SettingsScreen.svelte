@@ -23,9 +23,10 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import { reactionSettings } from '$lib/storage/reactions.svelte';
-	import type { NestingMode, CommentVirtualization, ColorScheme, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
+	import { paletteSelection } from '$lib/themes/palette';
 	import { haptics } from '$lib/haptics';
 	import { pushSubstate, popSubstate } from '$lib/navigation';
 
@@ -67,22 +68,14 @@
 	let currentDevice = $derived(device ?? detectedDevice);
 
 	// --- Описания общих полей настроек ---
-	let colorSchemeDescription = $derived(
-		activeTheme.supportsDarkMode
-			? 'Цветовая схема для интерфейса приложения и тем с поддержкой тёмного режима.'
-			: `Текущая тема (${activeTheme.name}) не поддерживает тёмный режим и отображается в светлом оформлении.`
-	);
-
-	let colorSchemeField = $derived<ChoiceField>({
-		key: 'colorScheme',
+	let paletteField = $derived<ChoiceField>({
+		key: 'palette',
 		type: 'radio',
-		title: 'Тема оформления',
-		description: colorSchemeDescription,
+		title: 'Цветовая палитра',
 		default: 'auto',
 		options: [
 			{ value: 'auto', title: 'Системная', description: 'Следовать настройкам системы' },
-			{ value: 'light', title: 'Светлая' },
-			{ value: 'dark', title: 'Тёмная' }
+			...activeTheme.palettes.options.map(palette => ({ value: palette.id, title: palette.title }))
 		]
 	});
 	const themeField: ChoiceField = {
@@ -739,9 +732,9 @@
 						{:else if selectedPageId === 'theme-select'}
 							<FieldControl field={themeField} value={activeTheme.id} onchange={(value) => activeTheme.set(String(value))} />
 							<FieldControl
-								field={colorSchemeField}
-								value={settings.value.colorScheme ?? 'auto'}
-								onchange={(value) => settings.patch({ colorScheme: value as ColorScheme })}
+								field={paletteField}
+								value={paletteSelection(activeTheme.palettes, activeThemeSettings().value.palette)}
+								onchange={(value) => activeThemeSettings().patch({ palette: String(value) })}
 							/>
 						{:else if selectedPageId === 'reactions'}
 							<ReactionsSettings />

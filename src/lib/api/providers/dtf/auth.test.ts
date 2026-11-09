@@ -27,7 +27,6 @@ describe('auth & proxy failover', () => {
 		resetRefreshCooldown();
 		settings.value = {
 			theme: 'dtf2022',
-			colorScheme: 'auto',
 			proxies: [
 				{
 					id: 'p1',

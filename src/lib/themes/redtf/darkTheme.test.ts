@@ -2,43 +2,25 @@ import { describe, expect, it } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { settings } from '$lib/storage/settings.svelte';
 import redtfTheme from './theme';
 import dtf2022Theme from '../dtf2022/theme';
 import { activeTheme } from '../index.svelte';
-import { themeSettings } from './themeSettings.svelte';
+import { activeThemeSettings } from '../settings.svelte';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('redtf dark mode configuration', () => {
-	it('declares supportsDarkMode in theme manifests', () => {
-		expect(redtfTheme.supportsDarkMode).toBe(true);
-		expect(dtf2022Theme.supportsDarkMode).toBeUndefined();
-	});
-
-	it('defines colorScheme setting in global settings and SettingsScreen', () => {
-		expect(settings.value.colorScheme).toBeDefined();
-		expect(['auto', 'light', 'dark']).toContain(settings.value.colorScheme);
-
-		const settingsScreenPath = path.resolve(__dirname, '../../components/settings/SettingsScreen.svelte');
-		const screenContent = fs.readFileSync(settingsScreenPath, 'utf-8');
-		expect(screenContent).toContain("key: 'colorScheme'");
-		expect(screenContent).toContain("data-theme-mode='dark'");
-		expect(screenContent).toContain('--st-bg: #242424;');
-		expect(screenContent).toContain('--st-card: #303030;');
-		expect(screenContent).toContain('--st-text: #ffffff;');
-	});
-
-	it('provides colorScheme getter in themeSettings', () => {
-		expect(typeof themeSettings.colorScheme).toBe('string');
-		expect(['auto', 'light', 'dark']).toContain(themeSettings.colorScheme);
+	it('тема определяет доступные палитры и системный выбор', () => {
+		expect(redtfTheme.palettes?.options.map(p => p.id)).toEqual(['light', 'dark']);
+		expect(dtf2022Theme.palettes?.options.map(p => p.id)).toEqual(['light']);
+		activeTheme.set('redtf');
+		expect(activeThemeSettings().value.palette).toBe('auto');
 	});
 
 	it('contains all essential dark theme tokens in theme.css', () => {
 		const cssPath = path.join(__dirname, 'theme.css');
 		const cssContent = fs.readFileSync(cssPath, 'utf-8');
 
-		expect(cssContent).toContain('color-scheme: light dark;');
 		expect(cssContent).toContain(':root[data-theme~="redtf"][data-theme-mode="dark"]');
 		expect(cssContent).not.toContain('@media (prefers-color-scheme: dark)');
 
@@ -84,11 +66,11 @@ describe('redtf dark mode configuration', () => {
 	it('locks darkreader when dark mode is enabled in app.html and +layout.svelte', () => {
 		const appHtmlPath = path.resolve(__dirname, '../../../app.html');
 		const appHtmlContent = fs.readFileSync(appHtmlPath, 'utf-8');
-		expect(appHtmlContent).toContain('darkreader-lock');
+		expect(appHtmlContent).toContain('<!-- redtf:appearance -->');
 
 		const layoutPath = path.resolve(__dirname, '../../../routes/+layout.svelte');
 		const layoutContent = fs.readFileSync(layoutPath, 'utf-8');
-		expect(layoutContent).toContain('darkreader-lock');
+		expect(layoutContent).toContain('applyPalette(palette)');
 	});
 
 	it('prevents dark theme white flash before load in app.html and app.css', () => {

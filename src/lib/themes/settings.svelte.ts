@@ -1,3 +1,4 @@
+import { THEME_SETTINGS_VERSION } from '$lib/storage/defaults';
 import { persistedState } from '$lib/storage/persisted.svelte';
 import { activeTheme } from './index.svelte';
 import { themeSettingsSchema, themes } from './registry';
@@ -11,8 +12,8 @@ const stores = new Map<string, ReturnType<typeof persistedState<Values>>>();
 export function getThemeSettings(themeId: string) {
 	let store = stores.get(themeId);
 	if (!store) {
-		const defaults: Values = Object.fromEntries(themeSettingsSchema(themeId).map((field) => [field.key, field.default]));
-		store = persistedState<Values>(`redtf:theme:${themeId}`, defaults);
+		const defaults: Values = { ...Object.fromEntries(themeSettingsSchema(themeId).map((field) => [field.key, field.default])), palette: 'auto' };
+		store = persistedState<Values>(`redtf:theme:${themeId}`, defaults, THEME_SETTINGS_VERSION);
 		stores.set(themeId, store);
 	}
 	return store;

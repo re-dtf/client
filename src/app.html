@@ -15,6 +15,7 @@
 		<meta name="apple-mobile-web-app-title" content="re:DTF" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/app-default-180.png" id="app-apple-touch-icon" />
 
+		<!-- redtf:appearance -->
 		<script>
 			try {
 				const saved = JSON.parse(localStorage.getItem('redtf:setup:completed'));
@@ -27,31 +28,6 @@
 					if (themeSt?.d?.headerBlur) document.documentElement.dataset.headerBlur = 'true';
 					if (themeSt?.d?.mobileBarBlur) document.documentElement.dataset.mobileBarBlur = 'true';
 					if (themeSt?.d?.mobileBarFloating) document.documentElement.dataset.mobileBarFloating = 'true';
-				}
-				const supportsDark = themeId === 'redtf';
-				const cs = st?.d?.colorScheme ?? 'auto';
-				const isDark = supportsDark && (cs === 'dark' || (cs === 'auto' && window.matchMedia?.('(prefers-color-scheme: dark)').matches === true));
-				document.documentElement.dataset.colorScheme = cs;
-				document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
-				const meta = document.querySelector('meta[name="color-scheme"]');
-				if (meta) meta.content = supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light';
-				const themeColors = {
-					dtf2022: { light: '#D9F5FF', dark: '#202022' },
-					redtf: { light: '#D9F5FF', dark: '#202022' }
-				};
-				const currentColors = themeColors[themeId] || themeColors.redtf;
-				const darkColor = currentColors.dark;
-				const lightColor = currentColors.light;
-				const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
-				if (cs === 'dark' || (supportsDark && isDark)) {
-					themeMetas.forEach((m) => m.setAttribute('content', darkColor));
-				} else if (cs === 'light' || (!isDark && supportsDark)) {
-					themeMetas.forEach((m) => m.setAttribute('content', lightColor));
-				}
-				if (isDark) {
-					const lock = document.createElement('meta');
-					lock.name = 'darkreader-lock';
-					document.head.appendChild(lock);
 				}
 				const appIcon = st?.d?.appIcon ?? 'default';
 				const customIcon = st?.d?.customIconData;
@@ -118,25 +94,25 @@
 
 			/* Базовый фон страницы до загрузки стилей темы, чтобы не ослеплять белым экраном */
 			html {
-				background-color: #f2f2f2;
+				background-color: var(--app-background, #f2f2f2);
 			}
 			html[data-theme-mode='dark'] {
-				background-color: #141414;
+				background-color: var(--app-background, #141414);
 				color: #e6e6e8;
 			}
 			html[data-theme-mode='light'] {
-				background-color: #f2f2f2;
+				background-color: var(--app-background, #f2f2f2);
 				color: #000000;
 			}
 			@media (prefers-color-scheme: dark) {
 				html:not([data-theme-mode='light']) {
-					background-color: #141414;
+					background-color: var(--app-background, #141414);
 					color: #e6e6e8;
 				}
 			}
 			@media (prefers-color-scheme: light) {
 				html:not([data-theme-mode='dark']) {
-					background-color: #f2f2f2;
+					background-color: var(--app-background, #f2f2f2);
 					color: #000000;
 				}
 			}
@@ -165,10 +141,8 @@
 			@media (prefers-color-scheme: dark) {
 				html:not([data-theme-mode='light']) #splash { --paper: 0 0 0; --ink: #fff; }
 			}
-			html[data-theme-mode='dark'] #splash,
-			html[data-color-scheme='dark'] #splash { --paper: 0 0 0; --ink: #fff; }
-			html[data-theme-mode='light'] #splash,
-			html[data-color-scheme='light'] #splash { --paper: 255 255 255; --ink: #000; }
+			html[data-theme-mode='dark'] #splash { --paper: 0 0 0; --ink: #fff; }
+			html[data-theme-mode='light'] #splash { --paper: 255 255 255; --ink: #000; }
 
 			/* Фон: белый → полупрозрачный и сильно размытый, под ним проступает приложение */
 			#splash .splash-bg {

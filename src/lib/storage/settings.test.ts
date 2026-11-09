@@ -40,7 +40,6 @@ describe('settings & shouldVirtualizeComments', () => {
 		localStorage.clear();
 		settings.value = {
 			theme: 'dtf2022',
-			colorScheme: 'auto',
 			proxies: JSON.parse(JSON.stringify(DEFAULT_PROXIES)),
 			commentNesting: 'flatten',
 			collectStats: true,
@@ -66,18 +65,6 @@ describe('settings & shouldVirtualizeComments', () => {
 
 		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
 		expect(saved.d.appIcon).toBe('bluer');
-	});
-
-	it('colorScheme по умолчанию "auto"', () => {
-		expect(settings.value.colorScheme).toBe('auto');
-	});
-
-	it('patch обновляет значение colorScheme и сохраняет в localStorage', () => {
-		settings.patch({ colorScheme: 'dark' });
-		expect(settings.value.colorScheme).toBe('dark');
-
-		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
-		expect(saved.d.colorScheme).toBe('dark');
 	});
 
 	it('watermark по умолчанию включен (true)', () => {

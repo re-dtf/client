@@ -1,11 +1,12 @@
 import { untrack } from 'svelte';
+import { DEFAULT_THEME, SETTINGS_VERSION } from './defaults';
+export { DEFAULT_THEME } from './defaults';
 import { persistedState } from './persisted.svelte';
 import { isNative } from '$lib/capacitor';
 import type { AppIconId } from '$lib/icons';
 
 export type NestingMode = 'flatten' | 'autopan';
 export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
-export type ColorScheme = 'auto' | 'light' | 'dark';
 export type ClientBadgesMode = 'all' | 'redtf_only' | 'none';
 export type MobileBadgesPosition = 'author' | 'date';
 
@@ -23,8 +24,6 @@ export interface ProxyItem {
 export interface AppSettings {
 	/** id активной темы (см. $lib/themes) */
 	theme: string;
-	/** Цветовая схема: системная, светлая или тёмная */
-	colorScheme: ColorScheme;
 	/** Список CORS-прокси для входа и обновления токена DTF */
 	proxies: ProxyItem[];
 	/** Показ глубоко вложенных комментариев */
@@ -94,14 +93,12 @@ if (!isNative() && DEFAULT_CLOUDFLARE_PROXY_URL) {
 	});
 }
 
-export const DEFAULT_THEME = 'redtf';
 
 /** Общие настройки приложения, не зависящие от темы. Настройки темы лежат в themeSettings. */
 export const settings = persistedState<AppSettings>(
 	'redtf:settings',
 	{
 		theme: DEFAULT_THEME,
-		colorScheme: 'auto',
 		proxies: DEFAULT_PROXIES,
 		commentNesting: 'flatten',
 		commentVirtualization: 'auto',
@@ -116,7 +113,7 @@ export const settings = persistedState<AppSettings>(
 		debugSafeAreaOverlay: false,
 		debugHud: false
 	},
-	6
+	SETTINGS_VERSION
 );
 
 /** Список всех активных прокси с непустым URL */

@@ -9,6 +9,7 @@
  *   store.patch({ поле: значение }); // заменить часть полей объекта
  */
 import { untrack } from 'svelte';
+import { readPersisted } from './readPersisted';
 
 export function persistedState<T>(key: string, defaults: T, version = 1) {
 	// localStorage может быть недоступен (приватный режим, запрет cookies)
@@ -20,24 +21,7 @@ export function persistedState<T>(key: string, defaults: T, version = 1) {
 		}
 	};
 
-	const isObject = (x: unknown): x is Record<string, unknown> =>
-		typeof x === 'object' && x !== null && !Array.isArray(x);
-
-	// Читает сохранённое значение. В localStorage лежит { v: версия, d: данные }.
-	// Если версия не совпала (формат поменяли) или JSON битый, берём значение по умолчанию.
-	function read(): T {
-		const raw = storage()?.getItem(key);
-		if (raw == null) return defaults;
-		try {
-			const saved = JSON.parse(raw);
-			if (saved?.v !== version) return defaults;
-			// Поля, которые добавили в defaults позже, не пропадают
-			return isObject(defaults) && isObject(saved.d) ? ({ ...defaults, ...saved.d } as T) : saved.d;
-		} catch (e) {
-			console.error(`[storage] Не удалось прочитать "${key}":`, e);
-			return defaults;
-		}
-	}
+	const read = () => readPersisted(key, defaults, version);
 
 	function write(next: T) {
 		try {

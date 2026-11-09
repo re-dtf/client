@@ -1,7 +1,7 @@
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
-import { readFileSync } from 'fs';
+import { build, defineConfig } from 'vite';
+import { readFileSync, mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
@@ -49,7 +49,30 @@ function svgIconsPlugin(base: string) {
 	};
 }
 
-export default defineConfig(({ command }) => {
+// SvelteKit не обрабатывает transformIndexHtml. Собираем синхронный запуск из тех же
+// манифестов и функций, что использует приложение, и встраиваем в его шаблон.
+async function writeAppTemplate() {
+	const result = await build({
+		configFile: false,
+		logLevel: 'silent',
+		resolve: { alias: { '$lib': path.resolve('./src/lib') } },
+		build: {
+			write: false,
+			minify: true,
+			lib: { entry: 'src/lib/themes/bootstrap.ts', formats: ['iife'], name: 'reDTFAppearance' }
+		}
+	});
+	const bundle = Array.isArray(result) ? result[0] : result;
+	if (!('output' in bundle)) throw new Error('Не удалось собрать оформление запуска');
+	const code = bundle.output.find(item => item.type === 'chunk')?.code;
+	if (!code) throw new Error('Не найден код оформления запуска');
+	const template = readFileSync('src/app.html', 'utf8').replace('<!-- redtf:appearance -->', `<script>${code.replace(/<\/script/gi, '<\\/script')}</script>`);
+	mkdirSync('.svelte-kit', { recursive: true });
+	writeFileSync('.svelte-kit/app-template.html', template);
+}
+
+export default defineConfig(async ({ command }) => {
+	await writeAppTemplate();
 	const appVersion = resolveVersion(command);
 
 	return {
@@ -74,6 +97,7 @@ export default defineConfig(({ command }) => {
 		},
 		plugins: [
 			sveltekit({
+				files: { appTemplate: ".svelte-kit/app-template.html" },
 				version: {
 					name: appVersion
 				},
@@ -91,6 +115,12 @@ export default defineConfig(({ command }) => {
 					handleUnseenRoutes: 'ignore'
 				}
 			}),
+			{
+				name: 'redtf-appearance-template',
+				async handleHotUpdate({ file }: { file: string }) {
+					if (file.endsWith('/src/app.html') || /\/src\/lib\/(themes|storage)\/.*\.ts$/.test(file)) await writeAppTemplate();
+				}
+			},
 			svgIconsPlugin(basePath)
 		]
 	};
