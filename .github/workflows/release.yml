@@ -104,14 +104,14 @@ jobs:
 
           echo "APK готов: $APK_SIGNED"
 
-      - name: Publish GitHub Release
+      - name: Publish GitHub Release (Draft)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
           APK_SIGNED="redtf-${TAG}.apk"
 
-          echo "Публикация релиза для тега: $TAG"
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          echo "Создание черновика релиза для тега: $TAG"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes --draft
           sha256sum "$APK_SIGNED" bundle.zip > SHA256SUMS.txt
           gh release upload "$TAG" bundle.zip "$APK_SIGNED" SHA256SUMS.txt --clobber
