@@ -58,6 +58,7 @@ src/
     feed.svelte.ts              ленты, текущая лента, обновление
     motion.ts                   анимации темы (ThemeMotion), кривые, play
     ready.ts                    ожидание картинок окна и отрисовки кадра
+    capacitor/                  нативный слой Android и OTA-обновления (Capgo)
     api/
       index.svelte.ts           фасад
       types.ts                  модель данных и интерфейс ApiProvider
@@ -93,5 +94,6 @@ docs/                           документация
 - [motion.md](motion.md) — отклик на нажатия, подложка и спиннер окон, анимации темы
 - [splash.md](splash.md) — заставка при запуске и приветствие первого входа
 - [api.md](api.md) — фасад, провайдеры, ошибки, текущий пользователь
+- [mobile.md](mobile.md) — мобильное приложение (Capacitor 8, Android, OTA-обновления)
 - [data-sources/](data-sources/README.md) — подключаемые источники
 - [../../decisions/](../../decisions/README.md) — почему так сделано

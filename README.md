@@ -26,6 +26,8 @@ npm run dev -- --open
 | `npm run check` | проверка типов (`svelte-check`) |
 | `npm run build` | статическая сборка в `build/` |
 | `npm run preview` | посмотреть собранную версию |
+| `npm run build:ota` | сборка и упаковка OTA-обновления (`bundle.zip`) |
+| `npm run cap:sync` | синхронизация сборки в проект Capacitor (Android) |
 
 ## Публикация
 
