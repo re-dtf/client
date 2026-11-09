@@ -35,6 +35,7 @@
 
 	let {
 		row,
+		postAuthorId,
 		highlightedLine = -1,
 		replying = false,
 		panObserver,
@@ -46,6 +47,8 @@
 		editor
 	}: {
 		row: CommentRow;
+		/** Автор поста: его комментарии помечаются плашкой «Автор» */
+		postAuthorId?: number;
 		/** Индекс подсвеченной линии ветки, -1 — нет */
 		highlightedLine?: number;
 		replying?: boolean;
@@ -70,6 +73,7 @@
 	});
 
 	let comment = $derived(row.comment);
+	let isPostAuthor = $derived(postAuthorId !== undefined && comment.author.id === postAuthorId);
 	let hasRepliesBelow = $derived(comment.children.length > 0 && !row.hiddenReplies);
 	let votes = $derived(themeSettings.votes);
 	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
@@ -151,6 +155,12 @@
 			onreact={react}
 		/>
 	</div>
+{/snippet}
+
+{#snippet authorMark()}
+	{#if isPostAuthor}
+		<span class="comment-item__author-mark">Автор</span>
+	{/if}
 {/snippet}
 
 {#snippet repliesAction()}
@@ -250,6 +260,7 @@
 			<a class="comment-item__time" href="#comment-{row.key}">
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
+			{@render authorMark()}
 			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
 				<button
 					type="button"
@@ -324,6 +335,7 @@
 			<a class="comment-item__time" href="#comment-{row.key}">
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
+			{@render authorMark()}
 			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
 				<button
 					type="button"
@@ -770,6 +782,16 @@
 
 	.comment-item__time:has(+ .comment-item__time-badge) {
 		margin-right: 4px;
+	}
+
+	/* Плашка «Автор» стоит в строке времени, как в оригинале: просто синий текст, не ссылка */
+	.comment-item__author-mark {
+		margin-left: 3px;
+		margin-right: var(--gap-details);
+		color: var(--color-blue);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
 	}
 
 	.comment-item__time-badge {

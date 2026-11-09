@@ -40,6 +40,8 @@ export interface ThemeComponents {
 		sourceId?: string;
 		commentsCount?: number;
 		subscribed?: boolean;
+		/** Автор поста: его комментарии получают плашку «Автор» */
+		postAuthorId?: number;
 		/** Комментарий, к которому прокрутить (из ссылки или уведомления); комментарии догружаются, пока он не найдётся */
 		focusCommentId?: number;
 		/** Повторный фокус на комментарий (например, при повторном клике по тому же уведомлению) */

@@ -174,7 +174,7 @@
 		{#if depth <= 1}
 			{#await commentsTurn then}
 				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined && !toComments ? appear('feedIn') : undefined)}>
-					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
+					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} postAuthorId={loaded.author.id} focusCommentId={commentId} {focusNonce} />
 					{#if loaded.sourceId === 'dtf' && hasThemeComponent(activeTheme.chain, 'Recommendations')}
 						<ThemeLoader componentName="Recommendations" postId={loaded.id} />
 					{/if}

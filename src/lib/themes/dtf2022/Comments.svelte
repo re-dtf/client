@@ -19,10 +19,11 @@
 		sourceId = 'dtf',
 		commentsCount = 0,
 		subscribed = false,
+		postAuthorId,
 		focusCommentId,
 		focusNonce,
 		onfocused
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; focusCommentId?: number; focusNonce?: number; onfocused?: () => void } = $props();
+	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; postAuthorId?: number; focusCommentId?: number; focusNonce?: number; onfocused?: () => void } = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -347,6 +348,7 @@
 			{#each renderedRows as row, index (row.key)}
 				<CommentItem
 					{row}
+					{postAuthorId}
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 					replying={replyTo === row.key}
 					onreply={() => reply(row.key)}
