@@ -178,12 +178,16 @@ export default defineTheme({
 
 	id: 'redtf',
 	name: 'Re:DTF',
-	supportsDarkMode: true,
 	gestures: true,
 	description: 'Основная тема. Вдохновлена DTF 2023-24 года, но лучше, и с кастомизацией.',
-	colors: {
-		light: '#D9F5FF',
-		dark: '#202022'
+	palettes: {
+		default: 'light',
+		system: { light: 'light', dark: 'dark' },
+		options: [
+			{ id: 'light', title: 'Светлая', mode: 'light', background: '#f2f2f2', themeColor: '#D9F5FF' },
+			{ id: 'dark', title: 'Тёмная', mode: 'dark', background: '#141414', themeColor: '#202022' },
+			{ id: 'amoled', title: 'AMOLED', mode: 'dark', background: '#000000', themeColor: '#000000' }
+		]
 	},
 	settings: [
 		{

@@ -99,19 +99,29 @@ export function isFieldVisible(
 	return current === field.dependsOn.value;
 }
 
-export interface ThemeColors {
-	/** Фирменный цвет для светлого режима (например, цвет шапки) */
-	light: string;
-	/** Фирменный цвет для тёмного режима (например, цвет шапки) */
-	dark: string;
+export interface ThemePalette {
+	id: string;
+	title: string;
+	/** Базовый режим системных элементов и общих компонентов. */
+	mode: 'light' | 'dark';
+	/** Фон страницы до загрузки CSS темы. */
+	background: string;
+	/** Цвет панели браузера. */
+	themeColor: string;
+}
+
+export interface ThemePalettes {
+	/** Палитра при неизвестном сохранённом выборе. */
+	default: string;
+	/** Соответствие системного режима палитрам темы. */
+	system: { light: string; dark: string };
+	options: [ThemePalette, ...ThemePalette[]];
 }
 
 export interface ThemeManifest {
 	/** Совпадает с именем папки темы */
 	id: string;
 	name: string;
-	/** Поддерживает ли тема тёмный режим */
-	supportsDarkMode?: boolean;
 	/** Жесты пальцем: свайп лент и «назад» в мобильной раскладке, свайп по комментарию. Форк не наследует поле, включает сам */
 	gestures?: boolean;
 	description?: string;
@@ -120,8 +130,8 @@ export interface ThemeManifest {
 	 * так что исправления основы попадают в форк сами.
 	 */
 	extends?: string;
-	/** Фирменные цвета темы в светлом и тёмном режимах */
-	colors?: ThemeColors;
+	/** Набор палитр. Форк без своего набора наследует набор основы целиком. */
+	palettes?: ThemePalettes;
 	/**
 	 * Анимации темы (docs/architecture/motion.md), например `fluent` из `$lib/motion`. Не указаны —
 	 * тема не анимирует ничего, кроме затемнения за окном. Форк не наследует поле: dtf2022 остаётся без анимаций.

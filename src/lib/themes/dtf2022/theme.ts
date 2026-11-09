@@ -4,9 +4,12 @@ export default defineTheme({
 	id: 'dtf2022',
 	name: 'DTF 2022',
 	description: 'Копия дизайна DTF начала 2023 года',
-	colors: {
-		light: '#D9F5FF',
-		dark: '#202022'
+	palettes: {
+		default: 'light',
+		system: { light: 'light', dark: 'light' },
+		options: [
+			{ id: 'light', title: 'Светлая', mode: 'light', background: '#f2f2f2', themeColor: '#D9F5FF' }
+		]
 	},
 	settings: [
 		{

@@ -1,8 +1,8 @@
 import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
-import { getTheme, themeChain, themeColors } from './registry';
-import type { ThemeColors, ThemeManifest } from './types';
+import { getTheme, themeChain, themePalettes } from './registry';
+import type { ThemePalettes, ThemeManifest } from './types';
 
-export { themes, themeColors } from './registry';
+export { themes, themePalettes } from './registry';
 
 /** Выбранная пользователем тема */
 export const activeTheme = {
@@ -10,10 +10,6 @@ export const activeTheme = {
 	/** Название темы */
 	get name(): string {
 		return getTheme(activeTheme.id)?.name ?? '';
-	},
-	/** Поддерживает ли выбранная тема тёмный режим */
-	get supportsDarkMode(): boolean {
-		return getTheme(activeTheme.id)?.supportsDarkMode === true;
 	},
 	/** Включены ли у выбранной темы жесты (свайп лент, «назад», по комментарию) */
 	get gestures(): boolean {
@@ -26,9 +22,9 @@ export const activeTheme = {
 	get chain(): string[] {
 		return themeChain(activeTheme.id);
 	},
-	/** Фирменные цвета выбранной темы (светлый и тёмный) */
-	get colors(): ThemeColors {
-		return themeColors(activeTheme.id) ?? { light: '#D9F5FF', dark: '#202022' };
+	/** Палитры выбранной темы с учётом основы. */
+	get palettes(): ThemePalettes {
+		return themePalettes(activeTheme.id);
 	},
 	/** Анимации самой темы (не основы): форк dtf2022 сам решает, анимировать ли */
 	get motion(): ThemeManifest['motion'] {

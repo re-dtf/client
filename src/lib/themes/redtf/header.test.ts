@@ -75,10 +75,7 @@ describe('Header: стили блюра верхней панели (headerBlur)
 
 	it('в тёмной теме сохраняет background-color: rgba(0, 0, 0, 0.1)', () => {
 		expect(cssContent).toContain(
-			':root[data-theme~="redtf"]:not([data-color-scheme="light"])[data-header-blur="true"] .header {\n\t\tbackground-color: rgba(0, 0, 0, 0.1);\n\t}'
-		);
-		expect(cssContent).toContain(
-			':root[data-theme~="redtf"][data-color-scheme="dark"][data-header-blur="true"] .header {\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}'
+			':root[data-theme~="redtf"][data-theme-mode="dark"][data-header-blur="true"] .header {\n\tbackground-color: rgba(0, 0, 0, 0.1);\n}'
 		);
 	});
 });

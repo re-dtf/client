@@ -30,6 +30,7 @@
 	import DebugHud from '$lib/components/debug/DebugHud.svelte';
 	
 	import '../app.css';
+	import { applyPalette, resolvePalette, paletteSelection } from '$lib/themes/palette';
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { play, playChildren, reducedMotion } from '$lib/motion';
 	import { feed } from '$lib/feed.svelte';
@@ -320,66 +321,21 @@
 		};
 	});
 
-	// Управление цветовой схемой приложения
+	// Настройки читаются реактивно, эффект синхронизирует только DOM и нативную панель.
 	$effect(() => {
-		const cs = settings.value.colorScheme ?? 'auto';
-		const supportsDark = activeTheme.supportsDarkMode;
-		document.documentElement.dataset.colorScheme = cs;
-
-		const updateMode = () => {
-			const isDark =
-				supportsDark &&
-				(cs === 'dark' ||
-				(cs === 'auto' &&
-					typeof window !== 'undefined' &&
-					window.matchMedia?.('(prefers-color-scheme: dark)').matches === true));
-			document.documentElement.dataset.themeMode = isDark ? 'dark' : 'light';
-			updateStatusBar(isDark);
-			const metaScheme = document.querySelector('meta[name="color-scheme"]');
-			if (metaScheme) metaScheme.setAttribute('content', supportsDark && cs === 'auto' ? 'light dark' : isDark ? 'dark' : 'light');
-			const colors = activeTheme.colors;
-			const targetColor = isDark ? colors.dark : colors.light;
-			const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
-			if (themeMetas.length > 0) {
-				themeMetas.forEach((m) => m.setAttribute('content', targetColor));
-			} else {
-				const meta = document.createElement('meta');
-				meta.name = 'theme-color';
-				meta.content = targetColor;
-				document.head.appendChild(meta);
-			}
-
-			const lock = document.querySelector('meta[name="darkreader-lock"]');
-			if (isDark) {
-				if (!lock) {
-					const newLock = document.createElement('meta');
-					newLock.name = 'darkreader-lock';
-					document.head.appendChild(newLock);
-				}
-				document.querySelectorAll('.darkreader').forEach((el) => el.remove());
-			} else {
-				lock?.remove();
-			}
+		const palettes = activeTheme.palettes;
+		const selected = paletteSelection(palettes, activeThemeSettings().value.palette);
+		const mql = window.matchMedia('(prefers-color-scheme: dark)');
+		const update = () => {
+			const palette = resolvePalette(palettes, selected, mql.matches);
+			applyPalette(palette);
+			updateStatusBar(palette.mode === 'dark').catch(() => {});
 		};
-
-		updateMode();
-
-		if (supportsDark && cs === 'auto' && typeof window !== 'undefined' && window.matchMedia) {
-			const mql = window.matchMedia('(prefers-color-scheme: dark)');
-			mql.addEventListener('change', updateMode);
-			return () => {
-				mql.removeEventListener('change', updateMode);
-				delete document.documentElement.dataset.colorScheme;
-				delete document.documentElement.dataset.themeMode;
-				document.querySelector('meta[name="darkreader-lock"]')?.remove();
-			};
+		update();
+		if (selected === 'auto') {
+			mql.addEventListener('change', update);
+			return () => mql.removeEventListener('change', update);
 		}
-
-		return () => {
-			delete document.documentElement.dataset.colorScheme;
-			delete document.documentElement.dataset.themeMode;
-			document.querySelector('meta[name="darkreader-lock"]')?.remove();
-		};
 	});
 
 	// Отключение верхнего бара в мобильной версии выставляет data-атрибут корня

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { themeChain, themeColors, themeSettingsSchema, themes, getTheme } from './registry';
+import { themeChain, themePalettes, themeSettingsSchema, themes, getTheme } from './registry';
 import type { ThemeManifest } from './types';
 
 const make = (...list: ThemeManifest[]) => new Map(list.map((t) => [t.id, t]));
@@ -60,20 +60,15 @@ describe('реестр тем', () => {
 		expect(schema.find((f) => f.key === 'dense')).toMatchObject({ title: 'Плотно (форк)', default: true });
 	});
 
-	it('возвращает фирменные цвета тем и наследует их по цепочке', () => {
-		expect(getTheme('dtf2022')?.colors).toEqual({ light: '#D9F5FF', dark: '#202022' });
-		expect(getTheme('redtf')?.colors).toEqual({ light: '#D9F5FF', dark: '#202022' });
-
+	it('наследует набор палитр целиком и позволяет форку заменить его', () => {
+		const basePalettes = getTheme('redtf')!.palettes!;
+		const ownPalettes = getTheme('dtf2022')!.palettes!;
 		const all = make(
-			{ id: 'base', name: 'Base', colors: { light: '#111', dark: '#222' } },
-			{ id: 'forkWithoutColors', name: 'Fork 1', extends: 'base' },
-			{ id: 'forkWithColors', name: 'Fork 2', extends: 'base', colors: { light: '#333', dark: '#444' } },
-			{ id: 'noColors', name: 'No Colors' }
+			{ id: 'base', name: 'Base', palettes: basePalettes },
+			{ id: 'fork', name: 'Fork', extends: 'base' },
+			{ id: 'own', name: 'Own', extends: 'base', palettes: ownPalettes }
 		);
-
-		expect(themeColors('base', all)).toEqual({ light: '#111', dark: '#222' });
-		expect(themeColors('forkWithoutColors', all)).toEqual({ light: '#111', dark: '#222' });
-		expect(themeColors('forkWithColors', all)).toEqual({ light: '#333', dark: '#444' });
-		expect(themeColors('noColors', all)).toBeUndefined();
+		expect(themePalettes('fork', all)).toBe(basePalettes);
+		expect(themePalettes('own', all)).toBe(ownPalettes);
 	});
 });

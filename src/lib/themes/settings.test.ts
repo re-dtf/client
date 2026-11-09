@@ -21,13 +21,23 @@ describe('настройки темы', () => {
 	beforeEach(() => localStorage.clear());
 
 	it('значения по умолчанию берутся из схемы темы', () => {
-		expect(getThemeSettings('dtf2022').value).toEqual({ votes: 'likes', arrowsSide: 'right', arrowsOrder: 'down-up' });
+		expect(getThemeSettings('dtf2022').value).toEqual({ votes: 'likes', arrowsSide: 'right', arrowsOrder: 'down-up', palette: 'auto' });
 	});
 
 	it('у каждой темы свой ключ, настройки не смешиваются', () => {
 		getThemeSettings('dtf2022').patch({ votes: 'rating' });
 
-		expect(JSON.parse(localStorage.getItem('redtf:theme:dtf2022')!).d).toEqual({ votes: 'rating', arrowsSide: 'right', arrowsOrder: 'down-up' });
+		expect(JSON.parse(localStorage.getItem('redtf:theme:dtf2022')!).d).toEqual({ votes: 'rating', arrowsSide: 'right', arrowsOrder: 'down-up', palette: 'auto' });
+	});
+
+	it('выбор палитры сохраняется отдельно для каждой темы', () => {
+		getThemeSettings('redtf').patch({ palette: 'dark' });
+		getThemeSettings('dtf2022').patch({ palette: 'light' });
+		activeTheme.set('redtf');
+		expect(activeThemeSettings().value.palette).toBe('dark');
+		activeTheme.set('dtf2022');
+		expect(activeThemeSettings().value.palette).toBe('light');
+		expect(JSON.parse(localStorage.getItem('redtf:theme:redtf')!).d.palette).toBe('dark');
 	});
 
 	it('один и тот же стор отдаётся для одной темы', () => {
