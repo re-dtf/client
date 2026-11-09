@@ -26,10 +26,10 @@
 		<button class="start" onclick={start} {@attach (el) => el.focus({ preventScroll: true })}>Начать</button>
 		<p class="legal">
 			Нажимая эту кнопку, вы принимаете наши
-			<a href="{ORG_REPO}/blob/main/docs/user/privacy-and-security.md" target="_blank" rel="noopener">политику конфиденциальности</a>,
-			<a href="{ORG_REPO}/blob/main/LICENSE" target="_blank" rel="noopener">лицензионное соглашение</a>,
-			<a href="https://dtf.ru/privacy" target="_blank" rel="noopener">политику</a> и
-			<a href="https://dtf.ru/terms" target="_blank" rel="noopener">лицензионное соглашение DTF</a>, а также подтверждаете, что
+			<a href="{ORG_REPO}/blob/main/PRIVACY.md" target="_blank" rel="noopener">политику конфиденциальности</a>,
+			<a href="{ORG_REPO}/blob/main/TERMS.md" target="_blank" rel="noopener">условия использования</a>,
+			<a href="https://dtf.ru/privacy" target="_blank" rel="noopener">политику конфиденциальности</a> и
+			<a href="https://dtf.ru/terms" target="_blank" rel="noopener">использования</a> DTF, а также подтверждаете, что
 			будете соблюдать <a href="https://dtf.ru/rules" target="_blank" rel="noopener">правила DTF</a>
 		</p>
 	</div>
