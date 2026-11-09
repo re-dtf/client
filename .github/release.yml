@@ -1,0 +1,22 @@
+changelog:
+  categories:
+    - title: "Новые возможности"
+      labels:
+        - "feature"
+        - "enhancement"
+        - "dtf-parity"
+    - title: "Исправления ошибок"
+      labels:
+        - "bug"
+        - "fix"
+    - title: "Интерфейс и темы"
+      labels:
+        - "ui"
+        - "theme"
+    - title: "Документация"
+      labels:
+        - "documentation"
+        - "docs"
+    - title: "Прочие изменения"
+      labels:
+        - "*"

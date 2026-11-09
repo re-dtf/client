@@ -37,7 +37,7 @@ function collectFiles(dir, baseDir = dir) {
 /**
  * Создает zip-архив из директории без сторонних зависимостей (только Node.js zlib/fs).
  */
-export function buildOtaZip(inputDir = 'build', outputFile = 'build.zip') {
+export function buildOtaZip(inputDir = 'build', outputFile = 'bundle.zip') {
 	const startTime = Date.now();
 
 	if (!fs.existsSync(inputDir)) {
@@ -153,6 +153,6 @@ export function buildOtaZip(inputDir = 'build', outputFile = 'build.zip') {
 // Запуск напрямую через CLI
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))) {
 	const inDir = process.argv[2] || 'build';
-	const outZip = process.argv[3] || 'build.zip';
+	const outZip = process.argv[3] || 'bundle.zip';
 	buildOtaZip(inDir, outZip);
 }

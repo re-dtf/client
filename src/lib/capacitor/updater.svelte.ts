@@ -165,10 +165,9 @@ class OtaUpdater {
 			const release = await res.json();
 			const remoteVersion = (release.tag_name || release.name || '').trim();
 
-			// Ищем архив build.zip среди прикрепленных ассетов
+			// Ищем архив bundle.zip среди прикрепленных ассетов
 			const asset = release.assets?.find(
-				(a: { name?: string; browser_download_url?: string }) =>
-					a.name === 'build.zip' || a.name?.endsWith('.zip')
+				(a: { name?: string; browser_download_url?: string }) => a.name === 'bundle.zip'
 			);
 
 			if (!asset?.browser_download_url) {

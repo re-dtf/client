@@ -57,7 +57,7 @@ jobs:
           VITE_VALTOWN_PROXY_URL: ''
           VITE_CLOUDFLARE_PROXY_URL: ''
 
-      - name: Package OTA bundle (build.zip)
+      - name: Package OTA bundle (bundle.zip)
         run: node scripts/bundle-ota.js
 
       - name: Sync Capacitor Android
@@ -113,4 +113,5 @@ jobs:
 
           echo "Публикация релиза для тега: $TAG"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
-          gh release upload "$TAG" build.zip "$APK_SIGNED" --clobber
+          sha256sum "$APK_SIGNED" bundle.zip > SHA256SUMS.txt
+          gh release upload "$TAG" bundle.zip "$APK_SIGNED" SHA256SUMS.txt --clobber
