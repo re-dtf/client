@@ -30,4 +30,13 @@ describe('PostBlocks DTF link handling', () => {
 		expect(svelteContent).toContain('anchorId');
 		expect(svelteContent).toContain('scroll-margin-top: calc(var(--header-height, 60px) + 8px)');
 	});
+
+	it('ограничивает подписи полноширинных медиа на странице поста шириной контента', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostBlocks.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('.post-blocks--page > .media-figure:not(.media-figure--column) > .media-caption');
+		expect(svelteContent).toContain('max-width: min(var(--inner-content-width), calc(100% - 2 * var(--text-gap, 0px)))');
+		expect(svelteContent).toContain('margin-inline: auto');
+		expect(svelteContent).toContain('padding-inline: 16px');
+	});
 });

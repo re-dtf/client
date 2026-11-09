@@ -445,6 +445,14 @@
 		padding: 0 var(--island-offset-x, 16px);
 	}
 
+	/* На странице поста подписи полноширинных медиа выравниваются по ширине контента */
+	.post-blocks--page > .media-figure:not(.media-figure--column) > .media-caption {
+		width: 100%;
+		max-width: min(var(--inner-content-width), calc(100% - 2 * var(--text-gap, 0px)));
+		margin-inline: auto;
+		box-sizing: border-box;
+	}
+
 	/* Плеер и опрос интерактивны: поднимаем над ссылкой на пост в карточке, иначе клик открывает пост */
 	.post-block--audio,
 	.post-block--quiz {
@@ -546,6 +554,12 @@
 		.post-blocks--card > .post-block--title,
 		.post-blocks--embed > .post-block--title {
 			margin-top: 12px;
+		}
+	}
+
+	@media (max-width: 639px) {
+		.post-blocks--page > .media-figure:not(.media-figure--column) > .media-caption {
+			padding-inline: 16px;
 		}
 	}
 </style>
