@@ -232,7 +232,7 @@ export const api = {
 
 	// --- Профили (пока только DTF) ---
 
-	getProfile: (id: number) => dtfApiProvider.getProfile(id),
+	getProfile: (id: number | string) => dtfApiProvider.getProfile(id),
 	async getProfilePosts(...args: Parameters<typeof dtfApiProvider.getProfilePosts>) {
 		const res = await dtfApiProvider.getProfilePosts(...args);
 		cachePosts(res.items);

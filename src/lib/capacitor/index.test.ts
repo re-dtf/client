@@ -42,12 +42,12 @@ describe('Capacitor bridge', () => {
 	});
 
 	describe('handleAppUrl', () => {
-		it('открывает поддерживаемые ссылки dtf.ru через openDtfUrl', async () => {
+		it.each(['https://dtf.ru/games/111111-test', 'https://dtf.ru/donatovnet'])('открывает %s через openDtfUrl', async (url) => {
 			mocks.openDtfUrl.mockReturnValue(true);
 
-			const result = await handleAppUrl('https://dtf.ru/games/111111-test');
+			const result = await handleAppUrl(url);
 
-			expect(mocks.openDtfUrl).toHaveBeenCalledWith('https://dtf.ru/games/111111-test');
+			expect(mocks.openDtfUrl).toHaveBeenCalledWith(url);
 			expect(result).toBe(true);
 		});
 
@@ -85,12 +85,12 @@ describe('Capacitor bridge', () => {
 	});
 
 	describe('handleNativeLinkClick', () => {
-		it('перехватывает клик по ссылке на dtf.ru и передает в openDtfLink', () => {
+		it.each(['https://dtf.ru/games/333333', 'https://dtf.ru/donatovnet'])('перехватывает клик по %s через openDtfLink', (url) => {
 			mocks.openDtfLink.mockReturnValue(true);
 
 			const anchor = {
 				closest: (selector: string) => (selector === 'a' ? anchor : null),
-				getAttribute: (attr: string) => (attr === 'href' ? 'https://dtf.ru/games/333333' : null)
+				getAttribute: (attr: string) => (attr === 'href' ? url : null)
 			};
 
 			const event = {
@@ -102,7 +102,7 @@ describe('Capacitor bridge', () => {
 
 			handleNativeLinkClick(event);
 
-			expect(mocks.openDtfLink).toHaveBeenCalledWith(event, 'https://dtf.ru/games/333333');
+			expect(mocks.openDtfLink).toHaveBeenCalledWith(event, url);
 			expect(event.preventDefault).not.toHaveBeenCalled();
 		});
 

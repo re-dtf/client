@@ -177,6 +177,39 @@ describe('navigation', () => {
 			expect(openDtfUrl('https://dtf.ru/notifications')).toBe(true);
 		});
 
+		it('открывает короткое имя профиля оверлеем без ожидания API', () => {
+			const event = { button: 0, preventDefault: vi.fn() } as unknown as MouseEvent;
+			expect(openDtfLink(event, 'https://dtf.ru/donatovnet')).toBe(true);
+			expect(event.preventDefault).toHaveBeenCalled();
+			expect(goto).toHaveBeenCalledWith('/u/donatovnet', expect.objectContaining({
+				shallow: true,
+				state: { overlays: [expect.objectContaining({ type: 'profile', data: { profileId: 'donatovnet' } })] }
+			}));
+		});
+
+		it('открывает короткое имя в новой вкладке для Ctrl и средней кнопки', () => {
+			const open = vi.fn();
+			vi.stubGlobal('window', { open });
+			try {
+				for (const options of [{ button: 0, ctrlKey: true }, { button: 1 }]) {
+					const event = { ...options, preventDefault: vi.fn() } as unknown as MouseEvent;
+					expect(openDtfLink(event, 'https://dtf.ru/donatovnet')).toBe(true);
+					expect(event.preventDefault).toHaveBeenCalled();
+				}
+				expect(open).toHaveBeenCalledTimes(2);
+				expect(open).toHaveBeenCalledWith('/u/donatovnet', '_blank');
+				expect(goto).not.toHaveBeenCalled();
+			} finally {
+				vi.unstubAllGlobals();
+			}
+		});
+
+		it('не открывает ссылку повторно при всплытии уже обработанного клика', () => {
+			const event = { defaultPrevented: true, button: 0, preventDefault: vi.fn() } as unknown as MouseEvent;
+			expect(openDtfLink(event, '/u/donatovnet')).toBe(false);
+			expect(goto).not.toHaveBeenCalled();
+		});
+
 		it('openDtfUrl возвращает false для неподдерживаемых адресов', () => {
 			expect(openDtfUrl('https://dtf.ru/rules')).toBe(false);
 			expect(openDtfUrl('https://example.com/test')).toBe(false);

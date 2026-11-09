@@ -10,17 +10,18 @@
 	 * Данные профиля для темы: сам профиль, его посты (с подгрузкой) и списки подписчиков/подписок.
 	 * Разметку рисует компонент темы Profile.
 	 */
-	let { profileId, onLoaded }: { profileId: number; onLoaded?: (name: string) => void } = $props();
+	let { profileId, onLoaded }: { profileId: number | string; onLoaded?: (name: string) => void } = $props();
 
-	let lastLoadedId: number | undefined;
+	let lastLoadedId: number | string | undefined;
+	let lastPostsId: number | undefined;
 	let lastSorting: Sorting | undefined;
 
 	let profile = $state.raw<Profile>();
 	let profileError = $state<unknown>();
+	let resolvedProfileId = $derived(typeof profileId === 'number' ? profileId : profile?.id);
 
 	function retryLoadProfile() {
-		profileError = undefined;
-		lastLoadedId = undefined;
+		loadProfile(profileId);
 	}
 
 	let subscribersPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
@@ -36,6 +37,8 @@
 	let requestId = 0;
 
 	async function loadPosts(reset = false) {
+		const currentId = resolvedProfileId;
+		if (currentId === undefined) return;
 		if (loadingPosts && !reset) return;
 		if (!hasMore && !reset) return;
 		const id = ++requestId;
@@ -47,7 +50,7 @@
 		loadingPosts = true;
 		postsError = null;
 		try {
-			const result = await api.getProfilePosts(profileId, sorting, cursor);
+			const result = await api.getProfilePosts(currentId, sorting, cursor);
 			if (id !== requestId) return;
 			posts = [...posts, ...result.items];
 			hasMore = result.items.length > 0 && result.lastId !== undefined;
@@ -59,13 +62,8 @@
 		}
 	}
 
-	$effect(() => {
-		const currentId = profileId;
-		if (currentId === lastLoadedId) return;
+	function loadProfile(currentId: number | string) {
 		lastLoadedId = currentId;
-
-		subscribersPromise = api.getProfileSubscribers(currentId).then((page) => page.items).catch(() => []);
-		subscriptionsPromise = api.getProfileSubscriptions(currentId).catch(() => []);
 
 		profile = profileError = undefined;
 		api.getProfile(currentId).then(
@@ -80,12 +78,26 @@
 				onLoaded?.('Ошибка');
 			}
 		);
-	});
+	}
 
 	$effect(() => {
 		const currentId = profileId;
+		untrack(() => loadProfile(currentId));
+	});
+
+	$effect(() => {
+		const currentId = resolvedProfileId;
+		if (currentId === undefined) return;
+		subscribersPromise = api.getProfileSubscribers(currentId).then((page) => page.items).catch(() => []);
+		subscriptionsPromise = api.getProfileSubscriptions(currentId).catch(() => []);
+	});
+
+	$effect(() => {
+		const currentId = resolvedProfileId;
+		if (currentId === undefined) return;
 		const currentSorting = sorting;
-		if (currentId === lastLoadedId && currentSorting === lastSorting) return;
+		if (currentId === lastPostsId && currentSorting === lastSorting) return;
+		lastPostsId = currentId;
 		lastSorting = currentSorting;
 		untrack(() => loadPosts(true));
 	});

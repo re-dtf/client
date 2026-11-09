@@ -465,8 +465,9 @@ export const dtfApiProvider = {
 
 	// --- Профили ---
 
-	async getProfile(id: number): Promise<Profile> {
-		const response = await fetchWithAuth(`${API_URL}/subsite?id=${id}`);
+	async getProfile(id: number | string): Promise<Profile> {
+		const query = typeof id === 'number' ? `id=${id}` : `uri=${encodeURIComponent(id)}`;
+		const response = await fetchWithAuth(`${API_URL}/subsite?${query}`);
 		const subsite = (await response.json()).result?.subsite;
 		if (!subsite) throw new Error('Профиль не найден');
 

@@ -47,8 +47,8 @@ export function getPostPath(post: { id: number; sourceId: string }, target?: num
 	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}${hash}`;
 }
 
-export function getProfilePath(id: number) {
-	return `/u/${id}`;
+export function getProfilePath(id: number | string) {
+	return `/u/${encodeURIComponent(id)}`;
 }
 
 export function getTagPath(tag: string) {
@@ -455,6 +455,7 @@ export function openDtfUrl(href: string): boolean {
  * Возвращает true, если открыли у себя.
  */
 export function openDtfLink(e: MouseEvent, href: string): boolean {
+	if (e.defaultPrevented) return false;
 	if (href.startsWith('#')) {
 		const hash = href.slice(1);
 		if (!hash) return false;

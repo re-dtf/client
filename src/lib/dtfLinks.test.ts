@@ -59,10 +59,20 @@ describe('parseDtfUrl', () => {
 		expect(parseDtfUrl('/u/120658')).toEqual({ type: 'profile', profileId: 120658 });
 	});
 
-	it('остальное остаётся на dtf.ru', () => {
+	it('короткое имя профиля превращается во внутренний адрес', () => {
+		for (const href of ['https://dtf.ru/donatovnet', '/donatovnet/', '/s/donatovnet', '/donatovnet/entries', '/u/donatovnet']) {
+			expect(parseDtfUrl(href)).toEqual({ type: 'profile', profileId: 'donatovnet' });
+			expect(dtfUrlToPath(href)).toBe('/u/donatovnet');
+		}
+		expect(dtfUrlToPath('https://dtf.ru/gameindustry')).toBe('/u/gameindustry');
+		expect(dtfUrlToPath('https://dtf.ru/s/cinema')).toBe('/u/cinema');
+	});
+
+	it('служебные страницы и посторонние адреса не перехватываются', () => {
 		expect(parseDtfUrl('https://dtf.ru/rules#8')).toBeUndefined();
-		expect(parseDtfUrl('https://dtf.ru/gameindustry')).toBeUndefined();
-		expect(parseDtfUrl('https://dtf.ru/s/cinema')).toBeUndefined();
+		for (const path of ['terms', 'privacy', 'settings/', 'settings/notifications', 'search', 'write', 'login', 'm', 'discovery', 'store', 'about', 'ads', 'bookmarks', 'drafts', 'tag/', 'api/version.json', 'donatovnet/unknown']) {
+			expect(parseDtfUrl(`https://dtf.ru/${path}`)).toBeUndefined();
+		}
 		expect(parseDtfUrl('https://m.dtf.ru/games/5394366-remejk')).toBeUndefined();
 		expect(parseDtfUrl('https://evil.example/games/5220898-x')).toBeUndefined();
 		expect(parseDtfUrl('javascript:alert(1)')).toBeUndefined();

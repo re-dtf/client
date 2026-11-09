@@ -2,7 +2,7 @@
 export type DtfTarget =
 	| { type: 'feed'; feed?: 'popular' | 'new' | 'my' }
 	| { type: 'post'; postId: number; commentId?: number; toComments?: boolean; anchor?: string }
-	| { type: 'profile'; profileId: number }
+	| { type: 'profile'; profileId: number | string }
 	| { type: 'tag'; tag: string }
 	| { type: 'notifications' };
 
@@ -12,9 +12,9 @@ export type DtfTarget =
  * - уведомления: `/notifications`,
  * - пост: `/<раздел или id автора>/<id>-<слаг>`, `/s/<раздел>/<id>-<слаг>`, `/<id>-<слаг>` или `/post/<id>`
  *   (параметры `?comment=`, `#comment-`, `#comments`, суффикс `/comments` — комментарии, `#...` — якорные блоки поста),
- * - профиль: `/id<N>`, `/u/<N>-<имя>`, `/s/<N>`,
+ * - профиль: `/id<N>`, `/u/<N>-<имя>`, `/s/<N>`, `/<короткое имя>` или `/s/<короткое имя>`,
  * - тег: `/tag/<тег>` (и `/tag/<тег>/popular`).
- * Остальное (правила, разделы без id) остаётся на dtf.ru.
+ * Служебные страницы остаются на dtf.ru.
  */
 export function parseDtfUrl(href: string): DtfTarget | undefined {
 	let url: URL;
@@ -57,7 +57,11 @@ export function parseDtfUrl(href: string): DtfTarget | undefined {
 	if (profile) return { type: 'profile', profileId: Number(profile[1] ?? profile[2]) };
 
 	const post = /^\/(?:(?:post|(?:s\/)?[^/]+)\/)?(\d+)(?:-[^/]*)?(?:\/(comments)?)?\/?$/i.exec(url.pathname);
-	if (!post) return undefined;
+	if (!post) {
+		const alias = /^\/(?:(?:u|s)\/)?([a-z][a-z0-9_-]*)(?:\/(?:entries|comments|favorites|subscribers|subscriptions))?\/?$/i.exec(url.pathname);
+		if (!alias || /^(?:rules|terms|privacy|settings|account|auth|login|logout|write|editor|drafts|bookmarks|search|discovery|store|m|tag|u|s|post|popular|new|my|notifications|about|contacts|help|ads|advertising|vacancies|rating)$/i.test(alias[1])) return undefined;
+		return { type: 'profile', profileId: alias[1] };
+	}
 
 	const commentParam = url.searchParams.get('comment');
 	const commentHash = /^#(?:comment[=-]|comments?-)(\d+)$/i.exec(url.hash);
@@ -100,7 +104,7 @@ export function dtfTargetToPath(target: DtfTarget): string {
 		const query = target.commentId ? `?comment=${target.commentId}` : '';
 		return `/post/${target.postId}${query}${hash}`;
 	}
-	return `/u/${target.profileId}`;
+	return `/u/${encodeURIComponent(target.profileId)}`;
 }
 
 /** Превратить ссылку на dtf.ru во внутренний путь, если это пост или профиль */
