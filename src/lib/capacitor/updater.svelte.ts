@@ -6,6 +6,35 @@ import { pwa } from '$lib/pwa.svelte';
 export type UpdateStatus = 'idle' | 'checking' | 'downloading' | 'ready' | 'up-to-date' | 'error';
 
 /**
+ * Извлекает hex SHA-256 из строки digest GitHub (формат sha256:<hex> или чистый hex).
+ */
+export function extractChecksumFromDigest(digest?: string | null): string | null {
+	if (!digest) return null;
+	const match = digest.match(/(?:sha256:)?([a-f0-9]{64})/i);
+	return match ? match[1].toLowerCase() : null;
+}
+
+/**
+ * Парсит текстовое содержимое файла SHA256SUMS.txt и возвращает хэш для указанного файла.
+ */
+export function parseSha256Sums(content: string, filename = 'bundle.zip'): string | null {
+	if (!content) return null;
+	for (const rawLine of content.split('\n')) {
+		const line = rawLine.trim();
+		if (!line || line.startsWith('#')) continue;
+		const parts = line.split(/\s+/);
+		if (parts.length >= 2) {
+			const hash = parts[0].toLowerCase();
+			const file = parts.slice(1).join(' ').replace(/^\*/, '');
+			if (file === filename && /^[a-f0-9]{64}$/.test(hash)) {
+				return hash;
+			}
+		}
+	}
+	return null;
+}
+
+/**
  * Сравнивает две строки версий (семантические или с префиксами v/суффиксами).
  * Возвращает true, если remote новее current.
  */
@@ -167,7 +196,8 @@ class OtaUpdater {
 
 			// Ищем архив bundle.zip среди прикрепленных ассетов
 			const asset = release.assets?.find(
-				(a: { name?: string; browser_download_url?: string }) => a.name === 'bundle.zip'
+				(a: { name?: string; browser_download_url?: string; digest?: string }) =>
+					a.name === 'bundle.zip'
 			);
 
 			if (!asset?.browser_download_url) {
@@ -182,6 +212,29 @@ class OtaUpdater {
 				return false;
 			}
 
+			// Контрольная сумма SHA-256 обязательна для Capgo Updater v8+
+			let checksum = extractChecksumFromDigest(asset.digest);
+			if (!checksum) {
+				const sumsAsset = release.assets?.find(
+					(a: { name?: string; browser_download_url?: string }) => a.name === 'SHA256SUMS.txt'
+				);
+				if (sumsAsset?.browser_download_url) {
+					try {
+						const sumsRes = await fetch(sumsAsset.browser_download_url);
+						if (sumsRes.ok) {
+							const sumsText = await sumsRes.text();
+							checksum = parseSha256Sums(sumsText, 'bundle.zip');
+						}
+					} catch (e) {
+						console.warn('[OTA] Failed to fetch SHA256SUMS.txt:', e);
+					}
+				}
+			}
+
+			if (!checksum) {
+				throw new Error('Контрольная сумма SHA-256 для bundle.zip не найдена в релизе');
+			}
+
 			// Найдена более свежая версия: запускаем скачивание бандла
 			this.status = 'downloading';
 			this.availableVersion = remoteVersion;
@@ -191,7 +244,8 @@ class OtaUpdater {
 
 			const bundle = await CapacitorUpdater.download({
 				url: asset.browser_download_url,
-				version: remoteVersion
+				version: remoteVersion,
+				checksum
 			});
 
 			this.downloadedBundleId = bundle.id;

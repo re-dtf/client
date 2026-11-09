@@ -1,7 +1,56 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { isNewerVersion, otaUpdater } from './updater.svelte';
+import { extractChecksumFromDigest, isNewerVersion, otaUpdater, parseSha256Sums } from './updater.svelte';
 
 describe('OTA Updater', () => {
+	describe('extractChecksumFromDigest', () => {
+		it('извлекает sha256 хеш с префиксом sha256:', () => {
+			const hash = 'b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9';
+			expect(extractChecksumFromDigest(`sha256:${hash}`)).toBe(hash);
+			expect(extractChecksumFromDigest(`SHA256:${hash.toUpperCase()}`)).toBe(hash);
+		});
+
+		it('принимает чистый 64-символьный hex', () => {
+			const hash = 'b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9';
+			expect(extractChecksumFromDigest(hash)).toBe(hash);
+		});
+
+		it('возвращает null для некорректных значений', () => {
+			expect(extractChecksumFromDigest(null)).toBeNull();
+			expect(extractChecksumFromDigest(undefined)).toBeNull();
+			expect(extractChecksumFromDigest('')).toBeNull();
+			expect(extractChecksumFromDigest('invalid')).toBeNull();
+			expect(extractChecksumFromDigest('sha256:123')).toBeNull();
+		});
+	});
+
+	describe('parseSha256Sums', () => {
+		it('находит хэш для указанного файла из вывода sha256sum', () => {
+			const content = `
+c159217566fa72860a57076a27e61c8aeffe9cc97fdcb7767e3b430c12c40e92  redtf-v0.1.0-alpha.6.apk
+b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9  bundle.zip
+`;
+			expect(parseSha256Sums(content, 'bundle.zip')).toBe(
+				'b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9'
+			);
+			expect(parseSha256Sums(content, 'redtf-v0.1.0-alpha.6.apk')).toBe(
+				'c159217566fa72860a57076a27e61c8aeffe9cc97fdcb7767e3b430c12c40e92'
+			);
+		});
+
+		it('обрабатывает бинарный префикс * перед именем файла', () => {
+			const content = 'b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9 *bundle.zip';
+			expect(parseSha256Sums(content, 'bundle.zip')).toBe(
+				'b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9'
+			);
+		});
+
+		it('возвращает null, если файл отсутствует или формат неверный', () => {
+			expect(parseSha256Sums('', 'bundle.zip')).toBeNull();
+			expect(parseSha256Sums('not a hash bundle.zip', 'bundle.zip')).toBeNull();
+			expect(parseSha256Sums('b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9 other.zip', 'bundle.zip')).toBeNull();
+		});
+	});
+
 	describe('isNewerVersion', () => {
 		it('корректно сравнивает семантические версии', () => {
 			expect(isNewerVersion('0.2.0', '0.1.9')).toBe(true);

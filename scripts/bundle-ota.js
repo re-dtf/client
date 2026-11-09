@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 
 /**
  * Преобразует Date в DOS дату и время для zip-заголовков.
@@ -146,8 +147,10 @@ export function buildOtaZip(inputDir = 'build', outputFile = 'bundle.zip') {
 	const compMb = (zipBuffer.length / (1024 * 1024)).toFixed(2);
 	const ratio = (((totalUncompressed - zipBuffer.length) / totalUncompressed) * 100).toFixed(1);
 
+	const sha256 = crypto.createHash('sha256').update(zipBuffer).digest('hex');
 	console.log(`[OTA Bundle] Собрано ${files.length} файлов -> ${outputFile}`);
 	console.log(`[OTA Bundle] Размер: ${compMb} MB (исходный ${uncompMb} MB, сжатие ${ratio}%) за ${elapsed}ms`);
+	console.log(`[OTA Bundle] SHA-256: ${sha256}`);
 }
 
 // Запуск напрямую через CLI
