@@ -39,8 +39,8 @@ describe('redtf dark mode configuration', () => {
 		const cssContent = fs.readFileSync(cssPath, 'utf-8');
 
 		expect(cssContent).toContain('color-scheme: light dark;');
-		expect(cssContent).toContain(':root[data-theme~="redtf"][data-color-scheme="dark"]');
-		expect(cssContent).toContain('@media (prefers-color-scheme: dark)');
+		expect(cssContent).toContain(':root[data-theme~="redtf"][data-theme-mode="dark"]');
+		expect(cssContent).not.toContain('@media (prefers-color-scheme: dark)');
 
 		const requiredTokens = [
 			'--bg-main',
