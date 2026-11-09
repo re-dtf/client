@@ -172,7 +172,7 @@
 	.post-header--card {
 		height: 40px;
 		margin-bottom: 10px;
-		padding: 16px 20px 0;
+		padding: 16px var(--island-offset-x, 16px) 0;
 	}
 
 	.post-header__info {
@@ -356,13 +356,6 @@
 
 		.time--short {
 			display: block;
-		}
-	}
-
-	@media (max-width: 639px) {
-		.post-header--card {
-			padding-left: 16px;
-			padding-right: 16px;
 		}
 	}
 

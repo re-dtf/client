@@ -3,7 +3,8 @@
 	import type { Post } from '$lib/api/types';
 	import Reveal from './Reveal.svelte';
 	import NetworkErrorState from './NetworkErrorState.svelte';
-	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
+	import ThemeLoader, { hasThemeComponent } from '$lib/themes/ThemeLoader.svelte';
+	import { activeTheme } from '$lib/themes/index.svelte';
 	import { markCommentsStart, trackPostClosed, trackPostLoaded } from '$lib/storage/stats.svelte';
 	import { nextPaint } from '$lib/ready';
 	import { appear } from '$lib/themes/appear';
@@ -174,6 +175,9 @@
 			{#await commentsTurn then}
 				<div class="comments-container" bind:this={commentsBox} {@attach (commentId === undefined && !toComments ? appear('feedIn') : undefined)}>
 					<ThemeLoader componentName="Comments" postId={loaded.id} sourceId={loaded.sourceId} commentsCount={loaded.commentsCount} subscribed={loaded.isSubscribedToComments} focusCommentId={commentId} {focusNonce} />
+					{#if loaded.sourceId === 'dtf' && hasThemeComponent(activeTheme.chain, 'Recommendations')}
+						<ThemeLoader componentName="Recommendations" postId={loaded.id} />
+					{/if}
 				</div>
 			{/await}
 		{:else if lastCommentsHeight > 0}

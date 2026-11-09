@@ -36,13 +36,6 @@
 		width: 100%;
 		height: 40px;
 		margin-bottom: -3px;
-		padding: 16px 20px 0;
-	}
-
-	@media (max-width: 639px) {
-		.repost-label--card {
-			padding-left: 16px;
-			padding-right: 16px;
-		}
+		padding: 16px var(--island-offset-x, 16px) 0;
 	}
 </style>

@@ -197,8 +197,8 @@
 
 	.post-block {
 		max-width: var(--content-width);
-		padding-left: 20px;
-		padding-right: 20px;
+		padding-left: var(--island-offset-x, 16px);
+		padding-right: var(--island-offset-x, 16px);
 	}
 
 	.post-footer {
@@ -262,9 +262,5 @@
 			border-radius: 0;
 		}
 
-		.post-block {
-			padding-left: 16px;
-			padding-right: 16px;
-		}
 	}
 </style>

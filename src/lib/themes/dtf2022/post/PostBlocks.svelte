@@ -309,8 +309,8 @@
 	/* Карточки (лента и встроенный пост) — с внутренними отступами; медиа — на всю ширину карточки */
 	.post-blocks--card > .post-block:not(.post-block--media, .post-block--audio, .post-block--quiz),
 	.post-blocks--embed > .post-block:not(.post-block--audio, .post-block--quiz) {
-		padding-left: 20px;
-		padding-right: 20px;
+		padding-left: var(--island-offset-x, 16px);
+		padding-right: var(--island-offset-x, 16px);
 	}
 
 	.post-blocks--card > .post-block--title,
@@ -442,7 +442,7 @@
 
 	.post-blocks--card .media-caption,
 	.post-blocks--embed .media-caption {
-		padding: 0 20px;
+		padding: 0 var(--island-offset-x, 16px);
 	}
 
 	/* Плеер и опрос интерактивны: поднимаем над ссылкой на пост в карточке, иначе клик открывает пост */
@@ -496,7 +496,7 @@
 
 	.post-blocks--card > .post-block--list,
 	.post-blocks--embed > .post-block--list {
-		padding-left: calc(20px + 1.5em);
+		padding-left: calc(var(--island-offset-x, 16px) + 1.5em);
 	}
 
 	.post-block--delimiter {
@@ -546,24 +546,6 @@
 		.post-blocks--card > .post-block--title,
 		.post-blocks--embed > .post-block--title {
 			margin-top: 12px;
-		}
-	}
-
-	@media (max-width: 639px) {
-		.post-blocks--card > .post-block:not(.post-block--media, .post-block--audio, .post-block--quiz),
-		.post-blocks--embed > .post-block:not(.post-block--audio, .post-block--quiz) {
-			padding-left: 16px;
-			padding-right: 16px;
-		}
-
-		.post-blocks--card .media-caption,
-		.post-blocks--embed .media-caption {
-			padding: 0 16px;
-		}
-
-		.post-blocks--card > .post-block--list,
-		.post-blocks--embed > .post-block--list {
-			padding-left: calc(16px + 1.5em);
 		}
 	}
 </style>

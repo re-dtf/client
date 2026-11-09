@@ -44,6 +44,7 @@ interface AppSettings {
 	theme: string;                  // id темы
 	proxies: ProxyItem[];           // список CORS-прокси для входа и обновления с failover
 	commentNesting: 'flatten' | 'autopan';
+	recommendations: 'auto' | 'button'; // лента рекомендаций под постом: подгружать сама или по кнопке
 	collectStats: boolean;          // вести локальную статистику
 	haptics: boolean;               // тактильный отклик
 	disableMobileTopBar: boolean;   // отключать верхний бар в мобильной версии

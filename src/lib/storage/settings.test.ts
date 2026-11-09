@@ -49,6 +49,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
 			commentVirtualization: 'auto',
+			recommendations: 'auto',
 			appIcon: 'default',
 			debugSafeAreaOverlay: false,
 			debugHud: false,

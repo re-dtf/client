@@ -49,6 +49,7 @@ describe('auth & proxy failover', () => {
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
 			commentVirtualization: 'auto',
+			recommendations: 'auto',
 			appIcon: 'default'
 		};
 	});

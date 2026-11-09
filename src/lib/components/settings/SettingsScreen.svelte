@@ -23,7 +23,7 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import { reactionSettings } from '$lib/storage/reactions.svelte';
-	import type { NestingMode, CommentVirtualization, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, RecommendationsMode, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
 	import { paletteSelection } from '$lib/themes/palette';
@@ -132,6 +132,18 @@
 		description:
 			'«Популярное» и «Лучшие» упорядочиваются по очкам из настроек реакций, а не по очкам DTF. Прежние посты и комментарии на месте не прыгают.',
 		default: true
+	};
+
+	const recommendationsField: ChoiceField = {
+		key: 'recommendations',
+		type: 'radio',
+		title: 'Рекомендации под постом',
+		description: 'Как загружать ленту рекомендаций после комментариев.',
+		default: 'auto',
+		options: [
+			{ value: 'auto', title: 'Сразу', description: 'Подгружаются, когда долистали до конца комментариев' },
+			{ value: 'button', title: 'По кнопке', description: 'Под комментариями кнопка «Показать рекомендации»' }
+		]
 	};
 
 	const nestingField: ChoiceField = {
@@ -835,6 +847,11 @@
 									field={rankField}
 									value={reactionSettings.value.rank}
 									onchange={(value) => reactionSettings.patch({ rank: value === true })}
+								/>
+								<FieldControl
+									field={recommendationsField}
+									value={settings.value.recommendations}
+									onchange={(value) => settings.patch({ recommendations: value as RecommendationsMode })}
 								/>
 								{#each visibleOtherFields as field (field.key)}
 									<FieldControl

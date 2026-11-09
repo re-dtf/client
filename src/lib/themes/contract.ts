@@ -10,7 +10,7 @@ export type SearchTab = 'posts' | 'blogs' | 'topics';
  *
  * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
  * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, TagPage, SearchPage, DraftsPage, LoginModal.
- * Необязательные без запасного варианта (у темы нет — не показывается): FeedNotice.
+ * Необязательные без запасного варианта (у темы нет — не показывается): FeedNotice, Recommendations.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
 export interface ThemeComponents {
@@ -25,6 +25,8 @@ export interface ThemeComponents {
 		/** «Больше не показывать» */
 		onnever: () => void;
 	};
+	/** Лента рекомендаций под комментариями поста: тема сама грузит её через `api.getRecommendations`, когда её низ подъезжает к экрану */
+	Recommendations: { postId: number };
 	FeedTabs: {
 		currentFeed: 'popular' | 'new' | 'my';
 		switchFeed: (feed: 'popular' | 'new' | 'my') => void;

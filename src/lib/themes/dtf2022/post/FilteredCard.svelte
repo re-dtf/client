@@ -60,7 +60,7 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-		padding: 16px 20px;
+		padding: 16px var(--island-offset-x, 16px);
 		background: var(--bg-card, #fff);
 		border-radius: 8px;
 		box-sizing: border-box;
@@ -145,7 +145,7 @@
 
 	@media (max-width: 639px) {
 		.filtered-card {
-			padding: 14px 16px;
+			padding: 14px var(--island-offset-x, 16px);
 			border-radius: 0;
 		}
 	}

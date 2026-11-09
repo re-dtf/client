@@ -7,6 +7,7 @@ import type { AppIconId } from '$lib/icons';
 
 export type NestingMode = 'flatten' | 'autopan';
 export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
+export type RecommendationsMode = 'auto' | 'button';
 export type ClientBadgesMode = 'all' | 'redtf_only' | 'none';
 export type MobileBadgesPosition = 'author' | 'date';
 
@@ -30,6 +31,8 @@ export interface AppSettings {
 	commentNesting: NestingMode;
 	/** Виртуализация отрисовки комментариев (content-visibility: auto) */
 	commentVirtualization: CommentVirtualization;
+	/** Рекомендации под постом: 'auto' (подгружать сами), 'button' (по кнопке) */
+	recommendations: RecommendationsMode;
 	/** Вести локальную статистику (см. stats.svelte.ts) */
 	collectStats: boolean;
 	/** Тактильный виброотклик (для поддерживаемых устройств) */
@@ -104,6 +107,7 @@ export const settings = persistedState<AppSettings>(
 		proxies: DEFAULT_PROXIES,
 		commentNesting: 'flatten',
 		commentVirtualization: 'auto',
+		recommendations: 'auto',
 		collectStats: true,
 		haptics: true,
 		disableMobileTopBar: false,
