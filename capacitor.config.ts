@@ -1,11 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+const hostname = process.env.VITE_APP_HOSTNAME || 'redtf.org';
+
 const config: CapacitorConfig = {
 	appId: 'org.redtf.app',
 	appName: 're:DTF',
 	webDir: 'build',
 	server: {
-		androidScheme: 'https'
+		androidScheme: 'https',
+		hostname
 	},
 	plugins: {
 		CapacitorUpdater: {
