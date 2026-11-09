@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.redtf.app",
+      "sha256_cert_fingerprints": [
+        "AF:9C:4A:EF:F9:6A:F2:F5:B2:3F:A4:60:C7:F9:A5:41:D6:FC:0F:60:CA:ED:E4:60:D1:B9:13:7B:5D:CE:76:6A"
+      ]
+    }
+  }
+]
