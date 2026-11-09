@@ -304,7 +304,7 @@
 				<input
 					type="email"
 					id="email"
-					name="username"
+					name="email"
 					bind:value={email}
 					required
 					disabled={isLoading}

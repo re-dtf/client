@@ -7,7 +7,7 @@ describe('LoginContent Autofill', () => {
 		const { body } = render(LoginContent);
 
 		expect(body).toContain('method="post"');
-		expect(body).toContain('name="username"');
+		expect(body).toContain('name="email"');
 		expect(body).toContain('autocomplete="username"');
 		expect(body).toContain('name="password"');
 		expect(body).toContain('autocomplete="current-password"');

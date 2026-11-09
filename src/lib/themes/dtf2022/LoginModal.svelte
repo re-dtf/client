@@ -285,8 +285,9 @@
 					<form onsubmit={handleEmailLogin} method="post">
 						<Input
 							type="email"
+							id="email"
 							placeholder="Почта"
-							name="username"
+							name="email"
 							autocomplete="username"
 							spellcheck="false"
 							autocapitalize="none"
@@ -297,6 +298,7 @@
 						/>
 						<Input
 							type="password"
+							id="password"
 							placeholder="Пароль"
 							name="password"
 							autocomplete="current-password"
@@ -309,7 +311,7 @@
 							type="submit"
 							variant="blue"
 							fullWidth
-							disabled={isLoading || enabledCount === 0}
+							disabled={isLoading || (!isNative() && enabledCount === 0)}
 							label={isLoading ? 'Загрузка...' : 'Войти'}
 						/>
 					</form>
@@ -334,7 +336,7 @@
 							type="submit"
 							variant="blue"
 							fullWidth
-							disabled={isLoading || enabledCount === 0}
+							disabled={isLoading || (!isNative() && enabledCount === 0)}
 							label={isLoading ? 'Загрузка...' : 'Войти'}
 						/>
 					</form>
