@@ -44,6 +44,12 @@ export interface CursorData {
 	lastSortingValue: number;
 }
 
+/** Курсор рекомендаций: обе строки отдаёт сервер, `excludeIds` — непрозрачный список уже показанного */
+export interface RecommendationsCursor {
+	lastId: string;
+	excludeIds: string;
+}
+
 export interface PaginatedResult<T> {
 	items: T[];
 	lastId?: number;
@@ -412,6 +418,8 @@ export interface ApiProvider {
 
 	// Репосты (ответы на пост)
 	getReposts?(postId: number): Promise<Post[]>;
+	/** Рекомендации под постом; `cursor` в ответе нет, когда записи кончились */
+	getRecommendations?(postId: number, cursor?: RecommendationsCursor): Promise<{ items: Post[]; cursor?: RecommendationsCursor }>;
 
 	// Теги, поиск, черновики
 	getTagPosts?(tag: string): Promise<Post[]>;

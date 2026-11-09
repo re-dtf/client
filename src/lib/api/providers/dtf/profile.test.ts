@@ -23,3 +23,18 @@ describe('getProfile', () => {
 		await expect(dtfApiProvider.getProfile('donatovnet')).rejects.toThrow('Сетевая ошибка');
 	});
 });
+
+describe('getRecommendations', () => {
+	it('запрашивает первую страницу и следующую по курсору, курсор кончается вместе с записями', async () => {
+		const entry = { id: 5, title: 'Пост', author: { id: 1, name: 'A' }, blocks: [] };
+		vi.mocked(fetchWithAuth).mockResolvedValueOnce(Response.json({ result: { items: [{ type: 'entry', data: entry }], lastId: '5397840', excludeIds: 'a+b/c' } }));
+		const first = await dtfApiProvider.getRecommendations(100);
+		expect(fetchWithAuth).toHaveBeenLastCalledWith('https://api.dtf.ru/v2.10/recommendations?markdown=false&contentId=100&previousPage=post');
+		expect(first.cursor).toEqual({ lastId: '5397840', excludeIds: 'a+b/c' });
+
+		vi.mocked(fetchWithAuth).mockResolvedValueOnce(Response.json({ result: { items: [], lastId: '5397840', excludeIds: 'x' } }));
+		const next = await dtfApiProvider.getRecommendations(100, first.cursor);
+		expect(fetchWithAuth).toHaveBeenLastCalledWith(expect.stringContaining('&lastId=5397840&excludeIds=a%2Bb%2Fc'));
+		expect(next.cursor).toBeUndefined();
+	});
+});

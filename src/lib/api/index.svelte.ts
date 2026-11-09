@@ -248,6 +248,12 @@ export const api = {
 		return items;
 	},
 
+	async getRecommendations(...args: Parameters<typeof dtfApiProvider.getRecommendations>) {
+		const res = await dtfApiProvider.getRecommendations(...args);
+		cachePosts(res.items);
+		return res;
+	},
+
 	// --- Теги, поиск, черновики (только DTF) ---
 
 	async getTagPosts(tag: string) {

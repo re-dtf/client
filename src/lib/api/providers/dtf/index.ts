@@ -22,6 +22,7 @@ import type {
 	ProfileSorting,
 	QuizResult,
 	Reactions,
+	RecommendationsCursor,
 	SearchFilters,
 	SearchSorting,
 	SearchSubsite,
@@ -234,6 +235,22 @@ export const dtfApiProvider = {
 	async getReposts(postId: number): Promise<Post[]> {
 		const response = await fetchWithAuth(`${COMMENTS_API_URL}/content/${postId}/reposts?markdown=false`);
 		return entriesOf((await response.json()).result?.items).map(mapEntryToPost);
+	},
+
+	/**
+	 * Рекомендации под постом, по дюжине записей. Следующая страница — те же параметры плюс курсор из ответа
+	 * (без `excludeIds` сервер отдаёт первую страницу заново). Адрес версии 2.10, токен не обязателен
+	 */
+	async getRecommendations(postId: number, cursor?: RecommendationsCursor): Promise<{ items: Post[]; cursor?: RecommendationsCursor }> {
+		const params = new URLSearchParams({ markdown: 'false', contentId: String(postId), previousPage: 'post' });
+		if (cursor) {
+			params.set('lastId', cursor.lastId);
+			params.set('excludeIds', cursor.excludeIds);
+		}
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/recommendations?${params}`);
+		const result = (await response.json()).result;
+		const items = entriesOf(result?.items).map(mapEntryToPost);
+		return { items, cursor: items.length && result.lastId && result.excludeIds ? { lastId: String(result.lastId), excludeIds: result.excludeIds } : undefined };
 	},
 
 	/**
