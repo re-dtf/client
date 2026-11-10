@@ -18,11 +18,29 @@ export function triggerHaptic(signal: HapticSignal): boolean {
 	return isNative() ? triggerNativeHaptic(signal) : triggerWebHaptic(signal);
 }
 
+export function selectionStart(): boolean {
+	if (settings.value.haptics === false) return false;
+	return isNative() ? nativeHaptics.selectionStart() : webHaptics.selectionStart();
+}
+
+export function selectionChanged(): boolean {
+	if (settings.value.haptics === false) return false;
+	return isNative() ? nativeHaptics.selectionChanged() : webHaptics.selectionChanged();
+}
+
+export function selectionEnd(): boolean {
+	if (settings.value.haptics === false) return false;
+	return isNative() ? nativeHaptics.selectionEnd() : webHaptics.selectionEnd();
+}
+
 export const haptics: HapticsEngine = {
 	tick: () => triggerHaptic('tick'),
 	click: () => triggerHaptic('click'),
 	heavy: () => triggerHaptic('heavy'),
 	double: () => triggerHaptic('double'),
 	error: () => triggerHaptic('error'),
-	trigger: (signal) => triggerHaptic(signal)
+	trigger: (signal) => triggerHaptic(signal),
+	selectionStart: () => selectionStart(),
+	selectionChanged: () => selectionChanged(),
+	selectionEnd: () => selectionEnd()
 };

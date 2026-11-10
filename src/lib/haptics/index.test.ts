@@ -8,7 +8,9 @@ import { settings } from '$lib/storage/settings.svelte';
 
 vi.mock('@capacitor/haptics', () => ({
 	Haptics: {
+		selectionStart: vi.fn().mockResolvedValue(undefined),
 		selectionChanged: vi.fn().mockResolvedValue(undefined),
+		selectionEnd: vi.fn().mockResolvedValue(undefined),
 		impact: vi.fn().mockResolvedValue(undefined),
 		notification: vi.fn().mockResolvedValue(undefined),
 		vibrate: vi.fn().mockResolvedValue(undefined)
@@ -83,6 +85,7 @@ describe('Haptics System', () => {
 	describe('Capacitor Native taptics', () => {
 		it('вызывает нативные методы Capacitor Haptics для каждого типа сигнала', () => {
 			expect(nativeHaptics.tick()).toBe(true);
+			expect(Haptics.selectionStart).toHaveBeenCalledTimes(1);
 			expect(Haptics.selectionChanged).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.click()).toBe(true);
@@ -96,6 +99,17 @@ describe('Haptics System', () => {
 
 			expect(nativeHaptics.error()).toBe(true);
 			expect(Haptics.notification).toHaveBeenCalledWith({ type: NotificationType.Error });
+		});
+
+		it('управляет сессией выбора selectionStart, selectionChanged, selectionEnd', () => {
+			expect(nativeHaptics.selectionStart()).toBe(true);
+			expect(Haptics.selectionStart).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.selectionChanged()).toBe(true);
+			expect(Haptics.selectionChanged).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.selectionEnd()).toBe(true);
+			expect(Haptics.selectionEnd).toHaveBeenCalledTimes(1);
 		});
 
 		it('поддерживает произвольную вибрацию по длительности и массиву', () => {
@@ -123,8 +137,16 @@ describe('Haptics System', () => {
 			expect(Haptics.impact).toHaveBeenCalledWith({ style: ImpactStyle.Light });
 			expect(vibrateMock).not.toHaveBeenCalled();
 
-			expect(haptics.tick()).toBe(true);
+			expect(haptics.selectionStart()).toBe(true);
+			expect(Haptics.selectionStart).toHaveBeenCalled();
+
+			expect(haptics.selectionChanged()).toBe(true);
 			expect(Haptics.selectionChanged).toHaveBeenCalled();
+
+			expect(haptics.selectionEnd()).toBe(true);
+			expect(Haptics.selectionEnd).toHaveBeenCalled();
+
+			expect(haptics.tick()).toBe(true);
 		});
 
 		it('не производит тактильный отклик, если отключен в настройках пользователя', () => {
@@ -133,12 +155,19 @@ describe('Haptics System', () => {
 			// В Web
 			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(false);
 			expect(haptics.click()).toBe(false);
+			expect(haptics.selectionStart()).toBe(false);
+			expect(haptics.selectionChanged()).toBe(false);
+			expect(haptics.selectionEnd()).toBe(false);
 			expect(vibrateMock).not.toHaveBeenCalled();
 
 			// В Native
 			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(true);
 			expect(haptics.click()).toBe(false);
+			expect(haptics.selectionStart()).toBe(false);
+			expect(haptics.selectionChanged()).toBe(false);
+			expect(haptics.selectionEnd()).toBe(false);
 			expect(Haptics.impact).not.toHaveBeenCalled();
+			expect(Haptics.selectionStart).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -17,4 +17,7 @@ export interface HapticsEngine {
 	double: () => boolean;
 	error: () => boolean;
 	trigger: (signal: HapticSignal) => boolean;
+	selectionStart: () => boolean;
+	selectionChanged: () => boolean;
+	selectionEnd: () => boolean;
 }

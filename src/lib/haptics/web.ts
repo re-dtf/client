@@ -34,5 +34,8 @@ export const webHaptics: HapticsEngine = {
 	heavy: () => triggerWebHaptic('heavy'),
 	double: () => triggerWebHaptic('double'),
 	error: () => triggerWebHaptic('error'),
-	trigger: (signal) => triggerWebHaptic(signal)
+	trigger: (signal) => triggerWebHaptic(signal),
+	selectionStart: () => canVibrateWeb(),
+	selectionChanged: () => triggerWebHaptic('tick'),
+	selectionEnd: () => canVibrateWeb()
 };

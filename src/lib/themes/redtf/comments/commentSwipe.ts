@@ -74,6 +74,7 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 			if (!key) return false;
 			item = node;
 			startY = e.clientY;
+			armY = 0;
 			view = { key, armed: false, slot: 0 };
 			return true;
 		},
@@ -95,16 +96,22 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 			const armed = x >= ARM;
 			if (!view || !column) return;
 			// До порога колонка идёт за пальцем по вертикали, после — стоит, и палец выбирает в ней действие
-			if (!armed) column.style.setProperty('--swipe-y', `${startY + dy - layerTop}px`);
-			else if (!view.armed) armY = dy;
+			if (!armed) {
+				column.style.setProperty('--swipe-y', `${startY + dy - layerTop}px`);
+				if (view.armed) haptics.selectionEnd();
+			} else if (!view.armed) {
+				armY = dy;
+				haptics.selectionStart();
+			}
 			const slot = armed ? slotAt(dy - armY, view.slot, options.count() - 1) : 0;
 			if (armed === view.armed && slot === view.slot) return;
 			// Отдача — когда действие готово и когда палец сменил его
-			if (armed) haptics.tick();
+			if (armed) haptics.selectionChanged();
 			view = { ...view, armed, slot };
 			options.show(view);
 		},
 		end(offset, v) {
+			haptics.selectionEnd();
 			const shown = view;
 			const node = item;
 			const moved = content;
@@ -122,6 +129,7 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 				icons.style.removeProperty('--swipe');
 				icons.style.removeProperty('--swipe-y');
 				view = item = content = column = undefined;
+				armY = 0;
 				options.show(null);
 			};
 			if (reducedMotion() || x < 1) return done();

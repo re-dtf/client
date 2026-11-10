@@ -19,4 +19,19 @@ describe('slotAt', () => {
 		expect(slotAt(STEP * 5, 0, 2)).toBe(2);
 		expect(slotAt(STEP * 3, 0, 0)).toBe(0);
 	});
+
+	it('корректно переключает действия при движении вниз и обратно вверх', () => {
+		let current = 0;
+		// Движение вниз
+		current = slotAt(STEP, current, 2);
+		expect(current).toBe(1);
+		current = slotAt(STEP * 2, current, 2);
+		expect(current).toBe(2);
+
+		// Движение вверх
+		current = slotAt(STEP, current, 2);
+		expect(current).toBe(1);
+		current = slotAt(0, current, 2);
+		expect(current).toBe(0);
+	});
 });
