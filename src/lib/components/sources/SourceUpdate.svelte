@@ -52,7 +52,7 @@
 
 	{#if updateResult.changelog}
 		<div class="section">
-			<h3>📄 ИЗМЕНЕНИЯ (CHANGELOG)</h3>
+			<h3>ИЗМЕНЕНИЯ (CHANGELOG)</h3>
 			<div class="changelog-box">
 				{updateResult.changelog}
 			</div>
@@ -61,7 +61,7 @@
 
 	{#if Object.keys(updateResult.addedEndpoints).length > 0 || updateResult.removedEndpoints.length > 0 || Object.keys(updateResult.modifiedEndpoints).length > 0}
 		<div class="section">
-			<h3>📋 ИЗМЕНЕНИЯ ЭНДПОИНТОВ</h3>
+			<h3>ИЗМЕНЕНИЯ ЭНДПОИНТОВ</h3>
 			<div class="endpoints-list">
 				{#each Object.entries(updateResult.addedEndpoints) as [key, endpoint]}
 					<div class="endpoint-item diff-added">
@@ -96,7 +96,7 @@
 
 	{#if updateResult.addedPermissions.length > 0}
 		<div class="section">
-			<h3>⚠️ НОВЫЕ РАЗРЕШЕНИЯ</h3>
+			<h3>НОВЫЕ РАЗРЕШЕНИЯ</h3>
 			<div class="permissions-list">
 				{#each updateResult.addedPermissions as perm (getPermissionKey(perm.id, perm.target))}
 					<label class="permission-item" class:required={perm.required}>
@@ -114,7 +114,7 @@
 
 	{#if updateResult.removedPermissions.length > 0}
 		<div class="section">
-			<h3>🗑️ УДАЛЁННЫЕ РАЗРЕШЕНИЯ</h3>
+			<h3>УДАЛЁННЫЕ РАЗРЕШЕНИЯ</h3>
 			<div class="permissions-list">
 				{#each updateResult.removedPermissions as perm (getPermissionKey(perm.id, perm.target))}
 					<div class="permission-item diff-removed">

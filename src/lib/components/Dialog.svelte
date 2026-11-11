@@ -106,4 +106,47 @@
 	.dialog :global(.btn.danger:hover) {
 		background: var(--color-danger-bg, #ffebee);
 	}
+
+	/* Кнопка-пилюля в стиле настроек (каталог и подключение источников); `suggested` — акцентная */
+	.dialog :global(.act) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: none;
+		min-height: 38px;
+		padding: 0 20px;
+		border: 0;
+		border-radius: 19px;
+		background: var(--st-button, var(--bg-button-hover, #eee));
+		color: inherit;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color var(--duration-base), opacity var(--duration-base);
+	}
+
+	.dialog :global(.act:not(:disabled):hover) {
+		background: var(--st-button-hover, var(--bg-button-hover, #e2e2e2));
+	}
+
+	.dialog :global(.act.suggested) {
+		background: var(--st-accent, var(--color-blue, #3584e4));
+		color: #fff;
+	}
+
+	.dialog :global(.act.suggested:not(:disabled):hover) {
+		background: var(--st-accent, var(--color-blue, #3584e4));
+		filter: brightness(0.93);
+	}
+
+	.dialog :global(.act:disabled) {
+		opacity: 0.5;
+		cursor: default;
+	}
+
+	.dialog :global(.act:focus-visible) {
+		outline: 2px solid var(--st-accent, var(--color-blue, #3584e4));
+		outline-offset: 2px;
+	}
 </style>

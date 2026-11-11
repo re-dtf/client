@@ -31,14 +31,19 @@
 		sourceRegistry.activeSources.some((s) => s.grantedPermissions.some((p) => p.startsWith('mutate:comments:restore')))
 	);
 
+	/** Загружает манифест и открывает окно подтверждения разрешений; ошибку бросает вызывающему */
+	async function loadForReview(url: string) {
+		reviewManifest = await sourceRegistry.addSource(url);
+		reviewManifestUrl = url;
+	}
+
 	async function handleAddSource() {
 		if (!newSourceUrl) return;
-		
+
 		isAdding = true;
 		addError = '';
 		try {
-			reviewManifest = await sourceRegistry.addSource(newSourceUrl);
-			reviewManifestUrl = newSourceUrl;
+			await loadForReview(newSourceUrl);
 			newSourceUrl = '';
 		} catch (err: any) {
 			addError = err.message || 'Ошибка при загрузке источника';
@@ -47,10 +52,9 @@
 		}
 	}
 
-	function handleInstallFromCatalog(manifestUrl: string) {
+	async function handleInstallFromCatalog(manifestUrl: string) {
+		await loadForReview(manifestUrl);
 		showCatalog = false;
-		newSourceUrl = manifestUrl;
-		handleAddSource();
 	}
 
 	function handleConfirmPermissions(grantedPermissions: string[]) {
@@ -102,7 +106,10 @@
 
 <section class="sources" aria-label="Установленные источники">
 	{#if sources.length === 0}
-		<p class="empty">Нет установленных источников</p>
+		<div class="empty">
+			<p>Нет установленных источников</p>
+			<SettingsButton variant="suggested" onclick={() => (showCatalog = true)}>Открыть каталог</SettingsButton>
+		</div>
 	{:else}
 		{#each sources as source (source.manifest.id)}
 			<SourceCard {source} onUpdateReady={handleUpdateReady} />
@@ -202,6 +209,10 @@
 	}
 
 	.empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
 		padding: 32px 24px;
 		border-radius: 14px;
 		background: var(--st-card);

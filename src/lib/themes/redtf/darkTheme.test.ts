@@ -128,13 +128,13 @@ describe('redtf dark mode configuration', () => {
 
 		const permPath = path.resolve(__dirname, '../../components/sources/SourcePermissions.svelte');
 		const permContent = fs.readFileSync(permPath, 'utf-8');
-		expect(permContent).toContain('var(--bg-secondary');
-		expect(permContent).toContain('var(--text-primary');
+		expect(permContent).toContain('var(--st-muted');
+		expect(permContent).toContain('var(--st-accent');
 
 		const catalogPath = path.resolve(__dirname, '../../components/sources/SourceCatalog.svelte');
 		const catalogContent = fs.readFileSync(catalogPath, 'utf-8');
-		expect(catalogContent).toContain('var(--bg-secondary');
-		expect(catalogContent).toContain('var(--text-primary');
+		expect(catalogContent).toContain('var(--st-muted');
+		expect(catalogContent).toContain('var(--st-accent');
 
 		const updatePath = path.resolve(__dirname, '../../components/sources/SourceUpdate.svelte');
 		const updateContent = fs.readFileSync(updatePath, 'utf-8');
