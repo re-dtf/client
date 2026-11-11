@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { settle, spring } from './swipe';
+import { rampUp, settle, spring } from './swipe';
+
+describe('rampUp', () => {
+	it('разгоняет страницу от нуля до пальца плавно и не выходит за границы', () => {
+		expect(rampUp(-5)).toBe(0);
+		expect(rampUp(0)).toBe(0);
+		expect(rampUp(1000)).toBe(1);
+		let prev = 0;
+		for (let t = 0; t <= 200; t += 5) {
+			const k = rampUp(t);
+			expect(k).toBeGreaterThanOrEqual(prev);
+			prev = k;
+		}
+		// В начале скорость почти нулевая: первые кадры страница почти не трогается
+		expect(rampUp(8)).toBeLessThan(0.02);
+	});
+});
 
 describe('spring', () => {
 	it('стартует с места, доезжает до цели и не перелетает её даже от сильного броска', () => {

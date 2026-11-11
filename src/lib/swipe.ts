@@ -34,6 +34,14 @@ const FLING = 0.35;
 /** Доля ширины, после которой медленный жест доводится до конца */
 const DISTANCE = 0.35;
 export const EASE = 'cubic-bezier(0.33, 1, 0.68, 1)';
+/** За сколько мс страница догоняет палец после старта жеста: без скачка скорости с нуля и без рывка после тяжёлого первого кадра */
+const RAMP = 120;
+
+/** Доля сдвига пальца, которую показываем через `elapsed` мс после первого кадра жеста: плавно от 0 до 1 */
+export const rampUp = (elapsed: number) => {
+	const u = Math.min(1, Math.max(0, elapsed / RAMP));
+	return u * u * (3 - 2 * u);
+};
 
 /**
  * Куда доехать после отпускания: к соседу слева (-1), справа (1) или назад (0).
@@ -73,6 +81,10 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 		let dragging = false;
 		let offset = 0;
 		let dy = 0;
+		// Сдвиг, который сейчас показан потребителю: в начале жеста он отстаёт от пальца (разгон), потом совпадает с ним
+		let shown = 0;
+		// Разгон после старта: `'pending'` — ждём первый кадр жеста, число — время этого кадра, `undefined` — разгона нет
+		let ramp: 'pending' | number | undefined;
 		let samples: { x: number; t: number }[] = [];
 		let frame = 0;
 		// Доезд после отпускания. Новое касание подхватывает его (`grab`) или завершает сразу, чтобы жесты шли подряд
@@ -82,7 +94,17 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 
 		function render() {
 			frame = 0;
-			hooks.move(offset, dy);
+			// Время берём своё, а не кадра: тяжёлый `begin` идёт до этого кадра и в разгон не входит
+			const now = performance.now();
+			if (ramp === 'pending') ramp = now;
+			let k = 1;
+			if (ramp !== undefined) {
+				k = rampUp(now - ramp);
+				if (k === 1) ramp = undefined;
+				else frame = requestAnimationFrame(render);
+			}
+			shown = offset * k;
+			hooks.move(shown, dy);
 		}
 
 		const stopClick = (e: Event) => {
@@ -99,13 +121,19 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 
 		function release(v: number | null) {
 			cancelAnimationFrame(frame);
+			// Кадр жеста ещё не был: быстрый бросок решает по реальному сдвигу, а не по нулевому
+			if (ramp === 'pending') ramp = undefined;
 			render();
+			// Доезд идёт от показанного сдвига, а разгон на этом кончается
+			cancelAnimationFrame(frame);
+			frame = 0;
+			ramp = undefined;
 			start = undefined;
 			dragging = false;
 			// Палец мог отпустить жест над ссылкой: такой клик не должен её открыть
 			node.addEventListener('click', stopClick, { capture: true, once: true });
 			setTimeout(() => node.removeEventListener('click', stopClick, true), 300);
-			finish = hooks.end(offset, v);
+			finish = hooks.end(shown, v);
 		}
 
 		/** Касание кончилось, не став жестом. Подхваченный доезд продолжается с места, где его остановили */
@@ -134,6 +162,7 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 			start = { x: e.clientX, y: e.clientY };
 			pointer = e.pointerId;
 			dy = 0;
+			ramp = undefined;
 			samples = [];
 		}
 
@@ -152,8 +181,10 @@ export function swipe(hooks: SwipeHooks): Attachment<HTMLElement> {
 				} catch {
 					// Палец уже отпущен: отпускание придёт следом
 				}
-				// Жест трогается с места захвата, а не прыгает на величину порога; подхваченный — с места, где остановлен доезд
-				start.x = e.clientX - (held ?? 0);
+				// Подхваченный доезд продолжается с места, где его остановили. Новый жест ведёт сдвиг от касания, а страница
+				// догоняет палец плавным разгоном (`ramp`), а не прыгает на величину порога и не едет с места со скоростью пальца
+				if (held === undefined) ramp = 'pending';
+				else start.x = e.clientX - held;
 				held = undefined;
 			}
 			offset = e.clientX - start.x;
