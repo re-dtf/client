@@ -21,7 +21,7 @@
 | Ключ | Слой | Содержимое | Файл |
 | --- | --- | --- | --- |
 | `redtf:settings` | settings | `{ theme, proxies, commentNesting, collectStats, … }` | `storage/settings.svelte.ts` |
-| `redtf:settings:filter` | settings | локальные фильтры (скрытые теги, стоп-слова, режим скрытия) | `storage/filter.svelte.ts` |
+| `redtf:settings:filter` | settings | локальные фильтры (скрытые теги, пользователи, стоп-слова, режим скрытия) | `storage/filter.svelte.ts` |
 | `redtf:settings:reactions` | settings | правила реакций (вид и вес), реакции лайка и дизлайка, сортировка по рейтингу | `storage/reactions.svelte.ts` |
 | `redtf:theme:<id>` | theme | значения полей настроек темы и выбор палитры | `themes/settings.svelte.ts` |
 | `redtf:secrets:dtf-session` | secrets | сессия DTF: токены и сроки | `storage/auth.svelte.ts` |

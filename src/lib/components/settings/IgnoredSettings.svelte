@@ -16,7 +16,8 @@
 		KEYWORD_PRESETS,
 		removeIgnoredKeyword,
 		removeIgnoredKeywords,
-		removeIgnoredTag
+		removeIgnoredTag,
+		unhideUser
 	} from '$lib/storage/filter.svelte';
 
 	/*
@@ -166,7 +167,7 @@
 </SettingsGroup>
 
 <!-- Локальные фильтры (клиентский ЧС) -->
-<SettingsGroup title="Локальные фильтры" description="Скрытие постов в приложении по тегам и фразам без авторизации на DTF.">
+<SettingsGroup title="Локальные фильтры" description="Скрытие контента в приложении по тегам, фразам и авторам без авторизации на DTF.">
 	<div class="filter-card">
 		<label class="filter-label" for="ignored-tags-input">Скрытые теги (через пробел, запятую или Enter)</label>
 		<div class="input-container">
@@ -242,6 +243,26 @@
 			</div>
 		{:else}
 			<p class="empty-hint">Нет скрытых ключевых слов</p>
+		{/if}
+	</div>
+
+	<div class="filter-card filter-card--top-border">
+		<span class="filter-label">Скрытые пользователи: их записи, комментарии и уведомления от них не показываются</span>
+		{#if filterSettings.value.users.length > 0}
+			<div class="chips-container" aria-label="Скрытые пользователи">
+				{#each filterSettings.value.users as user (user.id)}
+					<span class="chip">
+						<span class="chip__label">{user.name}</span>
+						<button class="chip__remove" type="button" aria-label="Показывать {user.name}" onclick={() => unhideUser(user.id)}>
+							<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+								<path d="M4 4l8 8M12 4l-8 8" />
+							</svg>
+						</button>
+					</span>
+				{/each}
+			</div>
+		{:else}
+			<p class="empty-hint">Нет скрытых пользователей. Скрыть можно из меню «⋯» у записи, комментария или в профиле.</p>
 		{/if}
 	</div>
 

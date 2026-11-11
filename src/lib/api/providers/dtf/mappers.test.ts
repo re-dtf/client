@@ -173,3 +173,10 @@ describe('mapSearchSnippet', () => {
 		expect(mapSearchSnippet(undefined, 'Заголовок')).toBeUndefined();
 	});
 });
+
+describe('mapNotification', () => {
+	it('запоминает, кто вызвал уведомление', () => {
+		expect(mapNotification({ id: 1, users: [{ id: 10 }, { id: 11 }] }).userIds).toEqual([10, 11]);
+		expect(mapNotification({ id: 2 }).userIds).toBeUndefined();
+	});
+});

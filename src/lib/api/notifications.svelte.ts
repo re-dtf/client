@@ -1,7 +1,10 @@
 import { api } from './index.svelte';
 import type { Notification } from './types';
+import { filterSettings, isNotificationHidden } from '$lib/storage/filter.svelte';
 
-let items = $state.raw<Notification[]>([]);
+let all = $state.raw<Notification[]>([]);
+/** Уведомления без тех, где все авторы скрыты локально */
+let items = $derived(all.filter((n) => !isNotificationHidden(n, filterSettings.value.users)));
 let loading = $state(false);
 let error = $state('');
 /** Увиденные в открытом списке: число на колокольчике их уже не считает, но в списке они подсвечены, пока их не перезагрузят */
@@ -44,7 +47,7 @@ export const notifications = {
 		loading = true;
 		error = '';
 		try {
-			items = await api.getNotifications();
+			all = await api.getNotifications();
 		} catch (e) {
 			error = (e as Error).message;
 		} finally {
@@ -53,17 +56,17 @@ export const notifications = {
 		}
 	},
 
-	/** Отметить прочитанными: сразу у себя, на сервере — следом. Без аргументов — все */
-	markRead(ids = items.filter((n) => !n.isRead).map((n) => n.id)) {
-		const unread = ids.filter((id) => items.some((n) => n.id === id && !n.isRead));
+	/** Отметить прочитанными: сразу у себя, на сервере — следом. Без аргументов — все, и скрытые тоже */
+	markRead(ids = all.filter((n) => !n.isRead).map((n) => n.id)) {
+		const unread = ids.filter((id) => all.some((n) => n.id === id && !n.isRead));
 		if (unread.length === 0) return;
 
-		items = items.map((n) => (unread.includes(n.id) ? { ...n, isRead: true } : n));
+		all = all.map((n) => (unread.includes(n.id) ? { ...n, isRead: true } : n));
 		api.markNotificationsRead(unread).catch((e) => console.warn('[notifications] Не удалось отметить прочитанными:', e));
 	},
 
 	clear() {
-		items = [];
+		all = [];
 		seen = new Set();
 		error = '';
 	}

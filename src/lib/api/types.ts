@@ -348,6 +348,8 @@ export interface Notification {
 	url?: string;
 	createdAt: string;
 	avatarUrl?: string;
+	/** Кто это сделал: по ним скрытые локально пользователи убирают свои уведомления */
+	userIds?: number[];
 }
 
 /**

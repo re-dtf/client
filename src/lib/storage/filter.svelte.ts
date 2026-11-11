@@ -1,19 +1,27 @@
 import { persistedState } from './persisted.svelte';
-import type { Comment, Post } from '$lib/api/types';
+import type { Comment, Notification, Post } from '$lib/api/types';
 
 /*
  * Локальный чёрный список и фильтрация контента в ленте и комментариях.
- * Позволяет скрывать посты и комментарии по тегам и ключевым словам локально на клиенте,
+ * Позволяет скрывать посты и комментарии по тегам, ключевым словам и авторам локально на клиенте,
  * без необходимости быть авторизованным на DTF.
  */
 
 export type FilterMode = 'soft' | 'hard';
+
+/** Пользователь DTF, которого скрыли локально; имя хранится, чтобы показать его в настройках без запроса */
+export interface HiddenUser {
+	id: number;
+	name: string;
+}
 
 export interface FilterSettings {
 	/** Список скрытых тегов (хранятся без ведущего #) */
 	tags: string[];
 	/** Список скрытых ключевых слов и фраз */
 	keywords: string[];
+	/** Скрытые локально пользователи DTF: их посты, комментарии и уведомления от них не показываются */
+	users: HiddenUser[];
 	/** Режим скрытия: soft — сворачивать под плашку с кнопкой «Показать», hard — скрывать насовсем */
 	mode: FilterMode;
 	/** Фильтровать посты */
@@ -24,7 +32,7 @@ export interface FilterSettings {
 
 export interface FilterMatch {
 	matched: boolean;
-	kind: 'tag' | 'keyword';
+	kind: 'tag' | 'keyword' | 'user';
 	rule: string;
 }
 
@@ -45,6 +53,7 @@ export const KEYWORD_PRESETS: KeywordPreset[] = [
 export const filterSettings = persistedState<FilterSettings>('redtf:settings:filter', {
 	tags: [],
 	keywords: [],
+	users: [],
 	mode: 'soft',
 	filterPosts: true,
 	filterComments: true
@@ -67,6 +76,31 @@ export function addIgnoredTag(tag: string): boolean {
 export function removeIgnoredTag(tag: string) {
 	const clean = normalizeTag(tag);
 	filterSettings.patch({ tags: filterSettings.value.tags.filter((t) => t !== clean) });
+}
+
+/** Скрывает пользователя DTF локально: без входа и без записи в чёрный список аккаунта */
+export function hideUser(id: number, name: string): boolean {
+	if (isUserHidden(id)) return false;
+	filterSettings.patch({ users: [...filterSettings.value.users, { id, name }] });
+	return true;
+}
+
+/** Возвращает локально скрытого пользователя */
+export function unhideUser(id: number) {
+	filterSettings.patch({ users: filterSettings.value.users.filter((u) => u.id !== id) });
+}
+
+export function isUserHidden(id: number, users: HiddenUser[] = filterSettings.value.users): boolean {
+	return users.some((u) => u.id === id);
+}
+
+/** Уведомление, у которого все авторы скрыты: «Имя и ещё двое оценили» остаётся, пока виден хоть кто-то из них */
+export function isNotificationHidden(
+	notification: Pick<Notification, 'userIds'>,
+	users: HiddenUser[] = filterSettings.value.users
+): boolean {
+	const ids = notification.userIds;
+	return !!ids?.length && ids.every((id) => isUserHidden(id, users));
 }
 
 /** Добавляет ключевое слово в локальный фильтр */
@@ -149,8 +183,11 @@ export function matchPostFilter(
 	settings: FilterSettings = filterSettings.value
 ): FilterMatch | null {
 	if (!settings.filterPosts) return null;
-	const { tags, keywords } = settings;
-	if (tags.length === 0 && keywords.length === 0) return null;
+	const { tags, keywords, users } = settings;
+	if (tags.length === 0 && keywords.length === 0 && users.length === 0) return null;
+
+	const author = post.sourceId === 'dtf' && post.author ? users.find((u) => u.id === post.author.id) : undefined;
+	if (author) return { matched: true, kind: 'user', rule: author.name };
 
 	const subsiteName = post.subsite?.name ? normalizeTag(post.subsite.name) : '';
 	const fullText = getPostSearchText(post);
@@ -187,8 +224,11 @@ export function matchCommentFilter(
 	settings: FilterSettings = filterSettings.value
 ): FilterMatch | null {
 	if (!settings.filterComments) return null;
-	const { tags, keywords } = settings;
-	if (tags.length === 0 && keywords.length === 0) return null;
+	const { tags, keywords, users } = settings;
+	if (tags.length === 0 && keywords.length === 0 && users.length === 0) return null;
+
+	const author = comment.sourceId === 'dtf' ? users.find((u) => u.id === comment.author.id) : undefined;
+	if (author) return { matched: true, kind: 'user', rule: author.name };
 
 	const content = comment.content || '';
 	const lowerContent = content.toLowerCase();

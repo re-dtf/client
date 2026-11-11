@@ -24,14 +24,17 @@ import {
 	addIgnoredKeywords,
 	addIgnoredTag,
 	filterSettings,
+	hideUser,
 	isKeywordPresetActive,
+	isNotificationHidden,
 	KEYWORD_PRESETS,
 	matchCommentFilter,
 	matchPostFilter,
 	normalizeTag,
 	removeIgnoredKeyword,
 	removeIgnoredKeywords,
-	removeIgnoredTag
+	removeIgnoredTag,
+	unhideUser
 } from './filter.svelte';
 import type { Comment, Post } from '$lib/api/types';
 
@@ -41,6 +44,7 @@ describe('filter storage', () => {
 		filterSettings.patch({
 			tags: [],
 			keywords: [],
+			users: [],
 			mode: 'soft',
 			filterPosts: true,
 			filterComments: true
@@ -208,5 +212,24 @@ describe('filter storage', () => {
 		filterSettings.patch({ filterComments: false });
 		expect(matchCommentFilter(comment1)).toBeNull();
 		expect(matchCommentFilter(comment2)).toBeNull();
+	});
+
+	it('скрытый пользователь прячет свои посты, комментарии и уведомления', () => {
+		expect(hideUser(10, 'User')).toBe(true);
+		expect(hideUser(10, 'User')).toBe(false);
+
+		const post = { id: 1, sourceId: 'dtf', title: '', blocks: [], author: { id: 10, name: 'User' }, commentsCount: 0, createdAt: '' } as Post;
+		const comment = { id: 2, sourceId: 'dtf', postId: 1, author: { id: 10, name: 'User' }, content: 'привет', createdAt: '' } as Comment;
+		expect(matchPostFilter(post)).toEqual({ matched: true, kind: 'user', rule: 'User' });
+		expect(matchCommentFilter(comment)).toEqual({ matched: true, kind: 'user', rule: 'User' });
+		expect(matchPostFilter({ ...post, author: { id: 11, name: 'Other' } })).toBeNull();
+
+		// уведомление пропадает, только если скрыты все, кто его вызвал
+		expect(isNotificationHidden({ userIds: [10] })).toBe(true);
+		expect(isNotificationHidden({ userIds: [10, 11] })).toBe(false);
+		expect(isNotificationHidden({})).toBe(false);
+
+		unhideUser(10);
+		expect(matchPostFilter(post)).toBeNull();
 	});
 });
