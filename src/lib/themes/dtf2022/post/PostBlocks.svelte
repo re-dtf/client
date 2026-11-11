@@ -276,7 +276,7 @@
 	{#if title?.trim()}
 		<div class="post-block post-block--title">
 			{#if editorial}
-				{titleParts.head}<span class="post-block__last-word">{titleParts.last}<span class="post-block__tick" role="img" aria-label="Материал редакции" title="Материал редакции"><svg width="24" height="24" aria-hidden="true"><use href="/icons.svg#v_editorial"></use></svg></span></span>
+				{titleParts.head}<span class="post-block__last-word">{titleParts.last}&nbsp;<span class="post-block__tick" role="img" aria-label="Материал редакции" title="Материал редакции"><svg width="24" height="24" aria-hidden="true"><use href="/icons.svg#v_editorial"></use></svg></span></span>
 			{:else}
 				{title.trim()}
 			{/if}
@@ -333,8 +333,10 @@
 		cursor: pointer;
 	}
 
+	/* .content-title__last-word из архива: слово и галочка держатся вместе, длинное слово всё равно переносится */
 	.post-block__last-word {
-		white-space: nowrap;
+		display: inline-block;
+		word-break: break-word;
 	}
 
 	/* Галочка редакции: .content-editorial-tick из архива (у встроенного поста иконка 20px) */
