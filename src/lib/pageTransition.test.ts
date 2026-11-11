@@ -54,4 +54,34 @@ describe('pageTransition', () => {
 		unfreeze();
 		expect(mockScreen.style.position).toBeUndefined();
 	});
+
+	it('freeze с headerBottom = 0 позиционирует элемент с top = 0px для показа контента за блюром шапки', () => {
+		const mockScreen = {
+			style: {} as Record<string, string>,
+			scrollTop: 0
+		} as unknown as HTMLElement;
+
+		const rect = { top: -450, left: 0, width: 400 } as DOMRect;
+		const unfreeze = freeze(mockScreen, rect, 0);
+
+		expect(mockScreen.style.top).toBe('0px');
+		expect(mockScreen.scrollTop).toBe(450);
+
+		unfreeze();
+	});
+
+	it('freeze с ненулевым headerBottom ограничивает top снизу границей шапки', () => {
+		const mockScreen = {
+			style: {} as Record<string, string>,
+			scrollTop: 0
+		} as unknown as HTMLElement;
+
+		const rect = { top: -450, left: 0, width: 400 } as DOMRect;
+		const unfreeze = freeze(mockScreen, rect, 60);
+
+		expect(mockScreen.style.top).toBe('60px');
+		expect(mockScreen.scrollTop).toBe(510);
+
+		unfreeze();
+	});
 });

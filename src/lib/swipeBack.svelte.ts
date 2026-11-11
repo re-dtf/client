@@ -3,7 +3,7 @@ import type { Attachment } from 'svelte/attachments';
 import { page } from '$app/state';
 import { closeOverlay } from './navigation';
 import { reducedMotion } from './motion';
-import { freeze, headerBottomOf, pageTransition } from './pageTransition.svelte';
+import { freeze, pageTransition } from './pageTransition.svelte';
 import { EASE, glide, settle, swipe, translate } from './swipe';
 import { activeTheme } from './themes/index.svelte';
 import { getCurrentDevice } from './themes/types';
@@ -124,11 +124,11 @@ export function swipeBackGesture(options: SwipeBackOptions): Attachment<HTMLElem
 			// У тем между «островами» страницы промежутки: без фона в них был бы виден слой под ней. Короткая страница тянется до низа окна
 			const fill = [top, document.body, document.documentElement].map(bg).find((c) => !transparent(c)) ?? '';
 			// Слой под страницей встаёт туда, где окажется после закрытия: прокрутка окна сменится на его собственную,
-			// а в потоке он займёт место страницы (с поправкой на свой отступ сверху)
+			// а в потоке он займёт место страницы (с поправкой на свой отступ сверху).
+			// Не обрезаем по шапке (minTop = 0): при прокрутке слой заходит под топбар и должен быть виден за его блюром
 			const y = rect.top - margin(top) + margin(under) + scrollY - options.scrollOf(from.under);
-			const headerBottom = headerBottomOf();
 			// Стили ставятся, пока слой скрыт, а прокрутка внутри — когда он показан: ей нужна раскладка
-			const unfreeze = freeze(under, new DOMRect(rect.left, y, rect.width, innerHeight), headerBottom);
+			const unfreeze = freeze(under, new DOMRect(rect.left, y, rect.width, innerHeight), 0);
 			// Слой под страницей: страница поднимется над ним своим transform (порядок по DOM)
 			under.style.zIndex = '';
 			under.style.willChange = 'transform';

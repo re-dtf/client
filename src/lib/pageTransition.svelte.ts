@@ -71,7 +71,7 @@ export function headerBottomOf(): number {
 	return headerEl ? Math.round(headerEl.getBoundingClientRect().bottom) : 0;
 }
 
-/** Временно зафиксировать экран по размерам окна. `headerBottom` можно передать, если он уже прочитан */
+/** Временно зафиксировать экран по размерам окна. `headerBottom` задаёт нижнюю границу шапки (0 — заходить под шапку) */
 export function freeze(screen: HTMLElement, rect: DOMRect, headerBottom = headerBottomOf()): () => void {
 	const top = Math.max(rect.top, headerBottom);
 	const winHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
