@@ -18,7 +18,8 @@
 		children
 	}: {
 		open?: boolean;
-		items: { value: T; label: string; icon?: string }[];
+		/** `hint` — подсказка при наведении: что пункт делает на самом деле */
+		items: { value: T; label: string; icon?: string; hint?: string }[];
 		selected?: T;
 		onselect: (value: T) => void;
 		width?: number | string;
@@ -77,6 +78,7 @@
 						class={['popover-item', { 'popover-item--selected': item.value === selected }]}
 						role="option"
 						aria-selected={item.value === selected}
+						title={item.hint}
 						tabindex="0"
 						onclick={() => select(item.value)}
 						onkeydown={clickOnKey}
