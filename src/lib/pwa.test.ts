@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { version } from '$app/env';
 import { pwa } from './pwa.svelte';
 
 describe('pwa manager', () => {
@@ -6,6 +7,7 @@ describe('pwa manager', () => {
 		pwa.needRefresh = false;
 		pwa.offlineReady = false;
 		pwa.newVersion = null;
+		pwa.currentVersion = version;
 	});
 
 	it('начальные значения и dismiss сбрасывают состояние обновления', () => {
@@ -89,10 +91,28 @@ describe('pwa manager', () => {
 		pwa.newVersion = null;
 		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/commits/dev');
 
-		pwa.newVersion = '0.0.2';
-		expect(pwa.changesUrl).toContain('https://github.com/re-dtf/client');
+		pwa.currentVersion = '0.1.0-alpha.6';
+		pwa.newVersion = '1.0.0-alpha.1';
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/compare/v0.1.0-alpha.6...v1.0.0-alpha.1');
 
+		pwa.currentVersion = 'v0.1.0-alpha.6';
+		pwa.newVersion = 'v1.0.0-alpha.1';
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/compare/v0.1.0-alpha.6...v1.0.0-alpha.1');
+
+		pwa.currentVersion = '0.1.0';
+		pwa.newVersion = '0.2.0';
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/compare/v0.1.0...v0.2.0');
+
+		pwa.currentVersion = '0.0.1-abc1234';
+		pwa.newVersion = '0.0.1-def5678';
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/compare/abc1234...def5678');
+
+		pwa.currentVersion = '0.0.1-dev';
 		pwa.newVersion = '0.0.1-abc1234';
-		expect(pwa.changesUrl).toContain('https://github.com/re-dtf/client');
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/compare/dev...abc1234');
+
+		pwa.currentVersion = '1.0.0-alpha.1';
+		pwa.newVersion = '1.0.0-alpha.1';
+		expect(pwa.changesUrl).toBe('https://github.com/re-dtf/client/releases/tag/v1.0.0-alpha.1');
 	});
 });

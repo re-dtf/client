@@ -6,17 +6,24 @@ class PwaManager {
 	needRefresh = $state(false);
 	offlineReady = $state(false);
 	newVersion = $state<string | null>(null);
-	readonly currentVersion = version;
+	currentVersion = $state<string>(version);
 
 	get changesUrl(): string {
 		const repo = 'https://github.com/re-dtf/client';
 		if (!this.newVersion) return `${repo}/commits/dev`;
 
 		const extractRef = (v: string) => {
-			if (v.includes('-')) {
-				return v.split('-').pop();
+			if (!v) return '';
+			const trimmed = v.trim();
+			if (trimmed === 'dev' || trimmed.endsWith('-dev')) return 'dev';
+
+			// SemVer prereleases (e.g. 0.1.0-alpha.6) contain hyphens, but represent Git tags (v0.1.0-alpha.6), not commit hashes
+			const commitMatch = trimmed.match(/^(?:.*-)?([0-9a-f]{7,40})$/i);
+			if (commitMatch && !/alpha|beta|rc|nightly|preview/i.test(trimmed)) {
+				return commitMatch[1];
 			}
-			return `v${v}`;
+
+			return trimmed.startsWith('v') ? trimmed : `v${trimmed}`;
 		};
 
 		const fromRef = extractRef(this.currentVersion);
@@ -27,6 +34,8 @@ class PwaManager {
 		}
 
 		if (toRef) {
+			if (toRef === 'dev') return `${repo}/commits/dev`;
+			if (toRef.startsWith('v')) return `${repo}/releases/tag/${toRef}`;
 			return `${repo}/commit/${toRef}`;
 		}
 
