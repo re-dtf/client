@@ -109,7 +109,8 @@ export default defineConfig(async ({ command }) => {
 					fallback: '404.html'
 				}),
 				paths: {
-					base: basePath as `/${string}`
+					base: basePath as `/${string}`,
+					relative: false
 				},
 				prerender: {
 					handleUnseenRoutes: 'ignore'
