@@ -430,7 +430,31 @@ describe('isSourceManifest', () => {
 	});
 
 	describe('compatibility constraints', () => {
-		it('should reject responseFormat other than redtf-native', () => {
+		it('should accept responseFormat redtf-native and mapped (with valid mapping)', () => {
+			const manifestNative = createValidManifest();
+			expect(isSourceManifest(manifestNative)).toBe(true);
+
+			const manifestMapped = createValidManifest() as any;
+			manifestMapped.responseFormat = 'mapped';
+			manifestMapped.endpoints.getComments.mapping = {
+				items: 'data',
+				emptyStatuses: [404],
+				fields: {
+					id: { from: 'id', as: 'number' },
+					content: { from: 'data.text', as: 'string' }
+				}
+			};
+			expect(isSourceManifest(manifestMapped)).toBe(true);
+		});
+
+		it('should reject responseFormat mapped if no endpoint has mapping', () => {
+			const manifest = createValidManifest() as any;
+			manifest.responseFormat = 'mapped';
+			// endpoints don't have mapping
+			expect(isSourceManifest(manifest)).toBe(false);
+		});
+
+		it('should reject responseFormat other than redtf-native and mapped', () => {
 			const manifest = createValidManifest() as any;
 			manifest.responseFormat = 'custom-format';
 			expect(isSourceManifest(manifest)).toBe(false);
@@ -439,6 +463,45 @@ describe('isSourceManifest', () => {
 		it('should reject responseMapping if not null in v1', () => {
 			const manifest = createValidManifest() as any;
 			manifest.responseMapping = { some: 'mapping' };
+			expect(isSourceManifest(manifest)).toBe(false);
+		});
+
+		it('should validate endpoint timeoutMs and paged', () => {
+			const manifest = createValidManifest() as any;
+			manifest.endpoints.getComments.timeoutMs = 5000;
+			manifest.endpoints.getComments.paged = false;
+			expect(isSourceManifest(manifest)).toBe(true);
+
+			manifest.endpoints.getComments.timeoutMs = 25000; // > 15000
+			expect(isSourceManifest(manifest)).toBe(false);
+
+			manifest.endpoints.getComments.timeoutMs = 0;
+			expect(isSourceManifest(manifest)).toBe(false);
+
+			manifest.endpoints.getComments.timeoutMs = 3000;
+			manifest.endpoints.getComments.paged = 'invalid' as any;
+			expect(isSourceManifest(manifest)).toBe(false);
+		});
+
+		it('should reject unsafe paths and invalid transforms in mapping', () => {
+			const manifest = createValidManifest() as any;
+			manifest.endpoints.getComments.mapping = {
+				items: '__proto__.items'
+			};
+			expect(isSourceManifest(manifest)).toBe(false);
+
+			manifest.endpoints.getComments.mapping = {
+				items: 'data',
+				fields: {
+					id: { from: 'id', as: 'invalid_transform' as any }
+				}
+			};
+			expect(isSourceManifest(manifest)).toBe(false);
+
+			manifest.endpoints.getComments.mapping = {
+				items: 'data',
+				emptyStatuses: [99] // < 100
+			};
 			expect(isSourceManifest(manifest)).toBe(false);
 		});
 	});

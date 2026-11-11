@@ -19,6 +19,29 @@ export interface SourcePermission {
 }
 
 /**
+ * Поддерживаемые трансформации полей при декларативном маппинге ответов источника.
+ */
+export const MAPPING_TRANSFORMS = ['string', 'number', 'unixToIso', 'leonardoImage'] as const;
+export type MappingTransform = (typeof MAPPING_TRANSFORMS)[number];
+
+/**
+ * Описание маппинга одного поля.
+ */
+export interface FieldMapping {
+	from: string; // путь через точки к свойству (например, 'data.text' или 'id')
+	as?: MappingTransform; // преобразование из белого списка
+}
+
+/**
+ * Декларативная схема маппинга ответа эндпоинта.
+ */
+export interface EndpointMapping {
+	items?: string; // путь к списку сущностей (например, 'data'); если опущен, корень ответа
+	emptyStatuses?: number[]; // HTTP-коды, означающие отсутствие данных (например, [404])
+	fields?: Record<string, FieldMapping>; // сопоставление полей
+}
+
+/**
  * Описание конечной точки (endpoint) API источника.
  */
 export interface SourceEndpoint {
@@ -27,6 +50,9 @@ export interface SourceEndpoint {
 	path: string; // Относительный путь (например, '/comments/{postId}')
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE';
 	params?: Record<string, string>; // Шаблоны параметров запроса
+	timeoutMs?: number; // Таймаут запроса в мс (до 15000)
+	paged?: boolean; // false для источников без пагинации (загружаемых один раз на пост)
+	mapping?: EndpointMapping; // Декларативный маппинг ответа
 }
 
 /**
@@ -87,7 +113,7 @@ export interface SourceManifest {
 	endpoints: Record<string, SourceEndpoint>;
 	dependencies?: SourceDependency[];
 
-	responseFormat: 'redtf-native'; // В первой версии поддерживается только нативный формат reDTF
+	responseFormat: 'redtf-native' | 'mapped'; // 'redtf-native' или декларативно преобразованный 'mapped'
 	responseMapping: null; // Зарезервировано для v2 (JSONPath маппинг)
 }
 
@@ -168,6 +194,71 @@ function isSafeRelativePath(path: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Проверяет безопасность пути для извлечения свойств (защита от Prototype Pollution).
+ */
+export function isSafePath(path: string): boolean {
+	if (typeof path !== 'string') return false;
+	const trimmed = path.trim();
+	if (!trimmed) return false;
+	const parts = trimmed.split('.');
+	for (const part of parts) {
+		if (part === '__proto__' || part === 'prototype' || part === 'constructor') {
+			return false;
+		}
+		if (!/^[a-zA-Z0-9_]+$/.test(part)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * Проверяет валидность структуры EndpointMapping.
+ */
+export function isValidEndpointMapping(obj: unknown): boolean {
+	if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+		return false;
+	}
+	const mapping = obj as Record<string, any>;
+	if (mapping.items !== undefined) {
+		if (typeof mapping.items !== 'string' || (mapping.items.length > 0 && !isSafePath(mapping.items))) {
+			return false;
+		}
+	}
+	if (mapping.emptyStatuses !== undefined) {
+		if (!Array.isArray(mapping.emptyStatuses)) {
+			return false;
+		}
+		for (const status of mapping.emptyStatuses) {
+			if (typeof status !== 'number' || !Number.isInteger(status) || status < 100 || status > 599) {
+				return false;
+			}
+		}
+	}
+	if (mapping.fields !== undefined) {
+		if (typeof mapping.fields !== 'object' || mapping.fields === null || Array.isArray(mapping.fields)) {
+			return false;
+		}
+		for (const [key, val] of Object.entries(mapping.fields)) {
+			if (typeof key !== 'string' || !/^[a-zA-Z0-9_]+$/.test(key) || key === '__proto__' || key === 'prototype' || key === 'constructor') {
+				return false;
+			}
+			if (typeof val !== 'object' || val === null || Array.isArray(val)) {
+				return false;
+			}
+			const field = val as Record<string, any>;
+			if (typeof field.from !== 'string' || !isSafePath(field.from)) {
+				return false;
+			}
+			if (field.as !== undefined && !MAPPING_TRANSFORMS.includes(field.as)) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 /**
@@ -404,6 +495,19 @@ export function isSourceManifest(obj: unknown, isBuiltin = false): obj is Source
 				}
 			}
 		}
+		if (ep.timeoutMs !== undefined) {
+			if (typeof ep.timeoutMs !== 'number' || !Number.isFinite(ep.timeoutMs) || ep.timeoutMs <= 0 || ep.timeoutMs > 15000) {
+				return false;
+			}
+		}
+		if (ep.paged !== undefined && typeof ep.paged !== 'boolean') {
+			return false;
+		}
+		if (ep.mapping !== undefined) {
+			if (!isValidEndpointMapping(ep.mapping)) {
+				return false;
+			}
+		}
 	}
 
 	// 8. Зависимости (Dependencies)
@@ -425,8 +529,16 @@ export function isSourceManifest(obj: unknown, isBuiltin = false): obj is Source
 	}
 
 	// 9. Формат и отображение
-	if (manifest.responseFormat !== 'redtf-native') {
+	if (manifest.responseFormat !== 'redtf-native' && manifest.responseFormat !== 'mapped') {
 		return false;
+	}
+	if (manifest.responseFormat === 'mapped') {
+		const hasAnyMapping = Object.values(manifest.endpoints).some(
+			(ep: any) => ep && typeof ep.mapping === 'object' && ep.mapping !== null
+		);
+		if (!hasAnyMapping) {
+			return false;
+		}
 	}
 	if (manifest.responseMapping !== null && manifest.responseMapping !== undefined) {
 		return false;

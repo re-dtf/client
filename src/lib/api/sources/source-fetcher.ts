@@ -1,6 +1,7 @@
 import { resolveSourceUrl } from './types';
 import type { SourceState } from './types';
 import { sourceStorage } from '$lib/storage/sources.svelte';
+import { applyResponseMapping, MAX_RESPONSE_BYTES } from './response-mapping';
 
 /**
  * Выполняет запрос к эндпоинту источника.
@@ -8,10 +9,7 @@ import { sourceStorage } from '$lib/storage/sources.svelte';
  * - Резолвит шаблоны в path: {postId} → 12345
  * - Добавляет defaultHeaders из манифеста
  * - НЕ проверяет пермиссии (это делает фасад/registry для write-операций)
- *
- * Подготовлен для будущего responseMapping:
- * если manifest.responseMapping !== null, здесь будет вызываться
- * трансформация ответа. Сейчас просто возвращает response.json().
+ * - Если у эндпоинта есть `mapping`, приводит ответ к формату reDTF (response-mapping.ts)
  */
 export async function fetchFromSource<T>(
 	source: SourceState,
@@ -98,9 +96,10 @@ export async function fetchFromSource<T>(
 		}
 	}
 
-	// 4. Setup timeout (3 seconds)
+	// 4. Setup timeout (default 3 seconds, configurable up to 15 seconds)
+	const timeoutMs = endpoint.timeoutMs && endpoint.timeoutMs > 0 ? endpoint.timeoutMs : 3000;
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 3000);
+	const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 	init.signal = controller.signal;
 
 	try {
@@ -112,20 +111,41 @@ export async function fetchFromSource<T>(
 			throw new Error('Unauthorized');
 		}
 
+		const endpointMapping = endpoint.mapping;
+
 		if (!response.ok) {
+			if (endpointMapping?.emptyStatuses?.includes(response.status)) {
+				return (endpointMapping.items !== undefined ? { items: [] } : {}) as T;
+			}
 			throw new Error(`Source '${source.manifest.id}' returned ${response.status} ${response.statusText}`);
 		}
 
-		// Placeholder for future responseMapping
-		if (source.manifest.responseMapping !== null) {
-			// v2 mapping logic would go here
+		// Check response size via Content-Length header if present
+		const contentLengthHeader = response.headers?.get?.('content-length');
+		if (contentLengthHeader) {
+			const contentLength = parseInt(contentLengthHeader, 10);
+			if (contentLength > MAX_RESPONSE_BYTES) {
+				throw new Error(`Source '${source.manifest.id}' response exceeded size limit (${contentLength} bytes)`);
+			}
 		}
 
 		const text = await response.text();
 		if (!text) {
-			return {} as T;
+			return (endpointMapping?.items !== undefined ? { items: [] } : {}) as T;
 		}
-		return JSON.parse(text) as T;
+
+		if (text.length > MAX_RESPONSE_BYTES) {
+			throw new Error(`Source '${source.manifest.id}' response exceeded size limit (${text.length} characters)`);
+		}
+
+		const parsed = JSON.parse(text);
+
+		if (endpointMapping) {
+			const expectedPostId = pathParams?.postId !== undefined ? Number(pathParams.postId) : undefined;
+			return applyResponseMapping<T>(parsed, endpointMapping, expectedPostId);
+		}
+
+		return parsed as T;
 	} catch (error) {
 		if (error instanceof Error && error.name === 'AbortError') {
 			console.warn(`[reDTF] Request to source '${source.manifest.id}' timed out.`);
