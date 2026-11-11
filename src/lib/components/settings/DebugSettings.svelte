@@ -7,6 +7,7 @@
 	import { settings } from '$lib/storage/settings.svelte';
 	import { isNative } from '$lib/capacitor';
 	import { otaUpdater } from '$lib/capacitor/updater.svelte';
+	import HapticsLab from './HapticsLab.svelte';
 	import { dev } from '$app/env';
 
 	let { ondisable }: { ondisable?: () => void } = $props();
@@ -203,6 +204,8 @@
 			<span class="value-tag">{dev ? 'Development' : 'Production'}</span>
 		</SettingsRow>
 	</SettingsGroup>
+
+	<HapticsLab />
 
 	{#if isNative()}
 		<SettingsGroup title="Capgo OTA Updates" description="Диагностика и управление OTA-обновлениями бандла">
