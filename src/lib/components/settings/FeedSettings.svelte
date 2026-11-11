@@ -5,6 +5,7 @@
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
 	import { api } from '$lib/api/index.svelte';
+	import { nsfwBlur } from '$lib/nsfwBlur.svelte';
 	import type { AccountSettings } from '$lib/api/types';
 	import type { SettingField, SettingValue } from '$lib/themes/types';
 
@@ -72,6 +73,7 @@
 		try {
 			const { defaultFeed, myFeedSorting, isBlurNsfw, hideViewedPostsFromFeeds } = feed;
 			await api.updateAccountSettings(feed.id, { defaultFeed, myFeedSorting, isBlurNsfw, hideViewedPostsFromFeeds });
+			nsfwBlur.sync(feed);
 		} catch (e) {
 			feed = before;
 			feedError = (e as Error).message;

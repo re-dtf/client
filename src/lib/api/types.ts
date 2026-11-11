@@ -94,6 +94,8 @@ export interface Post {
 	commentEditor?: CommentEditorState;
 	/** Материал редакции: синяя галочка у заголовка */
 	isEditorial?: boolean;
+	/** Запись 18+: в ленте закрыта размытием (если пользователь аноним или включил «Размывать NSFW») */
+	isBlur?: boolean;
 	/** Плашка от редакции под заголовком («Обновление» и т. п.) */
 	warning?: { title: string; text: string };
 	/** Не опубликован: черновик */

@@ -145,6 +145,7 @@ export function mapEntryToPost(entry: any): Post {
 		isSubscribedToComments: entry.subscribedToTreads,
 		commentEditor: mapCommentEditor(entry.commentEditor),
 		isEditorial: entry.isEditorial || undefined,
+		isBlur: entry.isBlur || undefined,
 		warning: mapWarning(entry),
 		isDraft: entry.isPublished === false || undefined
 	};

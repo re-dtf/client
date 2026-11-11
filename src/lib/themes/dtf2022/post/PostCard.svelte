@@ -3,6 +3,10 @@
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { preloadIntent } from '$lib/actions/preloadIntent';
+	import { nsfwBlur } from '$lib/nsfwBlur.svelte';
+	import { authStorage } from '$lib/storage/auth.svelte';
+	import { Button } from '../ui';
+	import { toasts } from '../ui/notify.svelte';
 	import { reactToPost, repostPost, sharePost, toggleFavoritePost, votePost, withActions } from '../actions.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
@@ -39,6 +43,22 @@
 	let commentsPath = $derived(resolve(getPostPath(post, 'comments') as any));
 	let onreact = $derived(post.sourceId === 'dtf' ? (id: number) => reactToPost(post, id) : undefined);
 	let showReposts = $state(false);
+
+	// Запись 18+ в ленте закрыта размытием, пока её не откроют; встроенные посты не размываем
+	let revealed = $state(false);
+	let blurred = $derived(!embed && !revealed && nsfwBlur.isBlurred(post));
+	$effect(() => {
+		if (post.isBlur && !embed) nsfwBlur.ensure();
+	});
+
+	async function revealAlways() {
+		revealed = true;
+		try {
+			await nsfwBlur.disable();
+		} catch (e) {
+			toasts.add('error', (e as Error).message || 'Не удалось сохранить настройку');
+		}
+	}
 </script>
 
 <article class={['feed-item', { 'feed-item--embed': embed }]}>
@@ -49,8 +69,24 @@
 
 		<PostHeader {post} variant="card" {subscribe} />
 
-		<div class="post-content">
+		<div class={['post-content', { 'post-content--blur': blurred }]}>
 			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} />
+			{#if blurred}
+				<div class="post-adult">
+					<div class="post-adult__text">
+						Контент для взрослых
+						{#if !authStorage.isAuthenticated}<span class="post-adult__confirm">Подтвердите возраст.</span>{/if}
+					</div>
+					<div class="post-adult__buttons">
+						{#if authStorage.isAuthenticated}
+							<Button label="Показать" onclick={() => (revealed = true)} />
+							<Button label="Показывать всегда" onclick={revealAlways} />
+						{:else}
+							<Button label="Мне есть 18 лет" onclick={() => nsfwBlur.confirmAge()} />
+						{/if}
+					</div>
+				</div>
+			{/if}
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
 			<a class="post-link" href={postPath} aria-label={post.title || undefined} onclick={(e) => openPost(e, post)} use:preloadIntent={post}></a>
 		</div>
@@ -188,6 +224,61 @@
 	.post-link {
 		position: absolute;
 		inset: 0;
+	}
+
+	/* Запись 18+ (.content--is-visible-blur из архива): содержимое размыто, поверх — вопрос о возрасте */
+	.post-content--blur {
+		overflow: hidden;
+		min-height: 128px;
+		background: rgba(0, 0, 0, 0.2);
+	}
+
+	.post-content--blur :global(.post-blocks) {
+		filter: blur(35px);
+		transform: translate3d(0, 0, 0);
+	}
+
+	.post-adult {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.post-adult__text {
+		color: #fff;
+		font-size: 16px;
+		line-height: 24px;
+		text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+	}
+
+	.post-adult__buttons {
+		--btn-height: 40px;
+		--btn-offset: 25px;
+		display: flex;
+		gap: 18px;
+		margin-top: 17px;
+	}
+
+	@media (max-width: 859px) {
+		.post-content--blur {
+			min-height: 114px;
+		}
+	}
+
+	@media (max-width: 399px) {
+		.post-adult__text {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.post-adult__confirm {
+			display: none;
+		}
 	}
 
 	/* Исходный пост репоста: та же рамка, что у встроенного поста на странице, отступ только сверху */
