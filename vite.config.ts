@@ -83,6 +83,12 @@ export default defineConfig(async ({ command }) => {
 		},
 		optimizeDeps: {
 			include: [
+				'@capacitor/app',
+				'@capacitor/browser',
+				'@capacitor/core',
+				'@capacitor/splash-screen',
+				'@capacitor/status-bar',
+				'@capgo/capacitor-updater',
 				'dompurify',
 				'photoswipe',
 				'lottie-web/build/player/lottie_light',
@@ -98,6 +104,7 @@ export default defineConfig(async ({ command }) => {
 		plugins: [
 			sveltekit({
 				files: { appTemplate: ".svelte-kit/app-template.html" },
+				serviceWorker: { register: command === 'build' },
 				version: {
 					name: appVersion
 				},
