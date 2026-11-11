@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { ToastType } from './notify.svelte';
+	import type { ToastAction, ToastType } from './notify.svelte';
 
 	let {
 		type,
 		message,
-		lifeTime = 3000,
+		action,
+		// Плашке с кнопкой нужно время, чтобы успеть нажать
+		lifeTime = action ? 6000 : 3000,
 		onhide
 	}: {
 		type: ToastType;
 		message: string;
+		action?: ToastAction;
 		lifeTime?: number;
 		onhide: () => void;
 	} = $props();
@@ -64,7 +67,22 @@
 	<svg class="notify-item__icon icon" width="24" height="24" aria-hidden="true">
 		<use href="/icons.svg#{type === 'error' ? 'v_cancel' : 'v_success'}"></use>
 	</svg>
-	<p bind:this={text}>{message}</p>
+	<p bind:this={text}>
+		{message}
+		{#if action}
+			<button
+				type="button"
+				class="notify-item__action"
+				onclick={() => {
+					action.onclick();
+					clearTimeout(hideTimer);
+					setPhase('hidden');
+				}}
+			>
+				{action.label}
+			</button>
+		{/if}
+	</p>
 	<button type="button" class="notify-item__close" aria-label="Закрыть" onclick={() => setPhase('hidden')}>
 		<svg class="icon" width="20" height="20" aria-hidden="true">
 			<use href="/icons.svg#v_cross"></use>
@@ -150,6 +168,18 @@
 		margin: 0;
 		font-size: 15px;
 		line-height: 22px;
+	}
+
+	.notify-item__action {
+		margin-left: 8px;
+		color: var(--text-link);
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.notify-item__action:hover {
+		color: var(--color-danger);
 	}
 
 	.notify-item::before {

@@ -5,7 +5,7 @@
 
 <div class="notify" aria-live="polite">
 	{#each toasts.items as toast (toast.id)}
-		<Toast type={toast.type} message={toast.message} onhide={() => toasts.remove(toast.id)} />
+		<Toast type={toast.type} message={toast.message} action={toast.action} onhide={() => toasts.remove(toast.id)} />
 	{/each}
 </div>
 
