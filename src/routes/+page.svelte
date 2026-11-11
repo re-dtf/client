@@ -113,7 +113,7 @@
 </script>
 
 <svelte:head>
-	<title>reDTF - Лента</title>
+	<title>reDTF — неофициальный клиент DTF</title>
 </svelte:head>
 
 <svelte:window onscroll={rememberScroll} />

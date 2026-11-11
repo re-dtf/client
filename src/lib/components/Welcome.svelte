@@ -23,7 +23,7 @@
 </script>
 
 <!-- Логотип и размытый фон рисует заставка из app.html, здесь только текст и карточка поверх них -->
-<div class="welcome" class:leaving role="dialog" aria-modal="true" aria-labelledby="welcome-title-{step}">
+<div class="welcome" class:leaving role="dialog" aria-modal="true" aria-labelledby="welcome-title-{step}" data-nosnippet>
 	{#each [step] as current (current)}
 		<div
 			class={['screen', current === 'welcome' ? 'intro' : 'guided']}
