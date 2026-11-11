@@ -86,8 +86,22 @@
 	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
 	let paragraphs = $derived(parseCommentText(comment.content));
 	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
+
+	let revealedRestored = $state(false);
+	let isRestoredShown = $derived(
+		!!comment.restored &&
+		(settings.value.restoreScope !== 'moderator' || comment.removedByModerator) &&
+		(settings.value.restoreExpanded || revealedRestored)
+	);
+
+	let activeParagraphs = $derived(isRestoredShown && comment.restored ? parseCommentText(comment.restored.content) : paragraphs);
+	let activeMedia = $derived(
+		isRestoredShown && comment.restored
+			? (comment.restored.media?.length ? comment.restored.media : comment.media)
+			: comment.media
+	);
 	// Галерея просмотра — картинки комментария, видео в неё не входят
-	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
+	let images = $derived((activeMedia ?? []).filter((media) => media.type === 'image'));
 
 	let score = $derived(votesOf(comment));
 	let clientBadge = $derived(getCommentBadge(comment, settings.value.clientBadges));
@@ -239,7 +253,7 @@
 	</div>
 
 	<div class="comment-item__content">
-		{#if comment.isRemoved}
+		{#if comment.isRemoved && !isRestoredShown}
 			<div class="comment-item__avatar">
 				<div class="comment-item__avatar-image">
 					<img src={REMOVED_AVATAR} alt="" />
@@ -247,7 +261,12 @@
 			</div>
 
 			<div class="comment-item__text comment-item__text--deleted">
-				<p>{comment.content || 'Комментарий удалён'}</p>
+				<p>
+					{comment.content || (comment.removedByModerator ? 'Комментарий удален модератором' : 'Комментарий удален')}
+					{#if comment.restored}
+						&nbsp;<button type="button" class="comment-item__reveal-btn" onclick={() => (revealedRestored = true)}>Показать из архива</button>
+					{/if}
+				</p>
 			</div>
 
 			<div class="comment-item__break"></div>
@@ -328,6 +347,8 @@
 				<div class="comment-item__avatar-image">
 					{#if comment.author.avatarUrl}
 						<img src={comment.author.avatarUrl} alt="" />
+					{:else}
+						<img src={REMOVED_AVATAR} alt="" />
 					{/if}
 				</div>
 			</a>
@@ -372,6 +393,12 @@
 				<time datetime={comment.createdAt} title={formatFullDate(comment.createdAt)}>{formatTime(comment.createdAt)}</time>
 			</a>
 			{@render authorMark()}
+			{#if isRestoredShown && comment.restored}
+				<span class="comment-item__author-mark comment-item__author-mark--restored" title="Восстановлено из архива ({comment.restored.sourceId})">из архива</span>
+				{#if !settings.value.restoreExpanded}
+					<button type="button" class="comment-item__collapse-restored" onclick={() => (revealedRestored = false)}>свернуть</button>
+				{/if}
+			{/if}
 			{#if showDateBadge && clientBadge && 'icon' in clientBadge}
 				<button
 					type="button"
@@ -389,9 +416,9 @@
 				</button>
 			{/if}
 
-			{#if paragraphs.length}
+			{#if activeParagraphs.length}
 				<div class="comment-item__text">
-					{#each paragraphs as paragraph}
+					{#each activeParagraphs as paragraph}
 						{#snippet lines()}
 							{#each paragraph.lines as line, l}
 								{#if l > 0}<br />{/if}
@@ -429,9 +456,9 @@
 				</div>
 			{/if}
 
-			{#if comment.media?.length}
+			{#if activeMedia?.length}
 				<div class="comment-item__attaches comment-item__media">
-					{#each comment.media as media}
+					{#each activeMedia as media}
 						{#if media.type === 'image' || media.type === 'movie'}
 							<figure class="media-figure">
 								<div
@@ -476,51 +503,53 @@
 				</div>
 			{/if}
 
-			{#if votes === 'reactions'}
-				<Reactions compact reactions={comment.reactions} onreact={react} />
-			{:else if votes === 'likes'}
-				<PostButton
-					kind="like"
-					title="Лайк"
-					value={score.up || undefined}
-					active={score.myVote === 1}
-					reactions={comment.reactions}
-					onreact={react}
-					onclick={() => rate(1)}
-				/>
-			{/if}
+			{#if !comment.isRemoved}
+				{#if votes === 'reactions'}
+					<Reactions compact reactions={comment.reactions} onreact={react} />
+				{:else if votes === 'likes'}
+					<PostButton
+						kind="like"
+						title="Лайк"
+						value={score.up || undefined}
+						active={score.myVote === 1}
+						reactions={comment.reactions}
+						onreact={react}
+						onclick={() => rate(1)}
+					/>
+				{/if}
 
-			{#if votes === 'rating' && arrowsLeft}
-				{@render vote()}
-			{/if}
+				{#if votes === 'rating' && arrowsLeft}
+					{@render vote()}
+				{/if}
 
-			{#if canReply}
-				<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
-			{/if}
+				{#if canReply}
+					<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
+				{/if}
 
-			{#if comment.sourceId === 'dtf'}
-				<Popover bind:open={menuOpen} items={menuItems} onselect={selectMenuItem} width="max-content" align="left" label="Действия с комментарием">
-					<button type="button" class="comment-item__action comment-item__icon-action" title="Больше" aria-expanded={menuOpen} onclick={toggleMenu}>
-						<svg class="icon" width="16" height="20" aria-hidden="true">
-							<use href="/icons.svg#v_etc"></use>
-						</svg>
-					</button>
-				</Popover>
-			{/if}
+				{#if comment.sourceId === 'dtf'}
+					<Popover bind:open={menuOpen} items={menuItems} onselect={selectMenuItem} width="max-content" align="left" label="Действия с комментарием">
+						<button type="button" class="comment-item__action comment-item__icon-action" title="Больше" aria-expanded={menuOpen} onclick={toggleMenu}>
+							<svg class="icon" width="16" height="20" aria-hidden="true">
+								<use href="/icons.svg#v_etc"></use>
+							</svg>
+						</button>
+					</Popover>
+				{/if}
 
-			<!-- Стрелки стоят в конце строки действий (или перед «Ответить», если слева); на широких экранах поднимаются в строку автора -->
-			{#if votes === 'rating' && !arrowsLeft}
-				{@render vote()}
-			{:else if votes === 'likes'}
-				<PostButton
-					kind="dislike"
-					title="Дизлайк"
-					right
-					value={score.down || undefined}
-					active={score.myVote === -1}
-					reactions={comment.reactions}
-					onclick={() => rate(-1)}
-				/>
+				<!-- Стрелки стоят в конце строки действий (или перед «Ответить», если слева); на широких экранах поднимаются в строку автора -->
+				{#if votes === 'rating' && !arrowsLeft}
+					{@render vote()}
+				{:else if votes === 'likes'}
+					<PostButton
+						kind="dislike"
+						title="Дизлайк"
+						right
+						value={score.down || undefined}
+						active={score.myVote === -1}
+						reactions={comment.reactions}
+						onclick={() => rate(-1)}
+					/>
+				{/if}
 			{/if}
 
 			<div class="comment-item__break"></div>
@@ -831,6 +860,29 @@
 		font-size: 12px;
 		line-height: 16px;
 		white-space: nowrap;
+	}
+
+	.comment-item__author-mark--restored {
+		color: var(--text-muted);
+		opacity: 0.85;
+	}
+
+	.comment-item__collapse-restored {
+		background: none;
+		border: none;
+		padding: 0;
+		margin-right: var(--gap-details);
+		color: var(--text-muted);
+		opacity: 0.65;
+		font-size: 12px;
+		line-height: 16px;
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	.comment-item__collapse-restored:hover {
+		opacity: 1;
+		text-decoration: underline;
 	}
 
 	.comment-item__time-badge {
