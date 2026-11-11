@@ -1,51 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { api } from '$lib/api/index.svelte';
-	import type { Post } from '$lib/api/types';
-	import { feed } from '$lib/feed.svelte';
+	import { editorialNews } from '$lib/editorialNews.svelte';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { clickOnKey } from './a11y';
 	import { formatNumber } from './format';
 	import Preloader from './ui/Preloader.svelte';
-	import { untrack } from 'svelte';
-
-	// Новости — дополнение к ленте: пока грузятся или при ошибке виджета просто нет
-	let news = $state.raw<Post[]>([]);
-	let lastId = 0;
-	let loading = $state(false);
-	let hasMore = $state(true);
-
-	// Как у DTF: порция приходит с сервера по id последней новости, «Показать ещё» запрашивает следующую
-	async function loadMore(replace = false) {
-		if (loading) return;
-		loading = true;
-		try {
-			const page = await api.getEditorialNews(replace ? 0 : lastId);
-			news = replace ? page.items : [...news, ...page.items];
-			lastId = page.lastId ?? lastId;
-			hasMore = page.items.length > 0;
-		} catch (e) {
-			console.error('Failed to load news:', e);
-		} finally {
-			loading = false;
-		}
-	}
-
-	loadMore();
-
-	// Клик по логотипу или повторный клик по вкладке ленты: обновить новости
-	let handledRefresh = feed.refreshCount;
-	$effect(() => {
-		if (feed.refreshCount !== handledRefresh) {
-			handledRefresh = feed.refreshCount;
-			untrack(() => loadMore(true));
-		}
-	});
 </script>
 
-{#if news.length > 0}
-	<section class="news-widget" class:news-widget--loading={loading} aria-label="Новости">
-		{#each news as item (item.sourceId + '_' + item.id)}
+{#if editorialNews.items.length > 0}
+	<section class="news-widget" class:news-widget--loading={editorialNews.loading} aria-label="Новости">
+		{#each editorialNews.items as item (item.sourceId + '_' + item.id)}
 			{@const href = resolve(getPostPath(item) as any)}
 			{@const commentsHref = resolve(getPostPath(item, 'comments') as any)}
 			<div class="news-item">
@@ -61,12 +25,12 @@
 			</div>
 		{/each}
 
-		{#if hasMore}
+		{#if editorialNews.hasMore}
 			<div class="news-widget__footer">
-				{#if loading}
+				{#if editorialNews.loading}
 					<Preloader />
 				{:else}
-					<div class="news-widget__load-more" role="button" tabindex="0" onclick={() => loadMore()} onkeydown={clickOnKey}>
+					<div class="news-widget__load-more" role="button" tabindex="0" onclick={() => editorialNews.loadMore()} onkeydown={clickOnKey}>
 						<span>Показать ещё</span>
 						<svg height="9" width="10" class="icon" aria-hidden="true">
 							<use href="/icons.svg#v_arrow_down"></use>

@@ -11,6 +11,7 @@
 	import { untrack } from 'svelte';
 	import { appear } from '$lib/themes/appear';
 	import { markFeedLoaded } from '$lib/ready';
+	import { editorialNews } from '$lib/editorialNews.svelte';
 
 	/*
 	 * Одна лента главной. Страница держит несколько таких сразу: неактивная скрыта, но сохраняет посты,
@@ -43,16 +44,22 @@
 	async function loadInitial(isRefresh = false) {
 		const id = ++requestId;
 		const cached = isRefresh ? undefined : peekFeed(name, period);
+		const showNews = name === 'popular' && period === 'now';
 		error = null;
 		if (isRefresh) refreshing = true;
 		else {
 			feedResult = cached ?? null;
-			loading = !cached;
+			loading = !cached || (showNews && !editorialNews.ready);
 			epoch++;
 		}
 		try {
-			// Компонент поста догружается вместе с данными: иначе каждая карточка ленты на миг покажет заглушку
-			const [result] = await Promise.all([loadFeed(name, period, isRefresh), preloadThemeComponent(activeTheme.chain, 'Post')]);
+			// Данные и компоненты готовятся вместе: общая заглушка сразу сменяется готовой лентой.
+			const [result] = await Promise.all([
+				loadFeed(name, period, isRefresh),
+				preloadThemeComponent(activeTheme.chain, 'Post'),
+				preloadThemeComponent(activeTheme.chain, 'FeedTabs'),
+				...(showNews ? [preloadThemeComponent(activeTheme.chain, 'EditorialNews'), editorialNews.loadInitial(isRefresh)] : [])
+			]);
 			// Скрытая лента (соседняя для свайпа) строит список в простое: сборка десятков карточек не должна совпасть с прокруткой
 			if (!active) await new Promise((done) => ('requestIdleCallback' in window ? requestIdleCallback(done, { timeout: 300 }) : setTimeout(done)));
 			if (id !== requestId) return;
@@ -75,6 +82,9 @@
 	async function revalidate() {
 		const shown = feedResult;
 		if (!shown || loading || refreshing) return;
+		if (name === 'popular' && period === 'now') {
+			editorialNews.loadInitial();
+		}
 		const id = requestId;
 		const result = await loadFeed(name, period).catch(() => undefined);
 		if (result && id === requestId && feedResult === shown && atTop() && !startsWith(shown, result)) {

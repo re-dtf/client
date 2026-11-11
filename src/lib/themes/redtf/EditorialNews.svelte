@@ -1,72 +1,18 @@
-<script lang="ts" module>
-	import type { Post } from '$lib/api/types';
-
-	// Новости переживают закрытие компонента: он создаётся заново при каждом возврате на «Популярное»
-	let cache: { news: Post[]; lastId: number; hasMore: boolean; time: number } | undefined;
-	const STALE = 5 * 60_000;
-</script>
-
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { api } from '$lib/api/index.svelte';
-	import { feed } from '$lib/feed.svelte';
+	import { editorialNews } from '$lib/editorialNews.svelte';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { cubicOut } from 'svelte/easing';
 	import { slide } from 'svelte/transition';
 	import { reducedMotion } from '$lib/motion';
-	import Reveal from '$lib/components/Reveal.svelte';
 	import { clickOnKey } from '../dtf2022/a11y';
 	import { formatNumber } from '../dtf2022/format';
 	import Preloader from '../dtf2022/ui/Preloader.svelte';
-	import { untrack } from 'svelte';
-
-	// Новости — дополнение к ленте: пока грузятся или при ошибке виджета просто нет
-	let news = $state.raw<Post[]>(cache?.news ?? []);
-	let lastId = cache?.lastId ?? 0;
-	let loading = $state(false);
-	let hasMore = $state(cache?.hasMore ?? true);
-	// Первая загрузка закончилась (успешно или нет): до этого на месте блока стоит заглушка
-	let ready = $state(cache !== undefined);
-
-	// Как у DTF: порция приходит с сервера по id последней новости, «Показать ещё» запрашивает следующую.
-	// `replace` — загрузить первую порцию заново, не убирая показанное
-	async function loadMore(replace = false) {
-		if (loading) return;
-		loading = true;
-		try {
-			const page = await api.getEditorialNews(replace ? 0 : lastId);
-			news = replace ? page.items : [...news, ...page.items];
-			lastId = page.lastId ?? lastId;
-			hasMore = page.items.length > 0;
-			cache = { news, lastId, hasMore, time: Date.now() };
-		} catch (e) {
-			console.error('Failed to load news:', e);
-		} finally {
-			loading = false;
-			ready = true;
-		}
-	}
-
-	// Вкладки ленты не должны каждый раз загружать новости заново: виденное показываем сразу
-	if (!cache) loadMore();
-	else if (Date.now() - cache.time > STALE) loadMore(true);
-
-	// Клик по логотипу или повторный клик по вкладке ленты: обновить новости
-	let handledRefresh = feed.refreshCount;
-	$effect(() => {
-		if (feed.refreshCount !== handledRefresh) {
-			handledRefresh = feed.refreshCount;
-			untrack(() => loadMore(true));
-		}
-	});
 </script>
 
-<!-- display: contents: обёртка только передаёт заглушке размер, раскладку не трогает -->
-<div class="news-slot">
-<Reveal {ready} block>
-{#if news.length > 0}
-	<section class="news-widget" class:news-widget--loading={loading} aria-label="Новости">
-		{#each news as item (item.sourceId + '_' + item.id)}
+{#if editorialNews.items.length > 0}
+	<section class="news-widget" class:news-widget--loading={editorialNews.loading} aria-label="Новости">
+		{#each editorialNews.items as item (item.sourceId + '_' + item.id)}
 			{@const href = resolve(getPostPath(item) as any)}
 			{@const commentsHref = resolve(getPostPath(item, 'comments') as any)}
 			<div class="news-item" in:slide={{ duration: reducedMotion() ? 0 : 350, easing: cubicOut }}>
@@ -82,12 +28,12 @@
 			</div>
 		{/each}
 
-		{#if hasMore}
+		{#if editorialNews.hasMore}
 			<div class="news-widget__footer">
-				{#if loading}
+				{#if editorialNews.loading}
 					<Preloader />
 				{:else}
-					<div class="news-widget__load-more" role="button" tabindex="0" onclick={() => loadMore()} onkeydown={clickOnKey}>
+					<div class="news-widget__load-more" role="button" tabindex="0" onclick={() => editorialNews.loadMore()} onkeydown={clickOnKey}>
 						<span>Показать ещё</span>
 						<svg height="9" width="10" class="icon" aria-hidden="true">
 							<use href="/icons.svg#v_arrow_down"></use>
@@ -98,17 +44,8 @@
 		{/if}
 	</section>
 {/if}
-</Reveal>
-</div>
 
 <style>
-	/* Заглушка новостей — та же карточка, что у ленты, только ниже */
-	.news-slot {
-		display: contents;
-		--placeholder-height: 132px;
-		--placeholder-top: 0px;
-	}
-
 	.news-widget {
 		display: flex;
 		flex-direction: column;
@@ -175,9 +112,6 @@
 	}
 
 	@media (max-width: 639px) {
-		.news-slot {
-			--placeholder-top: 0px;
-		}
 		.news-widget {
 			margin-top: 0;
 			padding: 20px 16px;
