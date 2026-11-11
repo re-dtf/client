@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import type { Notification, NotificationPart } from '$lib/api/types';
 	import { notifications } from '$lib/api/notifications.svelte';
@@ -6,7 +7,6 @@
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { formatNotificationTime } from './format';
 	import { notificationsPopup } from './notificationsPopup.svelte';
-	import Preloader from './ui/Preloader.svelte';
 
 	/** page — страница уведомлений: список целиком, без ссылки «Все уведомления» */
 	let { page = false }: { page?: boolean } = $props();
@@ -16,8 +16,50 @@
 	// Уведомления без автора (блокировка) показывают значок в квадрате вместо аватара
 	const SQUARE_ICONS: Record<string, string> = { lock: 'ui_lock' };
 
+	/** Минимальное время показа обновления, чтобы заголовок не мелькал при мгновенном ответе (мс) */
+	const MIN_LOADING = 700;
+
+	let isUpdating = $state(false);
+	let closeTimer: ReturnType<typeof setTimeout> | undefined;
+	let startTime = 0;
+
+	const isOpen = $derived(page || notificationsPopup.open);
+
 	/** У кого раскрыт текст комментария («Развернуть») */
 	const expanded = new SvelteSet<number>();
+
+	$effect(() => {
+		const shouldLoad = authStorage.isAuthenticated && isOpen && notifications.loading;
+
+		untrack(() => {
+			if (shouldLoad) {
+				clearTimeout(closeTimer);
+				closeTimer = undefined;
+				if (!isUpdating) {
+					isUpdating = true;
+					startTime = performance.now();
+				}
+			} else if (isUpdating) {
+				if (!isOpen) {
+					clearTimeout(closeTimer);
+					closeTimer = undefined;
+					isUpdating = false;
+				} else if (isOpen && !notifications.loading) {
+					const elapsed = performance.now() - startTime;
+					const remaining = Math.max(0, MIN_LOADING - elapsed);
+					clearTimeout(closeTimer);
+					closeTimer = setTimeout(() => {
+						isUpdating = false;
+					}, remaining);
+				}
+			}
+		});
+	});
+
+	onDestroy(() => {
+		clearTimeout(closeTimer);
+		isUpdating = false;
+	});
 
 	/** Пост и профиль открываем у себя, всё остальное — на dtf.ru в новой вкладке; уведомление становится прочитанным */
 	function follow(e: MouseEvent, item: Notification, href: string) {
@@ -36,21 +78,26 @@
 
 <div class={['notifications', page && 'notifications--page']}>
 <header class="notifications__header">
-	<span class="notifications__title">Уведомления</span>
+	<span class="notifications__title">
+		<span class={['notifications__title-text', isUpdating && 'notifications__title-text--hidden']}>
+			Уведомления
+		</span>
+		<span class={['notifications__title-updating', !isUpdating && 'notifications__title-updating--hidden']} aria-hidden={!isUpdating}>
+			Обновляем<span class="notifications__dots" aria-hidden="true"><span class="notifications__dot">.</span><span class="notifications__dot">.</span><span class="notifications__dot">.</span></span>
+		</span>
+	</span>
 	{#if notifications.highlighted}
 		<button type="button" class="notifications__mark-all" onclick={() => notifications.markRead()}>Пометить все как прочитанные</button>
 	{/if}
 </header>
 {#if !authStorage.isAuthenticated}
 	<p class="notifications__status">Войдите, чтобы видеть уведомления</p>
-{:else if notifications.loading && notifications.items.length === 0}
-	<div class="notifications__loader">
-		<Preloader />
-	</div>
-{:else if notifications.error}
+{:else if notifications.error && notifications.items.length === 0}
 	<p class="notifications__status">{notifications.error}</p>
-{:else if notifications.items.length === 0}
+{:else if notifications.items.length === 0 && !isUpdating && !notifications.loading}
 	<p class="notifications__status">Уведомлений нет</p>
+{:else if notifications.items.length === 0}
+	<div class="notifications__empty-placeholder"></div>
 {:else}
 	<div class="notifications__list">
 		{#each notifications.items as item (item.id)}
@@ -132,9 +179,81 @@
 	}
 
 	.notifications__title {
+		display: inline-grid;
+		grid-template-areas: 'title';
+		align-items: center;
 		font-size: 14px;
 		line-height: 14px;
 		font-weight: 500;
+	}
+
+	.notifications__title-text,
+	.notifications__title-updating {
+		grid-area: title;
+		display: inline-flex;
+		align-items: baseline;
+		white-space: nowrap;
+		transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1), transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+	}
+
+	.notifications__title-text {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.notifications__title-text--hidden {
+		opacity: 0;
+		transform: translateY(-4px);
+		pointer-events: none;
+	}
+
+	.notifications__title-updating {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	.notifications__title-updating--hidden {
+		opacity: 0;
+		transform: translateY(4px);
+		pointer-events: none;
+	}
+
+	.notifications__dots {
+		display: inline-flex;
+		letter-spacing: 1px;
+	}
+
+	.notifications__dot {
+		display: inline-block;
+		animation: notifications-dot-pulse 1.4s infinite ease-in-out;
+		opacity: 0.2;
+	}
+
+	.notifications__dot:nth-child(1) {
+		animation-delay: 0s;
+	}
+
+	.notifications__dot:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+
+	.notifications__dot:nth-child(3) {
+		animation-delay: 0.4s;
+	}
+
+	@keyframes notifications-dot-pulse {
+		0%, 20% {
+			opacity: 0.2;
+			transform: translateY(0);
+		}
+		50% {
+			opacity: 1;
+			transform: translateY(-2px);
+		}
+		80%, 100% {
+			opacity: 0.2;
+			transform: translateY(0);
+		}
 	}
 
 	.notifications__mark-all {
@@ -144,10 +263,8 @@
 		cursor: pointer;
 	}
 
-	.notifications__loader {
-		display: flex;
-		justify-content: center;
-		padding: 13px 0;
+	.notifications__empty-placeholder {
+		min-height: 120px;
 	}
 
 	.notifications__status {
@@ -385,6 +502,18 @@
 
 		.u-notification__content__button:hover {
 			color: var(--text-link-subtle);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.notifications__title-text,
+		.notifications__title-updating {
+			transition: none;
+		}
+
+		.notifications__dot {
+			animation: none;
+			opacity: 1;
 		}
 	}
 </style>
