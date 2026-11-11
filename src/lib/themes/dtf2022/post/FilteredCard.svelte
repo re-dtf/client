@@ -29,8 +29,8 @@
 
 		<div class="filtered-card__body">
 			<div class="filtered-card__title">
-				<span>Пост скрыт фильтром</span>
-				{#if match.rule}
+				<span>{match.kind === 'user' ? 'Вы скрыли автора' : 'Пост скрыт фильтром'}</span>
+				{#if match.rule && match.kind !== 'user'}
 					<span class="filtered-card__badge">{match.rule}</span>
 				{/if}
 			</div>

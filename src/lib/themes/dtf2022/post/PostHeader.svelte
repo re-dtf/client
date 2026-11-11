@@ -4,7 +4,7 @@
 	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { api } from '$lib/api/index.svelte';
-	import { ensureLogin, subscriptions } from '../actions.svelte';
+	import { type AuthorAction, authorMenuItems, ensureLogin, hidePost, isAnotherDtfUser, runAuthorAction, subscriptions } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import Popover from '../ui/Popover.svelte';
 	import { notify } from '../ui/notify.svelte';
@@ -28,13 +28,17 @@
 		subscribe && !!post.subsite && post.subsite.id !== currentUser.value?.id && !subscriptions.isSubscribed(post.subsite.id, post.subsite.isSubscribed)
 	);
 
-	// Меню «⋯»: открытие на DTF, ссылка, жалоба (на свой пост жалобы нет)
+	// Меню «⋯»: открытие на DTF, ссылка, скрытие поста, скрытие и блокировка автора, жалоба (на свой пост их нет).
+	// Скрыть пост и заблокировать может только вошедший, скрыть автора у себя — любой
 	let menuOpen = $state(false);
 	let complaining = $state(false);
+	let others = $derived(isAnotherDtfUser(post.sourceId, post.author.id));
 	let menuItems = $derived([
 		...(post.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
-		...(post.sourceId === 'dtf' && post.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
+		...(others && currentUser.value ? [{ value: 'hide_post' as const, label: 'Скрыть пост', icon: 'v_eye', hint: 'Пост пропадёт из всех ваших лент на DTF' }] : []),
+		...(others ? authorMenuItems(post.author) : []),
+		...(others ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
 	]);
 	let showMenu = $derived(menuItems.length > 0);
 
@@ -48,11 +52,15 @@
 		}
 	}
 
-	function selectMenuItem(item: 'open_dtf' | 'copy' | 'complain') {
-		if (item === 'open_dtf') {
+	function selectMenuItem(item: 'open_dtf' | 'copy' | 'hide_post' | 'complain' | AuthorAction) {
+		if (item.endsWith('_author')) {
+			runAuthorAction(item as AuthorAction, post.author);
+		} else if (item === 'open_dtf') {
 			window.open(`https://dtf.ru/${post.id}`, '_blank', 'noopener,noreferrer');
 		} else if (item === 'copy') {
 			copyLink();
+		} else if (item === 'hide_post') {
+			hidePost(post);
 		} else if (item === 'complain') {
 			complaining = ensureLogin();
 		}

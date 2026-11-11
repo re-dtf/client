@@ -182,7 +182,7 @@ export const dtfApiProvider = {
 		await fetchWithAuth(`${apiV('2.1')}/subsite/mute`, { method: 'POST', body: formData });
 	},
 
-	/** Скрыть пост. Сайт добавляет откуда нажали (`location`, `previousPage`, `fromFeed`, `hitId`); без них и возврат поста (`unmute`) в HAR не сняты */
+	/** Скрыть пост. Сайт добавляет откуда нажали (`location`, `previousPage`, `fromFeed` — раздел ленты и страница, `hitId` — uuid показа); без них запрос не проверялся. Возврата поста на сайте нет, `unmute` не снят */
 	async setPostIgnored(postId: number, ignored: boolean, source: PostIgnoreSource = {}): Promise<void> {
 		requireAuth();
 		const formData = new FormData();

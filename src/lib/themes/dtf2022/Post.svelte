@@ -4,6 +4,7 @@
 	import PostPage from './post/PostPage.svelte';
 	import FilteredCard from './post/FilteredCard.svelte';
 	import { filterSettings, matchPostFilter } from '$lib/storage/filter.svelte';
+	import { isPostHidden } from './actions.svelte';
 
 	let { post, preview = true, evictMedia = false }: { post: Post; preview?: boolean; evictMedia?: boolean } = $props();
 
@@ -12,7 +13,9 @@
 </script>
 
 {#if preview}
-	{#if filterMatch && !revealed}
+	{#if isPostHidden(post)}
+		<!-- скрыто через меню «⋯» -->
+	{:else if filterMatch && !revealed}
 		{#if filterSettings.value.mode === 'soft'}
 			<FilteredCard {post} match={filterMatch} onreveal={() => (revealed = true)} />
 		{/if}

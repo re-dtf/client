@@ -1,9 +1,12 @@
-import { SvelteMap } from 'svelte/reactivity';
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { resolve } from '$app/paths';
 import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { getPostPath, openOverlay } from '$lib/navigation';
+import { currentUser } from '$lib/api/currentUser.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
+import { hideUser, isUserHidden, unhideUser } from '$lib/storage/filter.svelte';
+import { logHiddenPost, unlogHiddenPost } from '$lib/storage/hiddenPosts.svelte';
 import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from './ui/notify.svelte';
 import { haptics } from '$lib/haptics';
@@ -75,6 +78,102 @@ export function toggleFavoritePost(post: Post) {
 			notify.error(e.message);
 		});
 }
+
+/*
+ * Скрытые через меню «⋯» посты и авторы. Сервер уберёт их из лент при следующей загрузке,
+ * а до тех пор карточки прячутся здесь.
+ */
+const hiddenPosts = new SvelteSet<string>();
+// Чёрный список по id пользователя или темы: профиль и меню поста видят одно состояние
+const mutedSubsites = new SvelteMap<number, boolean>();
+
+export const isSubsiteMuted = (id: number, initial = false) => mutedSubsites.get(id) ?? initial;
+
+export const isPostHidden = (post: Pick<Post, 'id' | 'sourceId' | 'author'>) =>
+	hiddenPosts.has(key(post)) || (post.author ? mutedSubsites.get(post.author.id) === true : false);
+
+/** «Скрыть пост»: карточка пропадает сразу, при ошибке возвращается; в тосте «Отменить», других способов вернуть пост у DTF нет */
+export function hidePost(post: Pick<Post, 'id' | 'sourceId' | 'author'>) {
+	if (post.sourceId !== 'dtf' || !ensureLogin()) return;
+
+	hiddenPosts.add(key(post));
+	logHiddenPost(post);
+	api.setPostIgnored(post.id, true)
+		.then(() => notify.success('Пост скрыт', { label: 'Отменить', onclick: () => restorePost(post) }))
+		.catch((e) => {
+			hiddenPosts.delete(key(post));
+			unlogHiddenPost(post.id);
+			notify.error(e.message);
+		});
+}
+
+function restorePost(post: Pick<Post, 'id' | 'sourceId' | 'author'>) {
+	hiddenPosts.delete(key(post));
+	unlogHiddenPost(post.id);
+	api.setPostIgnored(post.id, false)
+		.then(() => notify.success('Пост вернулся'))
+		.catch((e) => {
+			hiddenPosts.add(key(post));
+			logHiddenPost(post);
+			notify.error(e.message);
+		});
+}
+
+/** Чёрный список DTF: скрыть пользователя или тему и вернуть обратно. Состояние меняется сразу, при ошибке откатывается */
+export function setSubsiteMuted(subsite: { id: number; name: string }, muted: boolean) {
+	if (!ensureLogin()) return;
+
+	const was = mutedSubsites.get(subsite.id);
+	mutedSubsites.set(subsite.id, muted);
+	api.setSubsiteIgnored(subsite.id, muted)
+		.then(() => notify.success(muted ? `${subsite.name} заблокирован` : `${subsite.name} разблокирован`))
+		.catch((e) => {
+			if (was === undefined) mutedSubsites.delete(subsite.id);
+			else mutedSubsites.set(subsite.id, was);
+			notify.error(e.message);
+		});
+}
+
+/*
+ * Два способа убрать человека. «Скрыть» работает только у нас: его записи, комментарии и уведомления не показываются,
+ * а он ничего не замечает. «Заблокировать» — чёрный список DTF: человек не может комментировать наши записи,
+ * это видят все наши устройства.
+ */
+export type AuthorAction = 'hide_author' | 'unhide_author' | 'block_author' | 'unblock_author';
+
+/**
+ * Пункты меню «⋯» для автора записи, комментария или профиля. `noun` — как назвать человека в подписи пункта
+ * («автора» в записи, пусто в профиле). Блокировка нужна вошедшему: без входа есть только локальное скрытие
+ */
+export function authorMenuItems(author: { id: number }, { noun = ' автора', blocked = false } = {}) {
+	const hidden = isUserHidden(author.id);
+	const muted = isSubsiteMuted(author.id, blocked);
+	const loggedIn = !!currentUser.value;
+	return [
+		hidden
+			? { value: 'unhide_author' as const, label: `Показывать${noun}`, icon: 'v_eye', hint: 'Снова показывать его записи, комментарии и уведомления' }
+			: { value: 'hide_author' as const, label: `Скрыть${noun}`, icon: 'v_eye', hint: 'Только у вас: его записи, комментарии и уведомления не будут показываться. Он об этом не узнает' },
+		...(loggedIn
+			? [
+					muted
+						? { value: 'unblock_author' as const, label: `Разблокировать${noun}`, icon: 'v_ban', hint: 'Убрать из чёрного списка DTF: он снова сможет комментировать ваши записи' }
+						: { value: 'block_author' as const, label: `Заблокировать${noun}`, icon: 'v_ban', hint: 'Чёрный список DTF: он не сможет комментировать ваши записи, а его записи и комментарии вы не увидите' }
+				]
+			: [])
+	];
+}
+
+export function runAuthorAction(action: AuthorAction, author: { id: number; name: string }) {
+	if (action === 'hide_author' && hideUser(author.id, author.name)) notify.success(`${author.name} скрыт`);
+	else if (action === 'unhide_author') {
+		unhideUser(author.id);
+		notify.success(`${author.name} снова виден`);
+	} else if (action === 'block_author') setSubsiteMuted(author, true);
+	else if (action === 'unblock_author') setSubsiteMuted(author, false);
+}
+
+/** Своя запись или комментарий: людей-«других» только здесь можно скрыть и заблокировать */
+export const isAnotherDtfUser = (sourceId: string, authorId: number) => sourceId === 'dtf' && authorId !== currentUser.value?.id;
 
 /** «Сделать репост»: у DTF репост — ответ на пост, его пишут в редакторе */
 export function repostPost(post: Pick<Post, 'id' | 'sourceId'>) {
