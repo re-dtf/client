@@ -5,7 +5,7 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { Browser } from '@capacitor/browser';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { page } from '$app/state';
-import { closeOverlay, openDtfLink, openDtfUrl } from '$lib/navigation';
+import { closeOverlay, openDtfLink, openDtfUrl, popSubstate } from '$lib/navigation';
 import { otaUpdater } from './updater.svelte';
 
 let initialized = false;
@@ -139,6 +139,33 @@ export function handleNativeLinkClick(e: MouseEvent): void {
 }
 
 /**
+ * Обработка системной кнопки / жеста «Назад» в нативном приложении.
+ * Сначала проверяет вложенные шаги навигации внутри активного оверлея (popSubstate),
+ * затем закрывает верхний оверлей (closeOverlay), затем переходит назад по истории,
+ * либо сворачивает приложение, если пользователь находится на главном экране.
+ */
+export function handleBackButton(canGoBack: boolean = false): void {
+	try {
+		if (popSubstate()) {
+			return;
+		}
+		const overlays = page.state.overlays ?? [];
+		if (overlays.length > 0) {
+			closeOverlay();
+			return;
+		}
+	} catch {}
+
+	if (canGoBack && typeof window !== 'undefined' && window.location?.pathname !== '/' && window.location?.pathname !== '') {
+		window.history.back();
+		return;
+	}
+
+	// Если на главном экране без оверлеев — сворачиваем приложение
+	App.minimizeApp()?.catch?.(() => {});
+}
+
+/**
  * Инициализация нативных обработчиков Capacitor (кнопка «Назад», StatusBar, SplashScreen, App Links).
  */
 export function initCapacitor(): void {
@@ -171,21 +198,7 @@ export function initCapacitor(): void {
 
 	// Обработка аппаратной кнопки / системного свайпа «Назад»
 	App.addListener('backButton', ({ canGoBack }) => {
-		try {
-			const overlays = page.state.overlays ?? [];
-			if (overlays.length > 0) {
-				closeOverlay();
-				return;
-			}
-		} catch {}
-
-		if (canGoBack && window.location.pathname !== '/' && window.location.pathname !== '') {
-			window.history.back();
-			return;
-		}
-
-		// Если на главном экране без оверлеев — сворачиваем приложение
-		App.minimizeApp().catch(() => {});
+		handleBackButton(canGoBack);
 	});
 
 	// Обработка входящих ссылок (App Links / Deep Links) при открытии свернутого/активного приложения

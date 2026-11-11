@@ -3,16 +3,39 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mocks = vi.hoisted(() => ({
 	openDtfUrl: vi.fn(),
 	openDtfLink: vi.fn(),
-	closeOverlay: vi.fn()
+	closeOverlay: vi.fn(),
+	popSubstate: vi.fn()
+}));
+
+const mockPageState: { overlays: any[] } = { overlays: [] };
+vi.mock('$app/state', () => ({
+	page: {
+		get state() {
+			return mockPageState;
+		}
+	}
+}));
+
+const appMocks = vi.hoisted(() => ({
+	minimizeApp: vi.fn().mockResolvedValue(undefined)
+}));
+
+vi.mock('@capacitor/app', () => ({
+	App: {
+		minimizeApp: appMocks.minimizeApp,
+		addListener: vi.fn(),
+		getLaunchUrl: vi.fn().mockResolvedValue({ url: '' })
+	}
 }));
 
 vi.mock('$lib/navigation', () => ({
 	openDtfUrl: mocks.openDtfUrl,
 	openDtfLink: mocks.openDtfLink,
-	closeOverlay: mocks.closeOverlay
+	closeOverlay: mocks.closeOverlay,
+	popSubstate: mocks.popSubstate
 }));
 
-import { isNative, openExternalUrl, updateStatusBar, hideSplashScreen, notifyAppReady, initCapacitor, handleAppUrl, handleNativeLinkClick } from './index';
+import { isNative, openExternalUrl, updateStatusBar, hideSplashScreen, notifyAppReady, initCapacitor, handleAppUrl, handleNativeLinkClick, handleBackButton } from './index';
 
 describe('Capacitor bridge', () => {
 	beforeEach(() => {
@@ -21,6 +44,10 @@ describe('Capacitor bridge', () => {
 		mocks.openDtfUrl.mockReset();
 		mocks.openDtfLink.mockReset();
 		mocks.closeOverlay.mockReset();
+		mocks.popSubstate.mockReset();
+		appMocks.minimizeApp.mockReset();
+		appMocks.minimizeApp.mockResolvedValue(undefined);
+		mockPageState.overlays = [];
 	});
 
 	it('корректно определяет отсутствие нативной платформы в тестовом окружении', () => {
@@ -167,6 +194,58 @@ describe('Capacitor bridge', () => {
 
 			expect(preventDefault).not.toHaveBeenCalled();
 			expect(openMock).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('handleBackButton', () => {
+		it('вызывает popSubstate и не закрывает оверлей, если есть активный вложенный шаг', () => {
+			mocks.popSubstate.mockReturnValue(true);
+			mockPageState.overlays = [{ id: 'settings-1', type: 'settings' }];
+
+			handleBackButton(true);
+
+			expect(mocks.popSubstate).toHaveBeenCalled();
+			expect(mocks.closeOverlay).not.toHaveBeenCalled();
+			expect(appMocks.minimizeApp).not.toHaveBeenCalled();
+		});
+
+		it('закрывает оверлей через closeOverlay, если вложенных шагов нет, но открыт оверлей', () => {
+			mocks.popSubstate.mockReturnValue(false);
+			mockPageState.overlays = [{ id: 'settings-1', type: 'settings' }];
+
+			handleBackButton(true);
+
+			expect(mocks.popSubstate).toHaveBeenCalled();
+			expect(mocks.closeOverlay).toHaveBeenCalled();
+			expect(appMocks.minimizeApp).not.toHaveBeenCalled();
+		});
+
+		it('переходит назад по истории, если нет оверлеев и canGoBack=true на глубоком URL', () => {
+			mocks.popSubstate.mockReturnValue(false);
+			mockPageState.overlays = [];
+			const backMock = vi.fn();
+			vi.stubGlobal('window', {
+				location: { pathname: '/post/123' },
+				history: { back: backMock }
+			});
+
+			handleBackButton(true);
+
+			expect(backMock).toHaveBeenCalled();
+			expect(appMocks.minimizeApp).not.toHaveBeenCalled();
+		});
+
+		it('сворачивает приложение на главном экране без оверлеев', () => {
+			mocks.popSubstate.mockReturnValue(false);
+			mockPageState.overlays = [];
+			vi.stubGlobal('window', {
+				location: { pathname: '/' },
+				history: { back: vi.fn() }
+			});
+
+			handleBackButton(false);
+
+			expect(appMocks.minimizeApp).toHaveBeenCalled();
 		});
 	});
 });
