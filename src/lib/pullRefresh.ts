@@ -147,7 +147,10 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 			if (e.cancelable) e.preventDefault();
 			y = resist(t.clientY - start.y);
 			const next = y >= THRESHOLD;
-			if (next && !armed) haptics.tick();
+			if (next !== armed) {
+				if (next) haptics.heavy();
+				else haptics.soft();
+			}
 			armed = next;
 			frame ||= requestAnimationFrame(render);
 		}

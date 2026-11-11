@@ -1,6 +1,7 @@
 import type { Comment } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { ensureLogin } from '../actions.svelte';
+import { ruleOf } from '$lib/storage/reactions.svelte';
 import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from '../ui/notify.svelte';
 import { haptics } from '$lib/haptics';
@@ -12,9 +13,11 @@ import { haptics } from '$lib/haptics';
 export function toggleCommentReaction(comment: Comment, reactionId: number): boolean {
 	if (comment.sourceId === 'dtf' && !ensureLogin()) return false;
 
-	haptics.click();
 	const prev = $state.snapshot(comment.reactions);
 	const next = nextReactionId(prev, reactionId);
+	if (!next) haptics.soft();
+	else if (ruleOf(next).kind === 'negative') haptics.dislike();
+	else haptics.like();
 	comment.reactions = applyReaction(prev, next);
 
 	api.reactToComment(comment.id, next, comment.sourceId, comment.author).catch((e) => {
@@ -31,8 +34,9 @@ export const voteComment = (comment: Comment, sign: 1 | -1) =>
 export async function toggleCommentFavorite(comment: Comment) {
 	if (!ensureLogin()) return;
 
-	haptics.click();
 	const was = !!comment.isFavorited;
+	if (was) haptics.soft();
+	else haptics.click();
 	comment.isFavorited = !was;
 
 	try {

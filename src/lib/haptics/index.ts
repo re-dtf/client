@@ -11,7 +11,7 @@ export { triggerNativeHaptic, nativeHaptics } from './native';
 /**
  * Единая точка приёма сигнала тактильного отклика.
  * Проверяет пользовательские настройки и направляет вызов в активную среду:
- * Capacitor Native Haptics в нативном приложении или Web Vibration API в PWA / браузере.
+ * нативный плагин NativeHaptics в Capacitor или Web Vibration API в PWA / браузере.
  */
 export function triggerHaptic(signal: HapticSignal): boolean {
 	if (settings.value.haptics === false) return false;
@@ -35,7 +35,10 @@ export function selectionEnd(): boolean {
 
 export const haptics: HapticsEngine = {
 	tick: () => triggerHaptic('tick'),
+	soft: () => triggerHaptic('soft'),
 	click: () => triggerHaptic('click'),
+	like: () => triggerHaptic('like'),
+	dislike: () => triggerHaptic('dislike'),
 	heavy: () => triggerHaptic('heavy'),
 	double: () => triggerHaptic('double'),
 	error: () => triggerHaptic('error'),

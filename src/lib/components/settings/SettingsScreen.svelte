@@ -28,7 +28,6 @@
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
 	import { paletteSelection } from '$lib/themes/palette';
-	import { haptics } from '$lib/haptics';
 	import { pushSubstate, popSubstate } from '$lib/navigation';
 	import { dev } from '$app/env';
 
@@ -784,11 +783,7 @@
 								<FieldControl
 									field={hapticsField}
 									value={settings.value.haptics}
-									onchange={(value) => {
-										const enabled = Boolean(value);
-										settings.patch({ haptics: enabled });
-										if (enabled) haptics.click();
-									}}
+									onchange={(value) => settings.patch({ haptics: Boolean(value) })}
 								/>
 								<FieldControl
 									field={transparencyField}

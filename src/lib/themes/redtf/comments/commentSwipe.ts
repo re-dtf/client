@@ -98,15 +98,21 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 			// До порога колонка идёт за пальцем по вертикали, после — стоит, и палец выбирает в ней действие
 			if (!armed) {
 				column.style.setProperty('--swipe-y', `${startY + dy - layerTop}px`);
-				if (view.armed) haptics.selectionEnd();
+				if (view.armed) {
+					haptics.soft();
+					haptics.selectionEnd();
+				}
 			} else if (!view.armed) {
 				armY = dy;
 				haptics.selectionStart();
 			}
 			const slot = armed ? slotAt(dy - armY, view.slot, options.count() - 1) : 0;
 			if (armed === view.armed && slot === view.slot) return;
-			// Отдача — когда действие готово и когда палец сменил его
-			if (armed) haptics.selectionChanged();
+			// Отдача — когда действие готово (чёткий щелчок) и когда палец сменил слот (микро-тик)
+			if (armed) {
+				if (!view.armed) haptics.click();
+				else haptics.selectionChanged();
+			}
 			view = { ...view, armed, slot };
 			options.show(view);
 		},

@@ -7,6 +7,7 @@ import { currentUser } from '$lib/api/currentUser.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { hideUser, isUserHidden, unhideUser } from '$lib/storage/filter.svelte';
 import { logHiddenPost, unlogHiddenPost } from '$lib/storage/hiddenPosts.svelte';
+import { ruleOf } from '$lib/storage/reactions.svelte';
 import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from './ui/notify.svelte';
 import { haptics } from '$lib/haptics';
@@ -46,9 +47,11 @@ function change(post: Post, own: PostChanges) {
 export function reactToPost(post: Post, reactionId: number): boolean {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return false;
 
-	haptics.click();
 	const current = withActions(post).reactions;
 	const next = nextReactionId(current, reactionId);
+	if (!next) haptics.soft();
+	else if (ruleOf(next).kind === 'negative') haptics.dislike();
+	else haptics.like();
 	change(post, { reactions: applyReaction(current, next) });
 
 	api.reactToPost(post.id, next, post.author)
@@ -67,8 +70,9 @@ export const votePost = (post: Post, sign: 1 | -1) =>
 export function toggleFavoritePost(post: Post) {
 	if (post.sourceId !== 'dtf' || !ensureLogin()) return;
 
-	haptics.click();
 	const { isFavorited, favoritesCount } = withActions(post);
+	if (isFavorited) haptics.soft();
+	else haptics.click();
 	change(post, { isFavorited: !isFavorited, favoritesCount: Math.max(0, (favoritesCount ?? 0) + (isFavorited ? -1 : 1)) });
 
 	api.setFavorite(post.id, 'post', !isFavorited)
@@ -248,6 +252,8 @@ export const subscriptions = {
 		if (!ensureLogin()) return;
 
 		const was = subscribed.get(id) ?? initial;
+		if (was) haptics.soft();
+		else haptics.click();
 		subscribed.set(id, !was);
 		// После отписки колокольчик гаснет вместе с подпиской
 		if (was) notified.set(id, false);
@@ -264,6 +270,8 @@ export const subscriptions = {
 		if (!ensureLogin()) return;
 
 		const was = notified.get(id) ?? initial;
+		if (was) haptics.soft();
+		else haptics.tick();
 		notified.set(id, !was);
 
 		try {

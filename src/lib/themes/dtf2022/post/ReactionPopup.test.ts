@@ -24,7 +24,7 @@ describe('ReactionPopup interactions', () => {
 		expect(content).toContain('onpointerdown={onPointerDown}');
 		expect(content).toContain('onpointermove={onPointerMove}');
 		expect(content).toContain('e.pointerType !== \'touch\'');
-		expect(content).toContain('haptics.click()');
+		expect(content).toContain('haptics.heavy()');
 		expect(content).toContain('triggerLongPress');
 	});
 

@@ -21,7 +21,7 @@ import org.json.JSONException;
  * Native Haptics Plugin for Android with 4-tier adaptive fallback.
  * Tier 1: Android 11+ (API 30+) VibrationEffect.Composition with USAGE_TOUCH
  * Tier 2: Android 10+ (API 29+) VibrationEffect.createPredefined
- * Tier 3: Android 8+ (API 26+) Waveforms with Amplitude Control (Telegram timings: 1-7ms)
+ * Tier 3: Android 8+ (API 26+) Waveforms with Amplitude Control (Telegram timings: 1-9ms)
  * Tier 4: Android 7+ (API 24+) Legacy micro-vibrations
  */
 @CapacitorPlugin(name = "NativeHaptics")
@@ -71,6 +71,15 @@ public class NativeHapticsPlugin extends Plugin {
         return false;
     }
 
+    private boolean isLowTickSupported(Vibrator vibrator) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && vibrator != null) {
+            try {
+                return vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_LOW_TICK);
+            } catch (Throwable ignored) {}
+        }
+        return false;
+    }
+
     private void vibrateWaveform(Vibrator vibrator, long[] timings, int[] amplitudes) {
         if (vibrator == null) return;
         try {
@@ -104,12 +113,7 @@ public class NativeHapticsPlugin extends Plugin {
         JSObject primitives = new JSObject();
         boolean suppClick = isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_CLICK);
         boolean suppTick = isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK);
-        boolean suppLowTick = false;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && vibrator != null) {
-            try {
-                suppLowTick = vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_LOW_TICK);
-            } catch (Throwable ignored) {}
-        }
+        boolean suppLowTick = isLowTickSupported(vibrator);
         boolean suppThud = isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_THUD);
         boolean suppSpin = isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_SPIN);
         boolean suppQuickRise = isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_QUICK_RISE);
@@ -153,16 +157,47 @@ public class NativeHapticsPlugin extends Plugin {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
                 VibrationEffect.Composition comp = VibrationEffect.startComposition();
-                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.7f);
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.65f);
                 vibrateWithAttributes(vibrator, comp.compose());
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK));
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasAmplitudeControl()) {
                 vibrateWaveform(vibrator, new long[]{2}, new int[]{70});
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE));
+                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(8, VibrationEffect.DEFAULT_AMPLITUDE));
             } else {
-                vibrator.vibrate(10);
+                vibrator.vibrate(8);
+            }
+        } catch (Throwable ignored) {}
+
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void soft(PluginCall call) {
+        Vibrator vibrator = getVibrator();
+        if (vibrator == null) {
+            call.resolve();
+            return;
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isLowTickSupported(vibrator)) {
+                VibrationEffect.Composition comp = VibrationEffect.startComposition();
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.55f);
+                vibrateWithAttributes(vibrator, comp.compose());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
+                VibrationEffect.Composition comp = VibrationEffect.startComposition();
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.35f);
+                vibrateWithAttributes(vibrator, comp.compose());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK));
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasAmplitudeControl()) {
+                vibrateWaveform(vibrator, new long[]{1}, new int[]{45});
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(6, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(6);
             }
         } catch (Throwable ignored) {}
 
@@ -180,16 +215,89 @@ public class NativeHapticsPlugin extends Plugin {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_CLICK)) {
                 VibrationEffect.Composition comp = VibrationEffect.startComposition();
-                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.9f);
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.8f);
                 vibrateWithAttributes(vibrator, comp.compose());
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasAmplitudeControl()) {
-                vibrateWaveform(vibrator, new long[]{6}, new int[]{140});
+                vibrateWaveform(vibrator, new long[]{5}, new int[]{140});
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(15, VibrationEffect.DEFAULT_AMPLITUDE));
+                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE));
             } else {
-                vibrator.vibrate(15);
+                vibrator.vibrate(12);
+            }
+        } catch (Throwable ignored) {}
+
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void like(PluginCall call) {
+        Vibrator vibrator = getVibrator();
+        if (vibrator == null) {
+            call.resolve();
+            return;
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_CLICK)) {
+                VibrationEffect.Composition comp = VibrationEffect.startComposition();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isLowTickSupported(vibrator)) {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.45f);
+                } else if (isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.45f);
+                }
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.95f, 25);
+                vibrateWithAttributes(vibrator, comp.compose());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasAmplitudeControl()) {
+                vibrateWaveform(vibrator, new long[]{2, 25, 5}, new int[]{60, 0, 180});
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(12, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(12);
+            }
+        } catch (Throwable ignored) {}
+
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void dislike(PluginCall call) {
+        Vibrator vibrator = getVibrator();
+        if (vibrator == null) {
+            call.resolve();
+            return;
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_THUD)) {
+                VibrationEffect.Composition comp = VibrationEffect.startComposition();
+                if (isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.6f);
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 0.95f, 30);
+                } else {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 0.95f);
+                }
+                vibrateWithAttributes(vibrator, comp.compose());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_CLICK)) {
+                VibrationEffect.Composition comp = VibrationEffect.startComposition();
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.75f);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && isLowTickSupported(vibrator)) {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_LOW_TICK, 0.9f, 30);
+                } else if (isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
+                    comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.45f, 30);
+                }
+                vibrateWithAttributes(vibrator, comp.compose());
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK));
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator.hasAmplitudeControl()) {
+                vibrateWaveform(vibrator, new long[]{4, 30, 9}, new int[]{140, 0, 240});
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrateWithAttributes(vibrator, VibrationEffect.createOneShot(18, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(18);
             }
         } catch (Throwable ignored) {}
 
@@ -238,8 +346,8 @@ public class NativeHapticsPlugin extends Plugin {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isPrimitiveSupported(vibrator, VibrationEffect.Composition.PRIMITIVE_TICK)) {
                 VibrationEffect.Composition comp = VibrationEffect.startComposition();
-                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.7f);
-                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.9f, 40);
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.65f);
+                comp.addPrimitive(VibrationEffect.Composition.PRIMITIVE_TICK, 0.95f, 40);
                 vibrateWithAttributes(vibrator, comp.compose());
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 vibrateWithAttributes(vibrator, VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK));

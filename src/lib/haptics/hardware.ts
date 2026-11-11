@@ -26,7 +26,10 @@ export interface HapticsDiagnostics {
 export interface NativeHapticsPluginInterface {
 	getDiagnostics(): Promise<HapticsDiagnostics>;
 	tick(): Promise<void>;
+	soft(): Promise<void>;
 	click(): Promise<void>;
+	like(): Promise<void>;
+	dislike(): Promise<void>;
 	heavy(): Promise<void>;
 	doubleClick(): Promise<void>;
 	error(): Promise<void>;
@@ -101,10 +104,40 @@ export const nativeHapticsEngine = {
 		}
 	},
 
+	async soft(): Promise<boolean> {
+		if (!isNative()) return triggerWebHaptic('soft');
+		try {
+			await NativeHaptics.soft();
+			return true;
+		} catch {
+			return false;
+		}
+	},
+
 	async click(): Promise<boolean> {
 		if (!isNative()) return triggerWebHaptic('click');
 		try {
 			await NativeHaptics.click();
+			return true;
+		} catch {
+			return false;
+		}
+	},
+
+	async like(): Promise<boolean> {
+		if (!isNative()) return triggerWebHaptic('like');
+		try {
+			await NativeHaptics.like();
+			return true;
+		} catch {
+			return false;
+		}
+	},
+
+	async dislike(): Promise<boolean> {
+		if (!isNative()) return triggerWebHaptic('dislike');
+		try {
+			await NativeHaptics.dislike();
 			return true;
 		} catch {
 			return false;

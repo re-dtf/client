@@ -75,8 +75,17 @@
 			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('tick (микро-щелчок)', () => nativeHapticsEngine.tick())}>
 				tick
 			</button>
-			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('click (клик лайка)', () => nativeHapticsEngine.click())}>
+			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('soft (мягкое снятие)', () => nativeHapticsEngine.soft())}>
+				soft
+			</button>
+			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('click (обычный клик)', () => nativeHapticsEngine.click())}>
 				click
+			</button>
+			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('like (лайк вверх)', () => nativeHapticsEngine.like())}>
+				like
+			</button>
+			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('dislike (дизлайк вниз)', () => nativeHapticsEngine.dislike())}>
+				dislike
 			</button>
 			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('heavy (акцент)', () => nativeHapticsEngine.heavy())}>
 				heavy

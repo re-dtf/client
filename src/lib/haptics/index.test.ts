@@ -1,30 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import * as capacitorModule from '$lib/capacitor';
+import { NativeHaptics } from './hardware';
 import { haptics, triggerHaptic, HAPTIC_PATTERNS } from './index';
 import { triggerWebHaptic, webHaptics } from './web';
 import { triggerNativeHaptic, nativeHaptics } from './native';
 import { settings } from '$lib/storage/settings.svelte';
 
-vi.mock('@capacitor/haptics', () => ({
-	Haptics: {
-		selectionStart: vi.fn().mockResolvedValue(undefined),
-		selectionChanged: vi.fn().mockResolvedValue(undefined),
-		selectionEnd: vi.fn().mockResolvedValue(undefined),
-		impact: vi.fn().mockResolvedValue(undefined),
-		notification: vi.fn().mockResolvedValue(undefined),
-		vibrate: vi.fn().mockResolvedValue(undefined)
-	},
-	ImpactStyle: {
-		Heavy: 'HEAVY',
-		Medium: 'MEDIUM',
-		Light: 'LIGHT'
-	},
-	NotificationType: {
-		Success: 'SUCCESS',
-		Warning: 'WARNING',
-		Error: 'ERROR'
-	}
+vi.mock('@capacitor/core', () => ({
+	registerPlugin: vi.fn(() => ({
+		getDiagnostics: vi.fn().mockResolvedValue({}),
+		tick: vi.fn().mockResolvedValue(undefined),
+		soft: vi.fn().mockResolvedValue(undefined),
+		click: vi.fn().mockResolvedValue(undefined),
+		like: vi.fn().mockResolvedValue(undefined),
+		dislike: vi.fn().mockResolvedValue(undefined),
+		heavy: vi.fn().mockResolvedValue(undefined),
+		doubleClick: vi.fn().mockResolvedValue(undefined),
+		error: vi.fn().mockResolvedValue(undefined),
+		testPrimitive: vi.fn().mockResolvedValue(undefined),
+		testPredefined: vi.fn().mockResolvedValue(undefined),
+		testViewHaptic: vi.fn().mockResolvedValue(undefined),
+		testPreset: vi.fn().mockResolvedValue(undefined),
+		testWaveform: vi.fn().mockResolvedValue(undefined)
+	}))
 }));
 
 describe('Haptics System', () => {
@@ -60,8 +58,17 @@ describe('Haptics System', () => {
 			expect(webHaptics.tick()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.tick);
 
+			expect(webHaptics.soft()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.soft);
+
 			expect(webHaptics.click()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.click);
+
+			expect(webHaptics.like()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.like);
+
+			expect(webHaptics.dislike()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.dislike);
 
 			expect(webHaptics.heavy()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.heavy);
@@ -82,42 +89,48 @@ describe('Haptics System', () => {
 		});
 	});
 
-	describe('Capacitor Native taptics', () => {
-		it('вызывает нативные методы Capacitor Haptics для каждого типа сигнала', () => {
+	describe('Capacitor Native haptics (NativeHaptics plugin)', () => {
+		it('вызывает нативные методы NativeHaptics для каждого типа сигнала', () => {
 			expect(nativeHaptics.tick()).toBe(true);
-			expect(Haptics.selectionStart).toHaveBeenCalledTimes(1);
-			expect(Haptics.selectionChanged).toHaveBeenCalledTimes(1);
+			expect(NativeHaptics.tick).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.soft()).toBe(true);
+			expect(NativeHaptics.soft).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.click()).toBe(true);
-			expect(Haptics.impact).toHaveBeenCalledWith({ style: ImpactStyle.Light });
+			expect(NativeHaptics.click).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.like()).toBe(true);
+			expect(NativeHaptics.like).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.dislike()).toBe(true);
+			expect(NativeHaptics.dislike).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.heavy()).toBe(true);
-			expect(Haptics.impact).toHaveBeenCalledWith({ style: ImpactStyle.Heavy });
+			expect(NativeHaptics.heavy).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.double()).toBe(true);
-			expect(Haptics.notification).toHaveBeenCalledWith({ type: NotificationType.Success });
+			expect(NativeHaptics.doubleClick).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.error()).toBe(true);
-			expect(Haptics.notification).toHaveBeenCalledWith({ type: NotificationType.Error });
+			expect(NativeHaptics.error).toHaveBeenCalledTimes(1);
 		});
 
 		it('управляет сессией выбора selectionStart, selectionChanged, selectionEnd', () => {
 			expect(nativeHaptics.selectionStart()).toBe(true);
-			expect(Haptics.selectionStart).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.selectionChanged()).toBe(true);
-			expect(Haptics.selectionChanged).toHaveBeenCalledTimes(1);
+			expect(NativeHaptics.tick).toHaveBeenCalledTimes(1);
 
 			expect(nativeHaptics.selectionEnd()).toBe(true);
-			expect(Haptics.selectionEnd).toHaveBeenCalledTimes(1);
 		});
 
-		it('поддерживает произвольную вибрацию по длительности и массиву', () => {
+		it('поддерживает произвольную вибрацию по длительности и массиву через testWaveform', () => {
 			expect(nativeHaptics.trigger(50)).toBe(true);
-			expect(Haptics.vibrate).toHaveBeenCalledWith({ duration: 50 });
+			expect(NativeHaptics.testWaveform).toHaveBeenCalledWith({ timings: [50] });
 
 			expect(nativeHaptics.trigger([15, 30, 15])).toBe(true);
-			expect(Haptics.vibrate).toHaveBeenCalledWith({ duration: 15 });
+			expect(NativeHaptics.testWaveform).toHaveBeenCalledWith({ timings: [15, 30, 15] });
 		});
 	});
 
@@ -127,24 +140,33 @@ describe('Haptics System', () => {
 
 			expect(haptics.click()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.click);
-			expect(Haptics.impact).not.toHaveBeenCalled();
+			expect(NativeHaptics.click).not.toHaveBeenCalled();
+
+			expect(haptics.like()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith(HAPTIC_PATTERNS.like);
+			expect(NativeHaptics.like).not.toHaveBeenCalled();
 		});
 
-		it('маршрутизирует сигнал в Capacitor Haptics при работе в нативной среде', () => {
+		it('маршрутизирует сигнал в NativeHaptics при работе в нативной среде', () => {
 			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(true);
 
 			expect(haptics.click()).toBe(true);
-			expect(Haptics.impact).toHaveBeenCalledWith({ style: ImpactStyle.Light });
+			expect(NativeHaptics.click).toHaveBeenCalled();
 			expect(vibrateMock).not.toHaveBeenCalled();
 
+			expect(haptics.like()).toBe(true);
+			expect(NativeHaptics.like).toHaveBeenCalled();
+
+			expect(haptics.dislike()).toBe(true);
+			expect(NativeHaptics.dislike).toHaveBeenCalled();
+
+			expect(haptics.soft()).toBe(true);
+			expect(NativeHaptics.soft).toHaveBeenCalled();
+
 			expect(haptics.selectionStart()).toBe(true);
-			expect(Haptics.selectionStart).toHaveBeenCalled();
-
 			expect(haptics.selectionChanged()).toBe(true);
-			expect(Haptics.selectionChanged).toHaveBeenCalled();
-
+			expect(NativeHaptics.tick).toHaveBeenCalled();
 			expect(haptics.selectionEnd()).toBe(true);
-			expect(Haptics.selectionEnd).toHaveBeenCalled();
 
 			expect(haptics.tick()).toBe(true);
 		});
@@ -155,6 +177,9 @@ describe('Haptics System', () => {
 			// В Web
 			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(false);
 			expect(haptics.click()).toBe(false);
+			expect(haptics.like()).toBe(false);
+			expect(haptics.dislike()).toBe(false);
+			expect(haptics.soft()).toBe(false);
 			expect(haptics.selectionStart()).toBe(false);
 			expect(haptics.selectionChanged()).toBe(false);
 			expect(haptics.selectionEnd()).toBe(false);
@@ -163,11 +188,14 @@ describe('Haptics System', () => {
 			// В Native
 			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(true);
 			expect(haptics.click()).toBe(false);
+			expect(haptics.like()).toBe(false);
+			expect(haptics.dislike()).toBe(false);
+			expect(haptics.soft()).toBe(false);
 			expect(haptics.selectionStart()).toBe(false);
 			expect(haptics.selectionChanged()).toBe(false);
 			expect(haptics.selectionEnd()).toBe(false);
-			expect(Haptics.impact).not.toHaveBeenCalled();
-			expect(Haptics.selectionStart).not.toHaveBeenCalled();
+			expect(NativeHaptics.click).not.toHaveBeenCalled();
+			expect(NativeHaptics.tick).not.toHaveBeenCalled();
 		});
 	});
 });

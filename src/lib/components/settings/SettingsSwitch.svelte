@@ -1,9 +1,23 @@
 <script lang="ts">
+	import { haptics } from '$lib/haptics';
+
 	/* Переключатель как в Adwaita: дорожка и круглый бегунок */
 	let { checked, onchange, label }: { checked: boolean; onchange: (checked: boolean) => void; label?: string } = $props();
 </script>
 
-<input class="switch" type="checkbox" role="switch" aria-label={label} {checked} onchange={(e) => onchange(e.currentTarget.checked)} />
+<input
+	class="switch"
+	type="checkbox"
+	role="switch"
+	aria-label={label}
+	{checked}
+	onchange={(e) => {
+		const next = e.currentTarget.checked;
+		onchange(next);
+		if (next) haptics.tick();
+		else haptics.soft();
+	}}
+/>
 
 <style>
 	.switch {

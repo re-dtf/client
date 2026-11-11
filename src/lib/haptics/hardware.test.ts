@@ -23,7 +23,10 @@ vi.mock('@capacitor/core', () => ({
 			}
 		}),
 		tick: vi.fn().mockResolvedValue(undefined),
+		soft: vi.fn().mockResolvedValue(undefined),
 		click: vi.fn().mockResolvedValue(undefined),
+		like: vi.fn().mockResolvedValue(undefined),
+		dislike: vi.fn().mockResolvedValue(undefined),
 		heavy: vi.fn().mockResolvedValue(undefined),
 		doubleClick: vi.fn().mockResolvedValue(undefined),
 		error: vi.fn().mockResolvedValue(undefined),
@@ -75,8 +78,17 @@ describe('Native Haptics Engine', () => {
 			expect(await nativeHapticsEngine.tick()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(2);
 
+			expect(await nativeHapticsEngine.soft()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith(1);
+
 			expect(await nativeHapticsEngine.click()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(5);
+
+			expect(await nativeHapticsEngine.like()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith([2, 25, 5]);
+
+			expect(await nativeHapticsEngine.dislike()).toBe(true);
+			expect(vibrateMock).toHaveBeenCalledWith([4, 30, 8]);
 
 			expect(await nativeHapticsEngine.heavy()).toBe(true);
 			expect(vibrateMock).toHaveBeenCalledWith(10);
@@ -100,8 +112,17 @@ describe('Native Haptics Engine', () => {
 			expect(await nativeHapticsEngine.tick()).toBe(true);
 			expect(NativeHaptics.tick).toHaveBeenCalled();
 
+			expect(await nativeHapticsEngine.soft()).toBe(true);
+			expect(NativeHaptics.soft).toHaveBeenCalled();
+
 			expect(await nativeHapticsEngine.click()).toBe(true);
 			expect(NativeHaptics.click).toHaveBeenCalled();
+
+			expect(await nativeHapticsEngine.like()).toBe(true);
+			expect(NativeHaptics.like).toHaveBeenCalled();
+
+			expect(await nativeHapticsEngine.dislike()).toBe(true);
+			expect(NativeHaptics.dislike).toHaveBeenCalled();
 
 			expect(await nativeHapticsEngine.heavy()).toBe(true);
 			expect(NativeHaptics.heavy).toHaveBeenCalled();

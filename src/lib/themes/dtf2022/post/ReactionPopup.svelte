@@ -81,7 +81,7 @@
 	function triggerLongPress() {
 		cancelTouch();
 		show();
-		haptics.click();
+		haptics.heavy();
 		suppressClick();
 		longPressed = true;
 		setTimeout(() => (longPressed = false), 800);

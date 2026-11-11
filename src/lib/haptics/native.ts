@@ -1,25 +1,17 @@
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { NativeHaptics } from './hardware';
 import type { HapticSignal, HapticsEngine } from './types';
 
 let selectionActive = false;
 
 export function nativeSelectionStart(): boolean {
-	try {
-		selectionActive = true;
-		Haptics.selectionStart().catch(() => {});
-		return true;
-	} catch {
-		return false;
-	}
+	selectionActive = true;
+	return true;
 }
 
 export function nativeSelectionChanged(): boolean {
 	try {
-		if (!selectionActive) {
-			selectionActive = true;
-			Haptics.selectionStart().catch(() => {});
-		}
-		Haptics.selectionChanged().catch(() => {});
+		selectionActive = true;
+		NativeHaptics.tick().catch(() => {});
 		return true;
 	} catch {
 		return false;
@@ -27,50 +19,53 @@ export function nativeSelectionChanged(): boolean {
 }
 
 export function nativeSelectionEnd(): boolean {
-	try {
-		selectionActive = false;
-		Haptics.selectionEnd().catch(() => {});
-		return true;
-	} catch {
-		return false;
-	}
+	selectionActive = false;
+	return true;
 }
 
 /**
- * Вызов нативного тактильного отклика через Capacitor Haptics.
+ * Вызов нативного тактильного отклика через кастомный плагин NativeHaptics.
  * Запускается асинхронно без блокировки потока UI с перехватом возможных ошибок.
  */
 export function triggerNativeHaptic(signal: HapticSignal): boolean {
 	try {
 		if (typeof signal === 'number') {
-			Haptics.vibrate({ duration: signal }).catch(() => {});
+			NativeHaptics.testWaveform({ timings: [signal] }).catch(() => {});
 			return true;
 		}
 
 		if (Array.isArray(signal)) {
-			const duration = signal[0] ?? 10;
-			Haptics.vibrate({ duration }).catch(() => {});
+			NativeHaptics.testWaveform({ timings: signal }).catch(() => {});
 			return true;
 		}
 
 		switch (signal) {
 			case 'tick':
-				nativeSelectionChanged();
+				NativeHaptics.tick().catch(() => {});
+				break;
+			case 'soft':
+				NativeHaptics.soft().catch(() => {});
 				break;
 			case 'click':
-				Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+				NativeHaptics.click().catch(() => {});
+				break;
+			case 'like':
+				NativeHaptics.like().catch(() => {});
+				break;
+			case 'dislike':
+				NativeHaptics.dislike().catch(() => {});
 				break;
 			case 'heavy':
-				Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
+				NativeHaptics.heavy().catch(() => {});
 				break;
 			case 'double':
-				Haptics.notification({ type: NotificationType.Success }).catch(() => {});
+				NativeHaptics.doubleClick().catch(() => {});
 				break;
 			case 'error':
-				Haptics.notification({ type: NotificationType.Error }).catch(() => {});
+				NativeHaptics.error().catch(() => {});
 				break;
 			default:
-				Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+				NativeHaptics.click().catch(() => {});
 				break;
 		}
 		return true;
@@ -81,7 +76,10 @@ export function triggerNativeHaptic(signal: HapticSignal): boolean {
 
 export const nativeHaptics: HapticsEngine = {
 	tick: () => triggerNativeHaptic('tick'),
+	soft: () => triggerNativeHaptic('soft'),
 	click: () => triggerNativeHaptic('click'),
+	like: () => triggerNativeHaptic('like'),
+	dislike: () => triggerNativeHaptic('dislike'),
 	heavy: () => triggerNativeHaptic('heavy'),
 	double: () => triggerNativeHaptic('double'),
 	error: () => triggerNativeHaptic('error'),
