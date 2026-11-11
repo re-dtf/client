@@ -11,7 +11,7 @@
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
-	import { ensureLogin } from '../actions.svelte';
+	import { type AuthorAction, authorMenuItems, ensureLogin, isAnotherDtfUser, isSubsiteMuted, runAuthorAction } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
@@ -88,8 +88,10 @@
 	let showAuthorBadge = $derived(clientBadge && (clientBadge.type === 'redtf' || settings.value.mobileBadgesPosition === 'author'));
 	let showDateBadge = $derived(clientBadge && clientBadge.type !== 'redtf' && settings.value.mobileBadgesPosition === 'date');
 	let filterMatch = $derived(matchCommentFilter(comment));
+	// Автор в чёрном списке DTF: сервер отдаёт его комментарии с isIgnored и пустым текстом, а свежую блокировку помним сами
+	let muted = $derived(isSubsiteMuted(comment.author.id, !!comment.isIgnored));
 	let revealed = $state(false);
-	let isFiltered = $derived(!!filterMatch && !revealed);
+	let isFiltered = $derived((muted || !!filterMatch) && !revealed);
 
 	// Голос «за» и «против» — выбранные в настройках реакции; false — голос не принят, анимации клика не будет
 	const rate = (vote: 1 | -1) => voteComment(comment, vote);
@@ -104,6 +106,7 @@
 		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' },
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
 		...(comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : []),
+		...(isAnotherDtfUser(comment.sourceId, comment.author.id) ? authorMenuItems(comment.author, { blocked: !!comment.isIgnored }) : []),
 		{
 			value: 'favorite' as const,
 			label: comment.isFavorited ? 'Убрать из закладок' : 'Добавить в закладки',
@@ -119,8 +122,9 @@
 		api.getCommentControls(comment.id).then((controls) => (canEdit = controls.edit)).catch(() => (canEdit = false));
 	}
 
-	function selectMenuItem(item: 'edit' | 'open_dtf' | 'copy' | 'favorite' | 'complain') {
-		if (item === 'edit') onedit();
+	function selectMenuItem(item: 'edit' | 'open_dtf' | 'copy' | 'favorite' | 'complain' | AuthorAction) {
+		if (item.endsWith('_author')) runAuthorAction(item as AuthorAction, comment.author);
+		else if (item === 'edit') onedit();
 		else if (item === 'open_dtf') window.open(`https://dtf.ru/${comment.postId}?comment=${comment.id}`, '_blank', 'noopener,noreferrer');
 		else if (item === 'copy') copyLink();
 		else if (item === 'complain') complaining = ensureLogin();
@@ -280,8 +284,17 @@
 			{/if}
 
 			<div class="comment-item__text comment-item__text--filtered">
-				<span>Комментарий скрыт фильтром ({filterMatch?.rule})</span>
-				{#if filterSettings.value.mode === 'soft'}
+				<span>
+					{#if muted}
+						Комментарий скрыт: автор заблокирован
+					{:else if filterMatch?.kind === 'user'}
+						Комментарий скрыт: вы скрыли автора
+					{:else}
+						Комментарий скрыт фильтром ({filterMatch?.rule})
+					{/if}
+				</span>
+				<!-- У комментария заблокированного с сервера текста нет, показывать нечего -->
+				{#if muted ? !!comment.content : filterSettings.value.mode === 'soft'}
 					<button type="button" class="comment-item__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
 				{/if}
 			</div>
