@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { haptics } from './haptics';
+import { createTension } from './haptics';
 import { activeTheme } from './themes/index.svelte';
 import { getCurrentDevice } from './themes/types';
 
@@ -69,6 +69,7 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 		let busy = false;
 		let y = 0;
 		let frame = 0;
+		const tension = createTension('heavy');
 
 		const touch = (e: TouchEvent) => start && [...e.touches].find((t) => t.identifier === start!.id);
 
@@ -92,6 +93,7 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 			listen(false);
 			if (!pulling) return;
 			pulling = armed = false;
+			tension.reset();
 			const d = p!;
 			if (!go) return d.close();
 			busy = true;
@@ -146,12 +148,7 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 			}
 			if (e.cancelable) e.preventDefault();
 			y = resist(t.clientY - start.y);
-			const next = y >= THRESHOLD;
-			if (next !== armed) {
-				if (next) haptics.heavy();
-				else haptics.soft();
-			}
-			armed = next;
+			armed = tension.move(y, THRESHOLD);
 			frame ||= requestAnimationFrame(render);
 		}
 

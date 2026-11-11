@@ -1,5 +1,5 @@
 import type { Attachment } from 'svelte/attachments';
-import { haptics } from '$lib/haptics';
+import { createTension, haptics } from '$lib/haptics';
 import { reducedMotion } from '$lib/motion';
 import { EASE, swipe, translate } from '$lib/swipe';
 
@@ -58,6 +58,7 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 	// Верх слоя колонки в окне и сдвиг пальца по вертикали, на котором сработал порог
 	let layerTop = 0;
 	let armY = 0;
+	const tension = createTension('click');
 
 	function render(x: number) {
 		if (!content || !column) return;
@@ -87,6 +88,7 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 			content.style.willChange = 'transform';
 			layerTop = column.getBoundingClientRect().top;
 			column.style.setProperty('--swipe-y', `${startY - layerTop}px`);
+			tension.reset();
 			options.show(view);
 			return true;
 		},
@@ -95,6 +97,7 @@ export function commentSwipe(options: CommentSwipeOptions): Attachment<HTMLEleme
 			render(x);
 			const armed = x >= ARM;
 			if (!view || !column) return;
+			if (!armed && !view.armed) tension.move(x, ARM, false);
 			// До порога колонка идёт за пальцем по вертикали, после — стоит, и палец выбирает в ней действие
 			if (!armed) {
 				column.style.setProperty('--swipe-y', `${startY + dy - layerTop}px`);

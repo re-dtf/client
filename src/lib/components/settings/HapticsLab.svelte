@@ -93,6 +93,9 @@
 			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('double (успех)', () => nativeHapticsEngine.double())}>
 				double
 			</button>
+			<button type="button" class="haptic-btn haptic-btn--accent" onclick={() => testAction('tension (натяжение Resist)', () => nativeHapticsEngine.tension())}>
+				tension
+			</button>
 			<button type="button" class="haptic-btn haptic-btn--danger" onclick={() => testAction('error (ошибка)', () => nativeHapticsEngine.error())}>
 				error
 			</button>

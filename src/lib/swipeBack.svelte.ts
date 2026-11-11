@@ -4,7 +4,8 @@ import { page } from '$app/state';
 import { closeOverlay } from './navigation';
 import { reducedMotion } from './motion';
 import { freeze, pageTransition } from './pageTransition.svelte';
-import { EASE, glide, settle, swipe, translate } from './swipe';
+import { createTension, haptics } from './haptics';
+import { DISTANCE, EASE, glide, settle, swipe, translate } from './swipe';
 import { activeTheme } from './themes/index.svelte';
 import { getCurrentDevice } from './themes/types';
 
@@ -92,6 +93,7 @@ export function swipeBackGesture(options: SwipeBackOptions): Attachment<HTMLElem
 	let dim: HTMLElement | undefined;
 	let width = 0;
 	let from: { top: string; under: string } | undefined;
+	const tension = createTension('click');
 
 	function move(x: number) {
 		if (!top || !under || !dim) return;
@@ -149,11 +151,16 @@ export function swipeBackGesture(options: SwipeBackOptions): Attachment<HTMLElem
 			Object.assign(style, { willChange: 'transform', boxShadow: '0 0 24px rgba(0, 0, 0, 0.18)', backgroundColor: fill, minHeight: `${Math.max(0, innerHeight - rect.top)}px` });
 			const screen = top;
 			restorePage = () => Object.assign(screen.style, prev);
+			tension.reset();
 			// До первого движения слой уже стоит в начале параллакса
 			move(0);
 			return true;
 		},
-		move: (x) => move(Math.max(0, x)),
+		move(x) {
+			const clamped = Math.max(0, x);
+			move(clamped);
+			tension.move(clamped, width * DISTANCE);
+		},
 		end(offset, v) {
 			const a = top;
 			const b = under;
@@ -163,6 +170,7 @@ export function swipeBackGesture(options: SwipeBackOptions): Attachment<HTMLElem
 			if (!a || !b || !c || !layer || !restorePage) return;
 			const x = Math.max(0, offset);
 			const close = v !== null && settle(x, v, width) === -1;
+			if (close && !tension.armed) haptics.tick();
 			const end = close ? width : 0;
 			let settled = false;
 			let animations: Animation[] = [];

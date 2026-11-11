@@ -23,6 +23,15 @@ export function nativeSelectionEnd(): boolean {
 	return true;
 }
 
+export function nativeTension(scale = 0.3): boolean {
+	try {
+		NativeHaptics.tension({ scale }).catch(() => {});
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /**
  * Вызов нативного тактильного отклика через кастомный плагин NativeHaptics.
  * Запускается асинхронно без блокировки потока UI с перехватом возможных ошибок.
@@ -83,6 +92,7 @@ export const nativeHaptics: HapticsEngine = {
 	heavy: () => triggerNativeHaptic('heavy'),
 	double: () => triggerNativeHaptic('double'),
 	error: () => triggerNativeHaptic('error'),
+	tension: (scale) => nativeTension(scale),
 	trigger: (signal) => triggerNativeHaptic(signal),
 	selectionStart: () => nativeSelectionStart(),
 	selectionChanged: () => nativeSelectionChanged(),

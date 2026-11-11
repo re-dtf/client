@@ -27,6 +27,7 @@ export interface NativeHapticsPluginInterface {
 	getDiagnostics(): Promise<HapticsDiagnostics>;
 	tick(): Promise<void>;
 	soft(): Promise<void>;
+	tension(options?: { scale?: number }): Promise<void>;
 	click(): Promise<void>;
 	like(): Promise<void>;
 	dislike(): Promise<void>;
@@ -108,6 +109,16 @@ export const nativeHapticsEngine = {
 		if (!isNative()) return triggerWebHaptic('soft');
 		try {
 			await NativeHaptics.soft();
+			return true;
+		} catch {
+			return false;
+		}
+	},
+
+	async tension(scale?: number): Promise<boolean> {
+		if (!isNative()) return false;
+		try {
+			await NativeHaptics.tension(scale !== undefined ? { scale } : {});
 			return true;
 		} catch {
 			return false;

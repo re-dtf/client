@@ -24,6 +24,7 @@ vi.mock('@capacitor/core', () => ({
 		}),
 		tick: vi.fn().mockResolvedValue(undefined),
 		soft: vi.fn().mockResolvedValue(undefined),
+		tension: vi.fn().mockResolvedValue(undefined),
 		click: vi.fn().mockResolvedValue(undefined),
 		like: vi.fn().mockResolvedValue(undefined),
 		dislike: vi.fn().mockResolvedValue(undefined),
@@ -132,6 +133,9 @@ describe('Native Haptics Engine', () => {
 
 			expect(await nativeHapticsEngine.error()).toBe(true);
 			expect(NativeHaptics.error).toHaveBeenCalled();
+
+			expect(await nativeHapticsEngine.tension(0.5)).toBe(true);
+			expect(NativeHaptics.tension).toHaveBeenCalledWith({ scale: 0.5 });
 		});
 
 		it('поддерживает тестовые вызовы по поколениям API', async () => {

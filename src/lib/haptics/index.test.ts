@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as capacitorModule from '$lib/capacitor';
 import { NativeHaptics } from './hardware';
-import { haptics, triggerHaptic, HAPTIC_PATTERNS } from './index';
+import { haptics, createTension, triggerHaptic, HAPTIC_PATTERNS } from './index';
 import { triggerWebHaptic, webHaptics } from './web';
 import { triggerNativeHaptic, nativeHaptics } from './native';
 import { settings } from '$lib/storage/settings.svelte';
@@ -11,6 +11,7 @@ vi.mock('@capacitor/core', () => ({
 		getDiagnostics: vi.fn().mockResolvedValue({}),
 		tick: vi.fn().mockResolvedValue(undefined),
 		soft: vi.fn().mockResolvedValue(undefined),
+		tension: vi.fn().mockResolvedValue(undefined),
 		click: vi.fn().mockResolvedValue(undefined),
 		like: vi.fn().mockResolvedValue(undefined),
 		dislike: vi.fn().mockResolvedValue(undefined),
@@ -114,6 +115,9 @@ describe('Haptics System', () => {
 
 			expect(nativeHaptics.error()).toBe(true);
 			expect(NativeHaptics.error).toHaveBeenCalledTimes(1);
+
+			expect(nativeHaptics.tension(0.45)).toBe(true);
+			expect(NativeHaptics.tension).toHaveBeenCalledWith({ scale: 0.45 });
 		});
 
 		it('управляет сессией выбора selectionStart, selectionChanged, selectionEnd', () => {
@@ -196,6 +200,42 @@ describe('Haptics System', () => {
 			expect(haptics.selectionEnd()).toBe(false);
 			expect(NativeHaptics.click).not.toHaveBeenCalled();
 			expect(NativeHaptics.tick).not.toHaveBeenCalled();
+		});
+
+		it('createTension наращивает импульсы натяжения до порога, щёлкает на пороге и мягко отпускает при возврате', () => {
+			vi.spyOn(capacitorModule, 'isNative').mockReturnValue(true);
+			let now = 100;
+			vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+			const tension = createTension('click');
+			expect(tension.armed).toBe(false);
+
+			// Небольшое движение (20px из 100px порога) — срабатывает лёгкий импульс tension
+			now += 30;
+			expect(tension.move(20, 100)).toBe(false);
+			expect(NativeHaptics.tension).toHaveBeenCalledTimes(1);
+			const firstScale = (NativeHaptics.tension as any).mock.calls[0][0].scale;
+			expect(firstScale).toBeGreaterThan(0.08);
+			expect(firstScale).toBeLessThan(0.3);
+
+			// Дальнейшее натяжение (80px из 100px) — амплитуда растёт
+			now += 30;
+			expect(tension.move(80, 100)).toBe(false);
+			expect(NativeHaptics.tension).toHaveBeenCalledTimes(2);
+			const secondScale = (NativeHaptics.tension as any).mock.calls[1][0].scale;
+			expect(secondScale).toBeGreaterThan(firstScale);
+
+			// Пересечение порога (105px >= 100px) — отсечка click и взвод armed = true
+			now += 30;
+			expect(tension.move(105, 100)).toBe(true);
+			expect(tension.armed).toBe(true);
+			expect(NativeHaptics.click).toHaveBeenCalledTimes(1);
+
+			// Возврат пальца под порог (85px < 100px) — мягкая отмена soft и сброс armed = false
+			now += 30;
+			expect(tension.move(85, 100)).toBe(false);
+			expect(tension.armed).toBe(false);
+			expect(NativeHaptics.soft).toHaveBeenCalledTimes(1);
 		});
 	});
 });

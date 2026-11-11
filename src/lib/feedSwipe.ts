@@ -3,7 +3,8 @@ import { activeTheme } from './themes/index.svelte';
 import { neighborFeed, type FeedName } from './feed.svelte';
 import { reducedMotion } from './motion';
 import { getCurrentDevice } from './themes/types';
-import { settle, spring, swipe, translate } from './swipe';
+import { createTension, haptics } from './haptics';
+import { DISTANCE, settle, spring, swipe, translate } from './swipe';
 import { pullDrawer, type DrawerPull } from './drawerSwipe';
 
 /*
@@ -47,6 +48,7 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 		let pull: DrawerPull | undefined;
 		// Идущий доезд: остановить его там, где он сейчас
 		let halt: (() => void) | undefined;
+		const tension = createTension('click');
 
 		const shift = () => (sides.get(offset > 0 ? -1 : 1) ? offset : rubber(offset, width));
 
@@ -81,13 +83,17 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 				if (pull) return true;
 				width = track.clientWidth;
 				track.style.willChange = 'transform';
+				tension.reset();
 				return true;
 			},
 			move(x) {
 				if (pull) return pull.move(x);
 				offset = x;
-				if (offset) place(offset > 0 ? -1 : 1);
-				track.style.transform = translate(shift());
+				const dir = offset > 0 ? -1 : 1;
+				if (offset) place(dir);
+				const s = shift();
+				track.style.transform = translate(s);
+				tension.move(Math.abs(s), width * DISTANCE, Boolean(sides.get(dir)));
 			},
 			end(x, v) {
 				if (pull) {
@@ -97,6 +103,7 @@ export function feedSwipe(options: FeedSwipeOptions): Attachment<HTMLElement> {
 				}
 				const dir = v === null ? 0 : settle(offset, v, width);
 				const target = dir && sides.get(dir) ? neighborFeed(from, dir) : undefined;
+				if (target && !tension.armed) haptics.tick();
 				const to = target ? -dir * width : 0;
 				// Доезд ведёт тот же сдвиг, что и палец, по кадрам: касание останавливает его где угодно и ведёт дальше
 				const at = spring(offset, to, v ?? 0);
