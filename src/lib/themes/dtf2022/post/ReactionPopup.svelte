@@ -5,6 +5,7 @@
 	import { formatNumber } from '../format';
 	import { fade } from 'svelte/transition';
 	import { reducedMotion } from '$lib/motion';
+	import { haptics } from '$lib/haptics';
 
 	let {
 		reactions,
@@ -21,7 +22,10 @@
 	let right = $state(false);
 	let picking = $state(false);
 	let anchor = $state<HTMLElement>();
-	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	let touchTimer: ReturnType<typeof setTimeout> | undefined;
+	let touchStart: { x: number; y: number } | undefined;
+	let longPressed = false;
 
 	const ms = (n: number) => (reducedMotion() ? 0 : n);
 
@@ -42,19 +46,8 @@
 		open = true;
 	}
 
-	function enter() {
-		if (!window.matchMedia?.('(hover: hover)').matches) return;
-		clearTimeout(timer);
-		if (!open) timer = setTimeout(show, 650);
-	}
-
-	function leave() {
-		clearTimeout(timer);
-		timer = setTimeout(close, 200);
-	}
-
 	function close() {
-		clearTimeout(timer);
+		cancelTouch();
 		open = false;
 		picking = false;
 	}
@@ -68,16 +61,86 @@
 		picking = !picking;
 		updatePosition();
 	}
+
+	function cancelTouch() {
+		clearTimeout(touchTimer);
+		touchTimer = undefined;
+		touchStart = undefined;
+	}
+
+	function suppressClick() {
+		if (!anchor) return;
+		const stopClick = (e: MouseEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+		};
+		anchor.addEventListener('click', stopClick, { capture: true, once: true });
+		setTimeout(() => anchor?.removeEventListener('click', stopClick, true), 400);
+	}
+
+	function triggerLongPress() {
+		cancelTouch();
+		show();
+		haptics.click();
+		suppressClick();
+		longPressed = true;
+		setTimeout(() => (longPressed = false), 800);
+	}
+
+	function onPointerDown(e: PointerEvent) {
+		if (e.pointerType !== 'touch') return;
+		if ((e.target as Element)?.closest?.('.reactions-popup')) return;
+		cancelTouch();
+		touchStart = { x: e.clientX, y: e.clientY };
+		touchTimer = setTimeout(triggerLongPress, 450);
+	}
+
+	function onPointerMove(e: PointerEvent) {
+		if (!touchStart || e.pointerType !== 'touch') return;
+		if (Math.hypot(e.clientX - touchStart.x, e.clientY - touchStart.y) > 10) cancelTouch();
+	}
+
+	function onContextMenu(e: MouseEvent) {
+		if ((e.target as Element)?.closest?.('.reactions-popup')) {
+			e.preventDefault();
+			return;
+		}
+		e.preventDefault();
+		if (longPressed) return;
+		if (touchTimer) {
+			triggerLongPress();
+			return;
+		}
+		if (open) close();
+		else show();
+	}
+
+	function handleClick(e: MouseEvent) {
+		if (open && !(e.target as Element)?.closest?.('.reactions-popup')) close();
+	}
+
+	$effect(() => () => cancelTouch());
 </script>
 
 <svelte:window
 	onclick={(e) => open && !anchor?.contains(e.target as Node) && close()}
+	oncontextmenu={(e) => open && !anchor?.contains(e.target as Node) && close()}
 	onkeydown={(e) => open && e.key === 'Escape' && close()}
 />
 
 {#if onreact}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="reactions-tooltip-anchor" bind:this={anchor} onmouseenter={enter} onmouseleave={leave}>
+	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+	<div
+		class="reactions-tooltip-anchor"
+		bind:this={anchor}
+		onpointerdown={onPointerDown}
+		onpointermove={onPointerMove}
+		onpointerup={cancelTouch}
+		onpointercancel={cancelTouch}
+		onpointerleave={cancelTouch}
+		oncontextmenu={onContextMenu}
+		onclick={handleClick}
+	>
 		{@render children()}
 
 		{#if open}
@@ -159,6 +222,9 @@
 		position: relative;
 		display: inline-flex;
 		align-items: center;
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	.reactions-popup {
@@ -177,14 +243,6 @@
 		background-color: var(--bg-card);
 		box-shadow: var(--shadow-picker);
 		user-select: none;
-	}
-
-	/* Мостик между триггером и окном для сохранения ховера */
-	.reactions-popup::before {
-		content: '';
-		position: absolute;
-		inset: -10px 0;
-		z-index: -1;
 	}
 
 	.reactions-popup--up {
