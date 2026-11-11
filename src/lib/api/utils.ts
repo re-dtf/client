@@ -1,3 +1,10 @@
+import type { Comment } from './types';
+
+/** Вместо текста сервер отдаёт заглушку: комментарий удалён, автор заморожен или комментарий скрыт баном */
+export function isStubComment(c: Comment): boolean {
+	return !!(c.isRemoved || c.author.isFrozen || c.isHiddenByBan);
+}
+
 export function getLeonardoUrl(
 	uuid: string,
 	options: { format?: string; width?: number; scale_crop?: string; original?: boolean } = {}

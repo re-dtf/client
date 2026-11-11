@@ -136,6 +136,20 @@ describe('mapComment', () => {
 		const comment = mapComment({ id: 11, text: 'тест', source: 'android-app' }, 1);
 		expect(comment.deviceSource).toBe('android-app');
 	});
+
+	it('замороженный автор и бан помечают заглушку; заморозка не считается модерацией', () => {
+		const frozen = mapComment({ id: 1, text: 'Комментарий недоступен', author: { id: 20, isFrozen: true } }, 1);
+		expect(frozen.author.isFrozen).toBe(true);
+		expect(frozen.removedByModerator).toBeUndefined();
+
+		const banned = mapComment({ id: 2, text: '', isHiddenByBan: true }, 1);
+		expect(banned.isHiddenByBan).toBe(true);
+		expect(banned.removedByModerator).toBe(true);
+
+		const live = mapComment({ id: 3, text: 'Комментарий недоступен', author: { id: 10, isFrozen: false } }, 1);
+		expect(live.author.isFrozen).toBeUndefined();
+		expect(live.isHiddenByBan).toBeUndefined();
+	});
 });
 
 describe('mapNotification', () => {

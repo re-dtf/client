@@ -4,6 +4,7 @@ import { createSourceProvider } from './providers/source';
 import { sourceRegistry } from './sources/registry.svelte';
 import { mergePosts, mergeComments, type CommentAddition } from './sources/merger';
 import { hasPermission } from './sources/permissions';
+import { isStubComment } from './utils';
 import { getOrFetchPostSourceData } from './sources/post-cache';
 import type { SourceState } from './sources/types';
 import { authStorage } from '$lib/storage/auth.svelte';
@@ -158,7 +159,7 @@ export const api = {
 				// В архив ходим, только если на странице есть заглушки, которые стоит восстановить
 				if (mode === 'restore') {
 					const { items } = await primaryPromise;
-					if (!items.some((c) => c.isRemoved && (!onlyModerator || c.removedByModerator))) return { items: [] };
+					if (!items.some((c) => isStubComment(c) && (!onlyModerator || c.removedByModerator))) return { items: [] };
 				}
 				const provider = createSourceProvider(source);
 				const load =

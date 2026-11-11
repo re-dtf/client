@@ -1,4 +1,5 @@
 import type { Post, PaginatedResult, CursorData, Comment, CommentPatch } from '../types';
+import { isStubComment } from '../utils';
 
 export type CommentMergeMode = 'append' | 'replace' | 'restore';
 
@@ -119,8 +120,8 @@ export function mergeComments(
 				const existingIndex = Number.isNaN(normalizedId) ? undefined : primaryMap.get(normalizedId);
 				if (existingIndex !== undefined) {
 					const existing = result[existingIndex];
-					// restore применяется ТОЛЬКО если existing.isRemoved === true
-					if (!existing.isRemoved) continue;
+					// restore применяется только к заглушкам: удалённым, скрытым баном или от замороженного автора
+					if (!isStubComment(existing)) continue;
 
 					// Проверка автора: если в patch передан authorId, он обязан совпадать с existing.author.id
 					if (patch.authorId !== undefined && Number(patch.authorId) !== existing.author.id) {

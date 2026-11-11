@@ -113,6 +113,7 @@ export interface User {
 	description?: string;
 	isPlus?: boolean;
 	isDonationsEnabled?: boolean;
+	isFrozen?: boolean;
 }
 
 export interface Subsite {
@@ -239,6 +240,8 @@ export interface Comment {
 	isRemoved?: boolean;
 	/** Комментарий удален модератором (а не самим автором) */
 	removedByModerator?: boolean;
+	/** Комментарий скрыт из-за блокировки автора */
+	isHiddenByBan?: boolean;
 	/** Восстановленное из внешнего архива содержимое (накладка поверх заглушки) */
 	restored?: {
 		content: string;

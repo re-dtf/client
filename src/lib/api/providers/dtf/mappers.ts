@@ -23,7 +23,8 @@ export function mapUser(author: any): User {
 		avatarUrl: mapAvatarUrl(author),
 		description: author?.description || undefined,
 		isPlus: !!author?.isPlus,
-		isDonationsEnabled: author?.isDonationsEnabled || undefined
+		isDonationsEnabled: author?.isDonationsEnabled || undefined,
+		isFrozen: author?.isFrozen ? true : undefined
 	};
 }
 
@@ -162,6 +163,8 @@ function mapRepost(entry: any): Post['repost'] {
 
 export function mapComment(item: any, postId: number): Comment {
 	const { text: content, isRedtf } = extractWatermark(item.text || '');
+	const isHiddenByBan = Boolean(item.isHiddenByBan);
+
 	return {
 		id: item.id,
 		sourceId: 'dtf',
@@ -175,7 +178,9 @@ export function mapComment(item: any, postId: number): Comment {
 		level: item.level,
 		isIgnored: item.isIgnored,
 		isRemoved: item.isRemoved,
-		removedByModerator: item.isRemovedByModerator ? true : undefined,
+		// Заморозка автора сюда не входит: аккаунт замораживают и по просьбе самого автора
+		removedByModerator: item.isRemovedByModerator || isHiddenByBan ? true : undefined,
+		isHiddenByBan: isHiddenByBan ? true : undefined,
 		media: item.media?.length ? item.media.map((m: any) => ({
 			type: m.type || 'image',
 			data: {

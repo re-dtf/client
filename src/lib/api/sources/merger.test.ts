@@ -191,4 +191,30 @@ describe('mergeComments', () => {
 
 		expect(merged[0].restored).toBeUndefined();
 	});
+
+	it('mode restore: восстанавливает заглушку замороженного автора, не помечая комментарий удалённым', () => {
+		const frozenComment = createComment(3, {
+			isRemoved: false,
+			content: 'Комментарий недоступен',
+			author: { id: 30, name: 'Аккаунт заморожен', isFrozen: true }
+		});
+
+		const patch: CommentPatch = {
+			id: 3,
+			authorId: 30,
+			content: 'Восстановленный текст замороженного автора'
+		};
+
+		const merged = mergeComments([frozenComment], [
+			{
+				sourceId: 'archive',
+				comments: [patch],
+				mode: 'restore'
+			}
+		]);
+
+		expect(merged[0].isRemoved).toBe(false);
+		expect(merged[0].author.isFrozen).toBe(true);
+		expect(merged[0].restored?.content).toBe('Восстановленный текст замороженного автора');
+	});
 });
