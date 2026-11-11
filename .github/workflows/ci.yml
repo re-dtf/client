@@ -42,3 +42,4 @@ jobs:
           VITE_AUTH_PROXY_URL: ${{ vars.VITE_AUTH_PROXY_URL }}
           VITE_VALTOWN_PROXY_URL: ${{ vars.VITE_VALTOWN_PROXY_URL }}
           VITE_CLOUDFLARE_PROXY_URL: ${{ vars.VITE_CLOUDFLARE_PROXY_URL }}
+          VITE_SHARE_URL: ${{ vars.VITE_SHARE_URL }}
