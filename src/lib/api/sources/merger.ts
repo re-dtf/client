@@ -1,4 +1,12 @@
-import type { Post, PaginatedResult, CursorData, Comment } from '../types';
+import type { Post, PaginatedResult, CursorData, Comment, CommentPatch } from '../types';
+
+export type CommentMergeMode = 'append' | 'replace' | 'restore';
+
+export interface CommentAddition {
+	sourceId: string;
+	comments: (Comment | CommentPatch)[];
+	mode: CommentMergeMode;
+}
 
 /**
  * Объединить результаты запроса постов из нескольких источников.
@@ -87,7 +95,7 @@ export function mergePosts(
  */
 export function mergeComments(
 	primary: Comment[],
-	additions: { sourceId: string; comments: Comment[]; mode: 'append' | 'replace' }[]
+	additions: CommentAddition[]
 ): Comment[] {
 	// Защита от битых элементов в массиве
 	const result = primary.filter(c => c !== null && typeof c === 'object');
@@ -102,8 +110,35 @@ export function mergeComments(
 		// Защита от некорректных данных от сторонних источников
 		if (!addition || !Array.isArray(addition.comments)) continue;
 
-		if (addition.mode === 'replace') {
-			for (const addedComment of addition.comments) {
+		if (addition.mode === 'restore') {
+			for (const added of addition.comments) {
+				if (!added || typeof added !== 'object') continue;
+
+				const patch = added as CommentPatch;
+				const normalizedId = Number(patch.id);
+				const existingIndex = Number.isNaN(normalizedId) ? undefined : primaryMap.get(normalizedId);
+				if (existingIndex !== undefined) {
+					const existing = result[existingIndex];
+					// restore применяется ТОЛЬКО если existing.isRemoved === true
+					if (!existing.isRemoved) continue;
+
+					// Проверка автора: если в patch передан authorId, он обязан совпадать с existing.author.id
+					if (patch.authorId !== undefined && Number(patch.authorId) !== existing.author.id) {
+						continue;
+					}
+
+					result[existingIndex] = {
+						...existing,
+						restored: {
+							content: patch.content || '',
+							media: patch.media,
+							sourceId: patch.sourceId ?? addition.sourceId
+						}
+					};
+				}
+			}
+		} else if (addition.mode === 'replace') {
+			for (const addedComment of addition.comments as Comment[]) {
 				if (!addedComment || typeof addedComment !== 'object') continue;
 
 				const normalizedId = Number(addedComment.id);
@@ -122,7 +157,7 @@ export function mergeComments(
 				}
 			}
 		} else if (addition.mode === 'append') {
-			for (const addedComment of addition.comments) {
+			for (const addedComment of addition.comments as Comment[]) {
 				if (!addedComment || typeof addedComment !== 'object') continue;
 				result.push({
 					...addedComment,

@@ -211,29 +211,42 @@ describe('api.getComments', () => {
 		});
 	});
 
-	it('для источника без пагинации (paged: false) вызывает его один раз и подмешивает на всех страницах', async () => {
-		const unpagedSource = source('archive', ['mutate:comments:append'], ['getComments']);
+	it('для restore-источника без пагинации (paged: false) вызывает его один раз и восстанавливает на всех страницах', async () => {
+		const unpagedSource = source('archive', ['mutate:comments:restore'], ['getComments']);
 		unpagedSource.manifest.endpoints.getComments = { paged: false } as any;
 		mocks.registry.activeSources = [unpagedSource];
 
-		mocks.dtf.getComments.mockResolvedValueOnce({ items: [comment(1, 'dtf')], lastId: 1, lastSortingValue: 1 });
-		mocks.sourceProvider.getComments.mockResolvedValueOnce({ items: [comment(2, 'archive')] });
+		const removed = (id: number) => ({ ...comment(id, 'dtf'), isRemoved: true });
+		mocks.sourceProvider.getComments.mockResolvedValueOnce({
+			items: [{ id: 1, content: 'Первый' }, { id: 3, content: 'Третий' }]
+		});
 
-		// Страница 1
+		mocks.dtf.getComments.mockResolvedValueOnce({ items: [removed(1)], lastId: 1, lastSortingValue: 1 });
 		const page1 = await api.getComments(1, 'dtf');
-		expect(page1.items.map((c) => `${c.sourceId}:${c.id}`).sort()).toEqual(['archive:2', 'dtf:1']);
-		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
+		expect(page1.items[0].restored?.content).toBe('Первый');
 		// Курсор для archive не должен устанавливаться
 		expect(page1.cursors).toEqual({ dtf: { lastId: 1, lastSortingValue: 1 } });
 
-		// Страница 2 (передаём курсор только для dtf, у archive курсора нет)
-		mocks.dtf.getComments.mockResolvedValueOnce({ items: [comment(3, 'dtf')], lastId: 3, lastSortingValue: 3 });
+		// Страница 2: у archive курсора нет, ответ берётся из кэша
+		mocks.dtf.getComments.mockResolvedValueOnce({ items: [removed(3)], lastId: 3, lastSortingValue: 3 });
 		const page2 = await api.getComments(1, 'dtf', page1.cursors);
 
-		// Источник archive НЕ должен быть вызван повторно по сети (использован кэш)
 		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
-		// Комментарии из archive всё равно подмешались
-		expect(page2.items.map((c) => `${c.sourceId}:${c.id}`).sort()).toEqual(['archive:2', 'dtf:3']);
+		expect(page2.items[0].restored?.content).toBe('Третий');
+	});
+
+	it('не ждёт основной источник, чтобы запросить append-источник', async () => {
+		mocks.registry.activeSources = [source('archive', ['mutate:comments:append'], ['getComments'])];
+		let resolveDtf!: (v: unknown) => void;
+		mocks.dtf.getComments.mockReturnValue(new Promise((r) => (resolveDtf = r)));
+		mocks.sourceProvider.getComments.mockResolvedValue({ items: [comment(2, 'archive')] });
+
+		const pending = api.getComments(1, 'dtf');
+		await Promise.resolve();
+		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
+
+		resolveDtf({ items: [comment(1, 'dtf')] });
+		expect((await pending).items).toHaveLength(2);
 	});
 
 	it('источник без разрешения комментарии не добавляет', async () => {
@@ -255,6 +268,36 @@ describe('api.getComments', () => {
 
 		expect(mocks.sourceProvider.getReplacedComments).toHaveBeenCalled();
 		expect(mocks.sourceProvider.getComments).not.toHaveBeenCalled();
+	});
+
+	it('ленивый запуск restore: не делает сетевых запросов к архиву, если нет удаленных комментариев', async () => {
+		mocks.registry.activeSources = [source('archive', ['mutate:comments:restore'], ['getComments'])];
+		// На DTF нет удаленных комментариев
+		mocks.dtf.getComments.mockResolvedValue({ items: [comment(1, 'dtf')] });
+
+		const res = await api.getComments(1, 'dtf');
+
+		expect(res.items).toHaveLength(1);
+		expect(mocks.sourceProvider.getComments).not.toHaveBeenCalled();
+	});
+
+	it('ленивый запуск restore: вызывает архив, если на DTF есть удаленный комментарий', async () => {
+		mocks.registry.activeSources = [source('archive', ['mutate:comments:restore'], ['getComments'])];
+		const removedComment = comment(2, 'dtf');
+		removedComment.isRemoved = true;
+		removedComment.removedByModerator = true;
+		removedComment.author = { id: 20, name: 'Author' };
+
+		mocks.dtf.getComments.mockResolvedValue({ items: [comment(1, 'dtf'), removedComment] });
+		mocks.sourceProvider.getComments.mockResolvedValue({
+			items: [{ id: 2, authorId: 20, content: 'Restored text' }]
+		});
+
+		const res = await api.getComments(1, 'dtf');
+
+		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
+		expect(res.items[1].isRemoved).toBe(true);
+		expect(res.items[1].restored?.content).toBe('Restored text');
 	});
 });
 

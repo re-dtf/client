@@ -1,4 +1,4 @@
-import type { ApiProvider, Comment, CursorData, GetPostsOptions, PaginatedResult, Post } from '../types';
+import type { ApiProvider, Comment, CommentPatch, CursorData, GetPostsOptions, PaginatedResult, Post } from '../types';
 import type { SourceState } from '../sources/types';
 import { fetchFromSource } from '../sources/source-fetcher';
 
@@ -47,6 +47,13 @@ export function createSourceProvider(source: SourceState): ApiProvider {
 		getReplacedComments: hasEndpoint('getReplacedComments')
 			? (postId: number, cursor?: CursorData, sorting = 'date') =>
 					fetchPage<Comment>('getReplacedComments', { postId }, commentsQuery(cursor, sorting))
+			: undefined,
+
+		getRestoredComments: hasEndpoint('getRestoredComments') || hasEndpoint('getComments')
+			? (postId: number, cursor?: CursorData, sorting = 'date') => {
+					const ep = hasEndpoint('getRestoredComments') ? 'getRestoredComments' : 'getComments';
+					return fetchPage<CommentPatch>(ep, { postId }, commentsQuery(cursor, sorting));
+				}
 			: undefined,
 
 		reactToComment: hasEndpoint('reactToComment')
