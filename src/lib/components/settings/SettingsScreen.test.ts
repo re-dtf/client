@@ -33,6 +33,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Источники данных');
 		expect(body).toContain('Моя статистика');
 		expect(body).toContain('Хочу помочь');
+		expect(body).toContain('Поддержавшие проект');
 		expect(body).toContain('О приложении');
 		expect(body).toContain('Дебаг');
 	});
@@ -101,6 +102,18 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Поддержите reDTF');
 		expect(body).toContain('Расскажите о проекте');
 		expect(body).toContain('Из России');
+	});
+
+	it('рендерит страницу «Поддержавшие проект» при передаче page: supporters', () => {
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'supporters'
+			}
+		});
+
+		expect(body).toContain('Поддержавшие проект');
+		expect(body).toContain('Загрузка списка спонсоров...');
 	});
 
 	it('открывает «О приложении» при передаче page: legal', () => {

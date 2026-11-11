@@ -17,6 +17,7 @@
 	import SettingsRow from './SettingsRow.svelte';
 	import SettingsSwitch from './SettingsSwitch.svelte';
 	import StatsSettings from './StatsSettings.svelte';
+	import SupportersSettings from './SupportersSettings.svelte';
 	import SourcesSettings from '$lib/components/sources/SourcesSettings.svelte';
 	import { activeTheme, themes } from '$lib/themes/index.svelte';
 	import { getTheme, themeSettingsSchema } from '$lib/themes/registry';
@@ -293,6 +294,7 @@
 			title: 'О проекте',
 			items: [
 				{ id: 'help', type: 'page', title: 'Хочу помочь', icon: 'help' },
+				{ id: 'supporters', type: 'page', title: 'Поддержавшие проект', icon: 'supporters' },
 				{ id: 'about', type: 'page', title: 'О приложении', icon: 'about' }
 			]
 		}
@@ -387,6 +389,9 @@
 		}
 		if (targetPage === 'proxy') {
 			return { folderId: null, pageId: 'network', section: targetSection };
+		}
+		if (targetPage === 'supporters' || targetPage === 'donations' || targetPage === 'backers') {
+			return { folderId: null, pageId: 'supporters', section: targetSection };
 		}
 		if (targetPage === 'debug' && !isDevVisible) {
 			return { folderId: null, pageId: null, section: targetSection };
@@ -756,7 +761,9 @@
 						{:else if selectedPageId === 'stats'}
 							<StatsSettings />
 						{:else if selectedPageId === 'help'}
-							<HelpSettings />
+							<HelpSettings onopensupporters={() => { selectedPageId = 'supporters'; scroller?.scrollTo({ top: 0 }); }} />
+						{:else if selectedPageId === 'supporters'}
+							<SupportersSettings />
 						{:else if selectedPageId === 'about'}
 							<AboutSettings section={activeSection} />
 						{:else if selectedPageId === 'debug' && isDevVisible}

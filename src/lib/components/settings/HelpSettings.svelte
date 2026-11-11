@@ -5,6 +5,8 @@
 	import SettingsTile from './SettingsTile.svelte';
 	import { shareApp } from '$lib/shareApp';
 
+	let { onopensupporters }: { onopensupporters?: () => void } = $props();
+
 	/* Страница «Хочу помочь»: сначала поддержка (донат, рассказать другу, звезда), потом участие в разработке */
 	const DONATE_RU_URL = 'https://pay.cloudtips.ru/p/2fa64784';
 	const DONATE_WORLD_URL = 'https://dalink.to/donnertech';
@@ -41,6 +43,15 @@
 		</div>
 	</div>
 </section>
+
+{#if onopensupporters}
+	<SettingsGroup title="Благодарности">
+		<SettingsRow title="Поддержавшие проект" subtitle="Список пользователей, благодаря которым живёт reDTF">
+			{#snippet prefix()}{@render icon('M6 4h12v5a6 6 0 0 1-12 0V4zM6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M12 15v5M7 20h10', '#d99a00')}{/snippet}
+			<span class="action"><SettingsButton onclick={onopensupporters}>Посмотреть</SettingsButton></span>
+		</SettingsRow>
+	</SettingsGroup>
+{/if}
 
 <SettingsGroup title="Расскажите о проекте">
 	<SettingsRow title="Расскажите другу" subtitle="Поделитесь ссылкой, упомяните в комментариях или в своём посте">
