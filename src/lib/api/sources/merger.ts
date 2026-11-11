@@ -123,17 +123,23 @@ export function mergeComments(
 					// restore применяется только к заглушкам: удалённым, скрытым баном или от замороженного автора
 					if (!isStubComment(existing)) continue;
 
-					// Проверка автора: если в patch передан authorId, он обязан совпадать с existing.author.id
-					if (patch.authorId !== undefined && Number(patch.authorId) !== existing.author.id) {
+					// Проверка автора: если в patch передан authorId, он обязан совпадать с existing.author.id.
+					// У удалённого комментария DTF скрывает автора (id -1), сверять там не с чем
+					if (patch.authorId !== undefined && existing.author.id > 0 && Number(patch.authorId) !== existing.author.id) {
 						continue;
 					}
 
+					const authorId = Number(patch.authorId);
 					result[existingIndex] = {
 						...existing,
 						restored: {
 							content: patch.content || '',
 							media: patch.media,
-							sourceId: patch.sourceId ?? addition.sourceId
+							sourceId: patch.sourceId ?? addition.sourceId,
+							author:
+								patch.authorName && authorId > 0
+									? { id: authorId, name: patch.authorName, avatarUrl: patch.authorAvatar }
+									: undefined
 						}
 					};
 				}

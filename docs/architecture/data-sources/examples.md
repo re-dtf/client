@@ -203,6 +203,8 @@
         "fields": {
           "id": { "from": "id", "as": "number" },
           "authorId": { "from": "data.user.id", "as": "number" },
+          "authorName": { "from": "data.user.name", "as": "string" },
+          "authorAvatar": { "from": "data.user.avatar", "as": "leonardoImage" },
           "content": { "from": "data.text", "as": "string" },
           "media": { "from": "data.media" }
         }

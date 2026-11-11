@@ -247,6 +247,8 @@ export interface Comment {
 		content: string;
 		media?: CommentMedia[];
 		sourceId: string;
+		/** Настоящий автор по данным архива: у удалённого комментария DTF подставляет безымянного */
+		author?: { id: number; name: string; avatarUrl?: string };
 	};
 	media?: CommentMedia[];
 	donation?: number;
@@ -272,6 +274,9 @@ export interface CommentPatch {
 	sourceId?: string;
 	postId?: number;
 	authorId?: number;
+	authorName?: string;
+	/** Готовый адрес аватара (манифест превращает uuid через `leonardoImage`) */
+	authorAvatar?: string;
 	content?: string;
 	media?: CommentMedia[];
 }

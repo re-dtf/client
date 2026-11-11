@@ -138,7 +138,7 @@
 
 - `items` (string, опционально): точечный путь к массиву элементов внутри JSON-ответа (например `"data"` для `{ "status": "ok", "data": [...] }`). Если не указан, массив ожидается в корне ответа.
 - `emptyStatuses` (number[], опционально): массив HTTP-кодов ответа, означающих «данных нет» (например `[404]`), превращаемых клиентом в пустой список без ошибки.
-- `fields` (object, опционально): маппинг ключевых полей сущности (`id`, `authorId`, `content`, `media`):
+- `fields` (object, опционально): маппинг ключевых полей сущности (`id`, `authorId`, `content`, `media`; для восстановления ещё `authorName` и `authorAvatar`, они показывают настоящего автора вместо заглушки DTF, аватар задавайте с `"as": "leonardoImage"`):
   - `from` (string): точечный путь к значению в объекте элемента (например `"data.user.id"`).
   - `as` (string, опционально): преобразование типа (`"number"`, `"string"`, `"unixToIso"`, `"leonardoImage"`). Без него тип выбирается по имени поля.
   - Поле `media` всегда проходит полную очистку (допустимы только изображения и видео из проверенных сервисов), `as` на него не влияет.
@@ -159,6 +159,8 @@
       "fields": {
         "id": { "from": "id", "as": "number" },
         "authorId": { "from": "data.user.id", "as": "number" },
+        "authorName": { "from": "data.user.name", "as": "string" },
+        "authorAvatar": { "from": "data.user.avatar", "as": "leonardoImage" },
         "content": { "from": "data.text", "as": "string" },
         "media": { "from": "data.media" }
       }

@@ -217,4 +217,14 @@ describe('mergeComments', () => {
 		expect(merged[0].author.isFrozen).toBe(true);
 		expect(merged[0].restored?.content).toBe('Восстановленный текст замороженного автора');
 	});
+
+	it('mode restore: у удалённого комментария DTF скрывает автора (id -1), поэтому берём автора из архива', () => {
+		const removed = createComment(4, { isRemoved: true, author: { id: -1, name: 'Защитный дебаркадер' } });
+		const patch: CommentPatch = { id: 4, authorId: 178749, authorName: 'Elreg', authorAvatar: 'https://x/a.png', content: 'Текст' };
+
+		const merged = mergeComments([removed], [{ sourceId: 'archive', comments: [patch], mode: 'restore' }]);
+
+		expect(merged[0].restored?.content).toBe('Текст');
+		expect(merged[0].restored?.author).toEqual({ id: 178749, name: 'Elreg', avatarUrl: 'https://x/a.png' });
+	});
 });
