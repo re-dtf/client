@@ -146,11 +146,16 @@
 		align-items: center;
 		gap: 12px;
 		flex-shrink: 0;
-		min-height: 56px;
-		padding: 8px 16px;
+		min-height: calc(56px + env(safe-area-inset-top, 0px));
+		padding: calc(8px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) 8px calc(16px + env(safe-area-inset-left, 0px));
 		box-sizing: border-box;
 		border-bottom: 1px solid var(--border-color);
 		background-color: var(--bg-card);
+	}
+
+	.writing--window .writing__bar {
+		min-height: 56px;
+		padding: 8px 16px;
 	}
 
 	.writing__close,
@@ -195,8 +200,12 @@
 		width: 100%;
 		max-width: var(--content-width);
 		margin: 0 auto;
-		padding: 16px 16px 0;
+		padding: 16px calc(16px + env(safe-area-inset-right, 0px)) 0 calc(16px + env(safe-area-inset-left, 0px));
 		box-sizing: border-box;
+	}
+
+	.writing--window .writing__settings {
+		padding: 16px 16px 0;
 	}
 
 	/* Два селектора и «18+» должны помещаться в колонку 608px (640 минус поля) в одну строку */
@@ -263,8 +272,12 @@
 		width: 100%;
 		max-width: var(--content-width);
 		margin: 0 auto;
-		padding: 16px 16px 120px;
+		padding: 16px calc(16px + env(safe-area-inset-right, 0px)) calc(120px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
 		box-sizing: border-box;
+	}
+
+	.writing--window .writing__body {
+		padding: 16px 16px 120px;
 	}
 
 	/* Исходный пост только для контекста: по нему нельзя ни кликнуть, ни проголосовать */
@@ -295,7 +308,12 @@
 	}
 
 	@media (max-width: 859px) {
-		.writing__body {
+		.writing:not(.writing--window) .writing__body {
+			padding-left: env(safe-area-inset-left, 0px);
+			padding-right: env(safe-area-inset-right, 0px);
+		}
+
+		.writing--window .writing__body {
 			padding-left: 0;
 			padding-right: 0;
 		}

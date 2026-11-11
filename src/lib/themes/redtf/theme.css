@@ -111,6 +111,12 @@
 		box-shadow 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
+:root[data-theme~="redtf"] .writing__bar {
+	transition:
+		min-height 0.4s cubic-bezier(0.2, 0, 0, 1),
+		padding 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
 :root[data-theme~="redtf"] .writing__mode {
 	display: none;
 }
