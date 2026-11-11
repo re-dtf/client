@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import LoginContent from '$lib/components/LoginContent.svelte';
 </script>
 
 <svelte:head>
@@ -8,9 +7,7 @@
 </svelte:head>
 
 <div class="standalone-login-page">
-	<ThemeLoader componentName="LoginModal">
-		<LoginContent />
-	</ThemeLoader>
+	<ThemeLoader componentName="LoginModal" />
 </div>
 
 <style>

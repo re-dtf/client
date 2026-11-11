@@ -1,9 +1,9 @@
 <script lang="ts">
-	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
+	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
 </script>
 
 <svelte:head>
 	<title>reDTF - Уведомления</title>
 </svelte:head>
 
-<NotificationsContent />
+<ThemeLoader componentName="Notifications" />

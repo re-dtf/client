@@ -2,7 +2,6 @@
 	import { analyzeError } from '$lib/api/errorInfo';
 	import { openOverlay } from '$lib/navigation';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import NetworkErrorModal from '$lib/themes/dtf2022/NetworkErrorModal.svelte';
 
 	let {
 		error,
@@ -76,9 +75,7 @@
 </div>
 
 {#if showModal}
-	<ThemeLoader componentName="NetworkErrorModal" {error} onretry={handleRetry} onclose={() => (showModal = false)}>
-		<NetworkErrorModal {error} onretry={handleRetry} onclose={() => (showModal = false)} />
-	</ThemeLoader>
+	<ThemeLoader componentName="NetworkErrorModal" {error} onretry={handleRetry} onclose={() => (showModal = false)} />
 {/if}
 
 <style>

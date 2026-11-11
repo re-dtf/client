@@ -93,23 +93,12 @@
 			{hasMore}
 			loadMore={() => load(true)}
 			onretry={() => load()}
-		>
-			<!-- Фолбэк для тем без своей страницы поиска -->
-			<div class="search-fallback">
-				<h1>Поиск: {query}</h1>
-				{#each posts as post (post.id)}
-					<ThemeLoader componentName="Post" {post} />
-				{/each}
-			</div>
-		</ThemeLoader>
+		/>
 	</Reveal>
 </div>
 
 <style>
 	.search-screen {
 		width: 100%;
-	}
-	.search-fallback {
-		padding: 20px;
 	}
 </style>

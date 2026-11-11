@@ -8,9 +8,9 @@ export type SearchTab = 'posts' | 'blogs' | 'topics';
  * Какие компоненты есть у темы и какие пропсы им передают.
  * Каждый лежит в корне папки темы: `<тема>/<Имя>.svelte`.
  *
- * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, EditorScreen, Spinner, ReloadPrompt.
- * Необязательные (если нет, показывается запасной вариант из ядра): MainLayout, Profile, Notifications, TagPage, SearchPage, DraftsPage, LoginModal.
- * Необязательные без запасного варианта (у темы нет — не показывается): FeedNotice, Recommendations.
+ * Обязательные: Header, EditorialNews, FeedTabs, Post, Comments, Profile, Notifications, TagPage, SearchPage, DraftsPage, LoginModal, NetworkErrorModal, EditorScreen, Spinner, ReloadPrompt.
+ * Необязательные (если нет, ядро обходится без них): MainLayout.
+ * Необязательные, которых без темы просто нет на экране: FeedNotice, Recommendations.
  * Форк темы (`extends`) может не иметь ничего из этого и взять недостающее у основы.
  */
 export interface ThemeComponents {

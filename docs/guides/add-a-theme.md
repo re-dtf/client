@@ -49,7 +49,7 @@
 ## Новая тема с нуля
 
 1. Папка `src/lib/themes/<id>/` и `theme.ts` без `extends`.
-2. Все обязательные компоненты из `themes/contract.ts` в корне папки: `Header`, `EditorialNews`, `FeedTabs`, `Post`, `Comments`, `EditorScreen`, `Spinner`, `ReloadPrompt`. Необязательные (`MainLayout`, `Profile`, `Notifications`, `LoginModal`) добавляйте по мере нужды, иначе покажется запасной вариант.
+2. Все обязательные компоненты из `themes/contract.ts` в корне папки: `Header`, `EditorialNews`, `FeedTabs`, `Post`, `Comments`, `Profile`, `Notifications`, `TagPage`, `SearchPage`, `DraftsPage`, `LoginModal`, `NetworkErrorModal`, `EditorScreen`, `Spinner`, `ReloadPrompt`. Необязательный только `MainLayout`; запасных вариантов в ядре нет, а у форка (`extends`) недостающее берётся у основы.
 3. `theme.css` с токенами и шрифтом, всё под `[data-theme~="<id>"]`.
 4. Палитры через `palettes`, настройки темы через `settings` в манифесте.
 5. Общие компоненты (`components/BlockRenderer`, `Comments/…`, `editor/…`) оформляются CSS-переменными: задайте их в `theme.css`.

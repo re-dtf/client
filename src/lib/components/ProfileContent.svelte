@@ -120,15 +120,7 @@
 				onSortingChange={(value: Sorting) => (sorting = value)}
 				loadMore={() => loadPosts()}
 				onProfileUpdate={(value: Profile) => (profile = value)}
-			>
-				<!-- Фолбэк для тем без своего профиля -->
-				<div class="profile-fallback">
-					<h1>{loaded.name}</h1>
-					{#if loaded.url}
-						<a href={loaded.url} target="_blank" rel="noreferrer">Открыть профиль на DTF</a>
-					{/if}
-				</div>
-			</ThemeLoader>
+			/>
 	{:else}
 		<NetworkErrorState error={profileError} title="Не удалось загрузить профиль" onretry={retryLoadProfile} />
 	{/if}
@@ -138,9 +130,5 @@
 <style>
 	.profile-screen {
 		width: 100%;
-	}
-	.profile-fallback {
-		padding: 40px;
-		text-align: center;
 	}
 </style>

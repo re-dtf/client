@@ -58,23 +58,12 @@
 			loadMore={() => load(true)}
 			onretry={() => load()}
 			onopen={(post: Post) => openOverlay({ type: 'editor', data: { postId: post.id } })}
-		>
-			<!-- Фолбэк для тем без своей страницы черновиков -->
-			<div class="drafts-fallback">
-				<h1>Черновики</h1>
-				{#each posts as post (post.id)}
-					<button type="button" onclick={() => openOverlay({ type: 'editor', data: { postId: post.id } })}>{post.title || 'Без названия'}</button>
-				{/each}
-			</div>
-		</ThemeLoader>
+		/>
 	</Reveal>
 </div>
 
 <style>
 	.drafts-screen {
 		width: 100%;
-	}
-	.drafts-fallback {
-		padding: 20px;
 	}
 </style>

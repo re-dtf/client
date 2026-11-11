@@ -3,8 +3,6 @@
 	import PostOverlay from '$lib/components/PostOverlay.svelte';
 	import ProfileContent from '$lib/components/ProfileContent.svelte';
 	import SettingsOverlay from '$lib/components/SettingsOverlay.svelte';
-	import LoginOverlay from '$lib/components/LoginOverlay.svelte';
-	import NotificationsContent from '$lib/components/NotificationsContent.svelte';
 	import TagContent from '$lib/components/TagContent.svelte';
 	import SearchContent from '$lib/components/SearchContent.svelte';
 	import DraftsContent from '$lib/components/DraftsContent.svelte';
@@ -407,7 +405,7 @@
 	{:else if overlay.type === 'settings'}
 		<SettingsOverlay {...overlay.data} />
 	{:else if overlay.type === 'notifications'}
-		<NotificationsContent />
+		<ThemeLoader componentName="Notifications" />
 	{:else if overlay.type === 'tag'}
 		<TagContent {...overlay.data} />
 	{:else if overlay.type === 'search'}
@@ -415,7 +413,7 @@
 	{:else if overlay.type === 'drafts'}
 		<DraftsContent />
 	{:else if overlay.type === 'login'}
-		<LoginOverlay />
+		<ThemeLoader componentName="LoginModal" />
 	{:else if overlay.type === 'editor'}
 		<EditorOverlay {...overlay.data} />
 	{:else if overlay.type === 'lightbox'}

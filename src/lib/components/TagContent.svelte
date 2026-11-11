@@ -43,15 +43,7 @@
 		{#if error}
 			<NetworkErrorState {error} title="Не удалось загрузить записи" onretry={load} />
 		{:else}
-			<ThemeLoader componentName="TagPage" {tag} {posts}>
-				<!-- Фолбэк для тем без своей страницы тега -->
-				<div class="tag-fallback">
-					<h1>#{tag}</h1>
-					{#each posts as post (post.id)}
-						<ThemeLoader componentName="Post" {post} />
-					{/each}
-				</div>
-			</ThemeLoader>
+			<ThemeLoader componentName="TagPage" {tag} {posts} />
 		{/if}
 	</Reveal>
 </div>
@@ -59,8 +51,5 @@
 <style>
 	.tag-screen {
 		width: 100%;
-	}
-	.tag-fallback {
-		padding: 20px;
 	}
 </style>

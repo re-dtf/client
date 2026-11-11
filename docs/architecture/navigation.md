@@ -72,7 +72,7 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' |
 | `/post/[id]?source=…` | пост (`PostContent`) |
 | `/u/[id]` | профиль по числовому ID или короткому имени (`ProfileContent`) |
 | `/settings` | сначала главная, затем открывается окно настроек |
-| `/notifications` | список уведомлений (`NotificationsContent`) |
+| `/notifications` | список уведомлений (компонент темы `Notifications`) |
 | `/tag/[name]` | записи с тегом (`TagContent`) |
 | `/search?q=…` | результаты поиска (`SearchContent`); новый поиск из открытого заменяет его, а не копится в истории |
 | `/drafts` | черновики вошедшего пользователя (`DraftsContent`) |
