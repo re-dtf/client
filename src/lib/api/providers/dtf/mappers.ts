@@ -243,6 +243,7 @@ export function mapProfile(subsite: any): Profile {
 		subscriptionsCount: subsite.counters?.subscriptions,
 		isSubscribed: subsite.isSubscribed,
 		isSubscribedToNewPosts: subsite.isSubscribedToNewPosts,
+		isMuted: subsite.isMuted,
 		createdAt: subsite.created ? new Date(subsite.created * 1000).toISOString() : undefined,
 		url: subsite.url
 	};

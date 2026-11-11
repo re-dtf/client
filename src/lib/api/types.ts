@@ -146,6 +146,8 @@ export interface Profile {
 	/** Только после входа: подписан ли вошедший пользователь и включён ли колокольчик */
 	isSubscribed?: boolean;
 	isSubscribedToNewPosts?: boolean;
+	/** Только после входа: в чёрном списке ли профиль у вошедшего */
+	isMuted?: boolean;
 	createdAt?: string;
 	url?: string;
 }

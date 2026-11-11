@@ -4,13 +4,14 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { resolve } from '$app/paths';
 	import { getProfilePath, isNewTabClick, openLightbox, openOverlay, openProfile, preloadLightbox } from '$lib/navigation';
-	import { subscriptions } from './actions.svelte';
+	import { authorMenuItems, runAuthorAction, subscriptions } from './actions.svelte';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
 	import ProfileComment from './ProfileComment.svelte';
 	import ProfileDetails, { type DetailsPage } from './ProfileDetails.svelte';
 	import Button from './ui/Button.svelte';
+	import Popover from './ui/Popover.svelte';
 	import Preloader from './ui/Preloader.svelte';
 	import { notify } from './ui/notify.svelte';
 
@@ -54,6 +55,9 @@
 	let wasNotified = $derived(!!currentUser.value && !!profile.isSubscribedToNewPosts);
 	let subscribed = $derived(subscriptions.isSubscribed(profile.id, wasSubscribed));
 	let notified = $derived(subscriptions.isNotified(profile.id, wasNotified));
+	// Меню «⋯» чужого профиля: скрыть у себя и заблокировать (флаг, как и подписка, верен только после входа)
+	let menuOpen = $state(false);
+	let blocked = $derived(!!currentUser.value && !!profile.isMuted);
 
 	/** Настройки аккаунта открываются окном re:DTF; Ctrl/Cmd-клик по ссылке открывает отдельную страницу настроек */
 	function openAccountSettings(e?: MouseEvent) {
@@ -311,6 +315,15 @@
 						onclick={() => subscriptions.toggleNotifications(profile.id, wasNotified)}
 					/>
 				{/if}
+				<Popover
+					bind:open={menuOpen}
+					items={authorMenuItems(profile, { noun: '', blocked: blocked })}
+					onselect={(action) => runAuthorAction(action, profile)}
+					width="max-content"
+					label="Действия с профилем"
+				>
+					<Button icon="v_etc" iconSize={20} title="Больше" aria-label="Больше" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)} />
+				</Popover>
 			{/if}
 		</div>
 
