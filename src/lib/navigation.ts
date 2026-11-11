@@ -5,6 +5,7 @@ import { parseDtfUrl, dtfTargetToPath, safeDecode } from './dtfLinks';
 import { feed, feedPath, openFeedTab } from './feed.svelte';
 import { scrollBehavior } from './motion';
 import { markOrigin } from './pageTransition.svelte';
+import { settings, DEFAULT_SHARE_SERVICE_URL } from '$lib/storage/settings.svelte';
 
 /*
  * Навигация внутри приложения. Посты, профили, настройки, вход и редактор открываются
@@ -43,6 +44,28 @@ export function getPostPath(post: { id: number; sourceId: string }, target?: num
 		return `/post/${post.id}${query}${hash}`;
 	}
 	return commentId ? `/post/${post.id}?comment=${commentId}` : `/post/${post.id}${hash}`;
+}
+
+/**
+ * Формирует ссылку на пост для шеринга или копирования.
+ * При включённой настройке `useSharePreview` (по умолчанию), наличии адреса сервиса превью
+ * и для постов из источника DTF генерирует ссылку через сервис превью, чтобы соцсети и мессенджеры
+ * показывали карточку статьи с обложкой.
+ * Для сторонних источников, при отсутствии адреса сервиса или при выключенной настройке
+ * возвращает прямой URL клиента.
+ */
+export function getPostShareUrl(
+	post: { id: number; sourceId: string },
+	target?: number | 'comments' | string,
+	base?: string,
+	shareServiceUrl: string = DEFAULT_SHARE_SERVICE_URL
+): string {
+	const path = getPostPath(post, target);
+	if (!shareServiceUrl || !settings.value.useSharePreview || post.sourceId !== 'dtf') {
+		const fallbackBase = base || (typeof location !== 'undefined' ? location.href : 'http://localhost');
+		return new URL(resolve(path as any), fallbackBase).href;
+	}
+	return `${shareServiceUrl}${path}`;
 }
 
 export function getProfilePath(id: number | string) {

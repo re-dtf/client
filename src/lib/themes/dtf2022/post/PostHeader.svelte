@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Post } from '$lib/api/types';
 	import { resolve } from '$app/paths';
-	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
+	import { getPostPath, getPostShareUrl, getProfilePath, openPost, openProfile } from '$lib/navigation';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { api } from '$lib/api/index.svelte';
 	import { type AuthorAction, authorMenuItems, ensureLogin, hidePost, isAnotherDtfUser, runAuthorAction, subscriptions } from '../actions.svelte';
@@ -43,9 +43,9 @@
 	let showMenu = $derived(menuItems.length > 0);
 
 	async function copyLink() {
-		const url = new URL(resolve(getPostPath(post) as any), location.href);
+		const url = getPostShareUrl(post);
 		try {
-			await navigator.clipboard.writeText(url.href);
+			await navigator.clipboard.writeText(url);
 			notify.success('Ссылка скопирована');
 		} catch {
 			notify.error('Не удалось скопировать ссылку');

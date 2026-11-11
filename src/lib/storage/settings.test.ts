@@ -55,7 +55,8 @@ describe('settings & shouldVirtualizeComments', () => {
 			autoCheckUpdates: true,
 			debugSafeAreaOverlay: false,
 			debugHud: false,
-			devMode: false
+			devMode: false,
+			useSharePreview: true
 		};
 	});
 

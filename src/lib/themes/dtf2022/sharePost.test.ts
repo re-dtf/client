@@ -15,7 +15,8 @@ vi.mock('$lib/api/index.svelte', () => ({
 
 vi.mock('$lib/navigation', () => ({
 	openOverlay: mocks.openOverlay,
-	getPostPath: (post: { id: number; sourceId: string }) => `/post/${post.id}`
+	getPostPath: (post: { id: number; sourceId: string }) => `/post/${post.id}`,
+	getPostShareUrl: (post: { id: number; sourceId: string }) => `https://share.example.com/post/${post.id}`
 }));
 
 vi.mock('$lib/storage/auth.svelte', () => ({

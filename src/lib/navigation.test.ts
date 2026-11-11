@@ -17,7 +17,8 @@ vi.mock('$app/navigation', () => ({
 }));
 
 import { goto } from '$app/navigation';
-import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openPost, openDtfUrl, openDtfLink } from './navigation';
+import { getPostPath, getPostShareUrl, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openPost, openDtfUrl, openDtfLink } from './navigation';
+import { settings } from './storage/settings.svelte';
 import { embedToPost } from './api/embed';
 import { clearPostCache, peekPost } from './postCache';
 import fs from 'node:fs';
@@ -33,6 +34,26 @@ describe('navigation', () => {
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 456)).toBe('/post/123?source=sourceX&comment=456');
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 'comments')).toBe('/post/123?source=sourceX#comments');
 		expect(getPostPath({ id: 123, sourceId: 'sourceX' }, 'sobytiya')).toBe('/post/123?source=sourceX#sobytiya');
+	});
+
+	it('getPostShareUrl строит адрес через сервис превью или напрямую в зависимости от настроек, сервиса и источника', () => {
+		const shareService = 'https://share.example.com';
+		expect(getPostShareUrl({ id: 123, sourceId: 'dtf' }, undefined, undefined, shareService)).toBe('https://share.example.com/post/123');
+		expect(getPostShareUrl({ id: 123, sourceId: 'dtf' }, 456, undefined, shareService)).toBe('https://share.example.com/post/123?comment=456');
+
+		// Без адреса сервиса превью -> прямой адрес клиента
+		expect(getPostShareUrl({ id: 123, sourceId: 'dtf' }, undefined, 'https://redtf.org', '')).toBe('https://redtf.org/post/123');
+
+		// Для сторонних источников -> прямой адрес клиента
+		expect(getPostShareUrl({ id: 123, sourceId: 'sourceX' }, undefined, 'https://redtf.org', shareService)).toBe('https://redtf.org/post/123?source=sourceX');
+
+		// При отключённой настройке useSharePreview -> прямой адрес клиента
+		settings.patch({ useSharePreview: false });
+		try {
+			expect(getPostShareUrl({ id: 123, sourceId: 'dtf' }, undefined, 'https://redtf.org', shareService)).toBe('https://redtf.org/post/123');
+		} finally {
+			settings.patch({ useSharePreview: true });
+		}
 	});
 
 	it('getSettingsPath строит правильные адреса для настроек', () => {

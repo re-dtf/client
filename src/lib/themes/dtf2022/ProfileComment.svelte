@@ -7,7 +7,7 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import type { Comment } from '$lib/api/types';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openDtfLink, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
+	import { getPostPath, getPostShareUrl, getProfilePath, openDtfLink, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { ensureLogin } from './actions.svelte';
 	import { parseCommentText } from './comments/commentText';
@@ -43,7 +43,7 @@
 	let showDateBadge = $derived(clientBadge && clientBadge.type !== 'redtf' && settings.value.mobileBadgesPosition === 'date');
 	let images = $derived((comment.media ?? []).filter((media) => media.type === 'image'));
 	let postPath = $derived(resolve(getPostPath(post) as any));
-	let commentUrl = $derived(new URL(`${postPath}#comment-${comment.sourceId}_${comment.id}`, location.href));
+	let commentUrl = $derived(getPostShareUrl(post, `comment-${comment.sourceId}_${comment.id}`));
 
 	let menuOpen = $state(false);
 	let complaining = $state(false);
@@ -64,7 +64,7 @@
 			return;
 		}
 		try {
-			await navigator.clipboard.writeText(commentUrl.href);
+			await navigator.clipboard.writeText(commentUrl);
 			notify.success('Ссылка скопирована');
 		} catch {
 			notify.error('Не удалось скопировать ссылку');

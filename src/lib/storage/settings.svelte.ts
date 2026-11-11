@@ -39,6 +39,8 @@ export interface AppSettings {
 	haptics: boolean;
 	/** Отключать верхний бар в мобильной версии */
 	disableMobileTopBar: boolean;
+	/** Использовать сервис предпросмотра при копировании и шеринге ссылок на посты */
+	useSharePreview: boolean;
 	/** Невидимая подпись reDTF к отправляемым комментариям */
 	watermark: boolean;
 	/** Режим отображения бейджей клиентов у комментариев: 'all' (все), 'redtf_only' (только re), 'none' (скрыты) */
@@ -71,6 +73,12 @@ export const DEFAULT_VALTOWN_PROXY_URL: string = (
 /** Адрес CORS-прокси на Cloudflare Workers (задаётся при сборке VITE_CLOUDFLARE_PROXY_URL) */
 export const DEFAULT_CLOUDFLARE_PROXY_URL: string = (
 	import.meta.env.VITE_CLOUDFLARE_PROXY_URL ||
+	''
+).replace(/\/+$/, '');
+
+/** Базовый адрес сервиса генерации превью ссылок (задаётся при сборке VITE_SHARE_URL) */
+export const DEFAULT_SHARE_SERVICE_URL: string = (
+	import.meta.env.VITE_SHARE_URL ||
 	''
 ).replace(/\/+$/, '');
 
@@ -115,6 +123,7 @@ export const settings = persistedState<AppSettings>(
 		collectStats: true,
 		haptics: true,
 		disableMobileTopBar: false,
+		useSharePreview: true,
 		watermark: true,
 		clientBadges: 'redtf_only',
 		mobileBadgesPosition: 'author',

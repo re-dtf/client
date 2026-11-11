@@ -2,7 +2,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { resolve } from '$app/paths';
 import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
-import { getPostPath, openOverlay } from '$lib/navigation';
+import { getPostPath, getPostShareUrl, openOverlay } from '$lib/navigation';
 import { currentUser } from '$lib/api/currentUser.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { hideUser, isUserHidden, unhideUser } from '$lib/storage/filter.svelte';
@@ -188,7 +188,7 @@ export function repostPost(post: Pick<Post, 'id' | 'sourceId'>) {
 /** «Поделиться»: системное окно, а где его нет — ссылка в буфер */
 export async function sharePost(post: Pick<Post, 'id' | 'sourceId'> & { title?: string; url?: string }) {
 	const base = typeof location !== 'undefined' ? location.href : 'http://localhost';
-	const url = new URL(resolve(getPostPath(post) as any), base).href;
+	const url = getPostShareUrl(post, undefined, base);
 
 	if (typeof navigator !== 'undefined' && navigator.share) {
 		try {

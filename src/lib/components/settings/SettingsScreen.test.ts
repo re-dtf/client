@@ -228,6 +228,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Тактильный отклик (вибрация)');
 		expect(body).toContain('Продвинутые эффекты прозрачности и размытия');
 		expect(body).toContain('Невидимая подпись reDTF');
+		expect(body).toContain('Превью ссылок в соцсетях');
 		expect(body).toContain('Иконка приложения');
 		expect(body).toContain('Выбрать');
 	});

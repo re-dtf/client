@@ -7,7 +7,7 @@
 	import { mediaHold } from '$lib/actions/mediaHold';
 	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
-	import { getPostPath, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
+	import { getPostPath, getPostShareUrl, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
@@ -159,10 +159,9 @@
 	}
 
 	async function copyLink() {
-		const url = new URL(resolve(getPostPath({ id: comment.postId, sourceId: comment.sourceId }) as any), location.href);
-		url.hash = `comment-${row.key}`;
+		const url = getPostShareUrl({ id: comment.postId, sourceId: comment.sourceId }, `comment-${row.key}`);
 		try {
-			await navigator.clipboard.writeText(url.href);
+			await navigator.clipboard.writeText(url);
 			notify.success('Ссылка скопирована');
 		} catch {
 			notify.error('Не удалось скопировать ссылку');

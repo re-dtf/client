@@ -45,6 +45,7 @@ describe('auth & proxy failover', () => {
 			collectStats: true,
 			haptics: true,
 			disableMobileTopBar: false,
+			useSharePreview: true,
 			watermark: true,
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',

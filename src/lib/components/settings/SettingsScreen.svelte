@@ -104,6 +104,14 @@
 		device: 'mobile'
 	};
 
+	const useSharePreviewField: ToggleField = {
+		key: 'useSharePreview',
+		type: 'toggle',
+		title: 'Превью ссылок в соцсетях',
+		description: 'Копировать ссылки на посты через сервис предпросмотра, чтобы Telegram и другие соцсети показывали карточку статьи с обложкой.',
+		default: true
+	};
+
 	const watermarkField: ToggleField = {
 		key: 'watermark',
 		type: 'toggle',
@@ -794,6 +802,11 @@
 									field={watermarkField}
 									value={settings.value.watermark}
 									onchange={(value) => settings.patch({ watermark: Boolean(value) })}
+								/>
+								<FieldControl
+									field={useSharePreviewField}
+									value={settings.value.useSharePreview}
+									onchange={(value) => settings.patch({ useSharePreview: Boolean(value) })}
 								/>
 							</div>
 							<SettingsGroup title="Внешний вид приложения">
