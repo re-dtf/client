@@ -70,13 +70,13 @@
 
 /* Плавающая нижняя панель */
 :root[data-theme~="redtf"][data-mobile-bar-floating="true"] {
-	--mobile-bar-height: calc(var(--mobile-bar-height-raw) + 20px + env(safe-area-inset-bottom, 0px));
+	--mobile-bar-height: calc(var(--mobile-bar-height-raw) + 10px + max(10px, env(safe-area-inset-bottom, 0px)));
 }
 
 :root[data-theme~="redtf"][data-mobile-bar-floating="true"] .mobile-bar {
 	height: var(--mobile-bar-height-raw);
 	padding-bottom: 0;
-	margin: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+	margin: 10px 10px max(10px, env(safe-area-inset-bottom, 0px));
 	border-radius: 16px;
 }
 
