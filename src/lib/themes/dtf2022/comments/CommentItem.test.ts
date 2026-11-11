@@ -74,6 +74,6 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('Показать из архива');
 		expect(svelteContent).toContain('comment-item__author-mark--restored');
 		expect(svelteContent).toContain('comment-item__collapse-restored');
-		expect(svelteContent).toContain('!comment.isRemoved');
+		expect(svelteContent).toContain('!isStubComment(comment)');
 	});
 });

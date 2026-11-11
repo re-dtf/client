@@ -6,7 +6,7 @@
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { mediaHold } from '$lib/actions/mediaHold';
 	import { api } from '$lib/api/index.svelte';
-	import { getLeonardoUrl } from '$lib/api/utils';
+	import { getLeonardoUrl, isStubComment } from '$lib/api/utils';
 	import { getPostPath, getPostShareUrl, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
@@ -417,7 +417,7 @@
 
 			{#if activeParagraphs.length}
 				<div class="comment-item__text">
-					{#each activeParagraphs as paragraph}
+					{#each activeParagraphs as paragraph, p}
 						{#snippet lines()}
 							{#each paragraph.lines as line, l}
 								{#if l > 0}<br />{/if}
@@ -449,7 +449,12 @@
 								<span class="comment-item__quote-content">{@render lines()}</span>
 							</span>
 						{:else}
-							<p>{@render lines()}</p>
+							<p>
+								{@render lines()}
+								{#if !isRestoredShown && comment.restored && p === activeParagraphs.length - 1}
+									&nbsp;<button type="button" class="comment-item__reveal-btn" onclick={() => (revealedRestored = true)}>Показать из архива</button>
+								{/if}
+							</p>
 						{/if}
 					{/each}
 				</div>
@@ -502,7 +507,7 @@
 				</div>
 			{/if}
 
-			{#if !comment.isRemoved}
+			{#if !isStubComment(comment)}
 				{#if votes === 'reactions'}
 					<Reactions compact reactions={comment.reactions} onreact={react} />
 				{:else if votes === 'likes'}
