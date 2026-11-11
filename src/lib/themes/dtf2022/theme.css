@@ -37,8 +37,7 @@
     --text-search-placeholder: rgba(0, 0, 0, 0.5);
     --bg-sidebar-hover: rgba(255, 255, 255, 0.5);
     --bg-media-frame: rgba(0, 0, 0, 0.08);
-    --bg-spoiler: rgba(0, 0, 0, 0.04);
-    --bg-spoiler-hover: rgba(0, 0, 0, 0.06);
+    --bg-hidden-block: #f5fcff;
     --bg-highlight: rgba(70, 131, 217, 0.12);
     --color-blue-tint: #e8f3ff;
     --bg-unread: #f5fcff;

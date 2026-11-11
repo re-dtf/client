@@ -59,21 +59,17 @@
 
 	/*
 	 * hidden у блока DTF — это спойлер (см. editor/tools/SpoilerTune.ts), а не «не показывать».
-	 * Подряд идущие спойлеры сворачиваем в одну плашку, по клику показываем как обычные блоки.
-	 * в исходной вёрстке спойлеров нет — плашка минимальная.
+	 * Как у DTF: каждый скрытый блок — под плашкой «Содержание скрыто» своего размера, по клику плашка исчезает.
 	 */
-	type Segment = { block: Block } | { spoiler: Block[]; key: number };
-	let segments = $derived.by(() => {
-		const result: Segment[] = [];
-		blocks.forEach((block, index) => {
-			const last = result.at(-1);
-			if (!block.hidden) result.push({ block });
-			else if (last && 'spoiler' in last) last.spoiler.push(block);
-			else result.push({ spoiler: [block], key: index });
-		});
-		return result;
-	});
 	let revealed = $state<Record<number, boolean>>({});
+
+	/** Низкий блок (меньше столбца из текста и кнопки) — плашка в одну строку, как .block-hidden--low у DTF */
+	const LOW_HIDDEN_HEIGHT = 60;
+	const lowWhenShort = (el: HTMLElement) => {
+		const observer = new ResizeObserver(() => el.toggleAttribute('data-low', el.offsetHeight < LOW_HIDDEN_HEIGHT));
+		observer.observe(el);
+		return () => observer.disconnect();
+	};
 
 	function isVideo(image: any) {
 		const type = image?.data?.type;
@@ -265,19 +261,22 @@
 		<div class="post-block post-block--title">{title.trim()}</div>
 	{/if}
 
-	{#each segments as segment}
-		{#if 'block' in segment}
-			{@render renderBlock(segment.block)}
-		{:else if revealed[segment.key]}
-			{#each segment.spoiler as block}
-				{@render renderBlock(block)}
-			{/each}
+	{#each blocks as block, index}
+		{#if !block.hidden || revealed[index]}
+			{@render renderBlock(block)}
 		{:else}
-			<div class="post-block post-block--spoiler">
-				<button class="post-spoiler" onclick={() => (revealed[segment.key] = true)}>
-					<span class="post-spoiler__label">Спойлер</span>
-					<span>Нажмите, чтобы показать</span>
-				</button>
+			<!-- Класс варианта нужен, чтобы блок внутри плашки получил те же отступы, что и снаружи -->
+			<div class={['post-hidden', `post-blocks--${variant}`]} {@attach lowWhenShort}>
+				<div class="post-hidden__cover">
+					<div class="post-hidden__inner">
+						<div class="post-hidden__text">Содержание скрыто</div>
+						<button class="post-hidden__button" onclick={() => (revealed[index] = true)}>
+							<svg width="20" height="20" aria-hidden="true"><use href="/icons.svg#v_eye"></use></svg>
+							Показать
+						</button>
+					</div>
+				</div>
+				{@render renderBlock(block)}
 			</div>
 		{/if}
 	{/each}
@@ -524,28 +523,82 @@
 		line-height: 20px;
 	}
 
-	.post-spoiler {
+	/* Скрытый блок (спойлер): плашка поверх блока того же размера, как .block-hidden у DTF */
+	.post-hidden {
+		position: relative;
+		z-index: 1;
+	}
+
+	.post-hidden__cover,
+	.post-hidden__inner {
 		display: flex;
-		flex-direction: column;
-		width: 100%;
-		padding: 12px 16px;
-		border-radius: 8px;
-		background-color: var(--bg-spoiler);
-		color: var(--text-muted);
-		font: inherit;
+		align-items: center;
+	}
+
+	.post-hidden__cover {
+		position: absolute;
+		inset: 0;
+		z-index: 5;
+		justify-content: center;
+		overflow: hidden;
+		background-color: var(--bg-hidden-block);
 		font-size: 15px;
 		line-height: 22px;
-		text-align: left;
+	}
+
+	.post-hidden__inner {
+		flex-direction: column;
+	}
+
+	.post-hidden:global([data-low]) .post-hidden__inner {
+		flex-direction: row;
+	}
+
+	.post-hidden__text {
+		margin-bottom: 16px;
+	}
+
+	.post-hidden:global([data-low]) .post-hidden__text {
+		margin: 0 12px;
+	}
+
+	.post-hidden__button {
+		display: flex;
+		align-items: center;
+		margin: 0 12px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--color-accent);
+		font: inherit;
 		cursor: pointer;
 	}
 
-	.post-spoiler:hover {
-		background-color: var(--bg-spoiler-hover);
+	.post-hidden__button svg {
+		margin-right: 6px;
+		fill: currentColor;
 	}
 
-	.post-spoiler__label {
-		color: var(--text-primary);
-		font-weight: 500;
+	@media (hover: hover) {
+		.post-hidden__button:hover {
+			opacity: 0.8;
+		}
+	}
+
+	/*
+	 * Медиа на всю ширину страницы: растягиваем саму плашку, а фигуру внутри возвращаем в её рамки,
+	 * иначе плашка (шириной с колонку) оставит края картинки открытыми.
+	 */
+	.post-hidden.post-blocks--page:has(> .media-figure:not(.media-figure--column)) {
+		width: 100cqw;
+		margin-left: 50%;
+		transform: translateX(-50%);
+	}
+
+	.post-hidden.post-blocks--page > .media-figure:not(.media-figure--column) {
+		width: 100%;
+		margin-left: 0;
+		transform: none;
 	}
 
 	@media (max-width: 859px) {
