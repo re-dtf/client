@@ -17,7 +17,9 @@ vi.mock('$app/navigation', () => ({
 }));
 
 import { goto } from '$app/navigation';
-import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openDtfUrl, openDtfLink } from './navigation';
+import { getPostPath, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openPost, openDtfUrl, openDtfLink } from './navigation';
+import { embedToPost } from './api/embed';
+import { clearPostCache, peekPost } from './postCache';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -246,6 +248,16 @@ describe('navigation', () => {
 			expect(preventDefault).toHaveBeenCalled();
 			expect(openMock).toHaveBeenCalledWith('/post/5394366', '_blank');
 			vi.unstubAllGlobals();
+		});
+
+		it('openPost не кладёт карточку репоста (embedToPost) в кэш полных постов', () => {
+			clearPostCache();
+			const embed = embedToPost({ original_id: 5404140, title: 'Оригинал', blocks: [{ type: 'text', cover: true, data: { text: 'превью' } }] });
+			const event = { button: 0, preventDefault: vi.fn() } as unknown as MouseEvent;
+
+			openPost(event, embed);
+
+			expect(peekPost(5404140)).toBeUndefined();
 		});
 	});
 });
