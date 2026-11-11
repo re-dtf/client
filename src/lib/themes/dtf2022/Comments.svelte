@@ -2,7 +2,7 @@
 	import { scrollBehavior } from '$lib/motion';
 	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { CommentMedia } from '$lib/api/types';
+	import type { CommentEditorState, CommentMedia } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import { ensureLogin } from './actions.svelte';
@@ -12,6 +12,7 @@
 	import Preloader from './ui/Preloader.svelte';
 	import CommentEditor from './comments/CommentEditor.svelte';
 	import CommentItem from './comments/CommentItem.svelte';
+	import CommentRestriction from './comments/CommentRestriction.svelte';
 	import { commentKey, flattenComments } from './comments/flatten';
 
 	let {
@@ -20,10 +21,21 @@
 		commentsCount = 0,
 		subscribed = false,
 		postAuthorId,
+		commentEditor,
 		focusCommentId,
 		focusNonce,
 		onfocused
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; postAuthorId?: number; focusCommentId?: number; focusNonce?: number; onfocused?: () => void } = $props();
+	}: {
+		postId: number;
+		sourceId?: string;
+		commentsCount?: number;
+		subscribed?: boolean;
+		postAuthorId?: number;
+		commentEditor?: CommentEditorState;
+		focusCommentId?: number;
+		focusNonce?: number;
+		onfocused?: () => void;
+	} = $props();
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -77,6 +89,9 @@
 		commentsCount > 0 ? `${formatNumber(commentsCount)} ${plural(commentsCount, ['комментарий', 'комментария', 'комментариев'])}` : 'Комментарии'
 	);
 
+	/** Писать нельзя: ни нового комментария, ни ответа (правка своего остаётся на усмотрение сервера) */
+	let blocked = $derived(commentEditor?.enabled === false);
+
 	function setSorting(value: string) {
 		if (value === logic.sorting) return;
 		logic.sorting = value;
@@ -85,6 +100,7 @@
 	}
 
 	function reply(key: string) {
+		if (blocked) return;
 		if (editMode) clearDraft();
 		replyTo = key;
 		editMode = false;
@@ -116,7 +132,7 @@
 	/** Новый комментарий, ответ или правка; после отправки показываем результат */
 	async function submit() {
 		const text = draft.trim();
-		if ((!text && media.length === 0) || sending || sourceId !== 'dtf' || !ensureLogin()) return;
+		if ((!text && media.length === 0) || sending || sourceId !== 'dtf' || (blocked && !editMode) || !ensureLogin()) return;
 
 		sending = true;
 		sendError = '';
@@ -319,7 +335,9 @@
 		</div>
 
 		<div class="comments-reply-area">
-			{#if replyTo}
+			{#if blocked && !editMode}
+				<CommentRestriction text={commentEditor?.text} />
+			{:else if replyTo}
 				<button type="button" class="comment-fake-form" onclick={cancel}>
 					<span class="comment-fake-form__text">Написать комментарий...</span>
 					<span class="comment-fake-form__buttons" aria-hidden="true">
@@ -352,6 +370,7 @@
 					{postAuthorId}
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 					replying={replyTo === row.key}
+					canReply={!blocked}
 					onreply={() => reply(row.key)}
 					onedit={() => edit(row.key, row.comment.content, row.comment.media)}
 					onlinehover={(line) => highlightBranch(index, line)}

@@ -1,4 +1,4 @@
-import type { Comment, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, QuizResult, Reactions, SearchSubsite, User } from '../../types';
+import type { Comment, CommentEditorState, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, QuizResult, Reactions, SearchSubsite, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 import { embedToPost } from '../../embed';
 import { extractWatermark } from '$lib/watermark';
@@ -101,6 +101,11 @@ export function mapQuizResult(result: any): QuizResult {
 	return { items, userVoted: result?.userVoted ?? null };
 }
 
+export function mapCommentEditor(editor: any): CommentEditorState | undefined {
+	if (!editor || editor.enabled !== false) return undefined;
+	return { enabled: false, text: editor.text || undefined };
+}
+
 export function mapEntryToPost(entry: any): Post {
 	const commentsCount = entry.counters?.comments || 0;
 	const unreadCommentsCount = Math.max(0, commentsCount - (entry.commentsSeenCount?.count ?? commentsCount));
@@ -131,6 +136,7 @@ export function mapEntryToPost(entry: any): Post {
 		repostsCount: entry.counters?.reposts || undefined,
 		repost: mapRepost(entry),
 		isSubscribedToComments: entry.subscribedToTreads,
+		commentEditor: mapCommentEditor(entry.commentEditor),
 		isDraft: entry.isPublished === false || undefined
 	};
 }

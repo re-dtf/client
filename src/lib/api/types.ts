@@ -57,6 +57,13 @@ export interface PaginatedResult<T> {
 	cursors?: Record<string, CursorData>;
 }
 
+/** Можно ли текущему пользователю писать комментарии к посту: бан, чёрный список, ограничение автора */
+export interface CommentEditorState {
+	enabled: boolean;
+	/** Объяснение от сервера; при бане с оставшимся временем */
+	text?: string;
+}
+
 export interface Post {
 	id: number;
 	sourceId: string;
@@ -83,6 +90,8 @@ export interface Post {
 	repost?: { id: number; original?: Post };
 	/** Подписан ли пользователь на новые комментарии поста (колокольчик) */
 	isSubscribedToComments?: boolean;
+	/** Состояние редактора комментариев для текущего пользователя; нет — писать можно */
+	commentEditor?: CommentEditorState;
 	/** Не опубликован: черновик */
 	isDraft?: boolean;
 	/** Фрагмент текста с найденными словами в `<mark>`; приходит только в выдаче поиска */

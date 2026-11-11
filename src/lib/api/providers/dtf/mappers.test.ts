@@ -57,6 +57,17 @@ describe('mapEntryToPost', () => {
 		expect(post.unreadCommentsCount).toBe(6);
 	});
 
+	it('мапит заблокированный редактор комментариев (форма из blocked_comments_editor.har)', () => {
+		const commentEditor = { enabled: false, who: null, text: 'Комментирование доступно только подписчикам блога автора', until: null, reason: null, type: 'only_subscribers' };
+
+		expect(mapEntryToPost({ id: 1, commentEditor }).commentEditor).toEqual({ enabled: false, text: commentEditor.text });
+	});
+
+	it('разрешённый или отсутствующий редактор — комментировать можно', () => {
+		expect(mapEntryToPost({ id: 1, commentEditor: { enabled: true } }).commentEditor).toBeUndefined();
+		expect(mapEntryToPost({ id: 1 }).commentEditor).toBeUndefined();
+	});
+
 	it('репост: исходная запись из repostData, недоступная — только id', () => {
 		const embed = { original_id: 55, title: 'Оригинал', author: { id: 3, name: 'Автор' }, blocks: [{ type: 'text' }] };
 		const repost = mapEntryToPost({ id: 1, repostId: 55, repostData: { type: 'osnovaEmbed', data: embed }, counters: { reposts: 2 } });

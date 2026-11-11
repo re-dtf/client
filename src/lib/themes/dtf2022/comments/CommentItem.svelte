@@ -39,6 +39,7 @@
 		postAuthorId,
 		highlightedLine = -1,
 		replying = false,
+		canReply = true,
 		panObserver,
 		onreply,
 		onedit,
@@ -54,6 +55,8 @@
 		/** Индекс подсвеченной линии ветки, -1 — нет */
 		highlightedLine?: number;
 		replying?: boolean;
+		/** Писать нельзя (бан, чёрный список): кнопки «Ответить» нет */
+		canReply?: boolean;
 		panObserver?: IntersectionObserver;
 		onreply: () => void;
 		/** Открыть редактор с текстом этого комментария */
@@ -491,7 +494,9 @@
 				{@render vote()}
 			{/if}
 
-			<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
+			{#if canReply}
+				<button type="button" class="comment-item__action" onclick={onreply}>Ответить</button>
+			{/if}
 
 			{#if comment.sourceId === 'dtf'}
 				<Popover bind:open={menuOpen} items={menuItems} onselect={selectMenuItem} width="max-content" align="left" label="Действия с комментарием">

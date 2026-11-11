@@ -1,5 +1,5 @@
 import type { Snippet } from 'svelte';
-import type { Post, Profile, ProfileListItem, ProfileSorting, SearchFilters, SearchSorting, SearchSubsite } from '$lib/api/types';
+import type { CommentEditorState, Post, Profile, ProfileListItem, ProfileSorting, SearchFilters, SearchSorting, SearchSubsite } from '$lib/api/types';
 import type { Period } from '$lib/feed.svelte';
 
 export type SearchTab = 'posts' | 'blogs' | 'topics';
@@ -42,6 +42,8 @@ export interface ThemeComponents {
 		subscribed?: boolean;
 		/** Автор поста: его комментарии получают плашку «Автор» */
 		postAuthorId?: number;
+		/** Писать нельзя (бан, чёрный список, ограничение автора): вместо редактора тема показывает причину и убирает «Ответить» */
+		commentEditor?: CommentEditorState;
 		/** Комментарий, к которому прокрутить (из ссылки или уведомления); комментарии догружаются, пока он не найдётся */
 		focusCommentId?: number;
 		/** Повторный фокус на комментарий (например, при повторном клике по тому же уведомлению) */

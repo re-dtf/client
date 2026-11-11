@@ -2,7 +2,7 @@
 	import { scrollBehavior } from '$lib/motion';
 	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import type { Comment, CommentMedia } from '$lib/api/types';
+	import type { Comment, CommentEditorState, CommentMedia } from '$lib/api/types';
 	import { api } from '$lib/api/index.svelte';
 	import { CommentsLogic } from '$lib/components/Comments/commentsLogic.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
@@ -13,6 +13,7 @@
 	import Preloader from '../dtf2022/ui/Preloader.svelte';
 	import CommentEditor from '../dtf2022/comments/CommentEditor.svelte';
 	import CommentItem from '../dtf2022/comments/CommentItem.svelte';
+	import CommentRestriction from '../dtf2022/comments/CommentRestriction.svelte';
 	import { commentKey, flattenComments } from '../dtf2022/comments/flatten';
 	import { toggleCommentReaction, voteComment } from '../dtf2022/comments/votes.svelte';
 	import { REACTIONS } from '$lib/config/reactions';
@@ -27,10 +28,24 @@
 		commentsCount = 0,
 		subscribed = false,
 		postAuthorId,
+		commentEditor,
 		focusCommentId,
 		focusNonce,
 		onfocused
-	}: { postId: number; sourceId?: string; commentsCount?: number; subscribed?: boolean; postAuthorId?: number; focusCommentId?: number; focusNonce?: number; onfocused?: () => void } = $props();
+	}: {
+		postId: number;
+		sourceId?: string;
+		commentsCount?: number;
+		subscribed?: boolean;
+		postAuthorId?: number;
+		commentEditor?: CommentEditorState;
+		focusCommentId?: number;
+		focusNonce?: number;
+		onfocused?: () => void;
+	} = $props();
+
+	/** Писать нельзя: ни нового комментария, ни ответа (правка своего остаётся на усмотрение сервера) */
+	let blocked = $derived(commentEditor?.enabled === false);
 
 	const SORTINGS = [
 		{ value: 'hotness', label: 'Лучшие' },
@@ -96,6 +111,7 @@
 	}
 
 	function reply(key: string) {
+		if (blocked) return;
 		if (editMode) clearDraft();
 		replyTo = key;
 		editMode = false;
@@ -127,7 +143,7 @@
 	/** Новый комментарий, ответ или правка; после отправки показываем результат */
 	async function submit() {
 		const text = draft.trim();
-		if ((!text && media.length === 0) || sending || sourceId !== 'dtf' || !ensureLogin()) return;
+		if ((!text && media.length === 0) || sending || sourceId !== 'dtf' || (blocked && !editMode) || !ensureLogin()) return;
 
 		sending = true;
 		sendError = '';
@@ -310,7 +326,8 @@
 	let swipeView = $state<SwipeView | null>(null);
 	let swipeLayer = $state<HTMLElement>();
 	const swipeComment = commentSwipe({
-		enabled: () => activeTheme.gestures,
+		// Свайп открывает ответ, а при запрете писать он не нужен
+		enabled: () => activeTheme.gestures && !blocked,
 		// Кнопка «Ответить» есть только у обычного комментария: у удалённого и скрытого фильтром свайпа нет
 		keyOf: (item) => (item.querySelector(':scope > .comment-item__content > .comment-item__action') ? item.id.replace('comment-', '') : undefined),
 		count: () => swipeActions.length,
@@ -367,7 +384,9 @@
 		</div>
 
 		<div class="comments-reply-area">
-			{#if replyTo}
+			{#if blocked && !editMode}
+				<CommentRestriction text={commentEditor?.text} />
+			{:else if replyTo}
 				<button type="button" class="comment-fake-form" onclick={cancel}>
 					<span class="comment-fake-form__text">Написать комментарий...</span>
 					<span class="comment-fake-form__buttons" aria-hidden="true">
@@ -401,6 +420,7 @@
 						{postAuthorId}
 						highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 						replying={replyTo === row.key}
+						canReply={!blocked}
 						panObserver={isAutopan ? logic.engine.panObserver : undefined}
 						onreply={() => reply(row.key)}
 						onedit={() => edit(row.key, row.comment.content, row.comment.media)}
