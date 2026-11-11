@@ -9,9 +9,13 @@
 	import type { IgnoredSubsite } from '$lib/api/types';
 	import {
 		addIgnoredKeyword,
+		addIgnoredKeywords,
 		addIgnoredTag,
 		filterSettings,
+		isKeywordPresetActive,
+		KEYWORD_PRESETS,
 		removeIgnoredKeyword,
+		removeIgnoredKeywords,
 		removeIgnoredTag
 	} from '$lib/storage/filter.svelte';
 
@@ -240,6 +244,48 @@
 			<p class="empty-hint">Нет скрытых ключевых слов</p>
 		{/if}
 	</div>
+
+	<div class="filter-card filter-card--top-border">
+		<span class="filter-label">Пресеты ключевых слов</span>
+		<div class="presets-list">
+			{#each KEYWORD_PRESETS as preset (preset.id)}
+				{@const active = isKeywordPresetActive(preset, filterSettings.value.keywords)}
+				<div class="preset-row">
+					<div class="preset-row__info">
+						<span class="preset-row__title">{preset.title}</span>
+						<span class="preset-row__words">{preset.keywords.join(', ')}</span>
+					</div>
+					<button
+						class="preset-btn"
+						class:preset-btn--active={active}
+						type="button"
+						title={active ? `Убрать пресет ${preset.title}` : `Добавить пресет ${preset.title}`}
+						aria-label={active ? `Убрать пресет ${preset.title} из чёрного списка` : `Добавить пресет ${preset.title} в чёрный список`}
+						onclick={() => {
+							if (active) {
+								removeIgnoredKeywords(preset.keywords);
+							} else {
+								addIgnoredKeywords(preset.keywords);
+							}
+						}}
+					>
+						{#if active}
+							<svg class="preset-btn__icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<polyline points="3 8 7 12 13 4" />
+							</svg>
+							<span class="preset-btn__text">Добавлено</span>
+						{:else}
+							<svg class="preset-btn__icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+								<line x1="8" y1="3" x2="8" y2="13" />
+								<line x1="3" y1="8" x2="13" y2="8" />
+							</svg>
+							<span class="preset-btn__text">Добавить</span>
+						{/if}
+					</button>
+				</div>
+			{/each}
+		</div>
+	</div>
 </SettingsGroup>
 
 <!-- Серверный ЧС DTF -->
@@ -259,12 +305,14 @@
 
 <style>
 	.section-title {
-		margin: 24px 4px 8px;
-		color: var(--st-muted);
-		font-size: 13px;
+		margin: 36px 4px 12px;
+		font-size: 17px;
 		font-weight: 500;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		line-height: 24px;
+	}
+
+	.section-title + :global(.group) {
+		margin-top: 12px;
 	}
 
 	.filter-card {
@@ -454,6 +502,77 @@
 		display: none;
 	}
 
+	.presets-list {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+
+	.preset-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 10px 14px;
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--st-field) 50%, transparent);
+		border: 1px solid var(--st-separator);
+	}
+
+	.preset-row__info {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+		flex: 1;
+	}
+
+	.preset-row__title {
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 18px;
+	}
+
+	.preset-row__words {
+		color: var(--st-muted);
+		font-size: 12px;
+		line-height: 16px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.preset-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+		flex: none;
+		height: 32px;
+		padding: 0 14px;
+		border-radius: 16px;
+		background: var(--st-button);
+		color: inherit;
+		font-size: 13px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color var(--duration-base), color var(--duration-base);
+	}
+
+	.preset-btn:hover {
+		background: var(--st-button-hover);
+	}
+
+	.preset-btn--active {
+		background: color-mix(in srgb, var(--st-accent) 15%, transparent);
+		color: var(--st-accent);
+	}
+
+	.preset-btn--active:hover {
+		background: color-mix(in srgb, var(--st-danger) 15%, transparent);
+		color: var(--st-danger);
+	}
+
 	@container (max-width: 719px) {
 		.filter-card {
 			padding: 14px 16px;
@@ -461,6 +580,10 @@
 
 		.ignored-row {
 			padding: 10px 16px;
+		}
+
+		.preset-row {
+			padding: 10px 12px;
 		}
 
 		.unignore-btn {
@@ -476,6 +599,19 @@
 
 		.unignore-btn__icon {
 			display: block;
+		}
+	}
+
+	@container (max-width: 480px) {
+		.preset-btn {
+			width: 34px;
+			height: 34px;
+			padding: 0;
+			border-radius: 50%;
+		}
+
+		.preset-btn__text {
+			display: none;
 		}
 	}
 

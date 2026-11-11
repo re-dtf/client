@@ -28,6 +28,20 @@ export interface FilterMatch {
 	rule: string;
 }
 
+export interface KeywordPreset {
+	id: string;
+	title: string;
+	keywords: string[];
+}
+
+export const KEYWORD_PRESETS: KeywordPreset[] = [
+	{
+		id: 'gta6',
+		title: 'GTA 6',
+		keywords: ['gta 6', 'gta vi', 'гта 6', 'gta6', 'gtavi', 'гта6']
+	}
+];
+
 export const filterSettings = persistedState<FilterSettings>('redtf:settings:filter', {
 	tags: [],
 	keywords: [],
@@ -67,6 +81,40 @@ export function addIgnoredKeyword(keyword: string): boolean {
 export function removeIgnoredKeyword(keyword: string) {
 	const clean = keyword.trim().toLowerCase();
 	filterSettings.patch({ keywords: filterSettings.value.keywords.filter((k) => k !== clean) });
+}
+
+/** Добавляет группу ключевых слов (пресет) в локальный фильтр */
+export function addIgnoredKeywords(keywords: string[]): number {
+	const current = new Set(filterSettings.value.keywords);
+	let added = 0;
+	for (const kw of keywords) {
+		const clean = kw.trim().toLowerCase();
+		if (clean && !current.has(clean)) {
+			current.add(clean);
+			added++;
+		}
+	}
+	if (added > 0) {
+		filterSettings.patch({ keywords: Array.from(current) });
+	}
+	return added;
+}
+
+/** Удаляет группу ключевых слов из локального фильтра */
+export function removeIgnoredKeywords(keywords: string[]): void {
+	const toRemove = new Set(keywords.map((k) => k.trim().toLowerCase()));
+	filterSettings.patch({
+		keywords: filterSettings.value.keywords.filter((k) => !toRemove.has(k))
+	});
+}
+
+/** Проверяет, активен ли пресет (все ли его слова присутствуют в списке скрытых) */
+export function isKeywordPresetActive(
+	preset: KeywordPreset,
+	keywords: string[] = filterSettings.value.keywords
+): boolean {
+	const current = new Set(keywords);
+	return preset.keywords.every((kw) => current.has(kw.trim().toLowerCase()));
 }
 
 function escapeRegex(str: string): string {
