@@ -92,6 +92,8 @@ export interface Post {
 	isSubscribedToComments?: boolean;
 	/** Состояние редактора комментариев для текущего пользователя; нет — писать можно */
 	commentEditor?: CommentEditorState;
+	/** Материал редакции: синяя галочка у заголовка */
+	isEditorial?: boolean;
 	/** Плашка от редакции под заголовком («Обновление» и т. п.) */
 	warning?: { title: string; text: string };
 	/** Не опубликован: черновик */

@@ -27,6 +27,7 @@
 	let {
 		blocks,
 		title,
+		editorial = false,
 		warning,
 		variant,
 		postId,
@@ -36,6 +37,8 @@
 		blocks: Block[];
 		/** Заголовок поста — первым блоком */
 		title?: string;
+		/** Материал редакции: галочка после заголовка */
+		editorial?: boolean;
 		/** Плашка редакции после заголовка («Обновление») */
 		warning?: { title: string; text: string };
 		variant: 'card' | 'page' | 'embed';
@@ -45,6 +48,13 @@
 	} = $props();
 
 	const HEADINGS = ['h2', 'h3', 'h4'];
+
+	// Галочка липнет к последнему слову, чтобы не оказаться на строке одна (как .content-title__last-word)
+	let titleParts = $derived.by(() => {
+		const text = title?.trim() ?? '';
+		const split = text.lastIndexOf(' ') + 1;
+		return { head: text.slice(0, split), last: text.slice(split) };
+	});
 
 	const sanitize = (html: string) => sanitizeHtml(html ?? '');
 	/** Текст записи: `#теги` в нём — ссылки на страницу тега */
@@ -261,7 +271,13 @@
 	onauxclick={handleContainerClick}
 >
 	{#if title?.trim()}
-		<div class="post-block post-block--title">{title.trim()}</div>
+		<div class="post-block post-block--title">
+			{#if editorial}
+				{titleParts.head}<span class="post-block__last-word">{titleParts.last}<span class="post-block__tick" role="img" aria-label="Материал редакции" title="Материал редакции"><svg width="24" height="24" aria-hidden="true"><use href="/icons.svg#v_editorial"></use></svg></span></span>
+			{:else}
+				{title.trim()}
+			{/if}
+		</div>
 	{/if}
 
 	{#if warning}
@@ -306,6 +322,29 @@
 		color: var(--text-link);
 		border-bottom: 1px solid var(--border-link);
 		cursor: pointer;
+	}
+
+	.post-block__last-word {
+		white-space: nowrap;
+	}
+
+	/* Галочка редакции: .content-editorial-tick из архива (у встроенного поста иконка 20px) */
+	.post-block__tick {
+		display: inline-block;
+		margin-top: -4px;
+		margin-left: -2px;
+		line-height: 0;
+		vertical-align: middle;
+		color: var(--color-accent);
+	}
+
+	.post-block__tick svg {
+		fill: currentColor;
+	}
+
+	.post-blocks--embed .post-block__tick svg {
+		width: 20px;
+		height: 20px;
 	}
 
 	.post-block--title {

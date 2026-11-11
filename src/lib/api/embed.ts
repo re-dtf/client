@@ -14,6 +14,7 @@ export function embedToPost(embed: any): Post {
 		author: { id: embed.author?.id || 0, name: embed.author?.name || 'Аноним', avatarUrl: avatar(embed.author) },
 		subsite: embed.subsite ? { id: embed.subsite.id, name: embed.subsite.name, avatarUrl: avatar(embed.subsite) } : undefined,
 		commentsCount: 0,
+		isEditorial: embed.isEditorial || undefined,
 		createdAt: new Date((embed.date || 0) * 1000).toISOString()
 	};
 }

@@ -51,7 +51,7 @@
 		<PostHeader {post} variant="page" />
 
 		<div class="post-content">
-			<PostBlocks title={post.title} warning={post.warning} blocks={blocks.slice(0, leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
+			<PostBlocks title={post.title} editorial={post.isEditorial} warning={post.warning} blocks={blocks.slice(0, leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
 
 			{#if showActions}
 				<div class={['post-actions', { 'post-actions--arrows': arrows }]}>

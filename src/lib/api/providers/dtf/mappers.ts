@@ -144,6 +144,7 @@ export function mapEntryToPost(entry: any): Post {
 		repost: mapRepost(entry),
 		isSubscribedToComments: entry.subscribedToTreads,
 		commentEditor: mapCommentEditor(entry.commentEditor),
+		isEditorial: entry.isEditorial || undefined,
 		warning: mapWarning(entry),
 		isDraft: entry.isPublished === false || undefined
 	};
