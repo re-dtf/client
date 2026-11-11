@@ -2,11 +2,12 @@
 	import SettingsButton from './SettingsButton.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
+	import SettingsSwitch from './SettingsSwitch.svelte';
 	import SettingsTile from './SettingsTile.svelte';
 	import { asset } from '$app/paths';
 	import { version, dev } from '$app/env';
 	import { isNative } from '$lib/capacitor';
-	import { otaUpdater } from '$lib/capacitor/updater.svelte';
+	import { otaUpdater, shellUpdater } from '$lib/capacitor/updater.svelte';
 	import { pwa } from '$lib/pwa.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { haptics } from '$lib/haptics';
@@ -116,17 +117,23 @@
 	{/each}
 </ul>
 
-<SettingsGroup title="Обновления" description="Проверка новых версий и OTA-обновлений">
-	<SettingsRow
-		title={isNative() ? otaUpdater.statusTitle : (pwa.needRefresh ? 'Доступно обновление' : 'Обновление приложения')}
-		subtitle={isNative() ? otaUpdater.statusSubtitle : (pwa.needRefresh ? `Новая версия ${pwa.newVersion ?? ''}` : `Текущая версия ${version}`)}
-	>
-		{#snippet prefix()}{@render icon('M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', '#1693e5')}{/snippet}
-		{#if isNative()}
+<SettingsGroup title="Обновления" description="Проверка новых версий и обновлений">
+	{#if isNative()}
+		<SettingsRow
+			title={otaUpdater.statusTitle}
+			subtitle={otaUpdater.statusSubtitle}
+		>
+			{#snippet prefix()}{@render icon('M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', '#1693e5')}{/snippet}
 			{#if otaUpdater.status === 'ready'}
 				<span class="action">
-					<SettingsButton variant="suggested" onclick={() => otaUpdater.applyUpdate(true)}>
+					<SettingsButton variant="suggested" onclick={() => otaUpdater.applyUpdate()}>
 						Применить
+					</SettingsButton>
+				</span>
+			{:else if otaUpdater.status === 'available'}
+				<span class="action">
+					<SettingsButton variant="suggested" onclick={() => otaUpdater.downloadAndApply()}>
+						Обновить
 					</SettingsButton>
 				</span>
 			{:else}
@@ -135,24 +142,65 @@
 						disabled={otaUpdater.status === 'checking' || otaUpdater.status === 'downloading'}
 						onclick={() => otaUpdater.checkForUpdate(true)}
 					>
-						{otaUpdater.status === 'checking' || otaUpdater.status === 'downloading' ? 'Загрузка...' : 'Проверить'}
+						{otaUpdater.status === 'checking' ? 'Проверка...' : otaUpdater.status === 'downloading' ? 'Загрузка...' : 'Проверить'}
 					</SettingsButton>
 				</span>
 			{/if}
-		{:else if pwa.needRefresh}
-			<span class="action">
-				<SettingsButton variant="suggested" onclick={() => pwa.update()}>
-					Обновить
-				</SettingsButton>
-			</span>
-		{:else}
-			<span class="action">
-				<SettingsButton href="{CLIENT_URL}/releases">
-					Релизы
-				</SettingsButton>
-			</span>
-		{/if}
-	</SettingsRow>
+		</SettingsRow>
+
+		<SettingsRow
+			title={shellUpdater.statusTitle}
+			subtitle={shellUpdater.statusSubtitle}
+		>
+			{#snippet prefix()}{@render icon('M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM6 7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zm12 0a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2 2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM8 7h8v10a4 4 0 0 1-4 4 4 4 0 0 1-4-4V7z', '#10b981')}{/snippet}
+			{#if shellUpdater.status === 'available'}
+				<span class="action">
+					<SettingsButton variant="suggested" onclick={() => shellUpdater.downloadApk()}>
+						Скачать APK
+					</SettingsButton>
+				</span>
+			{:else}
+				<span class="action">
+					<SettingsButton
+						disabled={shellUpdater.status === 'checking' || shellUpdater.status === 'downloading'}
+						onclick={() => shellUpdater.checkForUpdate(true)}
+					>
+						{shellUpdater.status === 'checking' ? 'Проверка...' : shellUpdater.status === 'downloading' ? 'Загрузка...' : 'Проверить'}
+					</SettingsButton>
+				</span>
+			{/if}
+		</SettingsRow>
+
+		<SettingsRow
+			title="Проверять обновления автоматически"
+			subtitle="Периодически проверять наличие новых сборок на GitHub при запуске"
+		>
+			<SettingsSwitch
+				checked={settings.value.autoCheckUpdates !== false}
+				onchange={(v) => settings.patch({ autoCheckUpdates: v })}
+			/>
+		</SettingsRow>
+	{:else}
+		<SettingsRow
+			title={pwa.needRefresh ? 'Доступно обновление' : 'Обновление приложения'}
+			subtitle={pwa.needRefresh ? `Новая версия ${pwa.newVersion ?? ''}` : `Текущая версия ${version}`}
+		>
+			{#snippet prefix()}{@render icon('M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', '#1693e5')}{/snippet}
+			{#if pwa.needRefresh}
+				<span class="action">
+					<SettingsButton variant="suggested" onclick={() => pwa.update()}>
+						Обновить
+					</SettingsButton>
+				</span>
+			{:else}
+				<span class="action">
+					<SettingsButton href="{CLIENT_URL}/releases">
+						Релизы
+					</SettingsButton>
+				</span>
+			{/if}
+		</SettingsRow>
+	{/if}
 </SettingsGroup>
 
 <SettingsGroup title="Проект" description="Новости, исходный код и разработка">

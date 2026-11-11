@@ -6,7 +6,7 @@
 	import SettingsButton from './SettingsButton.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
 	import { isNative } from '$lib/capacitor';
-	import { otaUpdater } from '$lib/capacitor/updater.svelte';
+	import { otaUpdater, shellUpdater } from '$lib/capacitor/updater.svelte';
 	import HapticsLab from './HapticsLab.svelte';
 	import { dev } from '$app/env';
 
@@ -228,6 +228,26 @@
 					<span class="value-tag value-tag--red">{otaUpdater.errorMessage}</span>
 				</SettingsRow>
 			{/if}
+			{#if otaUpdater.status === 'available'}
+				<SettingsRow title="Доступно обновление" subtitle={`Версия ${otaUpdater.availableVersion ?? ''}`}>
+					<SettingsButton
+						variant="suggested"
+						onclick={() => otaUpdater.downloadAndApply()}
+					>
+						Скачать и применить
+					</SettingsButton>
+				</SettingsRow>
+			{/if}
+			{#if otaUpdater.status === 'ready'}
+				<SettingsRow title="Обновление готово" subtitle="Бандл загружен в память">
+					<SettingsButton
+						variant="suggested"
+						onclick={() => otaUpdater.applyUpdate()}
+					>
+						Применить
+					</SettingsButton>
+				</SettingsRow>
+			{/if}
 			<SettingsRow title="Принудительная проверка" subtitle="Проверить GitHub Releases прямо сейчас">
 				<SettingsButton
 					disabled={otaUpdater.status === 'checking' || otaUpdater.status === 'downloading'}
@@ -244,6 +264,25 @@
 					Сбросить к APK
 				</SettingsButton>
 			</SettingsRow>
+		</SettingsGroup>
+
+		<SettingsGroup title="Android Shell (APK)" description="Информация о нативной оболочке приложения">
+			<SettingsRow title="Версия оболочки">
+				<span class="value-tag">{shellUpdater.currentVersion}</span>
+			</SettingsRow>
+			<SettingsRow title="Номер сборки (versionCode)">
+				<span class="value-tag">{shellUpdater.currentBuild}</span>
+			</SettingsRow>
+			<SettingsRow title="Статус приложения">
+				<span class="value-tag">{shellUpdater.status}</span>
+			</SettingsRow>
+			{#if shellUpdater.status === 'available'}
+				<SettingsRow title="Новая сборка" subtitle={`Сборка ${shellUpdater.availableBuild ?? ''}`}>
+					<SettingsButton variant="suggested" onclick={() => shellUpdater.downloadApk()}>
+						Скачать APK
+					</SettingsButton>
+				</SettingsRow>
+			{/if}
 		</SettingsGroup>
 	{/if}
 

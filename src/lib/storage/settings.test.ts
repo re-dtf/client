@@ -52,6 +52,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			commentVirtualization: 'auto',
 			recommendations: 'auto',
 			appIcon: 'default',
+			autoCheckUpdates: true,
 			debugSafeAreaOverlay: false,
 			debugHud: false,
 			devMode: false
@@ -120,6 +121,18 @@ describe('settings & shouldVirtualizeComments', () => {
 
 	it('disableMobileTopBar по умолчанию выключен (false)', () => {
 		expect(settings.value.disableMobileTopBar).toBe(false);
+	});
+
+	it('autoCheckUpdates по умолчанию включен (true)', () => {
+		expect(settings.value.autoCheckUpdates).toBe(true);
+	});
+
+	it('patch обновляет значение autoCheckUpdates и сохраняет в localStorage', () => {
+		settings.patch({ autoCheckUpdates: false });
+		expect(settings.value.autoCheckUpdates).toBe(false);
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.autoCheckUpdates).toBe(false);
 	});
 
 	it('patch обновляет значение disableMobileTopBar и сохраняет в localStorage', () => {

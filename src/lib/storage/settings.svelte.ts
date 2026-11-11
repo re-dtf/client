@@ -51,6 +51,8 @@ export interface AppSettings {
 	customIconData?: string | null;
 	/** Автоматический голос «за» свой комментарий при публикации (как на Reddit) */
 	autoUpvoteComments: boolean;
+	/** Автоматически проверять обновления при запуске приложения (Android / iOS) */
+	autoCheckUpdates?: boolean;
 	/** Показывать визуальную подсветку Safe Area и панелей поверх интерфейса */
 	debugSafeAreaOverlay?: boolean;
 	/** Показывать плавающий индикатор метрик (HUD) */
@@ -119,6 +121,7 @@ export const settings = persistedState<AppSettings>(
 		autoUpvoteComments: false,
 		appIcon: 'default',
 		customIconData: null,
+		autoCheckUpdates: true,
 		debugSafeAreaOverlay: false,
 		debugHud: false,
 		devMode: false

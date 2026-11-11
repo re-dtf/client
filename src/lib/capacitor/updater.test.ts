@@ -1,5 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { extractChecksumFromDigest, isNewerVersion, otaUpdater, parseSha256Sums } from './updater.svelte';
+import {
+	extractChecksumFromDigest,
+	isNewerShell,
+	isNewerVersion,
+	otaUpdater,
+	parseApkReleaseInfo,
+	parseSha256Sums,
+	shellUpdater
+} from './updater.svelte';
 
 describe('OTA Updater', () => {
 	describe('extractChecksumFromDigest', () => {
@@ -89,6 +97,7 @@ b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9  bundle.zip
 			otaUpdater.downloadProgress = 0;
 			otaUpdater.availableVersion = null;
 			otaUpdater.downloadedBundleId = null;
+			otaUpdater.pendingRelease = null;
 			otaUpdater.errorMessage = null;
 		});
 
@@ -100,22 +109,116 @@ b620dad35acc74f65f1fea74cfa4ad646c8b98ecf2381c108c969fa6617535c9  bundle.zip
 			expect(otaUpdater.hasUpdate).toBe(true);
 		});
 
+		it('hasUpdate истинен в состоянии available при наличии pendingRelease', () => {
+			otaUpdater.status = 'available';
+			otaUpdater.pendingRelease = {
+				version: 'v0.2.0',
+				url: 'https://example.com/bundle.zip',
+				checksum: '123'
+			};
+			expect(otaUpdater.hasUpdate).toBe(true);
+		});
+
 		it('формирует понятные заголовки для UI', () => {
 			otaUpdater.status = 'checking';
 			expect(otaUpdater.statusTitle).toBe('Проверка обновлений...');
+
+			otaUpdater.status = 'available';
+			otaUpdater.availableVersion = 'v0.2.0';
+			expect(otaUpdater.statusTitle).toBe('Доступно обновление интерфейса v0.2.0');
+			expect(otaUpdater.statusSubtitle).toBe('Нажмите «Обновить» для загрузки и установки');
 
 			otaUpdater.status = 'downloading';
 			otaUpdater.availableVersion = 'v0.2.0';
 			expect(otaUpdater.statusTitle).toContain('v0.2.0');
 
 			otaUpdater.status = 'ready';
-			expect(otaUpdater.statusTitle).toBe('Обновление готово к установке');
+			expect(otaUpdater.statusTitle).toBe('Интерфейс готов к установке');
 
 			otaUpdater.status = 'up-to-date';
-			expect(otaUpdater.statusTitle).toBe('У вас последняя версия');
+			expect(otaUpdater.statusTitle).toBe('Интерфейс актуален');
 
 			otaUpdater.status = 'error';
 			expect(otaUpdater.statusTitle).toBe('Ошибка проверки обновлений');
+		});
+	});
+
+	describe('parseApkReleaseInfo & isNewerShell', () => {
+		it('извлекает номер сборки из имени APK файла (-b2)', () => {
+			const info = parseApkReleaseInfo([
+				{ name: 'bundle.zip', browser_download_url: 'https://example.com/bundle.zip' },
+				{ name: 'redtf-v0.2.0-b2.apk', browser_download_url: 'https://example.com/redtf.apk' }
+			]);
+			expect(info).not.toBeNull();
+			expect(info?.build).toBe(2);
+			expect(info?.filename).toBe('redtf-v0.2.0-b2.apk');
+			expect(info?.url).toBe('https://example.com/redtf.apk');
+		});
+
+		it('извлекает номер сборки из описания релиза, если его нет в имени', () => {
+			const info = parseApkReleaseInfo(
+				[{ name: 'redtf-v0.2.0.apk', browser_download_url: 'https://example.com/redtf.apk' }],
+				'Релиз с исправлениями.\nNative-Build: 3\nПодробности...'
+			);
+			expect(info).not.toBeNull();
+			expect(info?.build).toBe(3);
+		});
+
+		it('возвращает null, если в ассетах нет APK', () => {
+			const info = parseApkReleaseInfo([
+				{ name: 'bundle.zip', browser_download_url: 'https://example.com/bundle.zip' }
+			]);
+			expect(info).toBeNull();
+		});
+
+		it('isNewerShell корректно сравнивает номер нативного билда', () => {
+			expect(isNewerShell({ build: 2, version: '1.0' }, { build: 1, version: '1.0' })).toBe(true);
+			expect(isNewerShell({ build: 1, version: '1.0' }, { build: 1, version: '1.0' })).toBe(false);
+			expect(isNewerShell({ build: 1, version: '1.0' }, { build: 2, version: '1.0' })).toBe(false);
+		});
+
+		it('isNewerShell сравнивает версии при отсутствии build', () => {
+			expect(isNewerShell({ build: null, version: '1.1.0' }, { build: 1, version: '1.0.0' })).toBe(true);
+			expect(isNewerShell({ build: null, version: '1.0.0' }, { build: 1, version: '1.0.0' })).toBe(false);
+			expect(isNewerShell({ build: null, version: null }, { build: 1, version: '1.0.0' })).toBe(false);
+		});
+	});
+
+	describe('shellUpdater store', () => {
+		beforeEach(() => {
+			shellUpdater.status = 'idle';
+			shellUpdater.currentVersion = '1.0';
+			shellUpdater.currentBuild = 1;
+			shellUpdater.availableVersion = null;
+			shellUpdater.availableBuild = null;
+			shellUpdater.availableApk = null;
+			shellUpdater.errorMessage = null;
+		});
+
+		it('hasUpdate истинен только в состоянии available при наличии availableApk', () => {
+			expect(shellUpdater.hasUpdate).toBe(false);
+			shellUpdater.status = 'available';
+			expect(shellUpdater.hasUpdate).toBe(false);
+			shellUpdater.availableApk = {
+				url: 'https://example.com/redtf.apk',
+				filename: 'redtf.apk',
+				build: 2,
+				version: '1.0'
+			};
+			expect(shellUpdater.hasUpdate).toBe(true);
+		});
+
+		it('в состоянии up-to-date показывает заголовок "Приложение актуально"', () => {
+			shellUpdater.status = 'up-to-date';
+			expect(shellUpdater.statusTitle).toBe('Приложение актуально');
+			expect(shellUpdater.statusSubtitle).toContain('сборка 1');
+		});
+
+		it('в состоянии available показывает заголовок "Доступно обновление приложения"', () => {
+			shellUpdater.status = 'available';
+			shellUpdater.availableBuild = 2;
+			expect(shellUpdater.statusTitle).toBe('Доступно обновление приложения');
+			expect(shellUpdater.statusSubtitle).toContain('Сборка 2');
 		});
 	});
 });

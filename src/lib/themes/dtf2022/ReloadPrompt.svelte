@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { pwa } from '$lib/pwa.svelte';
 	import { isNative, openExternalUrl } from '$lib/capacitor';
+	import { shellUpdater } from '$lib/capacitor/updater.svelte';
 
 	function handleLinkClick(e: MouseEvent) {
 		if (isNative()) {
@@ -10,7 +11,7 @@
 	}
 </script>
 
-{#if pwa.needRefresh}
+{#if pwa.needRefresh || (isNative() && shellUpdater.hasUpdate)}
 	<aside
 		class="pwa-prompt"
 		role="alert"
@@ -18,9 +19,19 @@
 		data-pwa-prompt
 	>
 		<div class="pwa-prompt__content">
-			<span class="pwa-prompt__title">Доступно обновление</span>
+			<span class="pwa-prompt__title">
+				{#if isNative() && shellUpdater.hasUpdate}
+					Доступно обновление приложения
+				{:else if isNative()}
+					Доступно обновление интерфейса
+				{:else}
+					Доступно обновление
+				{/if}
+			</span>
 			<span class="pwa-prompt__version">
-				{#if pwa.newVersion && pwa.newVersion !== pwa.currentVersion}
+				{#if isNative() && shellUpdater.hasUpdate}
+					Новая версия приложения: <strong class="pwa-prompt__badge">{shellUpdater.availableBuild ? `сборка ${shellUpdater.availableBuild}` : (shellUpdater.availableVersion ? `v${shellUpdater.availableVersion}` : '')}</strong>
+				{:else if pwa.newVersion && pwa.newVersion !== pwa.currentVersion}
 					Версия <strong class="pwa-prompt__badge">{pwa.newVersion}</strong> (текущая: {pwa.currentVersion})
 				{:else}
 					Новая сборка ({pwa.currentVersion})
@@ -38,17 +49,30 @@
 		</div>
 
 		<div class="pwa-prompt__actions">
-			<button
-				type="button"
-				class="pwa-prompt__btn pwa-prompt__btn--primary"
-				onclick={() => pwa.update()}
-			>
-				Обновить
-			</button>
+			{#if isNative() && shellUpdater.hasUpdate}
+				<button
+					type="button"
+					class="pwa-prompt__btn pwa-prompt__btn--primary"
+					onclick={() => shellUpdater.downloadApk()}
+				>
+					Скачать APK
+				</button>
+			{:else}
+				<button
+					type="button"
+					class="pwa-prompt__btn pwa-prompt__btn--primary"
+					onclick={() => pwa.update()}
+				>
+					Обновить
+				</button>
+			{/if}
 			<button
 				type="button"
 				class="pwa-prompt__btn pwa-prompt__btn--secondary"
-				onclick={() => pwa.dismiss()}
+				onclick={() => {
+					if (isNative()) shellUpdater.dismiss();
+					pwa.dismiss();
+				}}
 			>
 				Отложить
 			</button>
