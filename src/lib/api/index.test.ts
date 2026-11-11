@@ -17,6 +17,7 @@ import { api } from './index.svelte';
 import { reactionSettings } from '$lib/storage/reactions.svelte';
 import { settings } from '$lib/storage/settings.svelte';
 import { clearPostCache } from '$lib/postCache';
+import { clearPostSourceCache } from './sources/post-cache';
 
 const post = (id: number, sourceId: string, createdAt: string): Post =>
 	({ id, sourceId, title: `Пост ${id}`, blocks: [], author: { id: 1, name: 'a' }, commentsCount: 0, createdAt }) as Post;
@@ -191,6 +192,7 @@ describe('api.getComments', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		clearPostCache();
+		clearPostSourceCache();
 		mocks.registry.activeSources = [];
 		mocks.sourceProvider.getReplacedComments = undefined;
 	});
@@ -207,6 +209,31 @@ describe('api.getComments', () => {
 			dtf: { lastId: 1, lastSortingValue: 1 },
 			archive: { lastId: 2, lastSortingValue: 2 }
 		});
+	});
+
+	it('для источника без пагинации (paged: false) вызывает его один раз и подмешивает на всех страницах', async () => {
+		const unpagedSource = source('archive', ['mutate:comments:append'], ['getComments']);
+		unpagedSource.manifest.endpoints.getComments = { paged: false } as any;
+		mocks.registry.activeSources = [unpagedSource];
+
+		mocks.dtf.getComments.mockResolvedValueOnce({ items: [comment(1, 'dtf')], lastId: 1, lastSortingValue: 1 });
+		mocks.sourceProvider.getComments.mockResolvedValueOnce({ items: [comment(2, 'archive')] });
+
+		// Страница 1
+		const page1 = await api.getComments(1, 'dtf');
+		expect(page1.items.map((c) => `${c.sourceId}:${c.id}`).sort()).toEqual(['archive:2', 'dtf:1']);
+		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
+		// Курсор для archive не должен устанавливаться
+		expect(page1.cursors).toEqual({ dtf: { lastId: 1, lastSortingValue: 1 } });
+
+		// Страница 2 (передаём курсор только для dtf, у archive курсора нет)
+		mocks.dtf.getComments.mockResolvedValueOnce({ items: [comment(3, 'dtf')], lastId: 3, lastSortingValue: 3 });
+		const page2 = await api.getComments(1, 'dtf', page1.cursors);
+
+		// Источник archive НЕ должен быть вызван повторно по сети (использован кэш)
+		expect(mocks.sourceProvider.getComments).toHaveBeenCalledTimes(1);
+		// Комментарии из archive всё равно подмешались
+		expect(page2.items.map((c) => `${c.sourceId}:${c.id}`).sort()).toEqual(['archive:2', 'dtf:3']);
 	});
 
 	it('источник без разрешения комментарии не добавляет', async () => {

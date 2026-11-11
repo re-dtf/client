@@ -4,6 +4,8 @@ import { createSourceProvider } from './providers/source';
 import { sourceRegistry } from './sources/registry.svelte';
 import { mergePosts, mergeComments } from './sources/merger';
 import { hasPermission } from './sources/permissions';
+import { getOrFetchPostSourceData } from './sources/post-cache';
+import type { SourceState } from './sources/types';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { reactionSettings, voteReaction } from '$lib/storage/reactions.svelte';
 import { settings } from '$lib/storage/settings.svelte';
@@ -40,6 +42,14 @@ function settled<T>(results: PromiseSettledResult<T>[], sourceIds: string[]) {
 		console.warn(`[reDTF] Источник '${sourceIds[index]}' не ответил:`, result.reason);
 		return [];
 	});
+}
+
+function endpointKeyFor(s: SourceState, mode: string): string {
+	return mode === 'replace' && s.manifest.endpoints.getReplacedComments ? 'getReplacedComments' : 'getComments';
+}
+
+function isEndpointUnpaged(s: SourceState, epKey: string): boolean {
+	return s.manifest.endpoints[epKey]?.paged === false;
 }
 
 export const api = {
@@ -131,8 +141,15 @@ export const api = {
 		// Остальные источники дополняют или подменяют комментарии, если у них есть такое разрешение для этого источника
 		const extraSources = sourceRegistry.activeSources.filter((s) => {
 			if (s.manifest.id === sourceId) return false;
-			if (!hasPermission(s, 'mutate:comments:append', sourceId) && !hasPermission(s, 'mutate:comments:replace', sourceId)) return false;
-			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined) return false;
+			const canReplace = hasPermission(s, 'mutate:comments:replace', sourceId);
+			const canAppend = hasPermission(s, 'mutate:comments:append', sourceId);
+			if (!canReplace && !canAppend) return false;
+
+			const mode = canReplace ? 'replace' : 'append';
+			const epKey = endpointKeyFor(s, mode);
+			const unpaged = isEndpointUnpaged(s, epKey);
+
+			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined && !unpaged) return false;
 			return true;
 		});
 		const modes = extraSources.map((s) => (hasPermission(s, 'mutate:comments:replace', sourceId) ? 'replace' : 'append') as 'replace' | 'append');
@@ -140,7 +157,11 @@ export const api = {
 		const extrasPromise = Promise.allSettled(
 			extraSources.map((s, i) => {
 				const provider = createSourceProvider(s);
+				const epKey = endpointKeyFor(s, modes[i]);
 				const load = modes[i] === 'replace' && provider.getReplacedComments ? provider.getReplacedComments : provider.getComments;
+				if (isEndpointUnpaged(s, epKey)) {
+					return getOrFetchPostSourceData(s.manifest.id, postId, epKey, () => load(postId, undefined, sorting));
+				}
 				return load(postId, safeCursors[s.manifest.id], sorting);
 			})
 		);
@@ -159,8 +180,11 @@ export const api = {
 		if (primary.lastId !== undefined && primary.lastSortingValue !== undefined) {
 			resultCursors[sourceId] = { lastId: primary.lastId, lastSortingValue: primary.lastSortingValue };
 		}
-		for (const { sourceId: extraId, value } of loaded) {
-			if (value.lastId !== undefined && value.lastSortingValue !== undefined) {
+		for (const { index, sourceId: extraId, value } of loaded) {
+			const src = extraSources[index];
+			const epKey = src ? endpointKeyFor(src, modes[index]) : '';
+			const unpaged = src ? isEndpointUnpaged(src, epKey) : false;
+			if (!unpaged && value.lastId !== undefined && value.lastSortingValue !== undefined) {
 				resultCursors[extraId] = { lastId: value.lastId, lastSortingValue: value.lastSortingValue };
 			}
 		}
