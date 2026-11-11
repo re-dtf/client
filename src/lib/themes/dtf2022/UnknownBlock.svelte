@@ -1,4 +1,6 @@
 <script lang="ts">
+	const UNSUPPORTED_BLOCK_TYPES = new Set(['game']);
+
 	let {
 		type,
 		postId,
@@ -11,6 +13,8 @@
 		sourceId?: string;
 	} = $props();
 
+	let isUnsupported = $derived(UNSUPPORTED_BLOCK_TYPES.has(type));
+
 	let dtfUrl = $derived.by(() => {
 		if (!postId || (sourceId && sourceId !== 'dtf')) return null;
 		return commentId ? `https://dtf.ru/${postId}?comment=${commentId}` : `https://dtf.ru/${postId}`;
@@ -18,8 +22,8 @@
 </script>
 
 <div class="unknown-block">
-	<span class="unknown-block__title">Неизвестный блок</span>
-	<span class="unknown-block__content">re:DTF пока не поддерживает блоки типа {type}.</span>
+	<span class="unknown-block__title">{isUnsupported ? 'Неподдерживаемый блок' : 'Неизвестный блок'}</span>
+	<span class="unknown-block__content">{isUnsupported ? `re:DTF не поддерживает блоки типа ${type} из-за их невостребованности.` : `re:DTF пока не поддерживает блоки типа ${type}.`}</span>
 	{#if dtfUrl}
 		<a class="unknown-block__button" href={dtfUrl} target="_blank" rel="noreferrer" onclick={(e) => e.stopPropagation()}>
 			Открыть на DTF

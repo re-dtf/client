@@ -26,4 +26,14 @@ describe('UnknownBlock', () => {
 		const { body } = render(UnknownBlock, { props: { type: 'quiz', postId: 5389802, sourceId: 'custom' } });
 		expect(body).not.toContain('Открыть на DTF');
 	});
+
+	it('рендерит сообщение о неподдерживаемом блоке для типа game', () => {
+		const { body } = render(UnknownBlock, { props: { type: 'game', postId: 5397981 } });
+		expect(body).toContain('Неподдерживаемый блок');
+		expect(body).not.toContain('Неизвестный блок');
+		expect(body).toContain('re:DTF не поддерживает блоки типа game из-за их невостребованности.');
+		expect(body).not.toContain('re:DTF пока не поддерживает');
+		expect(body).toContain('href="https://dtf.ru/5397981"');
+		expect(body).toContain('Открыть на DTF');
+	});
 });
