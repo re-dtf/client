@@ -403,7 +403,7 @@ export function openSettings(e?: MouseEvent, page?: string, section?: string) {
 }
 
 /**
- * Открыть ссылку или целевой объект dtf.ru внутри приложения (для deep links и программных переходов).
+ * Открыть ссылку или целевой объект dtf.ru или redtf.org внутри приложения (для deep links и программных переходов).
  * Возвращает true, если цель поддерживается и открыта.
  */
 export function openDtfUrl(href: string): boolean {
@@ -431,7 +431,7 @@ export function openDtfUrl(href: string): boolean {
 			type: 'post',
 			data: {
 				postId: target.postId,
-				sourceId: 'dtf',
+				sourceId: target.sourceId || 'dtf',
 				commentId: target.commentId,
 				toComments: target.toComments,
 				anchor: target.anchor
@@ -446,7 +446,7 @@ export function openDtfUrl(href: string): boolean {
 }
 
 /**
- * Клик по ссылке на dtf.ru: поддерживаемые цели открываем у себя, остальное оставляем браузеру.
+ * Клик по ссылке на dtf.ru или redtf.org: поддерживаемые цели открываем у себя, остальное оставляем браузеру.
  * Возвращает true, если открыли у себя.
  */
 export function openDtfLink(e: MouseEvent, href: string): boolean {

@@ -68,6 +68,37 @@ describe('parseDtfUrl', () => {
 		expect(dtfUrlToPath('https://dtf.ru/s/cinema')).toBe('/u/cinema');
 	});
 
+	it('ссылки redtf.org открываются аналогично dtf.ru', () => {
+		expect(parseDtfUrl('https://redtf.org/post/5394366')).toEqual({ type: 'post', postId: 5394366 });
+		expect(parseDtfUrl('https://redtf.org/post/5394366?comment=69664424')).toEqual({
+			type: 'post',
+			postId: 5394366,
+			commentId: 69664424
+		});
+		expect(parseDtfUrl('https://redtf.org/5394366')).toEqual({ type: 'post', postId: 5394366 });
+		expect(parseDtfUrl('https://www.redtf.org/post/5394366')).toEqual({ type: 'post', postId: 5394366 });
+		expect(parseDtfUrl('http://redtf.org/post/5394366')).toEqual({ type: 'post', postId: 5394366 });
+		expect(parseDtfUrl('https://redtf.org/post/5394366?source=archive')).toEqual({
+			type: 'post',
+			postId: 5394366,
+			sourceId: 'archive'
+		});
+		expect(dtfTargetToPath({ type: 'post', postId: 5394366, sourceId: 'archive' })).toBe('/post/5394366?source=archive');
+
+		expect(parseDtfUrl('https://redtf.org')).toEqual({ type: 'feed' });
+		expect(parseDtfUrl('https://redtf.org/popular')).toEqual({ type: 'feed', feed: 'popular' });
+		expect(parseDtfUrl('https://redtf.org/new')).toEqual({ type: 'feed', feed: 'new' });
+		expect(parseDtfUrl('https://redtf.org/?feed=my')).toEqual({ type: 'feed', feed: 'my' });
+		expect(parseDtfUrl('https://redtf.org/notifications')).toEqual({ type: 'notifications' });
+		expect(parseDtfUrl('https://redtf.org/u/120658')).toEqual({ type: 'profile', profileId: 120658 });
+		expect(parseDtfUrl('https://redtf.org/id3512753')).toEqual({ type: 'profile', profileId: 3512753 });
+		expect(parseDtfUrl('https://redtf.org/donatovnet')).toEqual({ type: 'profile', profileId: 'donatovnet' });
+		expect(parseDtfUrl('https://redtf.org/tag/xbox')).toEqual({ type: 'tag', tag: 'xbox' });
+
+		expect(parseDtfUrl('https://redtf.org/rules')).toBeUndefined();
+		expect(parseDtfUrl('https://redtf.org/settings')).toBeUndefined();
+	});
+
 	it('служебные страницы и посторонние адреса не перехватываются', () => {
 		expect(parseDtfUrl('https://dtf.ru/rules#8')).toBeUndefined();
 		for (const path of ['terms', 'privacy', 'settings/', 'settings/notifications', 'search', 'write', 'login', 'm', 'discovery', 'store', 'about', 'ads', 'bookmarks', 'drafts', 'tag/', 'api/version.json', 'donatovnet/unknown']) {

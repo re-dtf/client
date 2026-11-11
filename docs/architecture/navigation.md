@@ -42,8 +42,8 @@ type OverlayState = OverlayData & { id: string; presentation: 'page' | 'modal' |
 | `openProfile(e, id)` | то же для профиля |
 | `openFeed(e)` | обработчик клика по логотипу и «Главной» |
 | `openNotifications(e?)`, `openTag(tag, e?)`, `openSearch(query, e?)`, `openDrafts(e?)`, `openSettings(page?, solo?, e?)` | быстрые обработчики открытия соответствующих оверлеев |
-| `openDtfUrl(url)` | открыть ссылку на DTF внутри приложения (для deep links и переходов). Возвращает `true`, если цель поддержана |
-| `openDtfLink(e, href)` | обработчик клика по ссылке на dtf.ru: открывает поддерживаемые адреса оверлеями, остальное оставляет браузеру |
+| `openDtfUrl(url)` | открыть ссылку на DTF или redtf.org внутри приложения (для deep links и переходов). Возвращает `true`, если цель поддержана |
+| `openDtfLink(e, href)` | обработчик клика по ссылке на dtf.ru или redtf.org: открывает поддерживаемые адреса оверлеями, остальное оставляет браузеру |
 | `getPostPath(post)`, `getProfilePath(id)`, `getTagPath(tag)`, `getSearchPath(query)`, `getSettingsPath(page?)` | адреса для `href` |
 | `pushSubstate(key, value)`, `popSubstate()` | управление промежуточными внутренними состояниями окон (навигация по подменю без смены URL) |
 

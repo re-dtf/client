@@ -42,7 +42,12 @@ describe('Capacitor bridge', () => {
 	});
 
 	describe('handleAppUrl', () => {
-		it.each(['https://dtf.ru/games/111111-test', 'https://dtf.ru/donatovnet'])('открывает %s через openDtfUrl', async (url) => {
+		it.each([
+			'https://dtf.ru/games/111111-test',
+			'https://dtf.ru/donatovnet',
+			'https://redtf.org/post/111111',
+			'https://redtf.org/u/donatovnet'
+		])('открывает %s через openDtfUrl', async (url) => {
 			mocks.openDtfUrl.mockReturnValue(true);
 
 			const result = await handleAppUrl(url);
@@ -51,19 +56,23 @@ describe('Capacitor bridge', () => {
 			expect(result).toBe(true);
 		});
 
-		it('для неподдерживаемых страниц dtf.ru открывает системный браузер', async () => {
+		it('для неподдерживаемых страниц dtf.ru и redtf.org открывает системный браузер', async () => {
 			mocks.openDtfUrl.mockReturnValue(false);
 			const openMock = vi.fn();
 			vi.stubGlobal('window', { open: openMock });
 
-			const result = await handleAppUrl('https://dtf.ru/rules');
-
+			const dtfResult = await handleAppUrl('https://dtf.ru/rules');
 			expect(mocks.openDtfUrl).toHaveBeenCalledWith('https://dtf.ru/rules');
 			expect(openMock).toHaveBeenCalledWith('https://dtf.ru/rules', '_blank', 'noopener,noreferrer');
-			expect(result).toBe(true);
+			expect(dtfResult).toBe(true);
+
+			const redtfResult = await handleAppUrl('https://redtf.org/rules');
+			expect(mocks.openDtfUrl).toHaveBeenCalledWith('https://redtf.org/rules');
+			expect(openMock).toHaveBeenCalledWith('https://redtf.org/rules', '_blank', 'noopener,noreferrer');
+			expect(redtfResult).toBe(true);
 		});
 
-		it('игнорирует посторонние URL не от dtf.ru', async () => {
+		it('игнорирует посторонние URL не от dtf.ru или redtf.org', async () => {
 			mocks.openDtfUrl.mockReturnValue(false);
 
 			const result = await handleAppUrl('https://google.com/search');
@@ -85,7 +94,12 @@ describe('Capacitor bridge', () => {
 	});
 
 	describe('handleNativeLinkClick', () => {
-		it.each(['https://dtf.ru/games/333333', 'https://dtf.ru/donatovnet'])('перехватывает клик по %s через openDtfLink', (url) => {
+		it.each([
+			'https://dtf.ru/games/333333',
+			'https://dtf.ru/donatovnet',
+			'https://redtf.org/post/333333',
+			'https://redtf.org/u/donatovnet'
+		])('перехватывает клик по %s через openDtfLink', (url) => {
 			mocks.openDtfLink.mockReturnValue(true);
 
 			const anchor = {

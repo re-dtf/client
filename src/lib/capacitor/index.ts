@@ -94,21 +94,21 @@ export async function handleAppUrl(url: string): Promise<boolean> {
 	lastHandledUrl = url;
 	lastHandledTime = now;
 
-	// Игнорируем адреса, не относящиеся к dtf.ru
+	// Игнорируем адреса, не относящиеся к dtf.ru или redtf.org
 	if (
-		!/^https?:\/\/(?:www\.)?dtf\.ru/i.test(url) &&
+		!/^https?:\/\/(?:www\.)?(?:dtf\.ru|redtf\.org)/i.test(url) &&
 		!/^\/(?:post|u|tag|notifications|popular|new|my|\d+)/i.test(url)
 	) {
 		return false;
 	}
 
-	// Ссылки на dtf.ru открываем внутри приложения, если цель поддерживается
+	// Ссылки на dtf.ru и redtf.org открываем внутри приложения, если цель поддерживается
 	if (openDtfUrl(url)) {
 		return true;
 	}
 
-	// Неподдерживаемые разделы dtf.ru открываем во внешнем браузере, чтобы не терять контекст
-	if (/^https?:\/\/(?:www\.)?dtf\.ru/i.test(url)) {
+	// Неподдерживаемые разделы dtf.ru и redtf.org открываем во внешнем браузере, чтобы не терять контекст
+	if (/^https?:\/\/(?:www\.)?(?:dtf\.ru|redtf\.org)/i.test(url)) {
 		await openExternalUrl(url);
 		return true;
 	}
