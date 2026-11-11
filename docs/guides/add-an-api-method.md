@@ -15,7 +15,7 @@
    ```ts
    async getSubscriptionsFeed(cursor?: CursorData): Promise<PaginatedResult<Post>> {
    	requireAuth();
-   	const response = await fetchWithAuth(`${API_URL}/…${cursorQuery(cursor)}`);
+   	const response = await fetchWithAuth(apiV('2.4') + '/…' + cursorQuery(cursor));
    	const { result } = await response.json();
    	return { items: entriesOf(result.items).map(mapEntryToPost), lastId: result.lastId, lastSortingValue: result.lastSortingValue };
    }

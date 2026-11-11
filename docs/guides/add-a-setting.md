@@ -38,7 +38,7 @@
 
 Всё. Значение появится на странице темы, сохранится в `redtf:theme:<id>` и будет у каждой темы своё. Новое поле не требует миграции: у тех, кто уже сохранял настройки, подставится значение по умолчанию.
 
-Если вы меняете смысл существующего поля (были другие `value`), увеличьте `version` в `persistedState` в `themes/settings.svelte.ts` только если это действительно ломает сохранённые данные. Помните: миграций нет, старые значения будут отброшены у всех тем.
+Если вы меняете смысл существующего поля (были другие `value`), увеличьте `version` в `persistedState` в `themes/settings.svelte.ts` и при необходимости передайте функцию `migrate`, чтобы сохранить настройки пользователей.
 
 ## Общая настройка
 
@@ -46,7 +46,7 @@
 2. Добавьте поле на подходящую страницу в `components/settings/SettingsScreen.svelte` (новая страница — это новый пункт в `navigation` и ветка в разметке). Для выбора из вариантов и переключателя опишите поле и используйте `FieldControl`, для остального — `SettingsGroup` с обычным `input` и функциональной привязкой (образец — `ProxySettings.svelte`):
 
    ```svelte
-   <input bind:value={() => settings.value.proxyUrl, (v) => settings.patch({ proxyUrl: v })} />
+   <input type="checkbox" bind:checked={() => settings.value.collectStats, (v) => settings.patch({ collectStats: v })} />
    ```
 
 3. Читайте через `settings.value.<поле>`.

@@ -44,10 +44,19 @@ interface AppSettings {
 	theme: string;                  // id темы
 	proxies: ProxyItem[];           // список CORS-прокси для входа и обновления с failover
 	commentNesting: 'flatten' | 'autopan';
+	commentVirtualization: 'auto' | 'enabled' | 'disabled';
 	recommendations: 'auto' | 'button'; // лента рекомендаций под постом: подгружать сама или по кнопке
 	collectStats: boolean;          // вести локальную статистику
 	haptics: boolean;               // тактильный отклик
 	disableMobileTopBar: boolean;   // отключать верхний бар в мобильной версии
+	watermark: boolean;             // невидимая подпись reDTF к отправляемым комментариям
+	clientBadges: 'all' | 'redtf_only' | 'none'; // отображение бейджей клиентов комментариев
+	mobileBadgesPosition: 'author' | 'date';     // позиция бейджей клиентов
+	appIcon: AppIconId;             // иконка приложения и вкладки
+	customIconData?: string | null; // пользовательская иконка
+	debugSafeAreaOverlay?: boolean; // отладка safe-area
+	debugHud?: boolean;             // плавающий HUD метрик
+	devMode?: boolean;              // режим разработчика
 }
 ```
 
@@ -130,7 +139,7 @@ settings: [
 }
 ```
 
-Значения лежат в `redtf:theme:<id темы>`, **у каждой темы свои**: при смене темы настройки старой не теряются, а новой не смешиваются со старыми. Поля, добавленные в схему позже, получают значение по умолчанию без миграций.
+Значения лежат в `redtf:theme:<id темы>`, **у каждой темы свои**: при смене темы настройки старой не теряются, а новой не смешиваются со старыми. Новые поля в схеме подхватывают значение по умолчанию, а несовместимые изменения формата мигрируются через функцию `migrate` в `persistedState`.
 
 ### Как тема читает свои настройки
 

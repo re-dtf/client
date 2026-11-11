@@ -8,9 +8,9 @@
 
 ## Текущее состояние
 
-Сейчас: один хардкоженный `customApiProvider` с моками и `enableCustomApi` флаг в фасаде. Фасад ([index.svelte.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/index.svelte.ts)) жёстко импортирует DTF и custom провайдеры, мёржит посты/комменты через `if (this.enableCustomApi)`. Всё одноразовое — нет ни манифестов, ни реестра, ни авторизации, ни пермиссий.
+Сейчас: один хардкоженный `customApiProvider` с моками и `enableCustomApi` флаг в фасаде. Фасад (`src/lib/api/index.svelte.ts`) жёстко импортирует DTF и custom провайдеры, мёржит посты/комменты через `if (this.enableCustomApi)`. Всё одноразовое — нет ни манифестов, ни реестра, ни авторизации, ни пермиссий.
 
-**Что нужно убрать:** [custom.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/providers/custom.ts) — полностью. Весь хардкод `enableCustomApi` из фасада — тоже.
+**Что нужно убрать:** `custom.ts` — полностью. Весь хардкод `enableCustomApi` из фасада — тоже.
 
 ---
 
@@ -849,19 +849,19 @@ OAuth2 PKCE: code_verifier/challenge генерация, popup, token exchange.
 
 ### Модификация существующих файлов
 
-#### [MODIFY] [index.svelte.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/index.svelte.ts)
+#### [MODIFY] `src/lib/api/index.svelte.ts`
 Убрать хардкод custom provider. Мультипровайдерный роутинг через registry. `sourceId` в аргументах write-методов.
 
-#### [MODIFY] [commentsLogic.svelte.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/components/Comments/commentsLogic.svelte.ts)
+#### [MODIFY] `src/lib/components/Comments/commentsLogic.svelte.ts`
 Адаптировать под прием составного курсора `cursors` вместо одиночного `lastId`. При вызове `buildTree` передавать `this.sourceId` для корректного связывания родительских и дочерних комментариев со сторонних источников.
 
-#### [MODIFY] [types.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/types.ts)
+#### [MODIFY] `src/lib/api/types.ts`
 Добавить `sourceId: string` в `Post` и `Comment`.
 
-#### [MODIFY] [dtf.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/providers/dtf.ts)
+#### [MODIFY] `src/lib/api/providers/dtf/`
 Добавить `sourceId: 'dtf'` в `mapEntryToPost()` и маппинг комментариев.
 
-#### [DELETE] [custom.ts](file:///run/media/donner/Samsung/Dev/ReProject/reDTF/src/lib/api/providers/custom.ts)
+#### [DELETE] `src/lib/api/providers/custom.ts`
 Заменяется полностью новой системой.
 
 ---

@@ -52,12 +52,16 @@ src/
     +layout.svelte              тема, стили темы, стек оверлеев, восстановление прокрутки
     +page.svelte                лента (/ и /?feed=new)
     post/[id], u/[id]           страницы поста и профиля по прямой ссылке
-    settings, login, write      страницы, открывающие соответствующие оверлеи
+    notifications, search, tag  уведомления, поиск, теги
+    drafts, settings, write, …  черновики, настройки, редактор, вход
+    api/version.json            статический эндпоинт текущей версии
   lib/
     navigation.ts               openOverlay, closeOverlay, openPost, openProfile, openFeed
     feed.svelte.ts              ленты, текущая лента, обновление
     motion.ts                   анимации темы (ThemeMotion), кривые, play
     ready.ts                    ожидание картинок окна и отрисовки кадра
+    capacitor/                  нативный слой Android и OTA-обновления (Capgo)
+    icons/                      иконки приложения и SVG-спрайты
     api/
       index.svelte.ts           фасад
       types.ts                  модель данных и интерфейс ApiProvider
@@ -93,5 +97,6 @@ docs/                           документация
 - [motion.md](motion.md) — отклик на нажатия, подложка и спиннер окон, анимации темы
 - [splash.md](splash.md) — заставка при запуске и приветствие первого входа
 - [api.md](api.md) — фасад, провайдеры, ошибки, текущий пользователь
+- [mobile.md](mobile.md) — мобильное приложение (Capacitor 8, Android, OTA-обновления)
 - [data-sources/](data-sources/README.md) — подключаемые источники
 - [../../decisions/](../../decisions/README.md) — почему так сделано
