@@ -6,7 +6,7 @@
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { mediaHold } from '$lib/actions/mediaHold';
 	import { api } from '$lib/api/index.svelte';
-	import { getLeonardoUrl, isStubComment } from '$lib/api/utils';
+	import { getLeonardoUrl } from '$lib/api/utils';
 	import { getPostPath, getPostShareUrl, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
@@ -514,7 +514,8 @@
 				</div>
 			{/if}
 
-			{#if !isStubComment(comment)}
+			<!-- Реакции принимаются у замороженных и скрытых баном, у удалённых сервер отвечает 404 -->
+			{#if !comment.isRemoved}
 				{#if votes === 'reactions'}
 					<Reactions compact reactions={comment.reactions} onreact={react} />
 				{:else if votes === 'likes'}
