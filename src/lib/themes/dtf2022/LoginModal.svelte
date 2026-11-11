@@ -489,6 +489,7 @@
 
 				<div class="auth__footer">
 					<a target="_blank" rel="noreferrer" href="https://dtf.ru/?modal=auth/signup/email">Регистрация</a>
+					<a target="_blank" rel="noreferrer" href="https://github.com/re-dtf/.github/blob/main/SAFETY.md">О безопасности входа</a>
 				</div>
 			</div>
 		</div>
@@ -779,6 +780,7 @@
 
 	.auth__footer {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 16px;
 		margin-top: 20px;
