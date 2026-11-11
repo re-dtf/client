@@ -60,6 +60,8 @@ export interface AppSettings {
 	restoreScope: RestoreScope;
 	/** Показывать восстановленные комментарии сразу развёрнутыми */
 	restoreExpanded: boolean;
+	/** Показывать у восстановленного комментария автора из архива, а не заглушку DTF */
+	restoreAuthor: boolean;
 	/** Показывать визуальную подсветку Safe Area и панелей поверх интерфейса */
 	debugSafeAreaOverlay?: boolean;
 	/** Показывать плавающий индикатор метрик (HUD) */
@@ -135,6 +137,7 @@ export const settings = persistedState<AppSettings>(
 		autoUpvoteComments: false,
 		restoreScope: 'all',
 		restoreExpanded: false,
+		restoreAuthor: true,
 		appIcon: 'default',
 		customIconData: null,
 		autoCheckUpdates: true,

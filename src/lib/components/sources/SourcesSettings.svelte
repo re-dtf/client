@@ -161,6 +161,12 @@
 						onchange={(v) => settings.patch({ restoreExpanded: v })}
 					/>
 				</SettingsRow>
+				<SettingsRow tag="label" title="Восстанавливать автора" subtitle="Имя и аватар из архива вместо заглушки DTF. Аватар у таких комментариев приглушён">
+					<SettingsSwitch
+						checked={settings.value.restoreAuthor}
+						onchange={(v) => settings.patch({ restoreAuthor: v })}
+					/>
+				</SettingsRow>
 			{/if}
 		</SettingsGroup>
 	</div>

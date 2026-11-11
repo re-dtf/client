@@ -52,6 +52,7 @@ describe('auth & proxy failover', () => {
 			autoUpvoteComments: false,
 			restoreScope: 'all',
 			restoreExpanded: false,
+			restoreAuthor: true,
 			commentVirtualization: 'auto',
 			recommendations: 'auto',
 			appIcon: 'default'
