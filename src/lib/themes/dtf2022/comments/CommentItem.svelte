@@ -4,6 +4,7 @@
 	import { fromAction } from 'svelte/attachments';
 	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import { mediaHold } from '$lib/actions/mediaHold';
 	import { api } from '$lib/api/index.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
 	import { getPostPath, getProfilePath, openDtfLink, openLightbox, openProfile, preloadLightbox } from '$lib/navigation';
@@ -414,6 +415,7 @@
 											playsinline
 											controls={!!media.data.has_audio}
 											{@attach fromAction(lazyVideo)}
+											use:mediaHold={{ uuid: media.data.uuid, isGif: media.data?.type === 'gif' }}
 										></video>
 									{:else}
 										<img src={getLeonardoUrl(media.data.uuid, { width: 800 })} alt="" loading="lazy" />

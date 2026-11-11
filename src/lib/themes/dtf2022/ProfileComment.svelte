@@ -2,6 +2,7 @@
 	import { fromAction } from 'svelte/attachments';
 	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import { mediaHold } from '$lib/actions/mediaHold';
 	import { api } from '$lib/api/index.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import type { Comment } from '$lib/api/types';
@@ -178,7 +179,7 @@
 		<div class="profile-comment__media">
 			{#each comment.media as media}
 				{#if media.type === 'movie'}
-					<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)}></video>
+					<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)} use:mediaHold={{ uuid: media.data.uuid, isGif: media.data?.type === 'gif' }}></video>
 				{:else if media.type === 'image'}
 					<button
 						type="button"

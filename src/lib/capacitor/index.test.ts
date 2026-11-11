@@ -129,5 +129,30 @@ describe('Capacitor bridge', () => {
 			expect(preventDefault).toHaveBeenCalled();
 			expect(openMock).toHaveBeenCalledWith('https://github.com/re-dtf', '_blank', 'noopener,noreferrer');
 		});
+
+		it('не перехватывает ссылки с атрибутом download', () => {
+			mocks.openDtfLink.mockReturnValue(false);
+			const openMock = vi.fn();
+			vi.stubGlobal('window', { open: openMock });
+
+			const anchor = {
+				closest: (selector: string) => (selector === 'a' ? anchor : null),
+				getAttribute: (attr: string) => (attr === 'href' ? 'https://leonardo.osnova.io/test.jpg' : null),
+				hasAttribute: (attr: string) => attr === 'download'
+			};
+
+			const preventDefault = vi.fn();
+			const event = {
+				defaultPrevented: false,
+				button: 0,
+				target: anchor,
+				preventDefault
+			} as unknown as MouseEvent;
+
+			handleNativeLinkClick(event);
+
+			expect(preventDefault).not.toHaveBeenCalled();
+			expect(openMock).not.toHaveBeenCalled();
+		});
 	});
 });

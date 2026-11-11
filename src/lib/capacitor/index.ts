@@ -123,6 +123,7 @@ export function handleNativeLinkClick(e: MouseEvent): void {
 	if (e.defaultPrevented || e.button !== 0) return;
 	const anchor = (e.target as Element | null)?.closest?.('a');
 	if (!anchor) return;
+	if (anchor.hasAttribute?.('download') || anchor.getAttribute('download') !== null) return;
 	const href = anchor.getAttribute('href');
 	if (!href) return;
 

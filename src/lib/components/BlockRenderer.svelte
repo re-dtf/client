@@ -2,6 +2,7 @@
 	import type { Block } from '$lib/api/types';
 	import { resolve } from '$app/paths';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import { mediaHold } from '$lib/actions/mediaHold';
 	import { sanitizeHtml } from '$lib/sanitize';
 	import LazyImage from './LazyImage.svelte';
 	import { getLeonardoUrl } from '$lib/api/utils';
@@ -33,7 +34,7 @@
 			{#each block.data.items as item}
 				{#if item.image}
 					{#if item.image.data.type === 'mp4' || item.image.data.type === 'gif' || item.image.data.isVideo}
-						<video use:lazyVideo src={getLeonardoUrl(item.image.data.uuid, { format: 'mp4' })} controls loop muted playsinline></video>
+						<video use:lazyVideo use:mediaHold={{ uuid: item.image.data.uuid, isGif: item.image.data.type === 'gif' }} src={getLeonardoUrl(item.image.data.uuid, { format: 'mp4' })} controls loop muted playsinline></video>
 					{:else}
 						<LazyImage
 							src={getLeonardoUrl(item.image.data.uuid, { width: 800, format: 'webp' })}

@@ -70,28 +70,50 @@ export function getDownloadFilename(uuid: string, ext: string): string {
 export async function downloadImage(url: string, uuid: string, fallbackType?: string): Promise<void> {
 	if (typeof window === 'undefined') return;
 
+	const ext = resolveImageExtension(undefined, fallbackType);
+	const filename = getDownloadFilename(uuid, ext);
+	const mime = ext === 'mp4' ? 'video/mp4' : ext === 'gif' ? 'image/gif' : `image/${ext}`;
+
+	// В нативном приложении Capacitor (Android) передаём загрузку системному DownloadManager
+	if (typeof (window as any).AndroidBridge?.download === 'function') {
+		const queued = (window as any).AndroidBridge.download(url, filename, mime);
+		if (queued) return;
+	}
+
 	try {
 		const res = await fetch(url);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const blob = await res.blob();
-		const ext = resolveImageExtension(blob.type, fallbackType);
-		const filename = getDownloadFilename(uuid, ext);
+		const resolvedExt = resolveImageExtension(blob.type, fallbackType);
+		const resolvedFilename = getDownloadFilename(uuid, resolvedExt);
+
+		if (typeof navigator !== 'undefined' && 'canShare' in navigator) {
+			try {
+				const file = new File([blob], resolvedFilename, { type: blob.type });
+				if (navigator.canShare?.({ files: [file] })) {
+					await navigator.share({ files: [file], title: resolvedFilename });
+					return;
+				}
+			} catch (e: any) {
+				if (e?.name === 'AbortError') return;
+			}
+		}
+
 		const blobUrl = URL.createObjectURL(blob);
 		const link = document.createElement('a');
 		link.href = blobUrl;
-		link.download = filename;
+		link.download = resolvedFilename;
 		document.body.appendChild(link);
 		link.click();
 		link.remove();
 		setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000);
 	} catch {
-		const ext = resolveImageExtension(undefined, fallbackType);
-		const filename = getDownloadFilename(uuid, ext);
+		const fallbackFilename = getDownloadFilename(uuid, ext);
 		const link = document.createElement('a');
 		link.href = url;
 		link.target = '_blank';
 		link.rel = 'noopener noreferrer';
-		link.download = filename;
+		link.download = fallbackFilename;
 		document.body.appendChild(link);
 		link.click();
 		link.remove();

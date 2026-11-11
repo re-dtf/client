@@ -8,6 +8,7 @@
 	import DraftsContent from '$lib/components/DraftsContent.svelte';
 	import EditorOverlay from '$lib/components/overlays/EditorOverlay.svelte';
 	import LightboxOverlay from '$lib/components/overlays/LightboxOverlay.svelte';
+	import MediaSheet from '$lib/components/MediaSheet.svelte';
 	import { preloadLightbox } from '$lib/navigation';
 	import ModalShell from '$lib/components/overlays/ModalShell.svelte';
 	import Welcome from '$lib/components/Welcome.svelte';
@@ -489,6 +490,7 @@
 	</div>
 {/if}
 <ThemeLoader componentName="ReloadPrompt" />
+<MediaSheet />
 
 <style>
 	.app {

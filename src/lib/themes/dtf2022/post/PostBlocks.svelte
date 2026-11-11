@@ -6,6 +6,7 @@
 	import { linkifyHashtags } from '$lib/hashtags';
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import { mediaHold } from '$lib/actions/mediaHold';
 	import { getLeonardoUrl } from '$lib/api/utils';
 	import { resolve } from '$app/paths';
 	import { openDtfLink, openLightbox, preloadLightbox } from '$lib/navigation';
@@ -121,6 +122,7 @@
 						preload="metadata"
 						controls={!!image.data.has_audio}
 						{@attach fromAction(lazyVideo)}
+						use:mediaHold={{ uuid: image.data.uuid, isGif: image.data.type === 'gif' }}
 					></video>
 				{/if}
 			{:else}

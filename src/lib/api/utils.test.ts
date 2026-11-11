@@ -172,5 +172,21 @@ describe('api/utils', () => {
 			expect(clickedLinks[0].target).toBe('_blank');
 			expect(clickedLinks[0].download).toBe('image-fail.png');
 		});
+
+		it('в нативном приложении использует AndroidBridge.download', async () => {
+			const downloadMock = vi.fn().mockReturnValue(true);
+			(window as any).AndroidBridge = { download: downloadMock };
+
+			await downloadImage('https://leonardo.osnova.io/test-gif/', 'test-gif', 'gif');
+
+			expect(downloadMock).toHaveBeenCalledWith(
+				'https://leonardo.osnova.io/test-gif/',
+				'test-gif.gif',
+				'image/gif'
+			);
+			expect(clickedLinks.length).toBe(0);
+
+			delete (window as any).AndroidBridge;
+		});
 	});
 });
