@@ -78,6 +78,11 @@ describe('mapEntryToPost', () => {
 		expect(mapEntryToPost({ id: 1, isBlur: false }).isBlur).toBeUndefined();
 	});
 
+	it('материал дополняется: isStillUpdating только когда true', () => {
+		expect(mapEntryToPost({ id: 1, isStillUpdating: true }).isStillUpdating).toBe(true);
+		expect(mapEntryToPost({ id: 1, isStillUpdating: false }).isStillUpdating).toBeUndefined();
+	});
+
 	it('плашка редакции: заголовок по умолчанию, пустой текст — нет плашки', () => {
 		expect(mapEntryToPost({ id: 1, warningFromEditor: 'Текст', warningFromEditorTitle: 'Обновление' }).warning).toEqual({ title: 'Обновление', text: 'Текст' });
 		expect(mapEntryToPost({ id: 1, warningFromEditor: 'Текст', warningFromEditorTitle: null }).warning).toEqual({ title: 'От редакции', text: 'Текст' });

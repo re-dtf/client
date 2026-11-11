@@ -69,7 +69,7 @@
 				</div>
 			{/if}
 
-			<PostBlocks blocks={blocks.slice(leadEnd)} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
+			<PostBlocks blocks={blocks.slice(leadEnd)} updating={post.isStillUpdating} variant="page" postId={post.id} sourceId={post.sourceId} {evictMedia} />
 
 			{#if post.repost?.original}
 				<PostCard post={post.repost.original} embed />

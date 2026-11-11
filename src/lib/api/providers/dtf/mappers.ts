@@ -146,6 +146,7 @@ export function mapEntryToPost(entry: any): Post {
 		commentEditor: mapCommentEditor(entry.commentEditor),
 		isEditorial: entry.isEditorial || undefined,
 		isBlur: entry.isBlur || undefined,
+		isStillUpdating: entry.isStillUpdating || undefined,
 		warning: mapWarning(entry),
 		isDraft: entry.isPublished === false || undefined
 	};

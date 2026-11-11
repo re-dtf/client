@@ -29,6 +29,7 @@
 		title,
 		editorial = false,
 		warning,
+		updating = false,
 		variant,
 		postId,
 		sourceId,
@@ -41,6 +42,8 @@
 		editorial?: boolean;
 		/** Плашка редакции после заголовка («Обновление») */
 		warning?: { title: string; text: string };
+		/** Материал дополняется: пометка «Дополняется» после последнего блока */
+		updating?: boolean;
 		variant: 'card' | 'page' | 'embed';
 		postId?: number | string;
 		sourceId?: string;
@@ -306,6 +309,12 @@
 			</div>
 		{/if}
 	{/each}
+
+	{#if updating}
+		<div class="post-block post-block--updating">
+			<svg width="16" height="16" aria-hidden="true"><use href="/icons.svg#v_pencil_solid"></use></svg>Дополняется
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -558,6 +567,55 @@
 	@media (max-width: 859px) {
 		.post-block--warning {
 			padding: 16px;
+		}
+	}
+
+	/* «Дополняется»: .content__updating из архива 2023 — серый текст и карандаш, который «пишет» */
+	.post-blocks > .post-block--updating {
+		margin: 8px 0;
+		color: var(--text-muted);
+	}
+
+	.post-block--updating svg {
+		position: relative;
+		top: 1px;
+		margin-right: 0.5em;
+		fill: currentColor;
+		transform-origin: 30% 60%;
+		animation: post-updating-pencil 4.5s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
+	}
+
+	@keyframes post-updating-pencil {
+		0%,
+		20%,
+		45%,
+		60%,
+		80%,
+		100% {
+			transform: translate3d(0, 0, 0) rotate(0);
+		}
+
+		5%,
+		25%,
+		50%,
+		65%,
+		85% {
+			transform: rotate(-15deg);
+		}
+
+		15%,
+		40%,
+		55%,
+		75%,
+		90%,
+		95% {
+			transform: translate3d(7px, 0, 0) rotate(-15deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.post-block--updating svg {
+			animation: none;
 		}
 	}
 
