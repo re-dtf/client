@@ -237,6 +237,14 @@ export interface Comment {
 	level?: number;
 	isIgnored?: boolean;
 	isRemoved?: boolean;
+	/** Комментарий удален модератором (а не самим автором) */
+	removedByModerator?: boolean;
+	/** Восстановленное из внешнего архива содержимое (накладка поверх заглушки) */
+	restored?: {
+		content: string;
+		media?: CommentMedia[];
+		sourceId: string;
+	};
 	media?: CommentMedia[];
 	donation?: number;
 	reactions?: Reactions;
@@ -251,6 +259,18 @@ export interface Comment {
 	isRedtf?: boolean;
 	/** Платформа/приложение по данным DTF (например, 'android-app', 'ios-app') */
 	deviceSource?: string;
+}
+
+/**
+ * Частичные данные комментария от стороннего источника (для режима restore).
+ */
+export interface CommentPatch {
+	id: number;
+	sourceId?: string;
+	postId?: number;
+	authorId?: number;
+	content?: string;
+	media?: CommentMedia[];
 }
 
 export interface CommentTreeItem extends Comment {
@@ -386,6 +406,8 @@ export interface ApiProvider {
 	getComments(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
 	/** Комментарии, которыми источник подменяет основные (разрешение mutate:comments:replace) */
 	getReplacedComments?(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<Comment>>;
+	/** Восстановленные комментарии из архива (разрешение mutate:comments:restore) */
+	getRestoredComments?(postId: number, cursor?: CursorData, sorting?: string): Promise<PaginatedResult<CommentPatch>>;
 	getEditorialNews?(lastId?: number): Promise<PaginatedResult<Post>>;
 	reactToComment?(commentId: number, reactionId: number): Promise<void>;
 	/** reactionId 0 снимает свою реакцию; отвечает актуальными реакциями */

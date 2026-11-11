@@ -159,4 +159,84 @@ describe('fetchFromSource', () => {
 		const init = mockFetch.mock.calls[0][1];
 		expect(init.signal).toBeInstanceOf(AbortSignal);
 	});
+
+	it('should return empty items on emptyStatuses matching response status', async () => {
+		const source = createSource({
+			responseFormat: 'mapped',
+			endpoints: {
+				getComments: {
+					label: 'Comments',
+					description: '',
+					path: '/comments/{postId}',
+					method: 'GET',
+					mapping: {
+						items: 'data',
+						emptyStatuses: [404]
+					}
+				}
+			}
+		});
+
+		mockFetch.mockResolvedValueOnce({
+			ok: false,
+			status: 404,
+			statusText: 'Not Found',
+			headers: new Headers()
+		});
+
+		const res = await fetchFromSource(source, 'getComments', { postId: 123 });
+		expect(res).toEqual({ items: [] });
+	});
+
+	it('should apply endpoint mapping when mapping is defined', async () => {
+		const source = createSource({
+			responseFormat: 'mapped',
+			endpoints: {
+				getComments: {
+					label: 'Comments',
+					description: '',
+					path: '/comments/{postId}',
+					method: 'GET',
+					mapping: {
+						items: 'data',
+						fields: {
+							id: { from: 'id', as: 'number' },
+							content: { from: 'data.text' }
+						}
+					}
+				}
+			}
+		});
+
+		mockFetch.mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			headers: new Headers({ 'content-length': '100' }),
+			text: async () => JSON.stringify({
+				status: 'ok',
+				data: [
+					{ id: '42', data: { text: 'Hello from mapped source' } }
+				]
+			})
+		});
+
+		const res: any = await fetchFromSource(source, 'getComments', { postId: 123 });
+		expect(res.items).toHaveLength(1);
+		expect(res.items[0]).toEqual({
+			id: 42,
+			content: 'Hello from mapped source'
+		});
+	});
+
+	it('should reject response exceeding size limit', async () => {
+		const source = createSource();
+		mockFetch.mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			headers: new Headers({ 'content-length': '10000000' }), // 10 MB > 5 MB
+			text: async () => '{}'
+		});
+
+		await expect(fetchFromSource(source, 'getPosts')).rejects.toThrowError(/exceeded size limit/);
+	});
 });

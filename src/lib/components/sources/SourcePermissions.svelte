@@ -44,6 +44,41 @@
 		untrack(() => initCheckedState(preparePermissions(manifest)))
 	);
 
+	const PARAM_DESCRIPTIONS: Record<string, string> = {
+		postId: 'ID постов, которые вы открываете',
+		commentId: 'ID комментариев',
+		subsiteId: 'ID подсайтов и блогов',
+		userId: 'ID профилей пользователей',
+		authorId: 'ID авторов'
+	};
+
+	let serverHost = $derived.by(() => {
+		try {
+			return new URL(manifest.api.baseUrl).host;
+		} catch {
+			return manifest.api.baseUrl;
+		}
+	});
+
+	let disclosedParams = $derived.by(() => {
+		const found = new Set<string>();
+		const paramRegex = /\{([a-zA-Z0-9_]+)\}/g;
+		for (const ep of Object.values(manifest.endpoints || {})) {
+			let m: RegExpExecArray | null;
+			while ((m = paramRegex.exec(ep.path)) !== null) {
+				found.add(m[1]);
+			}
+			if (ep.params) {
+				for (const p of Object.values(ep.params)) {
+					while ((m = paramRegex.exec(p)) !== null) {
+						found.add(m[1]);
+					}
+				}
+			}
+		}
+		return Array.from(found).map((key) => PARAM_DESCRIPTIONS[key] || `Параметр {${key}}`);
+	});
+
 	function handleConfirm() {
 		const granted = permissionsToReview
 			.filter(p => p.required || checkedState[p.id])
@@ -71,6 +106,23 @@
 						</div>
 					</div>
 				{/each}
+			{/if}
+		</div>
+	</div>
+
+	<div class="section">
+		<h3>🔒 ПРИВАТНОСТЬ И СЕТЬ</h3>
+		<div class="privacy-box">
+			<p>• Сервер источника (<strong>{serverHost}</strong>) видит ваш IP-адрес при выполнении запросов.</p>
+			{#if disclosedParams.length > 0}
+				<p>• Для загрузки данных серверу передаются:
+					{#each disclosedParams as param, i}
+						<span>{i > 0 ? ', ' : ''}<em>{param}</em></span>
+					{/each}.
+				</p>
+			{/if}
+			{#if manifest.auth?.type === 'none'}
+				<p>• Личные токены и пароли от DTF этому источнику <strong>не передаются</strong>.</p>
 			{/if}
 		</div>
 	</div>
@@ -164,6 +216,23 @@
 	}
 	.permission-item input {
 		margin-top: 3px;
+	}
+	.privacy-box {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		background: var(--bg-secondary, #f8f9fa);
+		padding: 12px;
+		border-radius: 8px;
+		border: 1px solid var(--border-color, #eee);
+		font-size: 13px;
+		line-height: 18px;
+		color: var(--text-secondary, #555);
+	}
+	.privacy-box p {
+		margin: 0;
+		font-size: 13px;
+		color: inherit;
 	}
 	.actions {
 		display: flex;

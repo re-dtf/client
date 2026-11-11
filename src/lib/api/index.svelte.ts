@@ -1,9 +1,11 @@
-import type { ApiProvider, Comment, CursorData, GetPostsOptions, PaginatedResult, Post, User } from './types';
+import type { ApiProvider, Comment, CommentPatch, CursorData, GetPostsOptions, PaginatedResult, Post, User } from './types';
 import { dtfApiProvider } from './providers/dtf';
 import { createSourceProvider } from './providers/source';
 import { sourceRegistry } from './sources/registry.svelte';
-import { mergePosts, mergeComments } from './sources/merger';
+import { mergePosts, mergeComments, type CommentAddition } from './sources/merger';
 import { hasPermission } from './sources/permissions';
+import { getOrFetchPostSourceData } from './sources/post-cache';
+import type { SourceState } from './sources/types';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { reactionSettings, voteReaction } from '$lib/storage/reactions.svelte';
 import { settings } from '$lib/storage/settings.svelte';
@@ -40,6 +42,14 @@ function settled<T>(results: PromiseSettledResult<T>[], sourceIds: string[]) {
 		console.warn(`[reDTF] Источник '${sourceIds[index]}' не ответил:`, result.reason);
 		return [];
 	});
+}
+
+/** Режим источника в комментариях: подмена важнее восстановления, восстановление важнее добавления */
+function commentModeOf(s: SourceState, sourceId: string): 'replace' | 'restore' | 'append' | undefined {
+	if (hasPermission(s, 'mutate:comments:replace', sourceId)) return 'replace';
+	if (hasPermission(s, 'mutate:comments:restore', sourceId)) return 'restore';
+	if (hasPermission(s, 'mutate:comments:append', sourceId)) return 'append';
+	return undefined;
 }
 
 export const api = {
@@ -128,30 +138,47 @@ export const api = {
 			? providerFor(sourceId).getComments(postId, safeCursors[sourceId], sorting)
 			: Promise.resolve({ items: [] });
 
-		// Остальные источники дополняют или подменяют комментарии, если у них есть такое разрешение для этого источника
-		const extraSources = sourceRegistry.activeSources.filter((s) => {
-			if (s.manifest.id === sourceId) return false;
-			if (!hasPermission(s, 'mutate:comments:append', sourceId) && !hasPermission(s, 'mutate:comments:replace', sourceId)) return false;
-			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined) return false;
-			return true;
+		const onlyModerator = settings.value.restoreScope === 'moderator';
+
+		// Остальные источники дополняют, подменяют или восстанавливают комментарии, если у них есть такое разрешение для этого источника
+		const extras = sourceRegistry.activeSources.flatMap((s) => {
+			const mode = s.manifest.id === sourceId ? undefined : commentModeOf(s, sourceId);
+			if (!mode) return [];
+			const endpoint = mode === 'replace' ? 'getReplacedComments' : mode === 'restore' ? 'getRestoredComments' : 'getComments';
+			const epKey = s.manifest.endpoints[endpoint] ? endpoint : 'getComments';
+			// Источник без пагинации отдаёт всё за раз (и кэшируется), поэтому его опрашивают на каждой странице;
+			// ponytail: только восстановление, а добавление такого источника продублировало бы комментарии. Постраничный restore не поддержан
+			const unpaged = mode === 'restore' && s.manifest.endpoints[epKey]?.paged === false;
+			if (isSubsequentPage && safeCursors[s.manifest.id] === undefined && !unpaged) return [];
+			return [{ source: s, mode, epKey, unpaged }];
 		});
-		const modes = extraSources.map((s) => (hasPermission(s, 'mutate:comments:replace', sourceId) ? 'replace' : 'append') as 'replace' | 'append');
 
 		const extrasPromise = Promise.allSettled(
-			extraSources.map((s, i) => {
-				const provider = createSourceProvider(s);
-				const load = modes[i] === 'replace' && provider.getReplacedComments ? provider.getReplacedComments : provider.getComments;
-				return load(postId, safeCursors[s.manifest.id], sorting);
+			extras.map(async ({ source, mode, epKey, unpaged }): Promise<PaginatedResult<Comment | CommentPatch>> => {
+				// В архив ходим, только если на странице есть заглушки, которые стоит восстановить
+				if (mode === 'restore') {
+					const { items } = await primaryPromise;
+					if (!items.some((c) => c.isRemoved && (!onlyModerator || c.removedByModerator))) return { items: [] };
+				}
+				const provider = createSourceProvider(source);
+				const load =
+					(mode === 'replace' && provider.getReplacedComments) ||
+					(mode === 'restore' && provider.getRestoredComments) ||
+					provider.getComments;
+				if (unpaged) {
+					return getOrFetchPostSourceData<PaginatedResult<Comment | CommentPatch>>(source.manifest.id, postId, epKey, () => load(postId, undefined, sorting));
+				}
+				return load(postId, safeCursors[source.manifest.id], sorting);
 			})
 		);
 
-		const [primary, extras] = await Promise.all([primaryPromise, extrasPromise]);
+		const [primary, extrasSettled] = await Promise.all([primaryPromise, extrasPromise]);
 
-		const loaded = settled(extras, extraSources.map((s) => s.manifest.id));
-		const additions = loaded.map(({ index, sourceId: extraId, value }) => ({
+		const loaded = settled(extrasSettled, extras.map((e) => e.source.manifest.id));
+		const additions: CommentAddition[] = loaded.map(({ index, sourceId: extraId, value }) => ({
 			sourceId: extraId,
 			comments: value.items,
-			mode: modes[index]
+			mode: extras[index].mode
 		}));
 
 		// Курсоры следующей страницы: у каждого источника свой
@@ -159,8 +186,8 @@ export const api = {
 		if (primary.lastId !== undefined && primary.lastSortingValue !== undefined) {
 			resultCursors[sourceId] = { lastId: primary.lastId, lastSortingValue: primary.lastSortingValue };
 		}
-		for (const { sourceId: extraId, value } of loaded) {
-			if (value.lastId !== undefined && value.lastSortingValue !== undefined) {
+		for (const { index, sourceId: extraId, value } of loaded) {
+			if (!extras[index].unpaged && value.lastId !== undefined && value.lastSortingValue !== undefined) {
 				resultCursors[extraId] = { lastId: value.lastId, lastSortingValue: value.lastSortingValue };
 			}
 		}

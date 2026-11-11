@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { mergePosts } from './merger';
-import type { Post, PaginatedResult } from '../types';
+import { mergePosts, mergeComments } from './merger';
+import type { Post, PaginatedResult, Comment, CommentPatch } from '../types';
 
 describe('mergePosts', () => {
 	it('should merge empty results correctly', () => {
@@ -110,5 +110,85 @@ describe('mergePosts', () => {
 		// postValid should be first because invalid date is treated as 0 (Jan 1 1970)
 		expect(merged.items[0]).toEqual(postValid);
 		expect(merged.items[1]).toEqual(postInvalid);
+	});
+});
+
+describe('mergeComments', () => {
+	const createComment = (id: number, overrides: Partial<Comment> = {}): Comment => ({
+		id,
+		sourceId: 'dtf',
+		postId: 100,
+		author: { id: 10, name: 'User 10' },
+		content: `Comment ${id}`,
+		createdAt: '2023-01-01T12:00:00Z',
+		...overrides
+	});
+
+	it('mode restore: applies restored overlay ONLY to isRemoved comments and does NOT overwrite original fields', () => {
+		const liveComment = createComment(1, { content: 'Live text' });
+		const removedComment = createComment(2, {
+			content: 'Комментарий удален модератором',
+			isRemoved: true,
+			removedByModerator: true,
+			author: { id: 20, name: 'Author 20' }
+		});
+
+		const patch: CommentPatch = {
+			id: 2,
+			authorId: 20,
+			content: 'Original archived text',
+			media: [{ type: 'image', data: { uuid: 'img-1', width: 100, height: 100, size: 50, type: 'jpg' } }]
+		};
+
+		// Also try to restore the liveComment (should be ignored!)
+		const patchLive: CommentPatch = {
+			id: 1,
+			authorId: 10,
+			content: 'Attempted overwrite of live comment'
+		};
+
+		const merged = mergeComments([liveComment, removedComment], [
+			{
+				sourceId: 'archive',
+				comments: [patch, patchLive],
+				mode: 'restore'
+			}
+		]);
+
+		// Live comment should NOT be altered
+		expect(merged[0].content).toBe('Live text');
+		expect(merged[0].restored).toBeUndefined();
+
+		// Removed comment keeps isRemoved: true and content stub, but gains restored field
+		expect(merged[1].isRemoved).toBe(true);
+		expect(merged[1].content).toBe('Комментарий удален модератором');
+		expect(merged[1].restored).toEqual({
+			content: 'Original archived text',
+			media: patch.media,
+			sourceId: 'archive'
+		});
+	});
+
+	it('mode restore: rejects restoration if authorId does not match comment author', () => {
+		const removedComment = createComment(2, {
+			isRemoved: true,
+			author: { id: 20, name: 'Real Author' }
+		});
+
+		const maliciousPatch: CommentPatch = {
+			id: 2,
+			authorId: 999, // Mismatched author!
+			content: 'Fake attribution'
+		};
+
+		const merged = mergeComments([removedComment], [
+			{
+				sourceId: 'archive',
+				comments: [maliciousPatch],
+				mode: 'restore'
+			}
+		]);
+
+		expect(merged[0].restored).toBeUndefined();
 	});
 });

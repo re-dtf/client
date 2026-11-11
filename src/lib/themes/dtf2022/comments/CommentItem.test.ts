@@ -66,4 +66,14 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(dtfCommentsContent).toContain('onparent={scrollToTarget}');
 		expect(redtfCommentsContent).toContain('onparent={scrollToTarget}');
 	});
+
+	it('поддерживает отображение восстановленных комментариев из архива', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('comment.restored');
+		expect(svelteContent).toContain('Показать из архива');
+		expect(svelteContent).toContain('comment-item__author-mark--restored');
+		expect(svelteContent).toContain('comment-item__collapse-restored');
+		expect(svelteContent).toContain('!comment.isRemoved');
+	});
 });

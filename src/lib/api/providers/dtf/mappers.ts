@@ -175,6 +175,7 @@ export function mapComment(item: any, postId: number): Comment {
 		level: item.level,
 		isIgnored: item.isIgnored,
 		isRemoved: item.isRemoved,
+		removedByModerator: item.isRemovedByModerator ? true : undefined,
 		media: item.media?.length ? item.media.map((m: any) => ({
 			type: m.type || 'image',
 			data: {

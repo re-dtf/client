@@ -157,3 +157,58 @@
   "responseMapping": null
 }
 ```
+
+## Пример 4: Публичный архив удалённых комментариев со своим форматом (`mapped` и `restore`)
+
+Источник со своим нестандартным конвертом ответа (`{ "status": "ok", "data": [...] }`) и неразрушающим восстановлением удалённого контента.
+
+```json
+{
+  "manifestVersion": 1,
+  "id": "community-archive",
+  "name": "Архив удалённых комментариев",
+  "description": "Восстанавливает удалённые комментарии из публичного архива сообщества без перезаписи живых правок.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Community Developer",
+    "url": "https://archive.example.org"
+  },
+  "homepage": "https://archive.example.org",
+  "tags": ["comments", "archive", "dtf"],
+  "api": {
+    "baseUrl": "https://archive.example.org/api"
+  },
+  "auth": {
+    "type": "none"
+  },
+  "permissions": [
+    {
+      "id": "mutate:comments:restore",
+      "target": "dtf",
+      "description": "Восстановление текста удалённых комментариев из архива",
+      "required": true
+    }
+  ],
+  "endpoints": {
+    "getRestoredComments": {
+      "label": "Архив комментариев",
+      "description": "Получает архивную копию комментариев поста",
+      "path": "/comments/post/{postId}",
+      "method": "GET",
+      "paged": false,
+      "timeoutMs": 12000,
+      "mapping": {
+        "items": "data",
+        "emptyStatuses": [404],
+        "fields": {
+          "id": { "from": "id", "as": "number" },
+          "authorId": { "from": "data.user.id", "as": "number" },
+          "content": { "from": "data.text", "as": "string" },
+          "media": { "from": "data.media" }
+        }
+      }
+    }
+  },
+  "responseFormat": "mapped"
+}
+```
