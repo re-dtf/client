@@ -30,7 +30,7 @@ import type {
 	UploadResult
 } from '../../types';
 import { getLeonardoUrl } from '../../utils';
-import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchWithAuth, requireAuth } from './client';
+import { API_URL, COMMENTS_API_URL, UPLOAD_URL, apiV, fetchSearch, fetchWithAuth, requireAuth } from './client';
 import { untrack } from 'svelte';
 import { addWatermark } from '$lib/watermark';
 import { settings } from '$lib/storage/settings.svelte';
@@ -272,7 +272,7 @@ export const dtfApiProvider = {
 			editorial: String(filters.editorial),
 			strict: String(filters.strict)
 		});
-		const response = await fetchWithAuth(`${COMMENTS_API_URL}/search/posts?${params}${cursorQuery(cursor)}`);
+		const response = await fetchSearch(`/v2.10/search/posts?${params}${cursorQuery(cursor)}`);
 		const result = (await response.json()).result;
 
 		return {
@@ -291,7 +291,7 @@ export const dtfApiProvider = {
 	/** Поиск пользователей и блогов (`communities` — false) или тем (true). Отдаёт только первую дюжину: `page` метод не читает */
 	async searchSubsites(query: string, communities: boolean): Promise<{ items: SearchSubsite[]; total: number }> {
 		const params = new URLSearchParams({ q: query, type: communities ? '2' : '1', page: '0' });
-		const response = await fetchWithAuth(`${apiV('2.51')}/search/subsites?${params}`);
+		const response = await fetchSearch(`/v2.51/search/subsites?${params}`);
 		const result = (await response.json()).result;
 
 		return { items: (result?.items || []).map((item: any) => mapSearchSubsite(item.data || item)), total: result?.total ?? 0 };

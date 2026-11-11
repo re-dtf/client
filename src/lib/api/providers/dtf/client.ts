@@ -1,6 +1,7 @@
 import { untrack } from 'svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { settings, getEnabledProxies, type ProxyItem } from '$lib/storage/settings.svelte';
+import { checkAndConsumeSearchLimit } from '$lib/storage/searchLimit.svelte';
 import { isNative } from '$lib/capacitor';
 import { CapacitorHttp } from '@capacitor/core';
 import { ApiError, ProxyError } from '../../errors';
@@ -293,4 +294,128 @@ export async function fetchWithAuth(
 	}
 
 	return response;
+}
+
+async function fetchSearchNative(url: string): Promise<Response> {
+	const headers: Record<string, string> = {
+		'Accept': 'application/json'
+	};
+	const currentToken = untrack(() => authStorage.dtfToken);
+	if (currentToken) {
+		headers['JWTAuthorization'] = `Bearer ${currentToken}`;
+	}
+
+	const callNative = () =>
+		CapacitorHttp.get({
+			url,
+			headers,
+			connectTimeout: 10000,
+			readTimeout: 15000
+		}).catch((e: unknown) => {
+			const raw = e instanceof Error ? e.message : 'Неизвестная ошибка';
+			throw new ApiError(`Сетевая ошибка: ${raw}`, { url, rawMessage: raw, cause: e });
+		});
+
+	let res = await callNative();
+
+	if (res.status === 401 && (currentToken || untrack(() => !!authStorage.session?.refreshToken))) {
+		const refreshed = await refreshSession();
+		const nextToken = untrack(() => authStorage.dtfToken);
+		if (refreshed && nextToken) {
+			headers['JWTAuthorization'] = `Bearer ${nextToken}`;
+			res = await callNative();
+		} else {
+			delete headers['JWTAuthorization'];
+			res = await callNative();
+		}
+	}
+
+	const body = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+	const response = new Response(body, {
+		status: res.status,
+		headers: new Headers(res.headers as Record<string, string>)
+	});
+
+	if (!response.ok) {
+		const json = parseJsonResponse(res.data);
+		const defaultMessage = response.status >= 500 && response.status <= 599
+			? `Сервер DTF временно недоступен (код ${response.status})`
+			: `Ошибка API: ${response.status}`;
+		const message = json?.message || defaultMessage;
+		throw new ApiError(message, {
+			url,
+			status: response.status,
+			rawMessage: json?.message || String(response.status)
+		});
+	}
+
+	return response;
+}
+
+async function fetchSearchProxy(cleanPath: string): Promise<Response> {
+	const currentToken = untrack(() => authStorage.dtfToken);
+	const createHeaders = (token?: string | null) => {
+		const h: Record<string, string> = { 'Accept': 'application/json' };
+		if (token) h['JWTAuthorization'] = `Bearer ${token}`;
+		return h;
+	};
+
+	let { response } = await fetchWithProxyFailover(cleanPath, () => ({
+		method: 'GET',
+		headers: createHeaders(currentToken)
+	}));
+
+	if (response.status === 401 && (currentToken || untrack(() => !!authStorage.session?.refreshToken))) {
+		const refreshed = await refreshSession();
+		const nextToken = untrack(() => authStorage.dtfToken);
+		if (refreshed && nextToken) {
+			const retried = await fetchWithProxyFailover(cleanPath, () => ({
+				method: 'GET',
+				headers: createHeaders(nextToken)
+			}));
+			response = retried.response;
+		} else {
+			const retried = await fetchWithProxyFailover(cleanPath, () => ({
+				method: 'GET',
+				headers: createHeaders(null)
+			}));
+			response = retried.response;
+		}
+	}
+
+	if (!response.ok) {
+		const json = await response.json().catch(() => ({}));
+		const defaultMessage = response.status >= 500 && response.status <= 599
+			? `Сервер DTF временно недоступен (код ${response.status})`
+			: `Ошибка API: ${response.status}`;
+		const message = json.message || defaultMessage;
+		throw new ApiError(message, {
+			url: cleanPath,
+			status: response.status,
+			rawMessage: json.message || response.statusText || String(response.status)
+		});
+	}
+
+	return response;
+}
+
+/**
+ * Запрос к API поиска DTF (/search/posts, /search/subsites).
+ * - В нативном приложении (Capacitor): напрямую через CapacitorHttp (минуя ограничения CORS в WebView).
+ * - В dev-режиме: напрямую через fetchWithAuth (localhost входит в белый список DTF).
+ * - В веб-версии: через CORS-прокси с клиентским лимитом 5 запросов за 20 минут.
+ */
+export async function fetchSearch(path: string): Promise<Response> {
+	const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+	if (isNative()) {
+		return fetchSearchNative(`https://api.dtf.ru${cleanPath}`);
+	}
+
+	if (import.meta.env.DEV && getEnabledProxies().length === 0) {
+		return fetchWithAuth(`https://api.dtf.ru${cleanPath}`);
+	}
+
+	checkAndConsumeSearchLimit();
+	return fetchSearchProxy(cleanPath);
 }
