@@ -326,6 +326,7 @@
 	--bg-card-hover-2: rgba(255, 255, 255, 0.08);
 	--bg-card-active: rgba(255, 255, 255, 0.11);
 	--bg-secondary: #28282b;
+	--bg-warning: #3a3522;
 	--bg-tertiary: #2d2d32;
 	--bg-header: #202022;
 	--bg-search-field: rgba(255, 255, 255, 0.1);

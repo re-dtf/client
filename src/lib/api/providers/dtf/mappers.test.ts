@@ -68,6 +68,12 @@ describe('mapEntryToPost', () => {
 		expect(mapEntryToPost({ id: 1 }).commentEditor).toBeUndefined();
 	});
 
+	it('плашка редакции: заголовок по умолчанию, пустой текст — нет плашки', () => {
+		expect(mapEntryToPost({ id: 1, warningFromEditor: 'Текст', warningFromEditorTitle: 'Обновление' }).warning).toEqual({ title: 'Обновление', text: 'Текст' });
+		expect(mapEntryToPost({ id: 1, warningFromEditor: 'Текст', warningFromEditorTitle: null }).warning).toEqual({ title: 'От редакции', text: 'Текст' });
+		expect(mapEntryToPost({ id: 1, warningFromEditor: null, warningFromEditorTitle: 'Обновление' }).warning).toBeUndefined();
+	});
+
 	it('репост: исходная запись из repostData, недоступная — только id', () => {
 		const embed = { original_id: 55, title: 'Оригинал', author: { id: 3, name: 'Автор' }, blocks: [{ type: 'text' }] };
 		const repost = mapEntryToPost({ id: 1, repostId: 55, repostData: { type: 'osnovaEmbed', data: embed }, counters: { reposts: 2 } });

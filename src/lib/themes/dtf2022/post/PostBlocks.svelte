@@ -27,6 +27,7 @@
 	let {
 		blocks,
 		title,
+		warning,
 		variant,
 		postId,
 		sourceId,
@@ -35,6 +36,8 @@
 		blocks: Block[];
 		/** Заголовок поста — первым блоком */
 		title?: string;
+		/** Плашка редакции после заголовка («Обновление») */
+		warning?: { title: string; text: string };
 		variant: 'card' | 'page' | 'embed';
 		postId?: number | string;
 		sourceId?: string;
@@ -259,6 +262,13 @@
 >
 	{#if title?.trim()}
 		<div class="post-block post-block--title">{title.trim()}</div>
+	{/if}
+
+	{#if warning}
+		<div class="post-block post-block--warning">
+			<span class="post-block__warning-title">{warning.title}</span>
+			{@html withTags(warning.text)}
+		</div>
 	{/if}
 
 	{#each blocks as block, index}
@@ -491,6 +501,25 @@
 	.post-blocks--embed > .post-block--quote {
 		margin-left: 20px;
 		padding-left: 16px;
+	}
+
+	/* Плашка «Обновление» от редакции: .block-warning из архива 2023 (фон #fffbe7, поля 20px, до 859px — 16px) */
+	.post-block--warning {
+		padding: 20px;
+		background: var(--bg-warning, #fffbe7);
+		overflow-wrap: break-word;
+	}
+
+	.post-block__warning-title {
+		display: inline-block;
+		margin-right: 2px;
+		font-weight: 700;
+	}
+
+	@media (max-width: 859px) {
+		.post-block--warning {
+			padding: 16px;
+		}
 	}
 
 	.post-block__subline {

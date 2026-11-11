@@ -92,6 +92,8 @@ export interface Post {
 	isSubscribedToComments?: boolean;
 	/** Состояние редактора комментариев для текущего пользователя; нет — писать можно */
 	commentEditor?: CommentEditorState;
+	/** Плашка от редакции под заголовком («Обновление» и т. п.) */
+	warning?: { title: string; text: string };
 	/** Не опубликован: черновик */
 	isDraft?: boolean;
 	/** Фрагмент текста с найденными словами в `<mark>`; приходит только в выдаче поиска */

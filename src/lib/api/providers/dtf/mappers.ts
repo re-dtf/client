@@ -106,6 +106,13 @@ export function mapCommentEditor(editor: any): CommentEditorState | undefined {
 	return { enabled: false, text: editor.text || undefined };
 }
 
+/** Плашка редакции: заголовок необязателен, у DTF по умолчанию «От редакции» */
+export function mapWarning(entry: any): Post['warning'] {
+	const text = typeof entry.warningFromEditor === 'string' ? entry.warningFromEditor.trim() : '';
+	if (!text) return undefined;
+	return { title: entry.warningFromEditorTitle?.trim() || 'От редакции', text };
+}
+
 export function mapEntryToPost(entry: any): Post {
 	const commentsCount = entry.counters?.comments || 0;
 	const unreadCommentsCount = Math.max(0, commentsCount - (entry.commentsSeenCount?.count ?? commentsCount));
@@ -137,6 +144,7 @@ export function mapEntryToPost(entry: any): Post {
 		repost: mapRepost(entry),
 		isSubscribedToComments: entry.subscribedToTreads,
 		commentEditor: mapCommentEditor(entry.commentEditor),
+		warning: mapWarning(entry),
 		isDraft: entry.isPublished === false || undefined
 	};
 }
