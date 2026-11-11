@@ -85,7 +85,6 @@
 	let votes = $derived(themeSettings.votes);
 	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
 	let paragraphs = $derived(parseCommentText(comment.content));
-	let profilePath = $derived(resolve(getProfilePath(comment.author.id) as any));
 
 	let revealedRestored = $state(false);
 	let isRestoredShown = $derived(
@@ -93,6 +92,11 @@
 		(settings.value.restoreScope !== 'moderator' || comment.removedByModerator) &&
 		(settings.value.restoreExpanded || revealedRestored)
 	);
+
+	// Настоящий автор из архива подменяет заглушку DTF («Аккаунт заморожен», «Защитный дебаркадер»)
+	let restoredAuthor = $derived(isRestoredShown && settings.value.restoreAuthor ? comment.restored?.author : undefined);
+	let shownAuthor = $derived(restoredAuthor ?? comment.author);
+	let profilePath = $derived(resolve(getProfilePath(shownAuthor.id) as any));
 
 	let activeParagraphs = $derived(isRestoredShown && comment.restored ? parseCommentText(comment.restored.content) : paragraphs);
 	let activeMedia = $derived(
@@ -342,17 +346,20 @@
 			<div class="comment-item__break"></div>
 			{@render repliesAction()}
 		{:else}
-			<a class="comment-item__avatar" href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, comment.author.id)}>
+			<a class="comment-item__avatar" class:comment-item__avatar--restored={restoredAuthor} href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, shownAuthor.id)}>
 				<div class="comment-item__avatar-image">
-					{#if comment.author.avatarUrl}
-						<img src={comment.author.avatarUrl} alt="" />
+					{#if shownAuthor.avatarUrl}
+						<img src={shownAuthor.avatarUrl} alt="" />
 					{:else}
 						<img src={REMOVED_AVATAR} alt="" />
 					{/if}
 				</div>
 			</a>
 
-			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)}>{comment.author.name}</a>
+			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, shownAuthor.id)}>{shownAuthor.name}</a>
+			{#if restoredAuthor && comment.author.isFrozen}
+				<span class="comment-item__frozen" title="Аккаунт автора заморожен">заморожен</span>
+			{/if}
 			{#if showAuthorBadge && clientBadge}
 				<button
 					type="button"
@@ -730,6 +737,19 @@
 		line-height: 20px;
 		font-weight: 500;
 		white-space: nowrap;
+	}
+
+	/* Автор взят из архива, а не из DTF: аватар приглушён */
+	.comment-item__avatar--restored img {
+		opacity: 0.55;
+		filter: grayscale(0.5);
+	}
+
+	.comment-item__frozen {
+		margin-right: var(--gap-details);
+		line-height: 20px;
+		font-size: 12px;
+		color: var(--text-muted);
 	}
 
 	.comment-item__badge {
