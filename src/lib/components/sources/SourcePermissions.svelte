@@ -4,6 +4,7 @@
 	import SourceAvatar from './SourceAvatar.svelte';
 	import type { SourceManifest, SourcePermission } from '$lib/api/sources/types';
 	import { getPermissionDescription } from './utils';
+	import { getPermissionKey } from '$lib/api/sources/permissions';
 
 	let {
 		manifest,
@@ -36,7 +37,7 @@
 	function initCheckedState(perms: SourcePermission[]) {
 		const state: Record<string, boolean> = {};
 		for (const p of perms) {
-			state[p.id] = p.required ? true : false;
+			state[getPermissionKey(p.id, p.target)] = p.required ? true : false;
 		}
 		return state;
 	}
@@ -85,8 +86,8 @@
 
 	function handleConfirm() {
 		const granted = permissionsToReview
-			.filter(p => p.required || checkedState[p.id])
-			.map(p => p.id);
+			.map(p => getPermissionKey(p.id, p.target))
+			.filter((key, i) => permissionsToReview[i].required || checkedState[key]);
 		onConfirm(granted);
 	}
 </script>
@@ -140,10 +141,10 @@
 			<section>
 				<h3>Разрешения</h3>
 				<ul class="rows">
-					{#each permissionsToReview as perm (perm.id)}
+					{#each permissionsToReview as perm (getPermissionKey(perm.id, perm.target))}
 						<li>
 							<label class={['row', 'perm', { 'perm--warn': isRisky(perm), 'perm--locked': perm.required }]}>
-								<input type="checkbox" bind:checked={checkedState[perm.id]} disabled={perm.required} />
+								<input type="checkbox" bind:checked={checkedState[getPermissionKey(perm.id, perm.target)]} disabled={perm.required} />
 								<span class="row__text">
 									<span>{getPermissionDescription(perm)}</span>
 									{#if perm.required}<span class="muted">Без этого разрешения источник не работает</span>{/if}

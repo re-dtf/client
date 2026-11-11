@@ -27,7 +27,8 @@ vi.hoisted(() => {
 });
 
 // Import the module under test
-import { sourceStorage } from './sources.svelte';
+import { sourceStorage, migrateSources } from './sources.svelte';
+import { hasPermission } from '$lib/api/sources/permissions';
 import type { SourceState, SourceManifest } from '$lib/api/sources/types';
 
 const mockManifest: SourceManifest = {
@@ -152,5 +153,24 @@ describe('sourceStorage', () => {
 		const parsed = JSON.parse(stored!);
 		expect(parsed.d).toHaveLength(1);
 		expect(parsed.d[0].manifest.id).toBe('persist-source');
+	});
+});
+
+describe('migrateSources', () => {
+	it('превращает голый id разрешения с target в `id:target`, и разрешение начинает срабатывать', () => {
+		const manifest = {
+			...mockManifest,
+			permissions: [
+				{ id: 'mutate:comments:restore', target: 'dtf', description: '' },
+				{ id: 'write:comments', description: '' }
+			]
+		};
+		const old = { ...mockSourceState('old'), manifest, grantedPermissions: ['mutate:comments:restore', 'write:comments'] };
+		expect(hasPermission(old, 'mutate:comments:restore', 'dtf')).toBe(false);
+
+		const [migrated] = migrateSources([old]);
+
+		expect(migrated.grantedPermissions).toEqual(['mutate:comments:restore:dtf', 'write:comments']);
+		expect(hasPermission(migrated, 'mutate:comments:restore', 'dtf')).toBe(true);
 	});
 });
