@@ -1,7 +1,8 @@
 import { SvelteMap } from 'svelte/reactivity';
+import { resolve } from '$app/paths';
 import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
-import { openOverlay } from '$lib/navigation';
+import { getPostPath, openOverlay } from '$lib/navigation';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
 import { notify } from './ui/notify.svelte';
@@ -82,10 +83,27 @@ export function repostPost(post: Pick<Post, 'id' | 'sourceId'>) {
 }
 
 /** «Поделиться»: системное окно, а где его нет — ссылка в буфер */
-export function sharePost(post: Pick<Post, 'title' | 'url'>) {
-	if (!post.url) return;
-	if (navigator.share) navigator.share({ title: post.title, url: post.url }).catch(() => {});
-	else navigator.clipboard?.writeText(post.url).catch(() => {});
+export async function sharePost(post: Pick<Post, 'id' | 'sourceId'> & { title?: string; url?: string }) {
+	const base = typeof location !== 'undefined' ? location.href : 'http://localhost';
+	const url = new URL(resolve(getPostPath(post) as any), base).href;
+
+	if (typeof navigator !== 'undefined' && navigator.share) {
+		try {
+			await navigator.share(post.title ? { title: post.title, url } : { url });
+			return;
+		} catch (e: unknown) {
+			if (e instanceof Error && e.name === 'AbortError') return;
+		}
+	}
+
+	if (typeof navigator !== 'undefined' && navigator.clipboard) {
+		try {
+			await navigator.clipboard.writeText(url);
+			notify.success('Ссылка скопирована');
+		} catch {
+			notify.error('Не удалось скопировать ссылку');
+		}
+	}
 }
 
 /*
