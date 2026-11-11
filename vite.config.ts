@@ -106,7 +106,7 @@ export default defineConfig(async ({ command }) => {
 					runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 				},
 				adapter: adapter({
-					fallback: 'index.html'
+					fallback: '404.html'
 				}),
 				paths: {
 					base: basePath as `/${string}`
