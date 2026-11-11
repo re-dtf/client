@@ -48,6 +48,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			watermark: true,
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
+			autoUpvoteComments: false,
 			commentVirtualization: 'auto',
 			recommendations: 'auto',
 			appIcon: 'default',
@@ -103,6 +104,18 @@ describe('settings & shouldVirtualizeComments', () => {
 
 		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
 		expect(saved.d.mobileBadgesPosition).toBe('date');
+	});
+
+	it('autoUpvoteComments по умолчанию выключен (false)', () => {
+		expect(settings.value.autoUpvoteComments).toBe(false);
+	});
+
+	it('patch обновляет значение autoUpvoteComments', () => {
+		settings.patch({ autoUpvoteComments: true });
+		expect(settings.value.autoUpvoteComments).toBe(true);
+
+		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
+		expect(saved.d.autoUpvoteComments).toBe(true);
 	});
 
 	it('disableMobileTopBar по умолчанию выключен (false)', () => {

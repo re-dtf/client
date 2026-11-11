@@ -146,6 +146,14 @@
 		]
 	};
 
+	const autoUpvoteCommentsField: ToggleField = {
+		key: 'autoUpvoteComments',
+		type: 'toggle',
+		title: 'Голос за себя при публикации',
+		description: 'Автоматически ставить плюс своему комментарию сразу после публикации, как на Reddit.',
+		default: false
+	};
+
 	const nestingField: ChoiceField = {
 		key: 'commentNesting',
 		type: 'radio',
@@ -905,6 +913,11 @@
 							</SettingsGroup>
 						{:else if selectedPageId === 'interface-comments'}
 							<div class="settings-cards">
+								<FieldControl
+									field={autoUpvoteCommentsField}
+									value={settings.value.autoUpvoteComments}
+									onchange={(value) => settings.patch({ autoUpvoteComments: Boolean(value) })}
+								/>
 								<FieldControl
 									field={nestingField}
 									value={settings.value.commentNesting}

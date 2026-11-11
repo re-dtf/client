@@ -5,8 +5,9 @@ import { sourceRegistry } from './sources/registry.svelte';
 import { mergePosts, mergeComments } from './sources/merger';
 import { hasPermission } from './sources/permissions';
 import { authStorage } from '$lib/storage/auth.svelte';
-import { reactionSettings } from '$lib/storage/reactions.svelte';
-import { rankByScore } from '$lib/reactions';
+import { reactionSettings, voteReaction } from '$lib/storage/reactions.svelte';
+import { settings } from '$lib/storage/settings.svelte';
+import { applyReaction, rankByScore } from '$lib/reactions';
 import { trackComment, trackFavorite, trackReaction, trackSubscription } from '$lib/storage/stats.svelte';
 import { cachePost, cachePosts, loadPost, peekPost } from '$lib/postCache';
 
@@ -211,6 +212,23 @@ export const api = {
 	async addComment(...args: Parameters<typeof dtfApiProvider.addComment>) {
 		const comment = await dtfApiProvider.addComment(...args);
 		trackComment();
+		if (settings.value.autoUpvoteComments) {
+			const upvoteId = voteReaction(1);
+			const prevReactions = comment.reactions;
+			const prevLikes = comment.likes;
+			comment.reactions = applyReaction(comment.reactions, upvoteId);
+			if (comment.likes) {
+				comment.likes = {
+					...comment.likes,
+					count: (comment.likes.count || 0) + 1,
+					myVote: 1
+				};
+			}
+			api.reactToComment(comment.id, upvoteId, comment.sourceId, comment.author).catch(() => {
+				comment.reactions = prevReactions;
+				comment.likes = prevLikes;
+			});
+		}
 		return comment;
 	},
 	editComment: dtfApiProvider.editComment,

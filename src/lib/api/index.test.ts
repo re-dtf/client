@@ -3,7 +3,7 @@ import type { Comment, Post } from './types';
 import type { SourceState } from './sources/types';
 
 const mocks = vi.hoisted(() => ({
-	dtf: { getPosts: vi.fn(), getPost: vi.fn(), getComments: vi.fn(), reactToComment: vi.fn() },
+	dtf: { getPosts: vi.fn(), getPost: vi.fn(), getComments: vi.fn(), reactToComment: vi.fn(), addComment: vi.fn() },
 	sourceProvider: { getPosts: vi.fn(), getPost: vi.fn(), getComments: vi.fn(), getReplacedComments: undefined as any, reactToComment: undefined as any },
 	registry: { activeSources: [] as any[] }
 }));
@@ -15,6 +15,7 @@ vi.mock('$lib/storage/auth.svelte', () => ({ authStorage: {} }));
 
 import { api } from './index.svelte';
 import { reactionSettings } from '$lib/storage/reactions.svelte';
+import { settings } from '$lib/storage/settings.svelte';
 import { clearPostCache } from '$lib/postCache';
 
 const post = (id: number, sourceId: string, createdAt: string): Post =>
@@ -227,5 +228,51 @@ describe('api.getComments', () => {
 
 		expect(mocks.sourceProvider.getReplacedComments).toHaveBeenCalled();
 		expect(mocks.sourceProvider.getComments).not.toHaveBeenCalled();
+	});
+});
+
+describe('api.addComment', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		settings.patch({ autoUpvoteComments: false });
+	});
+
+	it('без autoUpvoteComments отправляет комментарий и не ставит реакцию', async () => {
+		const created = comment(123, 'dtf');
+		mocks.dtf.addComment.mockResolvedValue(created);
+
+		const result = await api.addComment(1, 'Привет');
+
+		expect(mocks.dtf.addComment).toHaveBeenCalledWith(1, 'Привет');
+		expect(mocks.dtf.reactToComment).not.toHaveBeenCalled();
+		expect(result).toBe(created);
+		expect(result.reactions).toBeUndefined();
+	});
+
+	it('при включенном autoUpvoteComments ставит плюс своему комментарию (как на Reddit)', async () => {
+		settings.patch({ autoUpvoteComments: true });
+		const created = { ...comment(123, 'dtf'), reactions: { counters: [], reactionId: 0 }, likes: { count: 0, myVote: 0 } };
+		mocks.dtf.addComment.mockResolvedValue(created);
+		mocks.dtf.reactToComment.mockResolvedValue(undefined);
+
+		const result = await api.addComment(1, 'Привет');
+
+		expect(mocks.dtf.addComment).toHaveBeenCalledWith(1, 'Привет');
+		expect(mocks.dtf.reactToComment).toHaveBeenCalledWith(123, 1);
+		expect(result.reactions?.reactionId).toBe(1);
+		expect(result.reactions?.counters).toEqual([{ id: 1, count: 1 }]);
+		expect(result.likes).toEqual({ count: 1, myVote: 1 });
+	});
+
+	it('ошибка запроса реакции не ломает публикацию комментария', async () => {
+		settings.patch({ autoUpvoteComments: true });
+		const created = { ...comment(123, 'dtf'), reactions: { counters: [], reactionId: 0 } };
+		mocks.dtf.addComment.mockResolvedValue(created);
+		mocks.dtf.reactToComment.mockRejectedValue(new Error('Сеть упала'));
+
+		const result = await api.addComment(1, 'Привет');
+
+		expect(mocks.dtf.addComment).toHaveBeenCalledWith(1, 'Привет');
+		expect(result.id).toBe(123);
 	});
 });

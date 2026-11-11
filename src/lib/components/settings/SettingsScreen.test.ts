@@ -266,6 +266,8 @@ describe('SettingsScreen', () => {
 			}
 		});
 
+		expect(body).toContain('Голос за себя при публикации');
+		expect(body).toContain('как на Reddit');
 		expect(body).toContain('Вложенные комментарии');
 		expect(body).toContain('Виртуализация комментариев');
 		expect(body).toContain('Подпись reDTF');

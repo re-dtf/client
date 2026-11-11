@@ -49,6 +49,8 @@ export interface AppSettings {
 	appIcon: AppIconId;
 	/** Пользовательская иконка в формате data URI (image/png или image/svg+xml) */
 	customIconData?: string | null;
+	/** Автоматический голос «за» свой комментарий при публикации (как на Reddit) */
+	autoUpvoteComments: boolean;
 	/** Показывать визуальную подсветку Safe Area и панелей поверх интерфейса */
 	debugSafeAreaOverlay?: boolean;
 	/** Показывать плавающий индикатор метрик (HUD) */
@@ -114,6 +116,7 @@ export const settings = persistedState<AppSettings>(
 		watermark: true,
 		clientBadges: 'redtf_only',
 		mobileBadgesPosition: 'author',
+		autoUpvoteComments: false,
 		appIcon: 'default',
 		customIconData: null,
 		debugSafeAreaOverlay: false,
