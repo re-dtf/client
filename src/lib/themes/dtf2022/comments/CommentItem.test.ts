@@ -55,4 +55,15 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain("icon: 'v_external'");
 		expect(svelteContent).toContain('https://dtf.ru/${comment.postId}?comment=${comment.id}');
 	});
+
+	it('поддерживает переход со стрелки к родителю ветки с подсветкой', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+		const dtfCommentsContent = fs.readFileSync(path.resolve(__dirname, '../Comments.svelte'), 'utf8');
+		const redtfCommentsContent = fs.readFileSync(path.resolve(__dirname, '../../redtf/Comments.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('onparent');
+		expect(svelteContent).toContain('onparent(key)');
+		expect(dtfCommentsContent).toContain('onparent={scrollToTarget}');
+		expect(redtfCommentsContent).toContain('onparent={scrollToTarget}');
+	});
 });

@@ -45,6 +45,7 @@
 		onlinehover,
 		onlineclick,
 		onexpand,
+		onparent,
 		editor
 	}: {
 		row: CommentRow;
@@ -60,6 +61,8 @@
 		onlinehover: (line: number | null) => void;
 		onlineclick: (owner: string) => void;
 		onexpand: () => void;
+		/** Переход к родительскому комментарию по стрелке */
+		onparent?: (key: string) => void;
 		/** Редактор ответа (один на все комментарии, рендерит родитель) */
 		editor: Snippet<[boolean]>;
 	} = $props();
@@ -133,7 +136,23 @@
 
 	function scrollToParent(e: MouseEvent) {
 		e.preventDefault();
-		if (row.parent) document.getElementById(`comment-${commentKey(row.parent)}`)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+		if (!row.parent) return;
+		const key = commentKey(row.parent);
+		if (onparent) {
+			onparent(key);
+		} else {
+			const node = document.getElementById(`comment-${key}`);
+			if (node) {
+				for (const anim of node.getAnimations?.() ?? []) anim.cancel();
+				node.style.backgroundColor = 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))';
+				node.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+				node.style.removeProperty('background-color');
+				node.animate(
+					[{ backgroundColor: 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))' }, { backgroundColor: 'transparent' }],
+					{ duration: 2500, easing: 'ease-out' }
+				);
+			}
+		}
 	}
 
 	async function copyLink() {

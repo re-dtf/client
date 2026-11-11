@@ -195,6 +195,7 @@
 					void node.offsetHeight;
 
 					// Подсвечиваем комментарий сразу, а угасание запускаем только по прибытии скролла
+					for (const anim of node.getAnimations?.() ?? []) anim.cancel();
 					node.style.backgroundColor = 'var(--color-blue-tint, var(--bg-highlight, #e8f3ff))';
 					node.scrollIntoView({ block: 'start', behavior: scrollBehavior() });
 
@@ -356,6 +357,7 @@
 					onlinehover={(line) => highlightBranch(index, line)}
 					onlineclick={collapseBranch}
 					onexpand={() => collapsed.delete(row.key)}
+					onparent={scrollToTarget}
 					{editor}
 				/>
 			{/each}
