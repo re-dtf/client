@@ -10,6 +10,7 @@ export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
 export type RecommendationsMode = 'auto' | 'button';
 export type ClientBadgesMode = 'all' | 'redtf_only' | 'none';
 export type MobileBadgesPosition = 'author' | 'date';
+export type RestoreScope = 'all' | 'moderator';
 
 export interface ProxyItem {
 	id: string;
@@ -51,6 +52,10 @@ export interface AppSettings {
 	customIconData?: string | null;
 	/** Автоматический голос «за» свой комментарий при публикации (как на Reddit) */
 	autoUpvoteComments: boolean;
+	/** Что восстанавливать из внешних архивов: 'all' (все удалённые) | 'moderator' (только удалённые модератором) */
+	restoreScope: RestoreScope;
+	/** Показывать восстановленные комментарии сразу развёрнутыми */
+	restoreExpanded: boolean;
 	/** Показывать визуальную подсветку Safe Area и панелей поверх интерфейса */
 	debugSafeAreaOverlay?: boolean;
 	/** Показывать плавающий индикатор метрик (HUD) */
@@ -117,6 +122,8 @@ export const settings = persistedState<AppSettings>(
 		clientBadges: 'redtf_only',
 		mobileBadgesPosition: 'author',
 		autoUpvoteComments: false,
+		restoreScope: 'all',
+		restoreExpanded: false,
 		appIcon: 'default',
 		customIconData: null,
 		debugSafeAreaOverlay: false,

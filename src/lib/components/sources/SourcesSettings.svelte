@@ -3,6 +3,10 @@
 	import { sourceRegistry } from '$lib/api/sources/registry.svelte';
 	import SettingsButton from '$lib/components/settings/SettingsButton.svelte';
 	import SettingsGroup from '$lib/components/settings/SettingsGroup.svelte';
+	import SettingsRow from '$lib/components/settings/SettingsRow.svelte';
+	import SettingsSwitch from '$lib/components/settings/SettingsSwitch.svelte';
+	import SettingsSegmented from '$lib/components/settings/SettingsSegmented.svelte';
+	import { settings } from '$lib/storage/settings.svelte';
 	import SourceCard from './SourceCard.svelte';
 	import SourcePermissions from './SourcePermissions.svelte';
 	import SourceUpdate from './SourceUpdate.svelte';
@@ -22,6 +26,10 @@
 	let updateSourceId = $state('');
 
 	let sources = $derived(sourceStorage.sources);
+
+	let hasRestoreSource = $derived(
+		sourceRegistry.activeSources.some((s) => s.grantedPermissions.some((p) => p.startsWith('mutate:comments:restore')))
+	);
 
 	async function handleAddSource() {
 		if (!newSourceUrl) return;
@@ -125,6 +133,32 @@
 	{/if}
 </SettingsGroup>
 
+{#if hasRestoreSource}
+	<div class="restore-settings">
+		<SettingsGroup title="Восстановленные комментарии" description="Настройки отображения удалённого контента из подключённых архивов.">
+			{#if hasRestoreSource}
+				<SettingsRow title="Что восстанавливать" subtitle="Применяется при следующей загрузке комментариев">
+					<SettingsSegmented
+						label="Что восстанавливать"
+						value={settings.value.restoreScope}
+						options={[
+							{ value: 'all', title: 'Все удалённые' },
+							{ value: 'moderator', title: 'Только модератором' }
+						]}
+						onchange={(v) => settings.patch({ restoreScope: v })}
+					/>
+				</SettingsRow>
+				<SettingsRow tag="label" title="Показывать сразу развёрнутыми" subtitle="Иначе под заглушкой будет кнопка «Показать из архива»">
+					<SettingsSwitch
+						checked={settings.value.restoreExpanded}
+						onchange={(v) => settings.patch({ restoreExpanded: v })}
+					/>
+				</SettingsRow>
+			{/if}
+		</SettingsGroup>
+	</div>
+{/if}
+
 {#if reviewManifest}
 	<SourcePermissions 
 		manifest={reviewManifest} 
@@ -203,5 +237,9 @@
 		padding: 0 20px 18px;
 		color: var(--st-danger);
 		font-size: 13px;
+	}
+
+	.restore-settings {
+		margin-top: 36px;
 	}
 </style>
