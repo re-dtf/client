@@ -46,4 +46,11 @@ describe('PostBlocks DTF link handling', () => {
 		expect(svelteContent).toContain('.post-block:not(.post-block--embed) :global(a)');
 		expect(svelteContent).not.toMatch(/^\s*\.post-block\s+:global\(a\)/m);
 	});
+
+	it('не использует srcset и sizes у img, чтобы не удерживать оторванный слой в Blink', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostBlocks.svelte'), 'utf8');
+
+		expect(svelteContent).not.toContain('srcset=');
+		expect(svelteContent).not.toContain('sizes=');
+	});
 });

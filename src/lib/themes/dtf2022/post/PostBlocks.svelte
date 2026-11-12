@@ -100,6 +100,10 @@
 		return ['media-figure', { 'media-figure--column': variant === 'page' && !isFullWidth(data) }];
 	}
 
+	// Без srcset/sizes: Blink удерживает ViewportChangeListener в MediaQueryMatcher на оторванном <img>, не давая выгрузить закрытый слой поста
+	const pageImageWidth = () =>
+		typeof window !== 'undefined' && Math.min(window.innerWidth, 1024) * (window.devicePixelRatio || 1) > 1024 ? 2048 : 1024;
+
 </script>
 
 <!--
@@ -140,9 +144,7 @@
 			{:else}
 				{#if !evictMedia}
 					<img
-						src={getLeonardoUrl(image.data.uuid, { width: 1024 })}
-						srcset={variant === 'page' ? `${getLeonardoUrl(image.data.uuid, { width: 1024 })} 1024w, ${getLeonardoUrl(image.data.uuid, { width: 2048 })} 2048w` : undefined}
-						sizes={variant === 'page' ? '(max-width: 768px) 100vw, 1024px' : undefined}
+						src={getLeonardoUrl(image.data.uuid, { width: variant === 'page' ? pageImageWidth() : 1024 })}
 						alt={caption || ''}
 						loading="lazy"
 					/>
