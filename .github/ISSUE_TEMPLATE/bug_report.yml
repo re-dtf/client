@@ -13,7 +13,7 @@ body:
     id: summary
     attributes:
       label: Краткое описание проблемы
-      placeholder: Например: При клике на ответ в ветке комментариев скролл прыгает в начало
+      placeholder: "Например: При клике на ответ в ветке комментариев скролл прыгает в начало"
     validations:
       required: true
 
@@ -64,7 +64,7 @@ body:
     id: version
     attributes:
       label: Версия клиента
-      placeholder: Отображается в настройках ()"О приложении")
+      placeholder: 'Отображается в настройках ("О приложении")'
 
   - type: textarea
     id: steps

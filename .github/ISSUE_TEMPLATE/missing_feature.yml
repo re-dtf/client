@@ -18,7 +18,7 @@ body:
     id: feature_name
     attributes:
       label: Название функционала или блока статьи
-      placeholder: Например: Блок опроса (quiz), личные сообщения...
+      placeholder: "Например: Блок опроса (quiz), личные сообщения..."
     validations:
       required: true
 
