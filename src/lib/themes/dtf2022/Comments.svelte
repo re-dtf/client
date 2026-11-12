@@ -385,6 +385,7 @@
 					onlineclick={collapseBranch}
 					onexpand={() => collapsed.delete(row.key)}
 					onparent={scrollToTarget}
+					onpatch={(patch) => logic.patchComment(row.key, patch)}
 					{editor}
 				/>
 			{/each}

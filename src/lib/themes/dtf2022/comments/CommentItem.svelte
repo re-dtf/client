@@ -25,6 +25,7 @@
 	import { COMMENT_MEDIA_MAX_HEIGHT, mediaMaxWidth, mediaPreviewUrl } from '../media';
 	import { parseCommentText } from './commentText';
 	import { commentKey, type CommentRow } from './flatten';
+	import type { Comment } from '$lib/api/types';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
 	import { settings, shouldVirtualizeComments } from '$lib/storage/settings.svelte';
 	import { getCommentBadge } from '$lib/clientBadge';
@@ -47,6 +48,7 @@
 		onlineclick,
 		onexpand,
 		onparent,
+		onpatch,
 		editor
 	}: {
 		row: CommentRow;
@@ -66,6 +68,7 @@
 		onexpand: () => void;
 		/** Переход к родительскому комментарию по стрелке */
 		onparent?: (key: string) => void;
+		onpatch?: (patch: Partial<Comment>) => void;
 		/** Редактор ответа (один на все комментарии, рендерит родитель) */
 		editor: Snippet<[boolean]>;
 	} = $props();
@@ -118,8 +121,8 @@
 	let isFiltered = $derived((muted || !!filterMatch) && !revealed);
 
 	// Голос «за» и «против» — выбранные в настройках реакции; false — голос не принят, анимации клика не будет
-	const rate = (vote: 1 | -1) => voteComment(comment, vote);
-	const react = (id: number) => toggleCommentReaction(comment, id);
+	const rate = (vote: 1 | -1) => voteComment(comment, vote, onpatch);
+	const react = (id: number) => toggleCommentReaction(comment, id, onpatch);
 
 	// Меню комментария: что можно править, сервер говорит при открытии
 	let menuOpen = $state(false);
@@ -152,7 +155,7 @@
 		else if (item === 'open_dtf') window.open(`https://dtf.ru/${comment.postId}?comment=${comment.id}`, '_blank', 'noopener,noreferrer');
 		else if (item === 'copy') copyLink();
 		else if (item === 'complain') complaining = ensureLogin();
-		else toggleCommentFavorite(comment);
+		else toggleCommentFavorite(comment, onpatch);
 	}
 
 	function scrollToParent(e: MouseEvent) {

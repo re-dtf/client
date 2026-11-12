@@ -315,18 +315,18 @@
 	/* Свайп влево по комментарию: ответ, а под ним по порядку — оценка или любимые реакции */
 	type SwipeAction = { label: string; icon?: string; image?: string; run: (key: string) => void };
 	// Комментарий из реактивного дерева, как у строки списка: в карте лежат копии, правка по ним не видна
-	const withComment = (key: string, act: (comment: Comment) => void) => {
+	const withComment = (key: string, act: (comment: Comment, onpatch: (patch: Partial<Comment>) => void) => void) => {
 		const comment = rows.find((row) => row.key === key)?.comment;
-		if (comment) act(comment);
+		if (comment) act(comment, (patch) => logic.patchComment(key, patch));
 	};
 	let swipeActions = $derived.by((): SwipeAction[] => {
 		const extra: SwipeAction[] =
 			themeSettings.votes === 'reactions'
-				? quickReactions().map((id) => ({ label: REACTIONS[id]?.name ?? '', image: REACTIONS[id]?.url, run: (key) => withComment(key, (c) => toggleCommentReaction(c, id)) }))
+				? quickReactions().map((id) => ({ label: REACTIONS[id]?.name ?? '', image: REACTIONS[id]?.url, run: (key) => withComment(key, (c, p) => toggleCommentReaction(c, id, p)) }))
 				: ([1, -1] as const).map((sign) => ({
 						label: sign > 0 ? 'Плюс' : 'Минус',
 						icon: themeSettings.votes === 'likes' ? (sign > 0 ? 'v_like' : 'v_dislike') : sign > 0 ? 'v_arrow_up' : 'v_arrow_down',
-						run: (key) => withComment(key, (c) => voteComment(c, sign))
+						run: (key) => withComment(key, (c, p) => voteComment(c, sign, p))
 					}));
 		return [{ label: 'Ответить', icon: 'v_reply', run: reply }, ...extra];
 	});
@@ -435,6 +435,7 @@
 						onlineclick={collapseBranch}
 						onexpand={() => collapsed.delete(row.key)}
 						onparent={scrollToTarget}
+						onpatch={(patch) => logic.patchComment(row.key, patch)}
 						{editor}
 					/>
 				{/each}

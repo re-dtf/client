@@ -11,9 +11,9 @@ export class CommentsLogic {
 	get postId() { return this.getPostId(); }
 	get sourceId() { return this.getSourceId(); }
 	
-	comments = $state<CommentTreeItem[]>([]);
-	flatComments = $state<Comment[]>([]);
-	allCommentsMap = $state(new Map<string, CommentTreeItem>());
+	comments = $state.raw<CommentTreeItem[]>([]);
+	flatComments = $state.raw<Comment[]>([]);
+	allCommentsMap = $state.raw(new Map<string, CommentTreeItem>());
 	loading = $state(false);
 	error = $state<string | null>(null);
 
@@ -104,6 +104,19 @@ export class CommentsLogic {
 		}
 	}
 
+	/** Точечно обновляет узел в $state.raw-дереве и триггерит пересчёт плоских строк */
+	patchComment(key: string, patch: Partial<CommentTreeItem>) {
+		const path = this.pathTo(key);
+		if (!path) return;
+		const idx = path.length - 1;
+		const next: CommentTreeItem = { ...path[idx], ...patch };
+		const siblings = idx === 0 ? this.comments : path[idx - 1].children;
+		const pos = siblings.indexOf(path[idx]);
+		if (pos !== -1) siblings[pos] = next;
+		this.allCommentsMap.set(key, next);
+		this.comments = [...this.comments];
+	}
+
 	/** Вставляет только что отправленный комментарий в дерево, не пересобирая его: локальные правки остальных не теряются */
 	addComment(comment: Comment) {
 		this.flatComments = [...this.flatComments, comment];
@@ -113,10 +126,12 @@ export class CommentsLogic {
 		this.allCommentsMap.set(`${comment.sourceId}_${comment.id}`, item);
 
 		if (!path) {
-			this.comments.push(item);
+			this.comments = [...this.comments, item];
 		} else {
-			path[path.length - 1].children.push(item);
+			const parent = path[path.length - 1];
+			parent.children = [...parent.children, item];
 			for (const node of path) node._totalReplies = (node._totalReplies ?? 0) + 1;
+			this.patchComment(`${parent.sourceId}_${parent.id}`, {});
 		}
 
 		cacheComments(this.postId, this.sourceId, this.sorting, {
@@ -129,12 +144,7 @@ export class CommentsLogic {
 	/** Текст комментария после правки */
 	updateComment(comment: Comment) {
 		this.flatComments = this.flatComments.map((c) => (c.sourceId === comment.sourceId && c.id === comment.id ? comment : c));
-		const path = this.pathTo(`${comment.sourceId}_${comment.id}`);
-		if (path) {
-			const node = path[path.length - 1];
-			node.content = comment.content;
-			node.media = comment.media;
-		}
+		this.patchComment(`${comment.sourceId}_${comment.id}`, { content: comment.content, media: comment.media });
 
 		cacheComments(this.postId, this.sourceId, this.sorting, {
 			flatComments: this.flatComments,
