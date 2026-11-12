@@ -327,7 +327,8 @@
 		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
-	.post-block :global(a) {
+	/* Исключаем --embed, чтобы цвет и подчёркивание ссылок не протекали в шапку встроенного PostCard */
+	.post-block:not(.post-block--embed) :global(a) {
 		color: var(--text-link);
 		border-bottom: 1px solid var(--border-link);
 		cursor: pointer;

@@ -39,4 +39,11 @@ describe('PostBlocks DTF link handling', () => {
 		expect(svelteContent).toContain('margin-inline: auto');
 		expect(svelteContent).toContain('padding-inline: 16px');
 	});
+
+	it('не применяет стили ссылок блоков к встроенному посту (osnovaEmbed)', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'PostBlocks.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('.post-block:not(.post-block--embed) :global(a)');
+		expect(svelteContent).not.toMatch(/^\s*\.post-block\s+:global\(a\)/m);
+	});
 });
