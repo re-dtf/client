@@ -63,9 +63,9 @@ export interface TensionController {
 /**
  * Контроллер тактильного натяжения для жестов (паттерн Android Resist / Circle to Search).
  * По мере приближения к порогу `threshold` уплотняет шаг (16px → 6px) и наращивает силу
- * `PRIMITIVE_LOW_TICK` (0.08 → 0.62), а на пороге даёт отсечку `snap` (`click` или `heavy`).
+ * `PRIMITIVE_LOW_TICK` (0.08 → 0.62), а на пороге даёт отсечку `snap` (`click`, `heavy`, `tick` или `soft`).
  */
-export function createTension(snap: 'click' | 'heavy' = 'click'): TensionController {
+export function createTension(snap: 'click' | 'heavy' | 'tick' | 'soft' = 'click'): TensionController {
 	let armed = false;
 	let lastDistance = 0;
 	let lastTime = 0;

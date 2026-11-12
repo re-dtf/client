@@ -69,7 +69,7 @@ export function pullRefresh(options: PullRefreshOptions): Attachment<HTMLElement
 		let busy = false;
 		let y = 0;
 		let frame = 0;
-		const tension = createTension('heavy');
+		const tension = createTension('click');
 
 		const touch = (e: TouchEvent) => start && [...e.touches].find((t) => t.identifier === start!.id);
 
