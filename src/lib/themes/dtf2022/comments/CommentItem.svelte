@@ -473,7 +473,7 @@
 						{#if media.type === 'image' || media.type === 'movie'}
 							<figure class="media-figure">
 								<div
-									class="media-placeholder"
+									class={['media-placeholder', media.data.base64preview && 'media-placeholder--preview']}
 									style:--media-max-w="{mediaMaxWidth(media.data.width, media.data.height, COMMENT_MEDIA_MAX_HEIGHT)}px"
 									style:--media-w={media.data.width || 16}
 									style:--media-h={media.data.height || 9}

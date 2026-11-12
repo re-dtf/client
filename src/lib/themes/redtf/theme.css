@@ -229,7 +229,7 @@
 }
 
 /* Base64 preview для медиа: размытая миниатюра до загрузки основного изображения */
-:root[data-theme~="redtf"] .media-placeholder[style*="--media-preview"]::before {
+:root[data-theme~="redtf"] .media-placeholder--preview::before {
 	content: '';
 	position: absolute;
 	inset: -14px;
@@ -242,7 +242,7 @@
 }
 
 /* До загрузки картинка скрыта и размыта; при загрузке плавно проявляется из размытия («обратное растворение») */
-:root[data-theme~="redtf"] .media-placeholder[style*="--media-preview"] :is(img, video) {
+:root[data-theme~="redtf"] .media-placeholder--preview :is(img, video) {
 	opacity: 0;
 	filter: blur(14px);
 	transform: scale(1.04);
@@ -254,14 +254,20 @@
 	will-change: opacity, filter, transform;
 }
 
-:root[data-theme~="redtf"] .media-placeholder--loaded[style*="--media-preview"] :is(img, video) {
+:root[data-theme~="redtf"] .media-placeholder--loaded.media-placeholder--preview :is(img, video) {
 	opacity: 1;
-	filter: blur(0px);
+	/* none, а не blur(0): иначе у каждой загруженной картинки остаётся отдельный слой фильтра, а в ленте их сотни */
+	filter: none;
 	transform: none;
+	/* Слой нужен только пока идёт проявление; running-анимацию браузер выносит в слой сам */
+	will-change: auto;
 }
 
 :root[data-theme~="redtf"] .media-placeholder--loaded::before {
 	opacity: 0;
+	/* После растворения размытая миниатюра уходит совсем, а не висит прозрачным слоем с фильтром */
+	visibility: hidden;
+	transition: opacity 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), visibility 0s 0.6s;
 }
 
 /* Без эффектов прозрачности и размытия: отключаем тяжелые фильтры у превью картинок */
@@ -276,13 +282,17 @@
 	transition: opacity 0.3s ease !important;
 }
 
+:root[data-theme~="redtf"][data-transparency="false"] .media-placeholder--loaded :is(img, video) {
+	will-change: auto !important;
+}
+
 /* Картинки и видео без base64preview: мягкое появление поверх цветной заглушки */
-:root[data-theme~="redtf"] .media-placeholder:not([style*="--media-preview"]) :is(img, video) {
+:root[data-theme~="redtf"] .media-placeholder:not(.media-placeholder--preview) :is(img, video) {
 	opacity: 0;
 	transition: opacity 0.4s ease;
 }
 
-:root[data-theme~="redtf"] .media-placeholder--loaded:not([style*="--media-preview"]) :is(img, video) {
+:root[data-theme~="redtf"] .media-placeholder--loaded:not(.media-placeholder--preview) :is(img, video) {
 	opacity: 1;
 }
 

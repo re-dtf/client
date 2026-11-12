@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { getPostPath, openPost } from '$lib/navigation';
 	import { preloadIntent } from '$lib/actions/preloadIntent';
+	import { nearViewport } from '$lib/actions/nearViewport';
 	import { nsfwBlur } from '$lib/nsfwBlur.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { Button } from '../ui';
@@ -43,6 +44,8 @@
 	let commentsPath = $derived(resolve(getPostPath(post, 'comments') as any));
 	let onreact = $derived(post.sourceId === 'dtf' ? (id: number) => reactToPost(post, id) : undefined);
 	let showReposts = $state(false);
+	// Карточка далеко от экрана: картинки и видео сняты, заглушка держит место
+	let near = $state(true);
 
 	// Запись 18+ в ленте закрыта размытием, пока её не откроют; встроенные посты не размываем
 	let revealed = $state(false);
@@ -61,7 +64,7 @@
 	}
 </script>
 
-<article class={['feed-item', { 'feed-item--embed': embed }]}>
+<article class={['feed-item', { 'feed-item--embed': embed }]} {@attach embed ? undefined : nearViewport((value) => (near = value))}>
 	<div class={['post-card', { 'post-card--embed': embed }]}>
 		{#if post.repost && !embed}
 			<RepostLabel />
@@ -70,7 +73,7 @@
 		<PostHeader {post} variant="card" {subscribe} />
 
 		<div class={['post-content', { 'post-content--blur': blurred }]}>
-			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} />
+			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} evictMedia={!near} />
 			{#if blurred}
 				<div class="post-adult">
 					<div class="post-adult__text">

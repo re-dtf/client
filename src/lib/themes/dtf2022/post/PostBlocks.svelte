@@ -110,7 +110,7 @@
 	{@const maxWidth = mediaMaxWidth(data?.width, data?.height, isFullWidth(data) ? Infinity : FEED_MEDIA_MAX_HEIGHT)}
 	<div class="media-frame" style:--media-max-w={maxWidth ? `${maxWidth}px` : '100%'}>
 		<div
-			class={['media-placeholder', kind && `media-placeholder--${kind}`]}
+			class={['media-placeholder', kind && `media-placeholder--${kind}`, data?.base64preview && 'media-placeholder--preview']}
 			style:--media-w={data?.width || 16}
 			style:--media-h={data?.height || 9}
 			style:--media-bg={data?.color ? `#${data.color}` : undefined}
@@ -201,7 +201,7 @@
 						allowfullscreen
 					></iframe>
 				{:else}
-					{#if video.thumbnail?.data?.uuid}
+					{#if video.thumbnail?.data?.uuid && !evictMedia}
 						<img src={getLeonardoUrl(video.thumbnail.data.uuid, { width: 1024 })} alt="" loading="lazy" />
 					{/if}
 					<button
