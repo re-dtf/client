@@ -1,0 +1,114 @@
+name: Оптимизация
+description: Сообщить о проблемах с производительностью, лагах, потреблении памяти или батареи
+title: "[Perf]: "
+labels: ["kind: performance", "status: needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Перед созданием тикета убедитесь, что проблема воспроизводится на актуальной версии и не вызвана сторонними расширениями браузера.
+        Для общих предложений по улучшению без конкретных проблем со скоростью используйте шаблон **«Новая идея / Улучшение»**.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Краткое описание проблемы
+      placeholder: "Например: Просадки FPS анимаций и долгие переходы при открытии веток с 300+ комментариями"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: problem_type
+    attributes:
+      label: Тип проблемы с производительностью
+      options:
+        - "Лаги / просадки FPS при скролле (Jank)"
+        - "Долгая загрузка / старт приложения (LCP / TTI)"
+        - "Зависание интерфейса / микрофризы (UI Freeze)"
+        - "Высокое потребление памяти / утечка (Memory Leak / OOM)"
+        - "Высокий нагрев / быстрый разряд батареи"
+        - "Медленный рендеринг тяжелых медиа (GIF, видео, длинные посты)"
+        - "Другое"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Область приложения
+      options:
+        - "Всё приложение"
+        - "Лента постов (Feed)"
+        - "Просмотр поста (Post)"
+        - "Комментарии (Comments)"
+        - "Редактор (Editor)"
+        - "Окна и оверлеи (Navigation / Modals)"
+        - "Настройки (Settings)"
+        - "PWA / Кеширование / Фоновые процессы"
+        - "Другое"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Операционная система
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Браузер / Окружение
+      options:
+        - Chrome / Chromium-based
+        - Firefox
+        - Safari / WebKit
+        - Android приложение (Capacitor)
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Устройство и характеристики (CPU / RAM)
+      placeholder: "Например: Xiaomi Redmi Note 10 (4 GB RAM) или ПК Ryzen 5600, 16 GB"
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия клиента
+      placeholder: 'Отображается в настройках ("О приложении")'
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      placeholder: |
+        1. Открыть пост с большим количеством комментариев
+        2. Быстро проскроллить вниз...
+        3. Заметить зависание...
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Замеры, профили или детали (если есть)
+      description: Скриншоты Performance/Memory из DevTools, замеры FPS, потребление ОЗУ или запись экрана.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Контрольный список
+      options:
+        - label: Я проверил, что аналогичная проблема с производительностью ещё не зарегистрирована
+          required: true
+        - label: Проблема воспроизводится на последней актуальной версии
+          required: true
