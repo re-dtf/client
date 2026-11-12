@@ -41,7 +41,8 @@ describe('redtf dark mode configuration', () => {
 			'--color-blue',
 			'--color-positive',
 			'--color-negative',
-			'--shadow-card'
+			'--shadow-card',
+			'--bg-hidden-block'
 		];
 
 		for (const token of requiredTokens) {
@@ -166,5 +167,11 @@ describe('redtf dark mode configuration', () => {
 		const appCssPath = path.resolve(__dirname, '../../../app.css');
 		const appCssContent = fs.readFileSync(appCssPath, 'utf-8');
 		expect(appCssContent).toContain('--color-blue-tint: rgba(70, 131, 217, 0.25);');
+	});
+
+	it('настраивает фон скрытого блока (спойлера) под фон опроса (--bg-unread) в тёмной теме', () => {
+		const cssPath = path.join(__dirname, 'theme.css');
+		const cssContent = fs.readFileSync(cssPath, 'utf-8');
+		expect(cssContent).toContain('--bg-hidden-block: #1a2636;');
 	});
 });

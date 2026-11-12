@@ -346,8 +346,7 @@
 	--text-search-placeholder: rgba(255, 255, 255, 0.5);
 	--bg-sidebar-hover: rgba(255, 255, 255, 0.08);
 	--bg-media-frame: rgba(255, 255, 255, 0.08);
-	--bg-spoiler: rgba(255, 255, 255, 0.08);
-	--bg-spoiler-hover: rgba(255, 255, 255, 0.12);
+	--bg-hidden-block: #1a2636;
 	--bg-highlight: rgba(70, 131, 217, 0.25);
 	--color-blue-tint: rgba(70, 131, 217, 0.25);
 	--bg-unread: #1a2636;
