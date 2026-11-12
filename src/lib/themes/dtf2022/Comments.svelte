@@ -14,6 +14,7 @@
 	import CommentItem from './comments/CommentItem.svelte';
 	import CommentRestriction from './comments/CommentRestriction.svelte';
 	import { commentKey, flattenComments } from './comments/flatten';
+	import { reactionSettings } from '$lib/storage/reactions.svelte';
 
 	let {
 		postId,
@@ -37,12 +38,19 @@
 		onfocused?: () => void;
 	} = $props();
 
-	const SORTINGS = [
+	let sortings = $derived([
 		{ value: 'hotness', label: 'Лучшие' },
-		{ value: 'date', label: 'Последние' }
-	];
+		{ value: 'date', label: 'Последние' },
+		...(reactionSettings.value.rank ? [{ value: 'worst', label: 'Худшие' }] : [])
+	]);
 
 	const logic = new CommentsLogic(() => postId, () => sourceId);
+
+	$effect(() => {
+		if (!reactionSettings.value.rank && logic.sorting === 'worst') {
+			setSorting('hotness');
+		}
+	});
 
 	/** Свёрнутые ветки: ключи комментариев, чьи ответы скрыты */
 	const collapsed = new SvelteSet<string>();
@@ -307,7 +315,7 @@
 			<h2 class="comments-header__title">{title}</h2>
 
 			<div class="comments-header__actions">
-				<Popover bind:open={sortingOpen} items={SORTINGS} selected={logic.sorting} onselect={setSorting} label="Сортировка комментариев">
+				<Popover bind:open={sortingOpen} items={sortings} selected={logic.sorting} onselect={setSorting} label="Сортировка комментариев">
 					<button
 						type="button"
 						class="comments-header__action"

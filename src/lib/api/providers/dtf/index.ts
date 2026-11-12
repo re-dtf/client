@@ -305,7 +305,8 @@ export const dtfApiProvider = {
 	},
 
 	async getComments(postId: number, cursor?: CursorData, sorting: string = 'date'): Promise<PaginatedResult<Comment>> {
-		const response = await fetchWithAuth(`${COMMENTS_API_URL}/comments?contentId=${postId}&sorting=${sorting}${cursorQuery(cursor)}`);
+		const dtfSorting = sorting === 'worst' ? 'hotness' : sorting;
+		const response = await fetchWithAuth(`${COMMENTS_API_URL}/comments?contentId=${postId}&sorting=${dtfSorting}${cursorQuery(cursor)}`);
 		const { result } = await response.json();
 
 		return {

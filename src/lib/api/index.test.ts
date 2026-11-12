@@ -113,16 +113,18 @@ describe('ранжирование по реакциям', () => {
 		expect((await api.getPosts({ pageName: 'new', sorting: 'all' })).items.map((p) => p.id)).toEqual([1, 2]);
 	});
 
-	it('комментарии «Лучшие» ранжируются, «Последние» нет, с выключенной настройкой порядок сервера', async () => {
+	it('комментарии «Лучшие» ранжируются, «Худшие» инвертируют порядок, «Последние» нет, с выключенной настройкой порядок сервера', async () => {
 		const comments = [reacted(comment(1, 'dtf'), [{ id: 25, count: 4 }]), reacted(comment(2, 'dtf'), [{ id: 1, count: 2 }])];
 		mocks.dtf.getComments.mockResolvedValue({ items: comments });
 		const ids = async (sorting: string) => (await api.getComments(1, 'dtf', undefined, sorting)).items.map((c) => c.id);
 
 		expect(await ids('hotness')).toEqual([2, 1]);
+		expect(await ids('worst')).toEqual([1, 2]);
 		expect(await ids('date')).toEqual([1, 2]);
 
 		reactionSettings.patch({ rank: false });
 		expect(await ids('hotness')).toEqual([1, 2]);
+		expect(await ids('worst')).toEqual([1, 2]);
 	});
 });
 

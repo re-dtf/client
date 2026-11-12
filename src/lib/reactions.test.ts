@@ -87,6 +87,16 @@ describe('rankByScore', () => {
 		expect(rankByScore([hated, first, loved, second, pinned]).map((i) => i.name)).toEqual(['pinned', 'loved', 'first', 'second', 'hated']);
 		expect(scoreOf(hated)).toBe(-31);
 	});
+
+	it('при ascending=true задизлайканное выше залайканного, закреплённое всё равно сверху', () => {
+		const loved = item('loved', [{ id: 1, count: 4 }]);
+		const hated = item('hated', [{ id: 1, count: 9 }, { id: 25, count: 20 }]);
+		const first = item('first', [{ id: 7, count: 5 }]);
+		const second = item('second', []);
+		const pinned = item('pinned', [{ id: 25, count: 1 }], true);
+
+		expect(rankByScore([loved, first, hated, second, pinned], true).map((i) => i.name)).toEqual(['pinned', 'hated', 'first', 'second', 'loved']);
+	});
 });
 
 describe('voteReaction', () => {

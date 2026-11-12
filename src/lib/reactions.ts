@@ -43,11 +43,11 @@ export function scoreOf(item: Rated): number {
 	return up - down;
 }
 
-/** От лучших к худшим; закреплённые остаются сверху, при равенстве сохраняется прежний порядок */
-export function rankByScore<T extends Rated>(items: T[]): T[] {
+/** От лучших к худшим (или от худших к лучшим при ascending=true); закреплённые остаются сверху, при равенстве сохраняется прежний порядок */
+export function rankByScore<T extends Rated>(items: T[], ascending = false): T[] {
 	return items
 		.map((item) => ({ item, score: scoreOf(item) }))
-		.sort((a, b) => Number(!!b.item.isPinned) - Number(!!a.item.isPinned) || b.score - a.score)
+		.sort((a, b) => Number(!!b.item.isPinned) - Number(!!a.item.isPinned) || (ascending ? a.score - b.score : b.score - a.score))
 		.map(({ item }) => item);
 }
 

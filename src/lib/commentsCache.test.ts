@@ -35,9 +35,11 @@ describe('commentsCache', () => {
 	it('разделяет кэш по типу сортировки', () => {
 		cacheComments(100, 'dtf', 'hotness', { flatComments: [makeComment(1, 'Best')], hasMore: false });
 		cacheComments(100, 'dtf', 'date', { flatComments: [makeComment(2, 'Latest')], hasMore: false });
+		cacheComments(100, 'dtf', 'worst', { flatComments: [makeComment(3, 'Worst')], hasMore: false });
 
 		expect(peekComments(100, 'dtf', 'hotness')?.flatComments[0].content).toBe('Best');
 		expect(peekComments(100, 'dtf', 'date')?.flatComments[0].content).toBe('Latest');
+		expect(peekComments(100, 'dtf', 'worst')?.flatComments[0].content).toBe('Worst');
 	});
 
 	it('вытесняет старые записи при переполнении лимита', () => {

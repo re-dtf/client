@@ -193,11 +193,15 @@ export const api = {
 			}
 		}
 
-		// «Лучшие» тоже ранжирует сервер; порядок меняется внутри загруженной страницы, чтобы уже показанные комментарии не прыгали
+		// «Лучшие» и «Худшие» ранжируются по очкам; порядок меняется внутри загруженной страницы, чтобы уже показанные комментарии не прыгали
 		const merged = mergeComments(primary.items, additions);
+		const items =
+			reactionSettings.value.rank && (sorting === 'hotness' || sorting === 'worst')
+				? rankByScore(merged, sorting === 'worst')
+				: merged;
 
 		return {
-			items: reactionSettings.value.rank && sorting === 'hotness' ? rankByScore(merged) : merged,
+			items,
 			lastId: primary.lastId,
 			lastSortingValue: primary.lastSortingValue,
 			cursors: resultCursors

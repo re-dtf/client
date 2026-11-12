@@ -17,7 +17,7 @@
 	import { commentKey, flattenComments } from '../dtf2022/comments/flatten';
 	import { toggleCommentReaction, voteComment } from '../dtf2022/comments/votes.svelte';
 	import { REACTIONS } from '$lib/config/reactions';
-	import { quickReactions } from '$lib/storage/reactions.svelte';
+	import { quickReactions, reactionSettings } from '$lib/storage/reactions.svelte';
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 	import { commentSwipe, type SwipeView } from './comments/commentSwipe';
@@ -47,12 +47,19 @@
 	/** Писать нельзя: ни нового комментария, ни ответа (правка своего остаётся на усмотрение сервера) */
 	let blocked = $derived(commentEditor?.enabled === false);
 
-	const SORTINGS = [
+	let sortings = $derived([
 		{ value: 'hotness', label: 'Лучшие' },
-		{ value: 'date', label: 'Последние' }
-	];
+		{ value: 'date', label: 'Последние' },
+		...(reactionSettings.value.rank ? [{ value: 'worst', label: 'Худшие' }] : [])
+	]);
 
 	const logic = new CommentsLogic(() => postId, () => sourceId);
+
+	$effect(() => {
+		if (!reactionSettings.value.rank && logic.sorting === 'worst') {
+			setSorting('hotness');
+		}
+	});
 
 	let isAutopan = $derived(settings.value.commentNesting === 'autopan');
 
@@ -356,7 +363,7 @@
 			<h2 class="comments-header__title">{title}</h2>
 
 			<div class="comments-header__actions">
-				<Popover bind:open={sortingOpen} items={SORTINGS} selected={logic.sorting} onselect={setSorting} label="Сортировка комментариев">
+				<Popover bind:open={sortingOpen} items={sortings} selected={logic.sorting} onselect={setSorting} label="Сортировка комментариев">
 					<button
 						type="button"
 						class="comments-header__action"
