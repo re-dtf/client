@@ -10,7 +10,7 @@
 
 /* 
  * Custom Tools Styling 
- * We use CSS variables to allow easy theming in the future.
+ * We use CSS variables to allow easy theming across light and dark modes.
  */
 
 :root {
@@ -25,6 +25,229 @@
 	--dtf-editor-accent-border: var(--border-focus, #b3d9ff);
 	--dtf-editor-accent-text: var(--color-blue, #0066cc);
 	--dtf-editor-danger: var(--color-danger, #ff4d4d);
+}
+
+/* 
+ * EditorJS Theme Adaptation (Dark/Light Modes)
+ */
+:root .ce-popover {
+	--border-radius: 8px;
+	--color-background: var(--bg-card, #fff);
+	--color-border: var(--border-color, #EFF0F1);
+	--color-shadow: var(--shadow-popup, 0 4px 16px rgba(0, 0, 0, 0.4));
+	--color-text-primary: var(--text-primary, #1a1a1a);
+	--color-text-secondary: var(--text-muted, #707684);
+	--color-border-icon: var(--border-subtle, rgba(201, 201, 204, .48));
+	--color-border-icon-disabled: var(--border-subtle, #EFF0F1);
+	--color-text-icon-active: var(--color-blue, #388AE5);
+	--color-background-icon-active: var(--bg-highlight, rgba(56, 138, 229, .1));
+	--color-background-item-focus: var(--bg-card-hover, rgba(34, 186, 255, .08));
+	--color-shadow-item-focus: transparent;
+	--color-background-item-hover: var(--bg-card-hover, #F8F8F8);
+	--color-background-item-confirm: var(--color-negative, #E24A4A);
+	--color-background-item-confirm-hover: var(--color-negative, #CE4343);
+}
+
+:root .ce-popover__container {
+	background: var(--color-background) !important;
+	border: 1px solid var(--color-border) !important;
+	box-shadow: var(--color-shadow) !important;
+}
+
+:root .ce-popover__items {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-color, #EFF0F1) transparent;
+}
+
+:root .cdx-search-field {
+	background: var(--bg-secondary, #F8F8F8) !important;
+	border: 1px solid var(--border-color, rgba(226, 226, 229, .2)) !important;
+}
+
+:root .cdx-search-field__input {
+	color: var(--text-primary, inherit) !important;
+}
+
+:root .cdx-search-field__icon svg {
+	color: var(--text-muted, #707684) !important;
+}
+
+:root .ce-popover-item {
+	color: var(--color-text-primary) !important;
+}
+
+:root .ce-popover-item__secondary-title,
+:root .ce-popover__nothing-found-message {
+	color: var(--color-text-secondary) !important;
+}
+
+:root .ce-popover-item-separator__line {
+	background: var(--color-border) !important;
+}
+
+:root .ce-popover-header__text,
+:root .ce-popover-header__back-button {
+	color: var(--color-text-primary) !important;
+}
+
+/* Toolbar Buttons */
+:root .ce-toolbar__plus,
+:root .ce-toolbar__settings-btn {
+	color: var(--text-primary, #1d202b) !important;
+}
+
+:root .ce-toolbar__plus:hover,
+:root .ce-toolbar__settings-btn:hover,
+:root .ce-toolbar__plus--active,
+:root .ce-toolbar__settings-btn--active {
+	background-color: var(--bg-card-hover, #eff2f5) !important;
+}
+
+@media (max-width: 650px) {
+	:root .ce-toolbar__plus,
+	:root .ce-toolbar__settings-btn {
+		background-color: var(--bg-card, #fff) !important;
+		border: 1px solid var(--border-color, #E8E8EB) !important;
+		box-shadow: var(--shadow-popup, 0 3px 15px -3px rgba(13, 20, 33, .13)) !important;
+	}
+}
+
+/* Buttons & Inputs */
+:root .cdx-button {
+	background: var(--bg-secondary, #fff) !important;
+	border: 1px solid var(--border-color, rgba(201, 201, 204, .48)) !important;
+	color: var(--text-secondary, #707684) !important;
+	box-shadow: none !important;
+}
+
+:root .cdx-button:hover {
+	background: var(--bg-card-hover, #FBFCFE) !important;
+	color: var(--text-primary, #1d202b) !important;
+}
+
+:root .cdx-input {
+	border: 1px solid var(--border-color, rgba(201, 201, 204, .48)) !important;
+	color: var(--text-primary, inherit) !important;
+	background: transparent;
+	box-shadow: none !important;
+}
+
+:root .cdx-settings-button {
+	color: var(--text-primary, inherit) !important;
+}
+
+:root .cdx-settings-button:hover,
+:root .cdx-settings-button--focused {
+	background-color: var(--bg-card-hover, #eff2f5) !important;
+}
+
+/* Tools (Image, Code, Quote, List) */
+:root .image-tool {
+	--bg-color: var(--bg-secondary, #cdd1e0) !important;
+	--front-color: var(--color-blue, #388ae5) !important;
+	--border-color: var(--border-color, #e8e8eb) !important;
+}
+
+:root .image-tool--uploading .image-tool__image,
+:root .image-tool--withBorder .image-tool__image {
+	border: 1px solid var(--border-color, #e8e8eb) !important;
+}
+
+:root .image-tool--uploading .image-tool__image,
+:root .image-tool--withBackground .image-tool__image {
+	background-color: var(--bg-secondary, #cdd1e0) !important;
+}
+
+:root .image-tool__caption,
+:root .cdx-quote__text,
+:root .cdx-quote__caption,
+:root .cdx-list {
+	color: var(--text-primary, inherit);
+}
+
+:root .ce-code__textarea {
+	background: var(--bg-secondary, #f8f7fa) !important;
+	color: var(--text-primary, #41314e) !important;
+	border: 1px solid var(--border-color, #f1f1f4) !important;
+}
+
+:root .cdx-list {
+	--checkbox-background: var(--bg-card, #fff) !important;
+	--color-border: var(--border-color, #C9C9C9) !important;
+}
+
+/* Inline Toolbar */
+:root .ce-inline-toolbar {
+	--color-background-icon-active: var(--bg-highlight, rgba(56, 138, 229, .1));
+	--color-text-icon-active: var(--color-blue, #388AE5);
+	--color-text-primary: var(--text-primary, black);
+	background: var(--bg-card, #fff) !important;
+	border: 1px solid var(--border-color, #EFF0F1) !important;
+	box-shadow: var(--shadow-popup, 0 3px 15px -3px rgba(13, 20, 33, .13)) !important;
+}
+
+:root .ce-inline-toolbar__dropdown {
+	border-right: 1px solid var(--border-color, rgba(201, 201, 204, .48)) !important;
+	color: var(--text-primary, inherit) !important;
+}
+
+:root .ce-inline-toolbar__dropdown:hover,
+:root .ce-inline-tool:hover {
+	background-color: var(--bg-card-hover, #f8f8f8) !important;
+}
+
+:root .ce-inline-tool {
+	color: var(--text-primary, inherit) !important;
+}
+
+:root .ce-inline-tool-input {
+	background: var(--bg-secondary, #F8F8F8) !important;
+	border: 1px solid var(--border-color, rgba(226, 226, 229, .2)) !important;
+	color: var(--text-primary, inherit) !important;
+}
+
+/* Selection, Stubs & Notifications */
+:root .ce-block--selected .ce-block__content,
+:root .codex-editor ::selection,
+:root .codex-editor ::-moz-selection {
+	background-color: var(--bg-highlight, #d4ecff) !important;
+}
+
+:root .ce-block--drop-target .ce-block__content:after {
+	background: repeating-linear-gradient(90deg, var(--color-blue, #388AE5), var(--color-blue, #388AE5) 1px, transparent 1px, transparent 6px) !important;
+}
+
+:root .ce-stub,
+:root .cdx-notify__input,
+:root .cdx-notify__button--cancel {
+	background: var(--bg-secondary, #eff2f5) !important;
+	border-color: var(--border-color, #EFF0F1) !important;
+	color: var(--text-muted, #707684) !important;
+}
+
+:root .cdx-notify {
+	background: var(--bg-card, #fff) !important;
+	color: var(--text-primary, inherit) !important;
+	border: 1px solid var(--border-color, transparent) !important;
+	box-shadow: var(--shadow-popup, 0 11px 17px 0 rgba(23, 32, 61, .13)) !important;
+}
+
+:root .cdx-notify__button--cancel:hover {
+	background: var(--bg-card-hover, #eee) !important;
+}
+
+/* Placeholders */
+:root .cdx-search-field__input::placeholder,
+:root .ce-code__textarea::placeholder,
+:root .ce-inline-tool-input::placeholder,
+:root .cdx-input[data-placeholder]:before,
+:root .image-tool__caption[data-placeholder]:before,
+:root .cdx-quote [data-placeholder]:before,
+.dtf-anchor-tune-input::placeholder,
+.dtf-quiz-tool-title::placeholder,
+.dtf-quiz-tool-option-input::placeholder,
+.dtf-person-tool-input::placeholder {
+	color: var(--text-placeholder, #707684) !important;
 }
 
 /* Spoiler Tune */
@@ -96,7 +319,7 @@
 	padding: 4px 8px;
 	border: 1px solid var(--dtf-editor-border);
 	border-radius: 4px;
-	background: var(--dtf-editor-bg);
+	background: var(--dtf-editor-bg-secondary);
 	color: var(--dtf-editor-text);
 }
 

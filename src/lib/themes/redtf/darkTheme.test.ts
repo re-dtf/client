@@ -174,4 +174,16 @@ describe('redtf dark mode configuration', () => {
 		const cssContent = fs.readFileSync(cssPath, 'utf-8');
 		expect(cssContent).toContain('--bg-hidden-block: #1a2636;');
 	});
+
+	it('ensures EditorJS and editor tools adapt to dark theme without hardcoded white elements', () => {
+		const editorCss = fs.readFileSync(path.resolve(__dirname, '../../components/editor/editor.css'), 'utf-8');
+		for (const token of ['--color-background: var(--bg-card', '--color-border: var(--border-color', '--color-text-primary: var(--text-primary', '.cdx-search-field', 'var(--bg-secondary', '.cdx-button', '.image-tool', '.ce-code__textarea', '.ce-toolbar__plus', '.ce-inline-toolbar', 'var(--bg-highlight']) {
+			expect(editorCss).toContain(token);
+		}
+
+		const subsite = fs.readFileSync(path.resolve(__dirname, '../../components/editor/SubsiteSelector.svelte'), 'utf-8');
+		expect(subsite).not.toMatch(/background:\s*#fff\b/);
+		expect(subsite).toContain('var(--bg-secondary');
+		expect(subsite).toContain('var(--bg-card');
+	});
 });

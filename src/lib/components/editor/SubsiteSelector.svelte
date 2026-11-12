@@ -68,18 +68,22 @@
 		min-width: 200px;
 	}
 
-	.select-trigger {
+	.select-trigger,
+	.option {
 		display: flex;
 		align-items: center;
 		width: 100%;
 		padding: 8px 12px;
-		background: #fff;
-		border: 1px solid #ccc;
-		border-radius: 6px;
 		cursor: pointer;
 		font-family: inherit;
 		font-size: 14px;
-		color: #1a1a1a;
+		color: var(--text-primary, #1a1a1a);
+	}
+
+	.select-trigger {
+		background: var(--bg-secondary, #fff);
+		border: 1px solid var(--border-color, #ccc);
+		border-radius: 6px;
 	}
 
 	.dropdown {
@@ -87,35 +91,27 @@
 		top: calc(100% + 4px);
 		left: 0;
 		width: 100%;
-		background: #fff;
-		border: 1px solid #ccc;
+		background: var(--bg-card, #fff);
+		border: 1px solid var(--border-color, #ccc);
 		border-radius: 6px;
-		box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		box-shadow: var(--shadow-dropdown, 0 4px 12px rgba(0,0,0,0.1));
 		max-height: 300px;
 		overflow-y: auto;
 		z-index: 1000;
 	}
 
 	.option {
-		display: flex;
-		align-items: center;
-		width: 100%;
-		padding: 8px 12px;
 		background: none;
 		border: none;
-		cursor: pointer;
 		text-align: left;
-		font-family: inherit;
-		font-size: 14px;
-		color: #1a1a1a;
 	}
 
 	.option:hover {
-		background: #f4f5f7;
+		background: var(--bg-card-hover, #f4f5f7);
 	}
 
 	.option.selected {
-		background: #eef2fa;
+		background: var(--bg-nav-tab-active, #eef2fa);
 		font-weight: 500;
 	}
 
@@ -129,13 +125,13 @@
 	}
 
 	.fallback {
-		background: #ccc;
+		background: var(--border-color, #ccc);
 	}
 
 	.arrow {
 		margin-left: auto;
 		font-size: 10px;
-		color: #888;
+		color: var(--text-muted, #888);
 		transition: transform var(--duration-base);
 	}
 
