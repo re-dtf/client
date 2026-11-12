@@ -38,4 +38,9 @@ describe('ReactionPopup interactions', () => {
 		expect(content).toContain('-webkit-touch-callout: none');
 		expect(content).toContain('user-select: none');
 	});
+
+	it('вешает слушатели на window только при открытом меню', () => {
+		expect(content).not.toContain('<svelte:window');
+		expect(content).toContain('if (!open) return;');
+	});
 });

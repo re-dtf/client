@@ -26,6 +26,7 @@
 	let touchTimer: ReturnType<typeof setTimeout> | undefined;
 	let touchStart: { x: number; y: number } | undefined;
 	let longPressed = false;
+	let detachTouch: (() => void) | undefined;
 
 	const ms = (n: number) => (reducedMotion() ? 0 : n);
 
@@ -66,6 +67,8 @@
 		clearTimeout(touchTimer);
 		touchTimer = undefined;
 		touchStart = undefined;
+		detachTouch?.();
+		detachTouch = undefined;
 	}
 
 	function suppressClick() {
@@ -93,6 +96,17 @@
 		cancelTouch();
 		touchStart = { x: e.clientX, y: e.clientY };
 		touchTimer = setTimeout(triggerLongPress, 450);
+		const el = anchor;
+		if (el) {
+			el.addEventListener('pointerup', cancelTouch);
+			el.addEventListener('pointercancel', cancelTouch);
+			el.addEventListener('pointerleave', cancelTouch);
+			detachTouch = () => {
+				el.removeEventListener('pointerup', cancelTouch);
+				el.removeEventListener('pointercancel', cancelTouch);
+				el.removeEventListener('pointerleave', cancelTouch);
+			};
+		}
 	}
 
 	function onPointerMove(e: PointerEvent) {
@@ -120,13 +134,26 @@
 	}
 
 	$effect(() => () => cancelTouch());
-</script>
 
-<svelte:window
-	onclick={(e) => open && !anchor?.contains(e.target as Node) && close()}
-	oncontextmenu={(e) => open && !anchor?.contains(e.target as Node) && close()}
-	onkeydown={(e) => open && e.key === 'Escape' && close()}
-/>
+	// Слушатели на window ставим только при открытом пикере, чтобы не плодить тысячи обработчиков в списке комментариев
+	$effect(() => {
+		if (!open) return;
+		const onOutside = (e: Event) => {
+			if (!anchor?.contains(e.target as Node)) close();
+		};
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') close();
+		};
+		window.addEventListener('click', onOutside);
+		window.addEventListener('contextmenu', onOutside);
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			window.removeEventListener('click', onOutside);
+			window.removeEventListener('contextmenu', onOutside);
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	});
+</script>
 
 {#if onreact}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -135,9 +162,6 @@
 		bind:this={anchor}
 		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
-		onpointerup={cancelTouch}
-		onpointercancel={cancelTouch}
-		onpointerleave={cancelTouch}
 		oncontextmenu={onContextMenu}
 		onclick={handleClick}
 	>

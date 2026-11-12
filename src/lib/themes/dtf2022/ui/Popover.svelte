@@ -48,12 +48,23 @@
 		onselect(value);
 	}
 
-	function closeOnOutsideClick(e: MouseEvent) {
-		if (open && !anchor?.contains(e.target as Node)) open = false;
-	}
+	// Слушатели на window ставим только пока меню открыто, чтобы в длинных списках не копились тысячи обработчиков
+	$effect(() => {
+		if (!open) return;
+		const onOutsideClick = (e: MouseEvent) => {
+			if (!anchor?.contains(e.target as Node)) open = false;
+		};
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') open = false;
+		};
+		window.addEventListener('click', onOutsideClick);
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			window.removeEventListener('click', onOutsideClick);
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	});
 </script>
-
-<svelte:window onclick={closeOnOutsideClick} onkeydown={(e) => e.key === 'Escape' && (open = false)} />
 
 <span class="popover-anchor" bind:this={anchor}>
 	{@render children()}
