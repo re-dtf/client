@@ -16,4 +16,12 @@ describe('Comments sorting options', () => {
 		expect(svelteContent).toContain("if (!reactionSettings.value.rank && logic.sorting === 'worst')");
 		expect(svelteContent).toContain("setSorting('hotness')");
 	});
+
+	it('не пересоздаёт IntersectionObserver чанков при изменении renderedCount', () => {
+		for (const file of ['Comments.svelte', '../redtf/Comments.svelte']) {
+			const content = fs.readFileSync(path.join(__dirname, file), 'utf8');
+			expect(content).toContain('if (!chunkSentinel) return;');
+			expect(content).not.toContain('if (!chunkSentinel || renderedCount >= rows.length)');
+		}
+	});
 });

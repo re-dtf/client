@@ -62,11 +62,13 @@
 	let chunkSentinel = $state<HTMLElement>();
 
 	$effect(() => {
-		if (!chunkSentinel || renderedCount >= rows.length) return;
+		if (!chunkSentinel) return;
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (entries[0].isIntersecting) {
-					renderedCount = Math.min(rows.length, renderedCount + CHUNK_SIZE);
+					untrack(() => {
+						renderedCount = Math.min(rows.length, renderedCount + CHUNK_SIZE);
+					});
 				}
 			},
 			{ rootMargin: '1000px' }
