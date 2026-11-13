@@ -17,8 +17,8 @@ export interface CommentRow {
 	level: number;
 	lines: ThreadLine[];
 	parent?: CommentTreeItem;
-	/** Сколько ответов скрыто, если ветка свёрнута */
-	hiddenReplies: number;
+	/** Ключи предков от корня до родителя — для скрытия потомков свёрнутой ветки без пересборки списка */
+	owners: string[];
 }
 
 export const commentKey = (c: { sourceId: string; id: number }) => `${c.sourceId}_${c.id}`;
@@ -27,7 +27,7 @@ export const commentKey = (c: { sourceId: string; id: number }) => `${c.sourceId
  * Дерево → плоский список, как рисует DTF: у комментария на уровне N есть N−1 линий.
  * Глубже maxDepth ответы не сдвигаются, а встают на последний уровень без дуги.
  */
-export function flattenComments(roots: CommentTreeItem[], maxDepth: number, collapsed: Set<string>): CommentRow[] {
+export function flattenComments(roots: CommentTreeItem[], maxDepth: number): CommentRow[] {
 	const rows: CommentRow[] = [];
 
 	// chain[k] — есть ли у узла цепочки на глубине k следующие соседи (ветка его родителя идёт дальше);
@@ -37,7 +37,6 @@ export function flattenComments(roots: CommentTreeItem[], maxDepth: number, coll
 			const key = commentKey(comment);
 			const chain = [...continues, index < nodes.length - 1];
 			const visual = Math.min(depth, maxDepth);
-			const isCollapsed = collapsed.has(key) && comment.children.length > 0;
 
 			rows.push({
 				key,
@@ -50,10 +49,10 @@ export function flattenComments(roots: CommentTreeItem[], maxDepth: number, coll
 					owner: owners[i]
 				})),
 				parent,
-				hiddenReplies: isCollapsed ? (comment._totalReplies ?? comment.children.length) : 0
+				owners
 			});
 
-			if (!isCollapsed) walk(comment.children, depth + 1, chain, [...owners, key], comment);
+			walk(comment.children, depth + 1, chain, [...owners, key], comment);
 		});
 	}
 

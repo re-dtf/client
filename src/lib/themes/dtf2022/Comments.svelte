@@ -54,7 +54,7 @@
 
 	/** Свёрнутые ветки: ключи комментариев, чьи ответы скрыты */
 	const collapsed = new SvelteSet<string>();
-	let rows = $derived(flattenComments(logic.comments, logic.maxVisualDepth, collapsed));
+	let rows = $derived(flattenComments(logic.comments, logic.maxVisualDepth));
 
 	const CHUNK_SIZE = 40;
 	let renderedCount = $state(CHUNK_SIZE);
@@ -381,6 +381,8 @@
 					highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 					replying={replyTo === row.key}
 					canReply={!blocked}
+					hidden={row.owners.some((o) => collapsed.has(o))}
+					hiddenReplies={collapsed.has(row.key) && row.comment.children.length > 0 ? (row.comment._totalReplies ?? row.comment.children.length) : 0}
 					onreply={() => reply(row.key)}
 					onedit={() => edit(row.key, row.comment.content, row.comment.media)}
 					onlinehover={(line) => highlightBranch(index, line)}

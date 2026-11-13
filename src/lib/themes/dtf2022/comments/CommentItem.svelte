@@ -42,6 +42,8 @@
 		highlightedLine = -1,
 		replying = false,
 		canReply = true,
+		hidden = false,
+		hiddenReplies = 0,
 		panObserver,
 		onreply,
 		onedit,
@@ -60,6 +62,8 @@
 		replying?: boolean;
 		/** Писать нельзя (бан, чёрный список): кнопки «Ответить» нет */
 		canReply?: boolean;
+		hidden?: boolean;
+		hiddenReplies?: number;
 		panObserver?: IntersectionObserver;
 		onreply: () => void;
 		/** Открыть редактор с текстом этого комментария */
@@ -85,7 +89,7 @@
 
 	let comment = $derived(row.comment);
 	let isPostAuthor = $derived(postAuthorId !== undefined && comment.author.id === postAuthorId);
-	let hasRepliesBelow = $derived(comment.children.length > 0 && !row.hiddenReplies);
+	let hasRepliesBelow = $derived(comment.children.length > 0 && !hiddenReplies);
 	let votes = $derived(themeSettings.votes);
 	let arrowsLeft = $derived(themeSettings.arrowsSide === 'left');
 	let paragraphs = $derived(parseCommentText(comment.content));
@@ -127,6 +131,7 @@
 
 	// Меню комментария: что можно править, сервер говорит при открытии
 	let menuOpen = $state(false);
+	let pickerOpen = $state(false);
 	let canEdit = $state(false);
 	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, жалоба, закладка
 	let menuItems = $derived([
@@ -201,6 +206,7 @@
 			reactions={comment.reactions}
 			onvote={rate}
 			onreact={react}
+			onopenchange={(v) => (pickerOpen = v)}
 		/>
 	</div>
 {/snippet}
@@ -212,9 +218,9 @@
 {/snippet}
 
 {#snippet repliesAction()}
-	{#if row.hiddenReplies > 0}
+	{#if hiddenReplies > 0}
 		<button class="comment-item__inline-action" onclick={onexpand}>
-			{row.hiddenReplies}&nbsp;{plural(row.hiddenReplies, ['комментарий', 'комментария', 'комментариев'])}
+			{hiddenReplies}&nbsp;{plural(hiddenReplies, ['комментарий', 'комментария', 'комментариев'])}
 		</button>
 	{/if}
 {/snippet}
@@ -228,10 +234,18 @@
 {/if}
 
 <div
-	class={['comment-item', { 'comment-item--reply': row.level > 1, 'comment-item--virtual': virtualize }]}
+	class={[
+		'comment-item',
+		{
+			'comment-item--reply': row.level > 1,
+			'comment-item--virtual': virtualize,
+			'comment-item--elevated': replying || menuOpen || pickerOpen
+		}
+	]}
 	style:--level={row.level}
 	id="comment-{row.key}"
 	data-depth={row.level - 1}
+	hidden={hidden || undefined}
 	bind:this={itemNode}
 >
 	<!--
@@ -525,7 +539,7 @@
 			<!-- Реакции принимаются у замороженных и скрытых баном, у удалённых сервер отвечает 404 -->
 			{#if !comment.isRemoved}
 				{#if votes === 'reactions'}
-					<Reactions compact reactions={comment.reactions} onreact={react} />
+					<Reactions compact reactions={comment.reactions} onreact={react} onopenchange={(v) => (pickerOpen = v)} />
 				{:else if votes === 'likes'}
 					<PostButton
 						kind="like"
@@ -534,6 +548,7 @@
 						active={score.myVote === 1}
 						reactions={comment.reactions}
 						onreact={react}
+						onopenchange={(v) => (pickerOpen = v)}
 						onclick={() => rate(1)}
 					/>
 				{/if}
@@ -608,15 +623,18 @@
 		scroll-margin-top: calc(var(--header-height, 60px) + 8px);
 	}
 
+	.comment-item[hidden] {
+		display: none;
+	}
+
 	.comment-item--virtual {
 		content-visibility: auto;
-		contain-intrinsic-size: auto none auto 72px;
+		contain-intrinsic-size: auto none auto 128px;
 		overflow-clip-margin: 20px;
 	}
 
-	.comment-item:has(:global(.post-reactions__picker)),
-	.comment-item:has(:global(.popover)),
-	.comment-item:has(:global(.comment-editor-container)) {
+	/* Класс состояния вместо селектора :has, чтобы браузер не пересматривал 1000+ комментариев при открытии редактора или меню */
+	.comment-item--elevated {
 		content-visibility: visible;
 		position: relative;
 		z-index: 20;

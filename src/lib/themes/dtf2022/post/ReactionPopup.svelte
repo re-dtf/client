@@ -10,10 +10,12 @@
 	let {
 		reactions,
 		onreact,
+		onopenchange,
 		children
 	}: {
 		reactions?: Reactions;
 		onreact?: (id: number) => void;
+		onopenchange?: (open: boolean) => void;
 		children: Snippet;
 	} = $props();
 
@@ -41,15 +43,21 @@
 		right = rect.left > window.innerWidth / 2;
 	}
 
+	function setOpen(next: boolean) {
+		if (open === next) return;
+		open = next;
+		onopenchange?.(next);
+	}
+
 	function show() {
 		if (!anchor?.isConnected) return;
 		updatePosition();
-		open = true;
+		setOpen(true);
 	}
 
 	function close() {
 		cancelTouch();
-		open = false;
+		setOpen(false);
 		picking = false;
 	}
 
@@ -133,7 +141,10 @@
 		if (open && !(e.target as Element)?.closest?.('.reactions-popup')) close();
 	}
 
-	$effect(() => () => cancelTouch());
+	$effect(() => () => {
+		cancelTouch();
+		if (open) onopenchange?.(false);
+	});
 
 	// Слушатели на window ставим только при открытом пикере, чтобы не плодить тысячи обработчиков в списке комментариев
 	$effect(() => {

@@ -23,13 +23,15 @@
 	let {
 		post: source,
 		embed = false,
-		subscribe = !embed
+		subscribe = !embed,
+		onoverlaychange
 	}: {
 		post: Post;
 		/** Встроенный пост на странице другого поста — без футера */
 		embed?: boolean;
 		/** Кнопка «Подписаться» в шапке (в профиле не нужна) */
 		subscribe?: boolean;
+		onoverlaychange?: (open: boolean) => void;
 	} = $props();
 
 	let post = $derived(withActions(source));
@@ -44,6 +46,9 @@
 	let commentsPath = $derived(resolve(getPostPath(post, 'comments') as any));
 	let onreact = $derived(post.sourceId === 'dtf' ? (id: number) => reactToPost(post, id) : undefined);
 	let showReposts = $state(false);
+	let headerOverlay = $state(false);
+	let pickerOpen = $state(false);
+	let embedOverlay = $state(false);
 	// Карточка далеко от экрана: картинки и видео сняты, заглушка держит место
 	let near = $state(true);
 
@@ -64,13 +69,16 @@
 	}
 </script>
 
-<article class={['feed-item', { 'feed-item--embed': embed }]} {@attach embed ? undefined : nearViewport((value) => (near = value))}>
+<article
+	class={['feed-item', { 'feed-item--embed': embed, 'feed-item--elevated': !embed && (headerOverlay || pickerOpen || embedOverlay || showReposts) }]}
+	{@attach embed ? undefined : nearViewport((value) => (near = value))}
+>
 	<div class={['post-card', { 'post-card--embed': embed }]}>
 		{#if post.repost && !embed}
 			<RepostLabel />
 		{/if}
 
-		<PostHeader {post} variant="card" {subscribe} />
+		<PostHeader {post} variant="card" {subscribe} onoverlaychange={(v) => { headerOverlay = v; if (embed) onoverlaychange?.(v); }} />
 
 		<div class={['post-content', { 'post-content--blur': blurred }]}>
 			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} evictMedia={!near} />
@@ -96,14 +104,14 @@
 
 		{#if post.repost?.original && !embed}
 			<div class="post-block post-repost">
-				<PostCard post={post.repost.original} embed />
+				<PostCard post={post.repost.original} embed onoverlaychange={(v) => (embedOverlay = v)} />
 			</div>
 		{/if}
 
 		{#if !embed}
 			{#if votes === 'reactions'}
 				<div class="post-block">
-					<Reactions reactions={post.reactions} {onreact} />
+					<Reactions reactions={post.reactions} {onreact} onopenchange={(v) => (pickerOpen = v)} />
 				</div>
 			{/if}
 
@@ -117,6 +125,7 @@
 							active={score.myVote === 1}
 							reactions={post.reactions}
 							{onreact}
+							onopenchange={(v) => (pickerOpen = v)}
 							onclick={() => votePost(post, 1)}
 						/>
 					{/if}
@@ -162,6 +171,7 @@
 							reactions={post.reactions}
 							onvote={(sign) => votePost(post, sign)}
 							{onreact}
+							onopenchange={(v) => (pickerOpen = v)}
 						/>
 					</div>
 				{/if}
@@ -190,16 +200,11 @@
 		content-visibility: visible;
 	}
 
-	.feed-item:has(:global(.post-reactions__picker)),
-	.feed-item:has(:global(.popover)) {
+	/* Класс состояния вместо селектора :has, чтобы браузер не пересматривал все карточки ленты при открытии меню и диалогов */
+	.feed-item--elevated {
 		content-visibility: visible;
 		position: relative;
 		z-index: 20;
-	}
-
-	/* Диалог с fixed внутри карточки: content-visibility: auto обрезал бы его по границам карточки */
-	.feed-item:has(:global([role='dialog'])) {
-		content-visibility: visible;
 	}
 
 	.post-card {

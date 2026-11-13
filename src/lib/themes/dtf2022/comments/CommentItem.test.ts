@@ -21,14 +21,22 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('.comment-item__thread-line--empty');
 	});
 
-	it('не обрезает меню реакций, поповер и редактор ответа из-за content-visibility', () => {
+	it('не обрезает меню реакций, поповер и редактор ответа из-за content-visibility и не использует :has(:global(...))', () => {
 		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
 
-		expect(svelteContent).toContain('.comment-item:has(:global(.post-reactions__picker))');
-		expect(svelteContent).toContain('.comment-item:has(:global(.comment-editor-container))');
+		expect(svelteContent).toContain("'comment-item--elevated': replying || menuOpen || pickerOpen");
+		expect(svelteContent).toContain('.comment-item--elevated');
+		expect(svelteContent).not.toContain(':has(:global(');
 		expect(svelteContent).toContain('content-visibility: visible');
 		expect(svelteContent).toContain('z-index: 20');
 		expect(svelteContent).toContain('overflow-clip-margin: 20px');
+	});
+
+	it('скрывает свёрнутые комментарии через [hidden] без пересборки DOM', () => {
+		const svelteContent = fs.readFileSync(path.join(__dirname, 'CommentItem.svelte'), 'utf8');
+
+		expect(svelteContent).toContain('hidden={hidden || undefined}');
+		expect(svelteContent).toContain('.comment-item[hidden]');
 	});
 
 	it('содержит кликабельные кнопки бейджей и модальное окно BadgeInfoModal', () => {

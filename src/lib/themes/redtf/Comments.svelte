@@ -67,7 +67,7 @@
 	const collapsed = new SvelteSet<string>();
 	/** При автопанорамировании ветки не упираются в искусственный лимит глубины */
 	let maxDepth = $derived(isAutopan ? 50 : logic.maxVisualDepth);
-	let rows = $derived(flattenComments(logic.comments, maxDepth, collapsed));
+	let rows = $derived(flattenComments(logic.comments, maxDepth));
 
 	const CHUNK_SIZE = 40;
 	let renderedCount = $state(CHUNK_SIZE);
@@ -430,6 +430,8 @@
 						highlightedLine={highlight && index >= highlight.from && index <= highlight.to ? highlight.line : -1}
 						replying={replyTo === row.key}
 						canReply={!blocked}
+						hidden={row.owners.some((o) => collapsed.has(o))}
+						hiddenReplies={collapsed.has(row.key) && row.comment.children.length > 0 ? (row.comment._totalReplies ?? row.comment.children.length) : 0}
 						panObserver={isAutopan ? logic.engine.panObserver : undefined}
 						onreply={() => reply(row.key)}
 						onedit={() => edit(row.key, row.comment.content, row.comment.media)}

@@ -82,15 +82,19 @@ describe('flattenComments', () => {
 		// 1 ─┬─ 2 ── 4 ── 5
 		//    └─ 3
 		const tree = [node(1, [node(2, [node(4, [node(5)])]), node(3)])];
-		const rows = flattenComments(tree, 2, new Set());
+		const rows = flattenComments(tree, 2);
 		const lines = rows.map((r) => r.lines.map((l) => `${l.border ? '|' : ' '}${l.arc ? 'arc' : ''}`));
 		expect(rows.map((r) => r.comment.id)).toEqual([1, 2, 4, 5, 3]);
 		expect(lines).toEqual([[], ['|arc'], ['|', ' arc'], ['|', ' '], [' arc']]);
 	});
 
-	it('свёрнутая ветка прячет ответы', () => {
-		const tree = [node(1, [node(2)])];
-		const rows = flattenComments(tree, 6, new Set(['dtf_1']));
-		expect(rows.map((r) => [r.comment.id, r.hiddenReplies])).toEqual([[1, 1]]);
+	it('строка хранит ключи всех предков для скрытия свёрнутой ветки', () => {
+		const tree = [node(1, [node(2, [node(4)])])];
+		const rows = flattenComments(tree, 1);
+		expect(rows.map((r) => [r.comment.id, r.owners])).toEqual([
+			[1, []],
+			[2, ['dtf_1']],
+			[4, ['dtf_1', 'dtf_2']]
+		]);
 	});
 });

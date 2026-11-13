@@ -14,13 +14,15 @@
 	let {
 		post,
 		variant = 'card',
-		subscribe = false
+		subscribe = false,
+		onoverlaychange
 	}: {
 		post: Pick<Post, 'id' | 'sourceId' | 'author' | 'subsite' | 'createdAt' | 'isPinned'>;
 		/** card — карточка в ленте и встроенный пост, page — страница поста */
 		variant?: 'card' | 'page';
 		/** Кнопка «Подписаться» справа */
 		subscribe?: boolean;
+		onoverlaychange?: (open: boolean) => void;
 	} = $props();
 
 	// В личном блоге подсайт — это сам автор, второй раз имя не показываем
@@ -33,6 +35,15 @@
 	// Скрыть пост и заблокировать может только вошедший, скрыть автора у себя — любой
 	let menuOpen = $state(false);
 	let complaining = $state(false);
+	const notifyOverlay = () => onoverlaychange?.(menuOpen || complaining);
+	const setMenuOpen = (v: boolean) => {
+		menuOpen = v;
+		notifyOverlay();
+	};
+	const setComplaining = (v: boolean) => {
+		complaining = v;
+		notifyOverlay();
+	};
 	let others = $derived(isAnotherDtfUser(post.sourceId, post.author.id));
 	let menuItems = $derived([
 		...(post.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
@@ -63,13 +74,13 @@
 		} else if (item === 'hide_post') {
 			hidePost(post);
 		} else if (item === 'complain') {
-			complaining = ensureLogin();
+			setComplaining(ensureLogin());
 		}
 	}
 </script>
 
 {#if complaining}
-	<ComplaintDialog onsubmit={(reasonId) => api.complain('post', post.id, reasonId)} onclose={() => (complaining = false)} />
+	<ComplaintDialog onsubmit={(reasonId) => api.complain('post', post.id, reasonId)} onclose={() => setComplaining(false)} />
 {/if}
 
 <div class={['post-header', { 'post-header--card': variant === 'card' }]}>
@@ -150,13 +161,13 @@
 
 		<div class="post-header__item post-header__etc">
 			<Popover
-				bind:open={menuOpen}
+				bind:open={() => menuOpen, setMenuOpen}
 				items={menuItems}
 				onselect={selectMenuItem}
 				width="max-content"
 				label="Действия с постом"
 			>
-				<button type="button" class="post-header__etc-button" title="Больше" aria-expanded={menuOpen} onclick={() => (menuOpen = !menuOpen)}>
+				<button type="button" class="post-header__etc-button" title="Больше" aria-expanded={menuOpen} onclick={() => setMenuOpen(!menuOpen)}>
 					<svg class="icon" width="16" height="20" aria-hidden="true">
 						<use href="/icons.svg#v_etc"></use>
 					</svg>

@@ -43,4 +43,11 @@ describe('ReactionPopup interactions', () => {
 		expect(content).not.toContain('<svelte:window');
 		expect(content).toContain('if (!open) return;');
 	});
+
+	it('Reactions тоже ставит слушатели на window только при открытии и не использует :has()', () => {
+		const reactions = fs.readFileSync(path.join(__dirname, 'Reactions.svelte'), 'utf8');
+		expect(reactions).not.toContain('<svelte:window');
+		expect(reactions).not.toContain(':has(');
+		expect(reactions).toContain('if (!picking) return;');
+	});
 });

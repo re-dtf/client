@@ -18,7 +18,8 @@
 		compact = false,
 		reactions,
 		onvote,
-		onreact
+		onreact,
+		onopenchange
 	}: {
 		value: number;
 		myVote?: number;
@@ -28,6 +29,7 @@
 		/** Вернуть false, если голос не принят — тогда анимации клика не будет */
 		onvote?: (vote: 1 | -1) => boolean | void;
 		onreact?: (id: number) => void;
+		onopenchange?: (open: boolean) => void;
 	} = $props();
 
 	let reversed = $derived(themeSettings.arrowsOrder === 'up-down');
@@ -80,7 +82,7 @@
 	}
 </script>
 
-<ReactionPopup {reactions} {onreact}>
+<ReactionPopup {reactions} {onreact} {onopenchange}>
 	<!-- Оценка стрелками, как у DTF осенью 2022 (.vote) -->
 	<div
 		class={[

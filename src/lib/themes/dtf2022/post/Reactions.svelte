@@ -11,11 +11,13 @@
 	let {
 		reactions,
 		onreact,
+		onopenchange,
 		compact = false
 	}: {
 		reactions?: Reactions;
 		/** Без обработчика реакции только показываются */
 		onreact?: (id: number) => void;
+		onopenchange?: (open: boolean) => void;
 		/** Вариант для комментария */
 		compact?: boolean;
 	} = $props();
@@ -29,8 +31,14 @@
 	/** Длительность перехода; при «уменьшить движение» в системе анимации нет */
 	const ms = (n: number) => (reducedMotion() ? 0 : n);
 
+	function setPicking(next: boolean) {
+		if (picking === next) return;
+		picking = next;
+		onopenchange?.(next);
+	}
+
 	function pick(id: number) {
-		picking = false;
+		setPicking(false);
 		onreact?.(id);
 	}
 
@@ -44,14 +52,30 @@
 		node.addEventListener('wheel', onWheel, { passive: false });
 		return () => node.removeEventListener('wheel', onWheel);
 	};
+
+	// Слушатели на window ставим только при открытом пикере, чтобы не плодить тысячи обработчиков в списке комментариев
+	$effect(() => {
+		if (!picking) return;
+		const onOutsideClick = (e: MouseEvent) => {
+			if (!root?.contains(e.target as Node)) setPicking(false);
+		};
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setPicking(false);
+		};
+		window.addEventListener('click', onOutsideClick);
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			window.removeEventListener('click', onOutsideClick);
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	});
+
+	$effect(() => () => {
+		if (picking) onopenchange?.(false);
+	});
 </script>
 
-<svelte:window
-	onclick={(e) => picking && !root?.contains(e.target as Node) && (picking = false)}
-	onkeydown={(e) => e.key === 'Escape' && (picking = false)}
-/>
-
-<div class={['post-reactions', { 'post-reactions--compact': compact }]} bind:this={root}>
+<div class={['post-reactions', { 'post-reactions--compact': compact, 'post-reactions--open': picking }]} bind:this={root}>
 	<div class="post-reactions__scroll" {@attach horizontalWheel}>
 		{#each visible as reaction (reaction.id)}
 			{@const isActive = reactions?.reactionId === reaction.id}
@@ -85,7 +109,7 @@
 				title="Добавить реакцию"
 				aria-label="Добавить реакцию"
 				aria-expanded={picking}
-				onclick={() => (picking = !picking)}
+				onclick={() => setPicking(!picking)}
 			>
 				<svg height="16" width="16" class="icon" aria-hidden="true">
 					<use href="/icons.svg#v_plus"></use>
@@ -138,7 +162,7 @@
 		--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
-	.post-reactions:has(.post-reactions__picker) {
+	.post-reactions--open {
 		z-index: 10;
 	}
 

@@ -48,7 +48,8 @@
 		reactions,
 		onclick,
 		onvalueclick,
-		onreact
+		onreact,
+		onopenchange
 	}: {
 		kind: PostButtonKind;
 		title: string;
@@ -64,6 +65,7 @@
 		/** Клик по числу вместо `onclick` (у репоста число открывает список) */
 		onvalueclick?: () => void;
 		onreact?: (id: number) => void;
+		onopenchange?: (open: boolean) => void;
 	} = $props();
 
 	let custom = $derived(kind === 'like' ? customVoteIconOf(reactions, 1) : kind === 'dislike' ? customVoteIconOf(reactions, -1) : undefined);
@@ -117,7 +119,7 @@
 	{/if}
 {/snippet}
 
-<ReactionPopup {reactions} {onreact}>
+<ReactionPopup {reactions} {onreact} {onopenchange}>
 	{#if href}
 		<a {href} class={className} title={resolvedTitle} aria-label={ariaLabel} {onclick}>{@render content()}</a>
 	{:else}

@@ -47,6 +47,7 @@
 	let commentUrl = $derived(getPostShareUrl(post, `comment-${comment.sourceId}_${comment.id}`));
 
 	let menuOpen = $state(false);
+	let pickerOpen = $state(false);
 	let complaining = $state(false);
 	let showBadgeModal = $state(false);
 	let menuItems = $derived([
@@ -89,7 +90,7 @@
 		</article>
 	{/if}
 {:else}
-<article class="profile-comment">
+<article class={['profile-comment', { 'profile-comment--elevated': menuOpen || pickerOpen }]}>
 	{#if comment.postTitle}
 		<a class="profile-comment__title" href={postPath} onclick={(e) => openPost(e, post)}>{comment.postTitle}</a>
 	{/if}
@@ -145,7 +146,7 @@
 
 		<div class="profile-comment__vote">
 			{#if votes === 'reactions'}
-				<Reactions compact reactions={comment.reactions} onreact={react} />
+				<Reactions compact reactions={comment.reactions} onreact={react} onopenchange={(v) => (pickerOpen = v)} />
 			{:else if votes === 'likes'}
 				<PostButton
 					kind="like"
@@ -154,6 +155,7 @@
 					active={score.myVote === 1}
 					reactions={comment.reactions}
 					onreact={react}
+					onopenchange={(v) => (pickerOpen = v)}
 					onclick={() => voteComment(comment, 1)}
 				/>
 			{:else}
@@ -164,6 +166,7 @@
 					reactions={comment.reactions}
 					onvote={(vote) => voteComment(comment, vote)}
 					onreact={react}
+					onopenchange={(v) => (pickerOpen = v)}
 				/>
 			{/if}
 		</div>
@@ -238,8 +241,7 @@
 		overflow-wrap: anywhere;
 	}
 
-	.profile-comment:has(:global(.post-reactions__picker)),
-	.profile-comment:has(:global(.popover)) {
+	.profile-comment--elevated {
 		z-index: 20;
 	}
 
