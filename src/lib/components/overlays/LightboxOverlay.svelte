@@ -2,15 +2,13 @@
 	import { onMount } from 'svelte';
 	import { downloadImage, getLeonardoOriginalUrl, getLeonardoUrl } from '$lib/api/utils';
 	import { closeOverlay, preloadLightbox, takeLightboxOrigin } from '$lib/navigation';
+	import { sanitizeHtml } from '$lib/sanitize';
 
-	/** Просмотр картинок на весь экран. PhotoSwipe рисует себя сам, поэтому здесь только запуск и закрытие */
+	/** Просмотр медиа на весь экран через PhotoSwipe */
 	let {
 		images,
 		index
-	}: {
-		images: { uuid: string; width: number; height: number; type?: string }[];
-		index: number;
-	} = $props();
+	}: Extract<App.OverlayData, { type: 'lightbox' }>['data'] = $props();
 
 	const MAX_WIDTH = 2048;
 
@@ -41,7 +39,8 @@
 					index,
 					// Стандартные 0.8 просвечивают страницу под просмотром
 					bgOpacity: 0.92,
-					dataSource: images.map(({ uuid, width, height }, i) => {
+					dataSource: images.map(({ uuid, width, height, video }, i) => {
+						if (video) return { type: 'video', width, height };
 						// Картинка приходит не шире MAX_WIDTH, поэтому и размер заявляем такой, иначе приближение будет мыльным
 						const scale = Math.min(1, MAX_WIDTH / width);
 						return {
@@ -54,8 +53,41 @@
 					})
 				});
 
+				pswp.on('contentLoad', (e) => {
+					if (e.content.type !== 'video') return;
+					e.preventDefault();
+					const media = images[e.content.index];
+					const slide = document.createElement('div');
+					slide.className = 'pswp__content';
+					const video = document.createElement('video');
+					video.src = getLeonardoUrl(media.uuid, { format: 'mp4' });
+					video.controls = true;
+					video.playsInline = true;
+					video.preload = 'metadata';
+					video.style.width = video.style.height = '100%';
+					slide.append(video);
+					e.content.element = slide;
+				});
+				pswp.on('contentDeactivate', ({ content }) => {
+					content.element?.querySelector('video')?.pause();
+				});
+				pswp.addFilter('preventPointerEvent', (prevent, event) =>
+					prevent && !(event.target instanceof HTMLVideoElement)
+				);
+
 				// Кнопка скачивания оригинала в полном качестве
 				pswp.on('uiRegister', () => {
+					if (images.some(({ caption }) => caption)) {
+						pswp?.ui?.registerElement({
+							name: 'redtf-caption',
+							appendTo: 'root',
+								onInit: (el, viewer) => {
+									const update = () => (el.innerHTML = sanitizeHtml(images[viewer.currIndex]?.caption ?? ''));
+									viewer.on('change', update);
+									update();
+								}
+						});
+					}
 					pswp?.ui?.registerElement({
 						name: 'download',
 						ariaLabel: 'Скачать оригинал',
@@ -125,6 +157,16 @@
 <div class="pswp-barrier" aria-hidden="true"></div>
 
 <style>
+	:global(.pswp__redtf-caption:not(:empty)) {
+		position: absolute;
+		inset: auto 0 0;
+		z-index: 1;
+		padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+		background: rgb(0 0 0 / 65%);
+		color: white;
+		text-align: center;
+	}
+
 	.pswp-barrier {
 		position: fixed;
 		inset: 0;

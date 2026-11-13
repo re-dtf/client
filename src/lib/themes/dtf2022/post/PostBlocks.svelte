@@ -51,6 +51,7 @@
 	} = $props();
 
 	const HEADINGS = ['h2', 'h3', 'h4'];
+	const GALLERY_LIMIT = 5;
 
 	// Галочка липнет к последнему слову, чтобы не оказаться на строке одна (как .content-title__last-word)
 	let titleParts = $derived.by(() => {
@@ -125,7 +126,7 @@
 	</div>
 {/snippet}
 
-{#snippet figure(image: any, caption: string | undefined, gallery: any[], anchorId?: string)}
+{#snippet figure(image: any, caption: string | undefined, anchorId?: string)}
 	<figure class={figureClass(image.data)} id={anchorId}>
 		{#snippet content()}
 			{#if isVideo(image)}
@@ -157,8 +158,8 @@
 						onpointerenter={preloadLightbox}
 						onclick={(e) =>
 							openLightbox(
-								gallery.map((g) => g.data),
-								gallery.indexOf(image),
+								[image.data],
+								0,
 								e.currentTarget.previousElementSibling as HTMLImageElement
 							)}
 					></button>
@@ -172,7 +173,7 @@
 	</figure>
 {/snippet}
 
-{#snippet renderBlock(block: Block)}
+{#snippet renderBlock(block: Block, covered = false)}
 	{@const anchorId = variant === 'page' ? (block.anchor || block.data?.anchor)?.trim() || undefined : undefined}
 	{#if block.type === 'text'}
 		<div class="post-block post-block--text" id={anchorId}>{@html withTags(block.data.text)}</div>
@@ -181,15 +182,39 @@
 			{@html sanitize(block.data.text)}
 		</svelte:element>
 	{:else if block.type === 'media'}
-		<!-- Галерея просмотра — картинки этого блока (видео в неё не входят) -->
-		{@const gallery = (block.data.items ?? []).map((item: any) => item.image).filter((image: any) => image?.data?.uuid && !isVideo(image))}
-		{@const validItems = (block.data.items ?? []).filter((item: any) => item.image?.data?.uuid)}
-		{#if anchorId && validItems.length === 0}
+		{@const items = (block.data.items ?? []).filter((item: any) => item?.image?.data?.uuid)}
+		{#if items.length > 1}
+			{@const tiles = items.slice(0, GALLERY_LIMIT)}
+			<figure class={figureClass(undefined)} id={anchorId}>
+				<div class={['media-gallery', `media-gallery--${tiles.length}`]} inert={covered || evictMedia}>
+					{#each tiles as { image }, i}
+						{@const video = isVideo(image)}
+						{@const more = i === GALLERY_LIMIT - 1 ? items.length - GALLERY_LIMIT : 0}
+						<button
+							class="media-gallery__tile"
+							style:background-color={image.data.color ? `#${image.data.color}` : undefined}
+							aria-label={more ? `Открыть кадр ${i + 1} из ${items.length}, ещё ${more}` : `Открыть кадр ${i + 1} из ${items.length}`}
+							onpointerenter={preloadLightbox}
+							onclick={() => openLightbox(items.map(({ image, title }: any) => ({ ...image.data, video: isVideo(image), caption: title })), i)}
+						>
+							{#if !evictMedia}
+								<img src={getLeonardoUrl(image.data.uuid, { width: 680, format: video ? 'jpg' : undefined })} alt="" loading="lazy" />
+							{/if}
+							{#if more}
+								<span class="media-gallery__more" aria-hidden="true">+{more}</span>
+							{:else if video}
+								<svg class="icon-play" width="48" height="48" aria-hidden="true"><use href="/icons.svg#andropov_play_default"></use></svg>
+							{/if}
+						</button>
+					{/each}
+				</div>
+			</figure>
+		{:else if items.length === 1}
+			{@const { image, title } = items[0]}
+			{@render figure(image, title, anchorId)}
+		{:else if anchorId}
 			<div id={anchorId} class="post-block post-anchor"></div>
 		{/if}
-		{#each validItems as item, i}
-			{@render figure(item.image, item.title, gallery, i === 0 ? anchorId : undefined)}
-		{/each}
 	{:else if block.type === 'video' && block.data.video?.data}
 		{@const video = block.data.video.data}
 		{@const youtubeId = video.external_service?.name === 'youtube' ? video.external_service.id : null}
@@ -307,7 +332,7 @@
 						</button>
 					</div>
 				</div>
-				{@render renderBlock(block)}
+				{@render renderBlock(block, true)}
 			</div>
 		{/if}
 	{/each}
@@ -425,6 +450,74 @@
 	}
 
 	/* Медиа */
+	/* Раскладка .gall из архива DTF. На мобильном меняются высоты, пропорции и порядок рядов из пяти кадров. */
+	.media-gallery {
+		--gallery-gap: 4px;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-auto-rows: 338px;
+		gap: var(--gallery-gap);
+		background: var(--bg-card);
+	}
+
+	.media-gallery--3,
+	.media-gallery--4 {
+		grid-template-columns: minmax(0, calc(70% - var(--gallery-gap))) minmax(0, 1fr);
+	}
+
+	.media-gallery--3 { grid-auto-rows: 215px; }
+	.media-gallery--4 { grid-auto-rows: 142px; }
+	.media-gallery--3 > :first-child { grid-row: span 2; }
+	.media-gallery--4 > :first-child { grid-row: span 3; }
+
+	.media-gallery--5 {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+		grid-template-rows: 280px 150px;
+	}
+
+	.media-gallery--5 > * { grid-column: span 2; }
+	.media-gallery--5 > :nth-child(-n + 2) { grid-column: span 3; }
+
+	.media-gallery__tile {
+		position: relative;
+		z-index: 1;
+		min-width: 0;
+		background: var(--bg-media-frame);
+		cursor: var(--gallery-cursor, pointer);
+	}
+
+	.media-gallery__tile img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.media-gallery__tile::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		box-shadow: inset 0 2px 11px rgb(0 0 0 / 10%);
+		pointer-events: none;
+	}
+
+	.media-gallery__tile:focus-visible::after {
+		z-index: 1;
+		outline: 2px solid var(--color-accent);
+		outline-offset: -2px;
+	}
+
+	.media-gallery__more {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		background: rgb(0 0 0 / 50%);
+		color: white;
+		font-size: 40px;
+	}
+
 	.media-figure {
 		display: flex;
 		flex-direction: column;
@@ -570,6 +663,27 @@
 	}
 
 	@media (max-width: 859px) {
+		.media-gallery {
+			--gallery-gap: 3px;
+			grid-auto-rows: 214px;
+		}
+
+		.media-gallery--3,
+		.media-gallery--4 {
+			grid-template-columns: minmax(0, calc(60% - var(--gallery-gap))) minmax(0, 1fr);
+			grid-auto-rows: 105px;
+		}
+
+		.media-gallery--3 > :first-child { height: 214px; }
+		.media-gallery--4 > :first-child { height: 323px; }
+		.media-gallery--3 { min-height: 214px; }
+		.media-gallery--4 { min-height: 323px; }
+
+		.media-gallery--5 { grid-template-rows: 160px 150px; }
+		.media-gallery--5 > :nth-child(-n + 3) { grid-column: span 2; }
+		.media-gallery--5 > :nth-child(n + 4) { grid-column: span 3; }
+		.media-gallery__more { font-size: 34px; }
+
 		.post-block--warning {
 			padding: 16px;
 		}

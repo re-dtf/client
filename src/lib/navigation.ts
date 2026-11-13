@@ -225,13 +225,13 @@ export function preloadLightbox() {
 }
 
 /** Открыть просмотр картинок; origin — миниатюра, из которой разворачиваем (и в которую сворачиваем) кадр с номером index */
-export function openLightbox(images: { uuid: string; width: number; height: number; type?: string }[], index: number, origin?: HTMLImageElement) {
+export function openLightbox(images: Extract<App.OverlayData, { type: 'lightbox' }>['data']['images'], index: number, origin?: HTMLImageElement) {
 	if (lightboxOpening || page.state.overlays?.some((o) => o.type === 'lightbox')) return;
 	lightboxOpening = true;
 	lightboxOrigin = origin;
 	return openOverlay({
 		type: 'lightbox',
-		data: { images: images.map(({ uuid, width, height, type }) => ({ uuid, width, height, type })), index }
+		data: { images: images.map(({ uuid, width, height, type, video, caption }) => ({ uuid, width, height, type, video, caption })), index }
 	}).finally(() => {
 		lightboxOpening = false;
 	});
