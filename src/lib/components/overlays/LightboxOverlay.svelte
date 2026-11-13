@@ -159,11 +159,26 @@
 <div class="pswp-barrier" aria-hidden="true"></div>
 
 <style>
+	:global(.pswp .pswp__top-bar) {
+		top: env(safe-area-inset-top, 0px);
+		padding-left: env(safe-area-inset-left, 0px);
+		padding-right: env(safe-area-inset-right, 0px);
+	}
+
+	:global(.pswp .pswp__button--arrow--prev) {
+		left: env(safe-area-inset-left, 0px);
+	}
+
+	:global(.pswp .pswp__button--arrow--next) {
+		right: env(safe-area-inset-right, 0px);
+	}
+
 	:global(.pswp__redtf-caption:not(:empty)) {
 		position: absolute;
 		inset: auto 0 0;
 		z-index: 1;
-		padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+		padding: 8px calc(16px + env(safe-area-inset-right, 0px))
+			calc(8px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
 		background: rgb(0 0 0 / 65%);
 		color: white;
 		text-align: center;
