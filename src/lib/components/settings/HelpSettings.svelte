@@ -29,7 +29,7 @@
 <section class="hero">
 	<span class="hero__icon">
 		<svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
-			<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" fill="currentColor" />
+			<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor" />
 		</svg>
 	</span>
 	<div class="hero__text">
