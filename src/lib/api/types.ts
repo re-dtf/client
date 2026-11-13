@@ -167,6 +167,7 @@ export interface Profile {
 	/** Вертикальная позиция обложки, % */
 	coverY?: number;
 	isPlus?: boolean;
+	badgeId?: string;
 	rating?: number;
 	subscribersCount?: number;
 	subscriptionsCount?: number;

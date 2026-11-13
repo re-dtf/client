@@ -271,6 +271,7 @@ export function mapProfile(subsite: any): Profile {
 		coverRaw: subsite.cover?.data?.uuid ? subsite.cover : undefined,
 		coverY: subsite.coverY ?? undefined,
 		isPlus: !!subsite.isPlus,
+		badgeId: subsite.badgeId || undefined,
 		rating: subsite.rating ?? undefined,
 		subscribersCount: subsite.counters?.subscribers,
 		subscriptionsCount: subsite.counters?.subscriptions,

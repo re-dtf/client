@@ -13,6 +13,7 @@
 	import Button from './ui/Button.svelte';
 	import Popover from './ui/Popover.svelte';
 	import Preloader from './ui/Preloader.svelte';
+	import PlusBadge from './ui/PlusBadge.svelte';
 	import { notify } from './ui/notify.svelte';
 
 	let {
@@ -275,10 +276,8 @@
 			<h1 class="profile-title">
 				<span class="profile-title__name">{profile.name}</span>
 				{#if profile.isPlus}
-					<span class="profile-title__badge" title="Plus">
-						<svg height="24" width="24" class="icon" aria-hidden="true">
-							<use href="/icons.svg#ui_badge_plus"></use>
-						</svg>
+					<span class="profile-title__badge">
+						<PlusBadge author={profile} size={24} />
 					</span>
 				{/if}
 			</h1>

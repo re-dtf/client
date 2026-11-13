@@ -47,4 +47,34 @@ describe('BadgeInfoModal', () => {
 		expect(body).toContain('Этот комментарий написан с использованием iOS приложения DTF.');
 		expect(body).toContain('Закрыть');
 	});
+
+	it('рендерит информацию для классического Plus бейджа со ссылкой на страницу Plus', () => {
+		const { body } = render(BadgeInfoModal, {
+			props: {
+				badge: { type: 'plus' },
+				onclose: vi.fn()
+			}
+		});
+
+		expect(body).toContain('badge-modal__badge--plus');
+		expect(body).toContain('ui_badge_plus');
+		expect(body).toContain('Plus');
+		expect(body).toContain('У этого пользователя активна подписка DTF+');
+		expect(body).toContain('https://dtf.ru/plus');
+		expect(body).toContain('Подробнее о Plus');
+	});
+
+	it('рендерит кастомную иконку для Plus бейджа с customUrl', () => {
+		const { body } = render(BadgeInfoModal, {
+			props: {
+				badge: { type: 'plus', customUrl: 'https://leonardo.osnova.io/custom-badge.png' },
+				onclose: vi.fn()
+			}
+		});
+
+		expect(body).toContain('badge-modal__badge--plus');
+		expect(body).toContain('https://leonardo.osnova.io/custom-badge.png');
+		expect(body).toContain('Plus');
+		expect(body).toContain('У этого пользователя активна подписка DTF+');
+	});
 });

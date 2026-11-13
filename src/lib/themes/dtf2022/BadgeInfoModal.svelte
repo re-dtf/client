@@ -4,11 +4,18 @@
 	import type { ClientBadge } from '$lib/clientBadge';
 	import { notify } from './ui/notify.svelte';
 
+	export type PlusBadgeModal = {
+		type: 'plus';
+		customUrl?: string;
+	};
+
+	export type BadgeModalInfo = ClientBadge | PlusBadgeModal;
+
 	let {
 		badge,
 		onclose
 	}: {
-		badge: ClientBadge;
+		badge: BadgeModalInfo;
 		onclose: () => void;
 	} = $props();
 
@@ -44,7 +51,7 @@
 	}
 </script>
 
-<Dialog label="Информация о клиенте" width="400px" onClose={onclose}>
+<Dialog label={badge.type === 'plus' ? 'Подписка DTF Plus' : 'Информация о клиенте'} width="400px" onClose={onclose}>
 	<div class="badge-modal">
 		<button type="button" class="badge-modal__close" aria-label="Закрыть" onclick={onclose}>
 			<svg class="icon" width="20" height="20" aria-hidden="true">
@@ -71,6 +78,17 @@
 					</svg>
 					<span>iOS</span>
 				</div>
+			{:else if badge.type === 'plus'}
+				<div class="badge-modal__badge badge-modal__badge--plus">
+					{#if badge.customUrl}
+						<img src={badge.customUrl} width="16" height="16" alt="" />
+					{:else}
+						<svg class="icon" width="16" height="16" aria-hidden="true">
+							<use href="/icons.svg#ui_badge_plus"></use>
+						</svg>
+					{/if}
+					<span>Plus</span>
+				</div>
 			{/if}
 		</div>
 
@@ -83,6 +101,9 @@
 				<p>Кстати, у re:DTF тоже есть мобильное приложение для Android.</p>
 			{:else if badge.type === 'ios'}
 				<p>Этот комментарий написан с использованием iOS приложения DTF.</p>
+			{:else if badge.type === 'plus'}
+				<p>У этого пользователя активна подписка DTF+</p>
+				<p>Она даёт возможность выбирать бейдж у профиля и разблокирует некоторые другие функции на DTF.</p>
 			{/if}
 		</div>
 
@@ -102,6 +123,18 @@
 					rel="noopener noreferrer"
 				>
 					Загрузить приложение
+				</a>
+				<button type="button" class="btn secondary" onclick={onclose}>
+					Закрыть
+				</button>
+			{:else if badge.type === 'plus'}
+				<a
+					class="btn primary"
+					href="https://dtf.ru/plus"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Подробнее о Plus
 				</a>
 				<button type="button" class="btn secondary" onclick={onclose}>
 					Закрыть
@@ -177,10 +210,16 @@
 	}
 
 	.badge-modal__badge--android,
-	.badge-modal__badge--ios {
+	.badge-modal__badge--ios,
+	.badge-modal__badge--plus {
 		background-color: var(--color-gray-10, rgba(0, 0, 0, 0.05));
 		color: var(--text-secondary);
 		border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+	}
+
+	.badge-modal__badge--plus img {
+		display: block;
+		flex-shrink: 0;
 	}
 
 	.badge-modal__content {
