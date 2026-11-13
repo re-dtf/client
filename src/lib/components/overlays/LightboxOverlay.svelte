@@ -13,7 +13,7 @@
 	const MAX_WIDTH = 2048;
 
 	onMount(() => {
-		const origin = takeLightboxOrigin();
+		let origin = takeLightboxOrigin();
 		let closed = false;
 		let pswp: import('photoswipe').default | undefined;
 		let downloadBtn: HTMLButtonElement | undefined;
@@ -148,7 +148,9 @@
 		// «Назад» в браузере: оверлея уже нет в истории, просто убираем просмотр
 		return () => {
 			closed = true;
+			origin = undefined;
 			pswp?.destroy();
+			pswp = undefined;
 		};
 	});
 </script>

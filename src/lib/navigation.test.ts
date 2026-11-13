@@ -17,7 +17,7 @@ vi.mock('$app/navigation', () => ({
 }));
 
 import { goto } from '$app/navigation';
-import { getPostPath, getPostShareUrl, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openPost, openDtfUrl, openDtfLink } from './navigation';
+import { getPostPath, getPostShareUrl, getSettingsPath, pushSubstate, popSubstate, closeOverlay, resetSubstates, clearSubstates, openPost, openDtfUrl, openDtfLink, openLightbox, takeLightboxOrigin } from './navigation';
 import { settings } from './storage/settings.svelte';
 import { embedToPost } from './api/embed';
 import { clearPostCache, peekPost } from './postCache';
@@ -279,6 +279,20 @@ describe('navigation', () => {
 			openPost(event, embed);
 
 			expect(peekPost(5404140)).toBeUndefined();
+		});
+
+		it('closeOverlay очищает невостребованный lightboxOrigin', async () => {
+			vi.stubGlobal('location', { href: 'http://localhost/' });
+			vi.stubGlobal('window', {});
+			vi.stubGlobal('history', { back: vi.fn(), go: vi.fn() });
+			try {
+				const img = { isConnected: true } as unknown as HTMLImageElement;
+				await openLightbox([{ uuid: 'u1', width: 100, height: 100 }], 0, img);
+				closeOverlay();
+				expect(takeLightboxOrigin()).toBeUndefined();
+			} finally {
+				vi.unstubAllGlobals();
+			}
 		});
 	});
 });

@@ -232,9 +232,14 @@ export function openLightbox(images: Extract<App.OverlayData, { type: 'lightbox'
 	return openOverlay({
 		type: 'lightbox',
 		data: { images: images.map(({ uuid, width, height, type, video, caption }) => ({ uuid, width, height, type, video, caption })), index }
-	}).finally(() => {
-		lightboxOpening = false;
-	});
+	})
+		.catch((e) => {
+			lightboxOrigin = undefined;
+			throw e;
+		})
+		.finally(() => {
+			lightboxOpening = false;
+		});
 }
 
 /** Миниатюра для анимации, которую запомнил openLightbox; после чтения забывается */
@@ -305,6 +310,7 @@ export function pushSubstate(onBack: () => void) {
  */
 export function clearSubstates() {
 	substateStack.length = 0;
+	lightboxOrigin = undefined;
 }
 
 /**
@@ -344,6 +350,7 @@ export function resetSubstates() {
  * закрывает оверлей целиком за один переход, возвращаясь на экран под ним.
  */
 export function closeOverlay() {
+	lightboxOrigin = undefined;
 	if (typeof window === 'undefined') return;
 	const currentTop = getCurrentTopOverlay();
 	const overlayId = currentTop?.id ?? '';
@@ -520,7 +527,7 @@ export function openDtfLink(e: MouseEvent, href: string): boolean {
 export function openFeed(e: MouseEvent) {
 	if (page.state.overlays?.length) {
 		e.preventDefault();
-		substateStack.length = 0;
+		clearSubstates();
 		const feedUrl = resolve(feedPath(feed.current, feed.period) as '/');
 		if (page.route.id === '/') {
 			goto(feedUrl, { shallow: true, state: { overlays: [] } });
