@@ -1,17 +1,20 @@
 <script lang="ts">
 	import AccountGate from './AccountGate.svelte';
-	import FieldControl from './FieldControl.svelte';
 	import SettingsButton from './SettingsButton.svelte';
 	import SettingsGroup from './SettingsGroup.svelte';
 	import SettingsRow from './SettingsRow.svelte';
+	import SettingsSelect from './SettingsSelect.svelte';
+	import SettingsSwitch from './SettingsSwitch.svelte';
 	import { api } from '$lib/api/index.svelte';
 	import { nsfwBlur } from '$lib/nsfwBlur.svelte';
+	import { reactionSettings } from '$lib/storage/reactions.svelte';
 	import type { AccountSettings } from '$lib/api/types';
-	import type { SettingField, SettingValue } from '$lib/themes/types';
+	import type { SettingValue } from '$lib/themes/types';
 
 	/*
-	 * Страница «Моя лента»: настройки аккаунта DTF (лента по умолчанию,
-	 * сортировка «Моей ленты», размытие NSFW, скрытие прочитанного).
+	 * Страница «Моя лента»: сортировка по рейтингу реакций,
+	 * настройки ленты аккаунта DTF (лента по умолчанию, сортировка «Моей ленты»,
+	 * размытие NSFW, скрытие прочитанного) и ссылка на оформление ленты.
 	 */
 	let { onopencontent }: { onopencontent?: () => void } = $props();
 
@@ -21,40 +24,9 @@
 		{ value: 'my', title: 'Моя лента' }
 	];
 
-	const DTF_FEED_FIELDS: (SettingField & { key: keyof AccountSettings })[] = [
-		{
-			key: 'defaultFeed',
-			type: 'select',
-			title: 'Лента по умолчанию',
-			description: 'Какая лента открывается первой при запуске.',
-			default: 'popular',
-			options: FEED_OPTIONS
-		},
-		{
-			key: 'myFeedSorting',
-			type: 'select',
-			title: 'Сортировка моей ленты',
-			description: 'Порядок постов во вкладке «Моя лента».',
-			default: 'new',
-			options: [
-				{ value: 'new', title: 'Свежее' },
-				{ value: 'popular', title: 'Популярное' }
-			]
-		},
-		{
-			key: 'isBlurNsfw',
-			type: 'toggle',
-			title: 'Размывать NSFW',
-			description: 'Откровенные картинки и видео в ленте закрыты размытием.',
-			default: false
-		},
-		{
-			key: 'hideViewedPostsFromFeeds',
-			type: 'toggle',
-			title: 'Скрывать просмотренные посты',
-			description: 'Прочитанные посты автоматически скрываются из лент.',
-			default: false
-		}
+	const MY_FEED_SORTING_OPTIONS = [
+		{ value: 'new', title: 'Свежее' },
+		{ value: 'popular', title: 'Популярное' }
 	];
 
 	let feed = $state<AccountSettings>();
@@ -81,24 +53,64 @@
 	}
 </script>
 
+<SettingsGroup>
+	<SettingsRow
+		tag="label"
+		title="Сортировать по моему рейтингу"
+		subtitle="«Популярное» и «Лучшие» упорядочиваются по очкам из настроек реакций, а не по очкам DTF. В комментариях появляется опция «Худшие». Прежние посты и комментарии на месте не прыгают."
+	>
+		<SettingsSwitch
+			checked={reactionSettings.value.rank}
+			label="Сортировать по моему рейтингу"
+			onchange={(checked) => reactionSettings.patch({ rank: checked })}
+		/>
+	</SettingsRow>
+</SettingsGroup>
+
 <AccountGate>
-	<div class="settings-cards">
+	<SettingsGroup
+		title="Настройки с DTF"
+		description="Синхронизируются с сервером DTF и сохраняются в аккаунте."
+	>
 		{#if feed}
-			{#each DTF_FEED_FIELDS as field (field.key)}
-				<FieldControl
-					{field}
-					value={feed[field.key] as SettingValue}
-					onchange={(value) => setFeed(field.key, value)}
+			<SettingsRow title="Лента по умолчанию" subtitle="Какая лента открывается первой при запуске.">
+				<SettingsSelect
+					id="dtf-defaultFeed"
+					options={FEED_OPTIONS}
+					value={feed.defaultFeed}
+					label="Лента по умолчанию"
+					onchange={(value) => setFeed('defaultFeed', value as 'popular' | 'new' | 'my')}
 				/>
-			{/each}
+			</SettingsRow>
+			<SettingsRow title="Сортировка моей ленты" subtitle="Порядок постов во вкладке «Моя лента».">
+				<SettingsSelect
+					id="dtf-myFeedSorting"
+					options={MY_FEED_SORTING_OPTIONS}
+					value={feed.myFeedSorting}
+					label="Сортировка моей ленты"
+					onchange={(value) => setFeed('myFeedSorting', value as 'new' | 'popular')}
+				/>
+			</SettingsRow>
+			<SettingsRow tag="label" title="Размывать NSFW" subtitle="Откровенные картинки и видео в ленте закрыты размытием.">
+				<SettingsSwitch
+					checked={feed.isBlurNsfw}
+					label="Размывать NSFW"
+					onchange={(checked) => setFeed('isBlurNsfw', checked)}
+				/>
+			</SettingsRow>
+			<SettingsRow tag="label" title="Скрывать просмотренные посты" subtitle="Прочитанные посты автоматически скрываются из лент.">
+				<SettingsSwitch
+					checked={feed.hideViewedPostsFromFeeds}
+					label="Скрывать просмотренные посты"
+					onchange={(checked) => setFeed('hideViewedPostsFromFeeds', checked)}
+				/>
+			</SettingsRow>
 		{:else if !feedError}
-			{#each DTF_FEED_FIELDS as field (field.key)}
-				<div class="loading-card" aria-busy="true">
-					<span class="loading-text">Загружаем…</span>
-				</div>
-			{/each}
+			<div class="loading-card" aria-busy="true">
+				<span class="loading-text">Загружаем…</span>
+			</div>
 		{/if}
-	</div>
+	</SettingsGroup>
 	{#if feedError}<p class="status status--error">{feedError}</p>{/if}
 </AccountGate>
 
@@ -106,7 +118,7 @@
 	<SettingsGroup title="Оформление ленты">
 		<SettingsRow
 			title="Лента и контент"
-			subtitle="Ширина контента, сортировка по рейтингу реакций и фильтрация"
+			subtitle="Ширина контента, рекомендации под постом и фильтрация"
 		>
 			<SettingsButton variant="suggested" onclick={onopencontent}>
 				<span class="btn-text">
@@ -121,17 +133,6 @@
 {/if}
 
 <style>
-	.settings-cards {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		margin-bottom: 36px;
-	}
-
-	.settings-cards > :global(.group) {
-		margin-bottom: 0;
-	}
-
 	.loading-card {
 		display: flex;
 		align-items: center;
@@ -139,7 +140,6 @@
 		min-height: 66px;
 		border-radius: 14px;
 		background: var(--st-card);
-		box-shadow: var(--st-card-shadow);
 		padding: 12px 20px;
 		box-sizing: border-box;
 	}

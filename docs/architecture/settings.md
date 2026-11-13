@@ -15,8 +15,8 @@
 | `components/settings/SettingsIcon.svelte` | значки разделов боковой панели (по id страницы/раздела); новая страница — новая ветка в нём |
 | `components/settings/FieldControl.svelte` | один пункт настроек по описанию поля |
 | `components/settings/SettingsGroup.svelte`, `SettingsRow.svelte`, `SettingsSwitch.svelte`, `SettingsSelect.svelte`, `SettingsSegmented.svelte`, `SettingsButton.svelte` | примитивы оформления: группа-карточка, строка, переключатель, выпадающий список, сегментированный выбор, кнопка |
-| `components/settings/AccountSettings.svelte`, `NotificationSettings.svelte`, `IgnoredSettings.svelte`, `AccountGate.svelte` | страницы «Профиль» (имя и описание), «Уведомления» (каналы и тумблеры) и «Чёрный список» (локальные фильтры по тегам и фразам + серверные скрытые пользователи и темы DTF). Серверные значения лежат на DTF и читаются через `api`, локальные фильтры лежат в `filterSettings` |
-| `components/settings/FeedSettings.svelte` | страница «Моя лента»: параметры лент DTF (лента по умолчанию, сортировка, размытие NSFW, скрытие прочитанного) |
+| `components/settings/AccountSettings.svelte`, `NotificationSettings.svelte`, `IgnoredSettings.svelte`, `AccountGate.svelte` | страницы «Мой профиль» (имя и описание), «Уведомления» (каналы и тумблеры) и «Чёрный список» (локальные фильтры по тегам и фразам + серверные скрытые пользователи и темы DTF). Серверные значения лежат на DTF и читаются через `api`, локальные фильтры лежат в `filterSettings` |
+| `components/settings/FeedSettings.svelte` | страница «Моя лента»: сортировка по рейтингу реакций, параметры лент DTF (лента по умолчанию, сортировка, размытие NSFW, скрытие прочитанного) |
 | `components/settings/SettingsEmptyState.svelte` | заглушка в стиле `AdwStatusPage`, пока ни один раздел или подпункт не выбран |
 | `components/settings/ProxySettings.svelte` | страница «Сеть и прокси»: управление списком прокси и failover |
 | `components/settings/HelpSettings.svelte` | страница «Хочу помочь»: поддержка и участие в разработке, адреса проекта лежат в константах файла |

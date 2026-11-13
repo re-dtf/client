@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from 'svelte/server';
 import SettingsScreen from './SettingsScreen.svelte';
+import { authStorage } from '$lib/storage/auth.svelte';
 
 describe('SettingsScreen', () => {
 	it('рендерит основные категории и пункты Уровня 1', () => {
@@ -15,14 +16,14 @@ describe('SettingsScreen', () => {
 
 		// Основные категории первого уровня
 		expect(body).toContain('Аккаунт');
+		expect(body).toContain('Контент');
 		expect(body).toContain('Персонализация');
-		expect(body).toContain('Сеть');
 		expect(body).toContain('Данные');
 		expect(body).toContain('О проекте');
 		expect(body).toContain('Разработка');
 
 		// Пункты меню первого уровня
-		expect(body).toContain('Профиль');
+		expect(body).toContain('Мой профиль');
 		expect(body).toContain('Уведомления');
 		expect(body).toContain('Чёрный список');
 		expect(body).toContain('Моя лента');
@@ -31,6 +32,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Реестр реакций');
 		expect(body).toContain('Приложение');
 		expect(body).toContain('Источники данных');
+		expect(body).toContain('Сеть и прокси');
 		expect(body).toContain('Моя статистика');
 		expect(body).toContain('Хочу помочь');
 		expect(body).toContain('Поддержавшие проект');
@@ -246,7 +248,7 @@ describe('SettingsScreen', () => {
 		expect(body).toContain('Блюр верхней панели');
 	});
 
-	it('рендерит раздел Лента и контент с рейтингом и соло-ссылкой на фильтрацию', () => {
+	it('рендерит раздел Лента и контент с рекомендациями и соло-ссылкой на фильтрацию', () => {
 		const { body } = render(SettingsScreen, {
 			props: {
 				onclose: () => {},
@@ -254,9 +256,44 @@ describe('SettingsScreen', () => {
 			}
 		});
 
-		expect(body).toContain('Сортировать по моему рейтингу');
+		expect(body).not.toContain('Сортировать по моему рейтингу');
+		expect(body).toContain('Рекомендации под постом');
 		expect(body).toContain('Фильтрация контента');
 		expect(body).toContain('Чёрный список и стоп-слова');
+	});
+
+	it('рендерит раздел Моя лента с рейтингом и заглушкой входа без сессии', () => {
+		authStorage.logout();
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'feed'
+			}
+		});
+
+		expect(body).toContain('Сортировать по моему рейтингу');
+		expect(body).toContain('Нужен вход в DTF');
+	});
+
+	it('рендерит раздел Моя лента с рейтингом и группой настроек DTF при авторизации', () => {
+		authStorage.session = {
+			accessToken: 'test-token',
+			refreshToken: 'test-refresh',
+			userId: 1,
+			userHash: 'test'
+		};
+
+		const { body } = render(SettingsScreen, {
+			props: {
+				onclose: () => {},
+				page: 'feed'
+			}
+		});
+
+		expect(body).toContain('Сортировать по моему рейтингу');
+		expect(body).toContain('Настройки с DTF');
+
+		authStorage.logout();
 	});
 
 	it('рендерит Оценки с соло-ссылкой на Реестр реакций', () => {

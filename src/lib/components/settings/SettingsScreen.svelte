@@ -133,15 +133,6 @@
 		default: defaultTransparency()
 	};
 
-	const rankField: ToggleField = {
-		key: 'rank',
-		type: 'toggle',
-		title: 'Сортировать по моему рейтингу',
-		description:
-			'«Популярное» и «Лучшие» упорядочиваются по очкам из настроек реакций, а не по очкам DTF. В комментариях появляется опция «Худшие». Прежние посты и комментарии на месте не прыгают.',
-		default: true
-	};
-
 	const recommendationsField: ChoiceField = {
 		key: 'recommendations',
 		type: 'radio',
@@ -281,10 +272,16 @@
 		{
 			title: 'Аккаунт',
 			items: [
-				{ id: 'account', type: 'page', title: 'Профиль', icon: 'profile' },
-				{ id: 'notifications', type: 'page', title: 'Уведомления', icon: 'notifications' },
+				{ id: 'account', type: 'page', title: 'Мой профиль', icon: 'profile' },
+				{ id: 'notifications', type: 'page', title: 'Уведомления', icon: 'notifications' }
+			]
+		},
+		{
+			title: 'Контент',
+			items: [
+				{ id: 'feed', type: 'page', title: 'Моя лента', icon: 'feed' },
 				{ id: 'ignored', type: 'page', title: 'Чёрный список', icon: 'ignored' },
-				{ id: 'feed', type: 'page', title: 'Моя лента', icon: 'feed' }
+				{ id: 'sources', type: 'page', title: 'Источники данных', icon: 'sources' }
 			]
 		},
 		{
@@ -297,15 +294,9 @@
 			]
 		},
 		{
-			title: 'Сеть',
-			items: [
-				{ id: 'sources', type: 'page', title: 'Источники данных', icon: 'sources' },
-				{ id: 'network', type: 'page', title: 'Сеть и прокси', icon: 'network' }
-			]
-		},
-		{
 			title: 'Данные',
 			items: [
+				{ id: 'network', type: 'page', title: 'Сеть и прокси', icon: 'network' },
 				{ id: 'stats', type: 'page', title: 'Моя статистика', icon: 'stats' }
 			]
 		},
@@ -878,11 +869,6 @@
 										onchange={(value) => themeValues.patch({ [field.key]: value })}
 									/>
 								{/each}
-								<FieldControl
-									field={rankField}
-									value={reactionSettings.value.rank}
-									onchange={(value) => reactionSettings.patch({ rank: value === true })}
-								/>
 								<FieldControl
 									field={recommendationsField}
 									value={settings.value.recommendations}
