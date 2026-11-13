@@ -198,6 +198,37 @@ describe('Capacitor bridge', () => {
 	});
 
 	describe('handleBackButton', () => {
+		it('выходит из полноэкранного режима вместо закрытия оверлея или сворачивания приложения', () => {
+			const exitFullscreen = vi.fn().mockResolvedValue(undefined);
+			vi.stubGlobal('document', {
+				fullscreenElement: {},
+				exitFullscreen
+			});
+			mocks.popSubstate.mockReturnValue(true);
+			mockPageState.overlays = [{ id: 'post-1', type: 'post' }];
+
+			handleBackButton(true);
+
+			expect(exitFullscreen).toHaveBeenCalledTimes(1);
+			expect(mocks.popSubstate).not.toHaveBeenCalled();
+			expect(mocks.closeOverlay).not.toHaveBeenCalled();
+			expect(appMocks.minimizeApp).not.toHaveBeenCalled();
+		});
+
+		it('выходит из полноэкранного режима через webkitExitFullscreen при наличии webkitFullscreenElement', () => {
+			const webkitExitFullscreen = vi.fn();
+			vi.stubGlobal('document', {
+				fullscreenElement: null,
+				webkitFullscreenElement: {},
+				webkitExitFullscreen
+			});
+
+			handleBackButton(false);
+
+			expect(webkitExitFullscreen).toHaveBeenCalledTimes(1);
+			expect(appMocks.minimizeApp).not.toHaveBeenCalled();
+		});
+
 		it('вызывает popSubstate и не закрывает оверлей, если есть активный вложенный шаг', () => {
 			mocks.popSubstate.mockReturnValue(true);
 			mockPageState.overlays = [{ id: 'settings-1', type: 'settings' }];

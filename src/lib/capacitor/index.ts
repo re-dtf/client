@@ -140,11 +140,26 @@ export function handleNativeLinkClick(e: MouseEvent): void {
 
 /**
  * Обработка системной кнопки / жеста «Назад» в нативном приложении.
- * Сначала проверяет вложенные шаги навигации внутри активного оверлея (popSubstate),
+ * Сначала выходит из полноэкранного режима (видео / iframe), затем проверяет
+ * вложенные шаги навигации внутри активного оверлея (popSubstate),
  * затем закрывает верхний оверлей (closeOverlay), затем переходит назад по истории,
  * либо сворачивает приложение, если пользователь находится на главном экране.
  */
 export function handleBackButton(canGoBack: boolean = false): void {
+	if (typeof document !== 'undefined') {
+		const doc = document as Document & {
+			webkitFullscreenElement?: Element | null;
+			webkitExitFullscreen?: () => Promise<void> | void;
+		};
+		if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+			try {
+				const exit = doc.fullscreenElement ? doc.exitFullscreen : doc.webkitExitFullscreen;
+				Promise.resolve(exit?.call(doc)).catch(() => {});
+			} catch {}
+			return;
+		}
+	}
+
 	try {
 		if (popSubstate()) {
 			return;
