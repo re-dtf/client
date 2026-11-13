@@ -21,6 +21,7 @@
 	import UnknownBlock from './UnknownBlock.svelte';
 	import { themeSettings } from './themeSettings.svelte';
 	import Popover from './ui/Popover.svelte';
+	import PlusBadge from './ui/PlusBadge.svelte';
 	import { notify } from './ui/notify.svelte';
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
@@ -100,6 +101,9 @@
 			{/if}
 			<span class="profile-comment__name">{comment.author.name}</span>
 		</a>
+		{#if comment.author.isPlus}
+			<span class="profile-comment__plus"><PlusBadge author={comment.author} size={14} /></span>
+		{/if}
 		{#if showAuthorBadge && clientBadge}
 			<button
 				type="button"
@@ -295,6 +299,11 @@
 		display: flex;
 		align-items: center;
 		margin: 8px 0 7px;
+	}
+
+	.profile-comment__plus {
+		display: flex;
+		margin-left: 6px;
 	}
 
 	.profile-comment__badge {

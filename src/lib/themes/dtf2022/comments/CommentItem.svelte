@@ -17,6 +17,7 @@
 	import { themeSettings } from '../themeSettings.svelte';
 	import { formatFullDate, formatTime, plural } from '../format';
 	import Popover from '../ui/Popover.svelte';
+	import PlusBadge from '../ui/PlusBadge.svelte';
 	import { notify } from '../ui/notify.svelte';
 	import PostButton from '../post/PostButton.svelte';
 	import Rating from '../post/Rating.svelte';
@@ -360,6 +361,10 @@
 			</a>
 
 			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, shownAuthor.id)}>{shownAuthor.name}</a>
+			<!-- У автора из архива статуса Плюса нет -->
+			{#if !restoredAuthor && comment.author.isPlus}
+				<span class="comment-item__plus"><PlusBadge author={comment.author} /></span>
+			{/if}
 			{#if restoredAuthor && comment.author.isFrozen}
 				<span class="comment-item__frozen" title="Аккаунт автора заморожен">заморожен</span>
 			{/if}
@@ -795,6 +800,12 @@
 		background-color: var(--border-subtle, rgba(0, 0, 0, 0.05));
 	}
 
+	.comment-item__plus {
+		display: flex;
+		align-self: center;
+		margin-right: var(--gap-details);
+	}
+
 	.comment-item__icon-action {
 		margin-right: 6px;
 		color: var(--text-muted);
@@ -854,6 +865,7 @@
 		.comment-item__author,
 		.comment-item__avatar,
 		.comment-item__badge,
+		.comment-item__plus,
 		.comment-item__icon-action {
 			order: -2;
 		}
