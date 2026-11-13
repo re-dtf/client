@@ -17,7 +17,7 @@
 	let posts = $state.raw<Post[]>([]);
 	let hasMore = $state(true);
 	let cursor: RecommendationsCursor | undefined;
-	let loading = false;
+	let loading = $state(false);
 	let requested = $state(settings.value.recommendations === 'auto');
 	// svelte-ignore state_referenced_locally
 	const seen = new Set<number>([postId]);
@@ -54,7 +54,7 @@
 	{#if hasMore}
 		{#if requested}
 			<div class="recommendations__horizon" {@attach loadOnVisible(load)}>
-				<Preloader />
+				{#if loading}<Preloader />{/if}
 			</div>
 		{:else}
 			<div class="recommendations__button">
