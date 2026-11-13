@@ -21,7 +21,7 @@ vi.hoisted(() => {
 });
 
 import {
-	READ_AFTER, addReaction, addRead, addTick, dayStreaks, emptyStats, flush, statsStore, tick, trackPostClosed, trackPostLoaded
+	READ_AFTER, addReaction, addRead, addTick, dayStreaks, emptyStats, flush, markCommentsStart, statsStore, tick, trackPostClosed, trackPostLoaded, withComments
 } from './stats.svelte';
 
 const post = (id: number): Post => ({
@@ -93,5 +93,40 @@ describe('stats', () => {
 
 		flush();
 		expect(statsStore.value.seconds).toBe(READ_AFTER * 2 + 2);
+	});
+
+	it('markCommentsStart переключает область на comments через IntersectionObserver без getBoundingClientRect', () => {
+		let callback: ((entries: Array<{ isIntersecting: boolean }>) => void) | undefined;
+		let disconnected = false;
+		vi.stubGlobal(
+			'IntersectionObserver',
+			class {
+				constructor(cb: (entries: Array<{ isIntersecting: boolean }>) => void) {
+					callback = cb;
+				}
+				observe() {}
+				disconnect() {
+					disconnected = true;
+				}
+			}
+		);
+		try {
+			const ctx = { area: 'post' as const, theme: 'dtf2022', post: 'dtf_42' };
+			const cleanup = markCommentsStart({ id: 42, sourceId: 'dtf' }, {} as HTMLElement);
+			expect(withComments(ctx).area).toBe('post');
+
+			callback?.([{ isIntersecting: true }]);
+			expect(withComments(ctx).area).toBe('comments');
+
+			callback?.([{ isIntersecting: false }]);
+			expect(withComments(ctx).area).toBe('post');
+
+			callback?.([{ isIntersecting: true }]);
+			cleanup();
+			expect(disconnected).toBe(true);
+			expect(withComments(ctx).area).toBe('post');
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 });

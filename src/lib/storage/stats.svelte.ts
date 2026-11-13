@@ -175,7 +175,7 @@ export function flush() {
 // Уже засчитанные посты помнит само хранилище (recentPosts): иначе каждое обновление страницы накручивало бы счётчик.
 const loaded = new Map<string, Post>();
 const watched = new Map<string, number>();
-const commentsStart = new Map<string, HTMLElement>();
+const inComments = new Set<string>();
 
 /** PostContent загрузил пост: время на нём пойдёт, когда он станет открытым (см. TickContext.post) */
 export function trackPostLoaded(post: Post) {
@@ -183,22 +183,33 @@ export function trackPostLoaded(post: Post) {
 }
 
 export function trackPostClosed(post: { id: number; sourceId: string }) {
-	loaded.delete(postKey(post));
-	watched.delete(postKey(post));
+	const key = postKey(post);
+	loaded.delete(key);
+	watched.delete(key);
+	inComments.delete(key);
 }
 
 /** Пустой элемент перед комментариями поста: когда он выше середины окна, пользователь «в комментариях». Возвращает снятие метки. */
 export function markCommentsStart(post: { id: number; sourceId: string }, element: HTMLElement) {
-	commentsStart.set(postKey(post), element);
+	const key = postKey(post);
+	if (typeof IntersectionObserver === 'undefined') return () => inComments.delete(key);
+	const observer = new IntersectionObserver(
+		(entries) => {
+			if (entries[0].isIntersecting) inComments.add(key);
+			else inComments.delete(key);
+		},
+		{ rootMargin: '1000000px 0px -50% 0px' }
+	);
+	observer.observe(element);
 	return () => {
-		if (commentsStart.get(postKey(post)) === element) commentsStart.delete(postKey(post));
+		observer.disconnect();
+		inComments.delete(key);
 	};
 }
 
 /** Открытый пост считается «комментариями», если граница комментариев прокручена выше середины окна */
-function withComments(context: TickContext): TickContext {
-	const start = context.area === 'post' && context.post ? commentsStart.get(context.post) : undefined;
-	return start && start.getBoundingClientRect().top < innerHeight / 2 ? { ...context, area: 'comments' } : context;
+export function withComments(context: TickContext): TickContext {
+	return context.area === 'post' && context.post && inComments.has(context.post) ? { ...context, area: 'comments' } : context;
 }
 
 /** Один шаг в секунду: время в приложении и время на открытом посте */
