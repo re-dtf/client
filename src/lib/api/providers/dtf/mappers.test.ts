@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { REDTF_WATERMARK } from '$lib/watermark';
-import { mapAvatarUrl, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, mapQuizResult, mapSearchSnippet, parseNotificationHtml } from './mappers';
+import { mapAvatarUrl, mapBadges, mapUser, mapComment, mapCurrentUser, mapEntryToPost, mapIgnoredSubsite, mapLikes, mapNotification, mapQuizResult, mapSearchSnippet, parseNotificationHtml } from './mappers';
 
 describe('mapQuizResult', () => {
 	it('неизвестный hash приходит пустым массивом — это пустой опрос', () => {
@@ -31,6 +31,26 @@ describe('mapAvatarUrl', () => {
 		expect(mapAvatarUrl({ avatar: { url: 'https://x/a.png' } })).toBe('https://x/a.png');
 		expect(mapAvatarUrl({ avatar: { data: { uuid: 'abc' } } }, '80x80')).toContain('/abc/-/scale_crop/80x80/');
 		expect(mapAvatarUrl({})).toBeUndefined();
+	});
+});
+
+describe('бейджи Плюса', () => {
+	it('автор: badgeId приходит строкой или null', () => {
+		expect(mapUser({ id: 1, isPlus: true, badgeId: 'b1' })).toMatchObject({ isPlus: true, badgeId: 'b1' });
+		expect(mapUser({ id: 1, badgeId: null }).badgeId).toBeUndefined();
+	});
+
+	it('каталог: берёт статичную картинку и пропускает записи без неё', () => {
+		const badges = mapBadges([
+			{ id: 'a', type: 'plus', staticUuid: 'u1', animatedUuid: null },
+			{ id: 'b', type: 'plus', staticUuid: null },
+			{ id: 'c', type: 'unknown', staticUuid: 'u3' }
+		]);
+
+		expect(badges).toHaveLength(1);
+		expect(badges[0]).toMatchObject({ id: 'a', type: 'plus' });
+		expect(badges[0].url).toContain('/u1/');
+		expect(mapBadges(undefined)).toEqual([]);
 	});
 });
 

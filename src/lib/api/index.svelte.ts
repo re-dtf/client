@@ -267,6 +267,7 @@ export const api = {
 	getQuizResults: dtfApiProvider.getQuizResults,
 	voteQuiz: dtfApiProvider.voteQuiz,
 	getCommentControls: dtfApiProvider.getCommentControls,
+	getBadges: dtfApiProvider.getBadges,
 	complain: dtfApiProvider.complain,
 	createDonation: dtfApiProvider.createDonation,
 	setCommentsSubscription: dtfApiProvider.setCommentsSubscription,

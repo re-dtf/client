@@ -1,4 +1,4 @@
-import type { Comment, CommentEditorState, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, QuizResult, Reactions, SearchSubsite, User } from '../../types';
+import type { Badge, Comment, CommentEditorState, CurrentUser, IgnoredSubsite, Likes, Notification, NotificationPart, Post, Profile, ProfileListItem, QuizResult, Reactions, SearchSubsite, User } from '../../types';
 import { getLeonardoUrl } from '../../utils';
 import { embedToPost } from '../../embed';
 import { extractWatermark } from '$lib/watermark';
@@ -23,9 +23,19 @@ export function mapUser(author: any): User {
 		avatarUrl: mapAvatarUrl(author),
 		description: author?.description || undefined,
 		isPlus: !!author?.isPlus,
+		badgeId: author?.badgeId || undefined,
 		isDonationsEnabled: author?.isDonationsEnabled || undefined,
 		isFrozen: author?.isFrozen ? true : undefined
 	};
+}
+
+const BADGE_TYPES = ['plus', 'verified', 'pro'];
+
+/** Каталог бейджей из `assets`: берём статичную картинку, анимированная нужна только сайту */
+export function mapBadges(raw: any): Badge[] {
+	return (Array.isArray(raw) ? raw : [])
+		.filter((badge) => badge?.id && badge.staticUuid && BADGE_TYPES.includes(badge.type))
+		.map((badge) => ({ id: badge.id, type: badge.type, url: getLeonardoUrl(badge.staticUuid, { width: 64 }) }));
 }
 
 export function mapProfileListItem(subsite: any): ProfileListItem {

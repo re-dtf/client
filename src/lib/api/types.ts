@@ -112,8 +112,17 @@ export interface User {
 	avatarUrl?: string;
 	description?: string;
 	isPlus?: boolean;
+	/** Бейдж, выбранный подписчиком Плюса; картинку по id отдаёт `getBadges` */
+	badgeId?: string;
 	isDonationsEnabled?: boolean;
 	isFrozen?: boolean;
+}
+
+/** Картинка бейджа из каталога DTF (у Плюса можно выбрать любой из своего типа) */
+export interface Badge {
+	id: string;
+	type: 'plus' | 'verified' | 'pro';
+	url: string;
 }
 
 export interface Subsite {
@@ -432,6 +441,8 @@ export interface ApiProvider {
 	getFavoriteGifs?(): Promise<GifResult[]>;
 	searchGifs?(query: string, cursor?: string): Promise<{ items: GifResult[]; cursor?: string }>;
 	getCommentControls?(commentId: number): Promise<CommentControls>;
+	/** Каталог бейджей DTF; публичный, не зависит от входа */
+	getBadges?(): Promise<Badge[]>;
 	complain?(kind: 'post' | 'comment', id: number, reasonId: number): Promise<void>;
 	/** Комментарий с донатом появляется после оплаты; отвечает ссылкой на оплату */
 	createDonation?(postId: number, text: string, replyTo: number | undefined, media: CommentMedia[], amount: number): Promise<string>;
