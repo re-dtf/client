@@ -48,6 +48,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			watermark: true,
 			clientBadges: 'redtf_only',
 			mobileBadgesPosition: 'author',
+			plusBadges: 'classic',
 			autoUpvoteComments: false,
 			restoreScope: 'all',
 			restoreExpanded: false,

@@ -10,6 +10,7 @@ export type CommentVirtualization = 'auto' | 'enabled' | 'disabled';
 export type RecommendationsMode = 'auto' | 'button';
 export type ClientBadgesMode = 'all' | 'redtf_only' | 'none';
 export type MobileBadgesPosition = 'author' | 'date';
+export type PlusBadgesMode = 'classic' | 'custom';
 export type RestoreScope = 'all' | 'moderator';
 
 export interface ProxyItem {
@@ -48,6 +49,8 @@ export interface AppSettings {
 	clientBadges: ClientBadgesMode;
 	/** Расположение бейджей мобильных клиентов (Android / iOS): 'author' (у автора), 'date' (у времени) */
 	mobileBadgesPosition: MobileBadgesPosition;
+	/** Бейдж Плюса у автора комментария: 'classic' (алмаз) или 'custom' (тот, что автор выбрал себе) */
+	plusBadges: PlusBadgesMode;
 	/** Выбранная иконка приложения и вкладки браузера: 'default' | 'bluer' | 'white' | 'custom' */
 	appIcon: AppIconId;
 	/** Пользовательская иконка в формате data URI (image/png или image/svg+xml) */
@@ -134,6 +137,7 @@ export const settings = persistedState<AppSettings>(
 		watermark: true,
 		clientBadges: 'redtf_only',
 		mobileBadgesPosition: 'author',
+		plusBadges: 'classic',
 		autoUpvoteComments: false,
 		restoreScope: 'all',
 		restoreExpanded: false,

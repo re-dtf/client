@@ -24,7 +24,7 @@
 	import { activeThemeSettings } from '$lib/themes/settings.svelte';
 	import { settings, DEFAULT_THEME } from '$lib/storage/settings.svelte';
 	import { reactionSettings } from '$lib/storage/reactions.svelte';
-	import type { NestingMode, CommentVirtualization, RecommendationsMode, ClientBadgesMode, MobileBadgesPosition } from '$lib/storage/settings.svelte';
+	import type { NestingMode, CommentVirtualization, RecommendationsMode, ClientBadgesMode, MobileBadgesPosition, PlusBadgesMode } from '$lib/storage/settings.svelte';
 	import { isFieldVisible, getCurrentDevice, MOBILE_BREAKPOINT } from '$lib/themes/types';
 	import type { ChoiceField, SettingField, ToggleField, SettingDevice } from '$lib/themes/types';
 	import { paletteSelection } from '$lib/themes/palette';
@@ -209,6 +209,18 @@
 		options: [
 			{ value: 'author', title: 'Возле ника (по умолчанию)', description: 'В строке автора рядом с именем' },
 			{ value: 'date', title: 'Возле времени отправления', description: 'Компактная мини-иконка рядом со временем комментария' }
+		]
+	};
+
+	const plusBadgesField: ChoiceField = {
+		key: 'plusBadges',
+		type: 'radio',
+		title: 'Бейджи Плюса',
+		description: 'Какой значок показывать у подписчиков DTF Plus рядом с ником у постов и комментариев.',
+		default: 'classic',
+		options: [
+			{ value: 'classic', title: 'Классическая иконка (по умолчанию)', description: 'Алмаз у всех подписчиков Плюса' },
+			{ value: 'custom', title: 'Свои бейджи', description: 'Тот значок, который автор выбрал в настройках профиля; без выбора остаётся алмаз' }
 		]
 	};
 
@@ -875,6 +887,11 @@
 									field={recommendationsField}
 									value={settings.value.recommendations}
 									onchange={(value) => settings.patch({ recommendations: value as RecommendationsMode })}
+								/>
+								<FieldControl
+									field={plusBadgesField}
+									value={settings.value.plusBadges}
+									onchange={(value) => settings.patch({ plusBadges: value as PlusBadgesMode })}
 								/>
 								{#each visibleOtherFields as field (field.key)}
 									<FieldControl
