@@ -4,7 +4,8 @@
 	import Reveal from './Reveal.svelte';
 	import NetworkErrorState from './NetworkErrorState.svelte';
 	import ThemeLoader from '$lib/themes/ThemeLoader.svelte';
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
+	import { chunked } from '$lib/chunked';
 
 	/*
 	 * Данные профиля для темы: сам профиль, его посты (с подгрузкой) и списки подписчиков/подписок.
@@ -27,7 +28,10 @@
 	let subscribersPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
 	let subscriptionsPromise = $state<Promise<ProfileListItem[]>>(Promise.resolve([]));
 
+	const CHUNK_SIZE = 5;
+
 	let sorting = $state<Sorting>('new');
+	let allPosts: Post[] = [];
 	let posts = $state.raw<Post[]>([]);
 	let cursor: CursorData | undefined;
 	let hasMore = $state(true);
@@ -35,31 +39,55 @@
 	let postsError = $state<string | null>(null);
 	// Номер запроса — чтобы ответ старой сортировки не перетёр новую
 	let requestId = 0;
+	let inFlight: Promise<boolean> | undefined;
 
-	async function loadPosts(reset = false) {
+	// Посты показываются порциями по кадрам, чтобы большая пачка не блокировала поток
+	const chunks = chunked(
+		() => allPosts.length,
+		() => posts.length,
+		(count) => (posts = allPosts.slice(0, count)),
+		CHUNK_SIZE
+	);
+	onDestroy(chunks.stop);
+
+	function loadPosts(reset = false): Promise<boolean> {
 		const currentId = resolvedProfileId;
-		if (currentId === undefined) return;
-		if (loadingPosts && !reset) return;
-		if (!hasMore && !reset) return;
+		if (currentId === undefined) return Promise.resolve(false);
+		if (!reset) {
+			if (inFlight) return inFlight;
+			if (loadingPosts || !hasMore) return Promise.resolve(false);
+		}
 		const id = ++requestId;
 		if (reset) {
+			chunks.stop();
+			allPosts = [];
 			posts = [];
 			cursor = undefined;
 			hasMore = true;
 		}
 		loadingPosts = true;
 		postsError = null;
-		try {
-			const result = await api.getProfilePosts(currentId, sorting, cursor);
-			if (id !== requestId) return;
-			posts = [...posts, ...result.items];
-			hasMore = result.items.length > 0 && result.lastId !== undefined;
-			cursor = hasMore ? { lastId: result.lastId!, lastSortingValue: result.lastSortingValue ?? 0 } : undefined;
-		} catch (e) {
-			if (id === requestId) postsError = (e as Error).message;
-		} finally {
-			if (id === requestId) loadingPosts = false;
-		}
+		const run = (async () => {
+			try {
+				const result = await api.getProfilePosts(currentId, sorting, cursor);
+				if (id !== requestId) return false;
+				allPosts = [...allPosts, ...result.items];
+				hasMore = result.items.length > 0 && result.lastId !== undefined;
+				cursor = hasMore ? { lastId: result.lastId!, lastSortingValue: result.lastSortingValue ?? 0 } : undefined;
+				const promise = chunks.run();
+				loadingPosts = false;
+				return await promise;
+			} catch (e) {
+				if (id === requestId) postsError = (e as Error).message;
+				return false;
+			} finally {
+				if (id === requestId) loadingPosts = false;
+			}
+		})().finally(() => {
+			if (inFlight === run) inFlight = undefined;
+		});
+		inFlight = run;
+		return run;
 	}
 
 	function loadProfile(currentId: number | string) {

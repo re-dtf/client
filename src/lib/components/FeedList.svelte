@@ -8,7 +8,9 @@
 	import { activeTheme } from '$lib/themes/index.svelte';
 	import { loadFeed, peekFeed, sortingOf } from '$lib/feedCache';
 	import { feed, openFeedTab, type FeedName, type Period } from '$lib/feed.svelte';
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
+	import { chunked } from '$lib/chunked';
+	import { watchVisible } from '$lib/watchVisible';
 	import { appear } from '$lib/themes/appear';
 	import { markFeedLoaded } from '$lib/ready';
 	import { editorialNews } from '$lib/editorialNews.svelte';
@@ -19,7 +21,11 @@
 	 */
 	let { name, period, active }: { name: FeedName; period: Period; active: boolean } = $props();
 
+	const CHUNK_SIZE = 5;
+
 	let feedResult = $state.raw<PaginatedResult<Post> | null>(null);
+	let renderedCount = $state(0);
+	let renderedItems = $derived(feedResult ? feedResult.items.slice(0, renderedCount) : []);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let refreshing = $state(false);
@@ -29,6 +35,16 @@
 
 	// Номер запроса: ответ прежнего периода не должен перетереть новый
 	let requestId = 0;
+	let moreInFlight: Promise<boolean> | undefined;
+
+	// Посты показываются порциями по кадрам, чтобы большая пачка не блокировала поток
+	const chunks = chunked(
+		() => feedResult?.items.length ?? 0,
+		() => renderedCount,
+		(count) => (renderedCount = count),
+		CHUNK_SIZE
+	);
+	onDestroy(chunks.stop);
 
 	// Свежие посты подставляются, только пока лента у верха: иначе список сменился бы под пальцем. У скрытой — по запомненной прокрутке
 	const atTop = () => (active ? window.scrollY : feed.scrollOf(name)) < 100;
@@ -48,7 +64,9 @@
 		error = null;
 		if (isRefresh) refreshing = true;
 		else {
+			chunks.stop();
 			feedResult = cached ?? null;
+			renderedCount = cached?.items.length ?? 0;
 			loading = !cached || (showNews && !editorialNews.ready);
 			epoch++;
 		}
@@ -65,7 +83,9 @@
 			if (id !== requestId) return;
 			if (!cached || (atTop() && !startsWith(cached, result))) {
 				feedResult = result;
+				renderedCount = 0;
 				epoch++;
+				void chunks.run();
 			}
 		} catch (e: any) {
 			// Показанный из кэша список остаётся, даже если обновить его не вышло
@@ -89,24 +109,39 @@
 		const result = await loadFeed(name, period).catch(() => undefined);
 		if (result && id === requestId && feedResult === shown && atTop() && !startsWith(shown, result)) {
 			feedResult = result;
+			renderedCount = 0;
 			epoch++;
+			void chunks.run();
 		}
 	}
 
-	async function loadMore() {
-		if (loading || loadingMore || !feedResult?.cursors || Object.keys(feedResult.cursors).length === 0) return;
-		const id = requestId;
-		try {
-			loadingMore = true;
-			const next = await api.getPosts({ pageName: name, sorting: sortingOf(name, period), cursors: feedResult.cursors });
-			if (id === requestId) {
-				feedResult = { items: [...feedResult.items, ...next.items], cursors: next.cursors };
-			}
-		} catch (e: any) {
-			console.error('Failed to load more posts:', e);
-		} finally {
-			loadingMore = false;
+	function loadMore(): Promise<boolean> {
+		if (chunks.pending) return chunks.pending;
+		if (moreInFlight) return moreInFlight;
+		if (loading || loadingMore || error || !feedResult?.cursors || Object.keys(feedResult.cursors).length === 0) {
+			return Promise.resolve(false);
 		}
+		const id = requestId;
+		const run = (async () => {
+			try {
+				loadingMore = true;
+				const next = await api.getPosts({ pageName: name, sorting: sortingOf(name, period), cursors: feedResult.cursors });
+				if (id !== requestId || !feedResult) return false;
+				feedResult = { items: [...feedResult.items, ...next.items], cursors: next.cursors };
+				const promise = chunks.run();
+				loadingMore = false;
+				return await promise;
+			} catch (e: any) {
+				console.error('Failed to load more posts:', e);
+				return false;
+			} finally {
+				loadingMore = false;
+			}
+		})().finally(() => {
+			if (moreInFlight === run) moreInFlight = undefined;
+		});
+		moreInFlight = run;
+		return run;
 	}
 
 	// Лента появилась или у «Популярного» сменился период: загружаем с начала
@@ -137,11 +172,7 @@
 	// Подгрузка вниз только у открытой ленты. Новый наблюдатель при возврате сразу сообщает, виден ли низ списка
 	$effect(() => {
 		if (!loaderNode || !active) return;
-		const observer = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) loadMore();
-		}, { rootMargin: '1000px' });
-		observer.observe(loaderNode);
-		return () => observer.disconnect();
+		return watchVisible(loaderNode, loadMore);
 	});
 
 	// Список, построенный в скрытой ленте, не анимируется: ленту на экран выводит страница или свайп
@@ -175,7 +206,7 @@
 						{#if name === 'popular' && period === 'now'}
 							<ThemeLoader componentName="EditorialNews" />
 						{/if}
-						{#each feedResult.items as post, i (post.sourceId + '_' + post.id)}
+						{#each renderedItems as post, i (post.sourceId + '_' + post.id)}
 							{#if i === NOTICE_AFTER_POST && showNotice}
 								<ThemeLoader componentName="FeedNotice" onlater={feedNotice.later} onnever={feedNotice.never} />
 							{/if}
