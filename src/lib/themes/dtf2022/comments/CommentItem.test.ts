@@ -28,6 +28,7 @@ describe('CommentItem thread lines hitbox', () => {
 		expect(svelteContent).toContain('.comment-item:has(:global(.comment-editor-container))');
 		expect(svelteContent).toContain('content-visibility: visible');
 		expect(svelteContent).toContain('z-index: 20');
+		expect(svelteContent).toContain('overflow-clip-margin: 20px');
 	});
 
 	it('содержит кликабельные кнопки бейджей и модальное окно BadgeInfoModal', () => {

@@ -611,6 +611,7 @@
 	.comment-item--virtual {
 		content-visibility: auto;
 		contain-intrinsic-size: auto none auto 72px;
+		overflow-clip-margin: 20px;
 	}
 
 	.comment-item:has(:global(.post-reactions__picker)),
