@@ -21,7 +21,7 @@
 		</span>
 		<div class="notice__text">
 			<h3 id="feed-notice-title" class="notice__title">Нравится reDTF?</h3>
-			<p class="notice__description">Проект делают в свободное время. Если он вам полезен, поддержите его или расскажите о нём друзьям.</p>
+			<p class="notice__description">Мы благодарны любой поддержке от вас. Будь это финансовая помощь, распространение проекта или star на гитхабе. Спасибо что вы с нами!</p>
 		</div>
 	</div>
 
