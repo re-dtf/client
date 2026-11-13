@@ -48,6 +48,7 @@ export async function getEditorConfig(): Promise<{ tools: EditorConfig['tools'],
 				class: ImageTool,
 				config: {
 					types: 'image/*, video/mp4, video/webm, image/gif, video/quicktime',
+					features: { border: false, background: false, stretch: false },
 					endpoints: {
 						byFile: ''
 					},

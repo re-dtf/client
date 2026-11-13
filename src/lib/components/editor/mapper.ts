@@ -137,10 +137,7 @@ const dtfToEditorJsRegistry: Record<string, DtfToEditorJsMapper> = {
 							size: item.image.data.size,
 							color: item.image.data.color
 						},
-						caption: item.title || '',
-						withBorder: false,
-						withBackground: false,
-						stretched: false
+						caption: item.title || ''
 					}
 				};
 			}
