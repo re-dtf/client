@@ -7,6 +7,7 @@
 	import { type AuthorAction, authorMenuItems, ensureLogin, hidePost, isAnotherDtfUser, runAuthorAction, subscriptions } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import Popover from '../ui/Popover.svelte';
+	import PlusBadge from '../ui/PlusBadge.svelte';
 	import { notify } from '../ui/notify.svelte';
 	import { formatFullDate, formatTime } from '../format';
 
@@ -97,10 +98,8 @@
 					{post.author.name}
 				</a>
 				{#if variant === 'page' && post.author.isPlus}
-					<div class="post-header-author__badge" title="Plus">
-						<svg class="icon" width="20" height="20" aria-hidden="true">
-							<use href="/icons.svg#ui_badge_plus"></use>
-						</svg>
+					<div class="post-header-author__badge">
+						<PlusBadge author={post.author} size={20} />
 					</div>
 				{/if}
 			</div>

@@ -7,6 +7,7 @@
 	import { subscriptions } from '../actions.svelte';
 	import { formatRating } from '../format';
 	import Button from '../ui/Button.svelte';
+	import PlusBadge from '../ui/PlusBadge.svelte';
 
 	let { author }: { author: User } = $props();
 
@@ -57,10 +58,8 @@
 					{author.name}
 				</a>
 				{#if author.isPlus}
-					<div class="author-card__item author-card__badge" title="Plus">
-						<svg height="20" width="20" class="icon" aria-hidden="true">
-							<use href="/icons.svg#ui_badge_plus"></use>
-						</svg>
+					<div class="author-card__item author-card__badge">
+						<PlusBadge {author} size={20} />
 					</div>
 				{/if}
 				{#await profilePromise then { rating }}
