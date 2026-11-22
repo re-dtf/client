@@ -171,7 +171,8 @@ export function mapEntryToPost(entry: any): Post {
 		isBlur: entry.isBlur || undefined,
 		isStillUpdating: entry.isStillUpdating || undefined,
 		warning: mapWarning(entry),
-		isDraft: entry.isPublished === false || undefined
+		// Удалённый по просьбе автора пост приходит с isPublished: false, но это не черновик
+		isDraft: (entry.isPublished === false && !entry.isRemovedByUserRequest) || undefined
 	};
 }
 

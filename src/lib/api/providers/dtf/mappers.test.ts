@@ -149,6 +149,12 @@ describe('mapEntryToPost', () => {
 		expect(hidden.repost).toEqual({ id: 55, original: undefined });
 		expect(mapEntryToPost({ id: 3, repostId: null, repostData: null }).repost).toBeUndefined();
 	});
+
+	it('черновик: только неопубликованная запись, не удалённая по просьбе автора', () => {
+		expect(mapEntryToPost({ id: 1, isPublished: false }).isDraft).toBe(true);
+		expect(mapEntryToPost({ id: 2, isPublished: false, isRemovedByUserRequest: true }).isDraft).toBeUndefined();
+		expect(mapEntryToPost({ id: 3, isPublished: true }).isDraft).toBeUndefined();
+	});
 });
 
 describe('mapComment', () => {

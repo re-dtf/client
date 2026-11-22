@@ -15,13 +15,18 @@ const draftPost: Post = {
 };
 
 describe('PostCard (черновик)', () => {
-	it('показывает кнопку «Удалить» для черновика только при переданном ondelete', () => {
-		const withoutDelete = render(PostCard, { props: { post: draftPost } });
+	it('показывает кнопки черновика только при переданных обработчиках и «Удалить» — при ondelete', () => {
+		const withoutHandlers = render(PostCard, { props: { post: draftPost } });
+		expect(withoutHandlers.body).not.toContain('Смотреть');
+		expect(withoutHandlers.body).not.toContain('Редактировать');
+		expect(withoutHandlers.body).not.toContain('Удалить');
+
+		const withoutDelete = render(PostCard, { props: { post: draftPost, onedit: () => {} } });
 		expect(withoutDelete.body).toContain('Смотреть');
 		expect(withoutDelete.body).toContain('Редактировать');
 		expect(withoutDelete.body).not.toContain('Удалить');
 
-		const withDelete = render(PostCard, { props: { post: draftPost, ondelete: () => {} } });
+		const withDelete = render(PostCard, { props: { post: draftPost, onedit: () => {}, ondelete: () => {} } });
 		expect(withDelete.body).toContain('Удалить');
 		expect(withDelete.body).toContain('#v_delete');
 	});

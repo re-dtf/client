@@ -48,6 +48,7 @@
 	let score = $derived(votesOf(post));
 	// Черновик: карточка как у поста, но неактивная. Сервер не принимает реакции, закладки и жалобы на неопубликованное
 	let draft = $derived(post.isDraft === true && !embed);
+	let draftActions = $derived(draft && Boolean(onedit || ondelete));
 	// Обложка у черновика может быть не размечена (её ставит сервер при публикации): тогда показываем первый блок
 	let blocks = $derived.by(() => {
 		const cover = post.blocks.filter((b) => b.cover);
@@ -109,7 +110,7 @@
 		<PostHeader {post} variant="card" subscribe={subscribe && !draft} onoverlaychange={(v) => { headerOverlay = v; if (embed) onoverlaychange?.(v); }} />
 
 		<div class={['post-content', { 'post-content--blur': blurred }]}>
-			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} evictMedia={!near} gifLink={draft ? undefined : postLink} />
+			<PostBlocks title={post.title} editorial={post.isEditorial} {blocks} variant={embed ? 'embed' : 'card'} postId={post.id} sourceId={post.sourceId} evictMedia={!near} gifLink={draftActions ? undefined : postLink} />
 			{#if blurred}
 				<div class="post-adult">
 					<div class="post-adult__text">
@@ -127,7 +128,7 @@
 				</div>
 			{/if}
 			<!-- Ссылка поверх превью: клик в любом месте открывает пост -->
-			{#if draft}
+			{#if draftActions}
 				<div class="post-link"></div>
 			{:else}
 				{@render postLink()}
@@ -205,10 +206,12 @@
 				{/if}
 			</div>
 
-			{#if draft}
+			{#if draftActions}
 				<div class="post-block post-draft">
 					<Button label="Смотреть" icon="v_eye" iconSize={20} onclick={() => openOverlay({ type: 'post', data: { postId: post.id, sourceId: post.sourceId } })} />
-					<Button label="Редактировать" icon="v_pencil" iconSize={20} onclick={() => onedit?.(post)} />
+					{#if onedit}
+						<Button label="Редактировать" icon="v_pencil" iconSize={20} onclick={() => onedit(post)} />
+					{/if}
 					{#if ondelete}
 						<Button label="Удалить" icon="v_delete" iconSize={20} onclick={() => ondelete(post)} />
 					{/if}
