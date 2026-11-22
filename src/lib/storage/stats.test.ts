@@ -24,11 +24,11 @@ import {
 	READ_AFTER, addReaction, addRead, addTick, dayStreaks, emptyStats, flush, markCommentsStart, statsStore, tick, trackPostClosed, trackPostLoaded, withComments
 } from './stats.svelte';
 
-const post = (id: number): Post => ({
+const post = (id: number, blocks: Post['blocks'] = []): Post => ({
 	id,
 	sourceId: 'dtf',
 	title: 't',
-	blocks: [],
+	blocks,
 	author: { id: 7, name: 'Автор' },
 	subsite: { id: 3, name: 'Игры' },
 	commentsCount: 0,
@@ -56,12 +56,16 @@ describe('stats', () => {
 		expect(dayStreaks(days, new Date(2026, 10, 5))).toEqual({ current: 0, longest: 3 });
 	});
 
-	it('прочитанные посты попадают в авторов, подсайты и список недавних', () => {
-		const stats = addRead(addRead(emptyStats(), post(1)), post(2));
+	it('прочитанные посты попадают в авторов, подсайты, теги и список недавних', () => {
+		const stats = addRead(
+			addRead(emptyStats(), post(1, [{ type: 'text', data: { text: '<p>#Игры и #игры #новости</p>' } }])),
+			post(2, [{ type: 'text', data: { text: '<p>#игры</p>' } }])
+		);
 
 		expect(stats).toMatchObject({ postsRead: 2, recentPosts: ['dtf_1', 'dtf_2'] });
 		expect(stats.authorsRead['dtf_7']).toMatchObject({ name: 'Автор', count: 2 });
 		expect(stats.subsitesRead['dtf_3'].count).toBe(2);
+		expect(stats.tagsRead).toEqual({ игры: 2, новости: 1 });
 	});
 
 	it('реакции считает по типам и авторам, снятие (0) не считает', () => {

@@ -35,6 +35,7 @@
 	const top = <T,>(entries: [string, T][], by: (value: T) => number, limit = 5) =>
 		entries.sort((a, b) => by(b[1]) - by(a[1])).slice(0, limit);
 	const topCounted = (map: Record<string, Counted>) => top(Object.entries(map), (c) => c.count).map(([, c]) => c);
+	const topTags = (map: Record<string, number>) => top(Object.entries(map), (n) => n).map(([tag, count]) => ({ name: `#${tag}`, count }));
 	const topReactions = (map: Record<number, number>) => top(Object.entries(map), (n) => n).map(([id, count]) => ({ id: Number(id), count }));
 
 	const AREAS = [
@@ -66,10 +67,10 @@
 	}
 </script>
 
-{#snippet counted(title: string, items: Counted[])}
+{#snippet counted(title: string, items: { id?: number; sourceId?: string; name: string; count: number }[])}
 	{#if items.length}
 		<SettingsGroup {title}>
-			{#each items as item (item.sourceId + item.id)}
+			{#each items as item (item.id !== undefined && item.sourceId ? item.sourceId + item.id : item.name)}
 				<SettingsRow title={item.name}><span class="value">{item.count}</span></SettingsRow>
 			{/each}
 		</SettingsGroup>
@@ -151,6 +152,7 @@
 
 	{@render counted('Самые читаемые авторы', topCounted(stats.authorsRead))}
 	{@render counted('Любимые подсайты', topCounted(stats.subsitesRead))}
+	{@render counted('Любимые теги', topTags(stats.tagsRead))}
 	{@render counted('Кому вы чаще всего ставите реакции', topCounted(stats.authorsReacted))}
 	{@render reactions('Любимые реакции на посты', topReactions(stats.reactions.post))}
 	{@render reactions('Любимые реакции на комментарии', topReactions(stats.reactions.comment))}

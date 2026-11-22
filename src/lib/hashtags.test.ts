@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { linkifyHashtags } from './hashtags';
+import { linkifyHashtags, postHashtags } from './hashtags';
 
 describe('linkifyHashtags', () => {
 	it('превращает теги в ссылки на страницу тега', () => {
@@ -17,5 +17,20 @@ describe('linkifyHashtags', () => {
 
 	it('после ссылки теги снова работают', () => {
 		expect(linkifyHashtags('<a href="/x">ссылка</a> #тег')).toBe('<a href="/x">ссылка</a> <a href="https://dtf.ru/tag/%D1%82%D0%B5%D0%B3">#тег</a>');
+	});
+});
+
+describe('postHashtags', () => {
+	it('извлекает теги из текста, списков и плашки без дублей и в нижнем регистре, пропуская ссылки и код', () => {
+		expect(
+			postHashtags({
+				warning: { text: '<p>Обновление #Новости и #Игры</p>' },
+				blocks: [
+					{ type: 'text', data: { text: '<p>#игры #Xbox <a href="https://dtf.ru/x">#ссылка</a> <code>#код</code> <pre>#пре</pre></p>' } },
+					{ type: 'list', data: { items: ['Первый #Кино', 'Второй #xbox'] } },
+					{ type: 'header', data: { text: '#Заголовок' } }
+				]
+			})
+		).toEqual(['новости', 'игры', 'xbox', 'кино']);
 	});
 });

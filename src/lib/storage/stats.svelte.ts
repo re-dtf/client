@@ -6,6 +6,7 @@
  * и секундный тик из корневого layout. Пост считается прочитанным после READ_AFTER секунд на нём.
  */
 import type { Post, User } from '$lib/api/types';
+import { postHashtags } from '$lib/hashtags';
 import { persistedState } from './persisted.svelte';
 import { settings } from './settings.svelte';
 
@@ -47,6 +48,7 @@ export interface Stats {
 	recentPosts: string[];
 	authorsRead: Record<string, Counted>;
 	subsitesRead: Record<string, Counted>;
+	tagsRead: Record<string, number>;
 	reactions: Record<ReactionTarget, Record<number, number>>;
 	authorsReacted: Record<string, Counted>;
 	commentsWritten: number;
@@ -84,6 +86,7 @@ export function emptyStats(date = new Date()): Stats {
 		recentPosts: [],
 		authorsRead: {},
 		subsitesRead: {},
+		tagsRead: {},
 		reactions: { post: {}, comment: {} },
 		authorsReacted: {},
 		commentsWritten: 0,
@@ -96,12 +99,23 @@ export function emptyStats(date = new Date()): Stats {
 
 const plus = <K extends string | number>(map: Record<K, number>, key: K, by = 1) => ({ ...map, [key]: (map[key] ?? 0) + by });
 
+/** Оставляет самые частые записи, когда словарь разрастается сверх лимита */
+function capTop<T>(map: Record<string, T>, countOf: (value: T) => number): Record<string, T> {
+	if (Object.keys(map).length <= TOP_LIMIT * 1.25) return map;
+	return Object.fromEntries(Object.entries(map).sort((a, b) => countOf(b[1]) - countOf(a[1])).slice(0, TOP_LIMIT));
+}
+
 /** +1 к человеку или подсайту; когда записей слишком много, остаются самые частые */
 function bump(map: Record<string, Counted>, who: { id: number; name: string }, sourceId: string): Record<string, Counted> {
 	const key = `${sourceId}_${who.id}`;
-	const next = { ...map, [key]: { id: who.id, sourceId, name: who.name, count: (map[key]?.count ?? 0) + 1 } };
-	if (Object.keys(next).length <= TOP_LIMIT * 1.25) return next;
-	return Object.fromEntries(Object.entries(next).sort((a, b) => b[1].count - a[1].count).slice(0, TOP_LIMIT));
+	return capTop({ ...map, [key]: { id: who.id, sourceId, name: who.name, count: (map[key]?.count ?? 0) + 1 } }, (c) => c.count);
+}
+
+function bumpTags(map: Record<string, number>, tags: string[]): Record<string, number> {
+	if (!tags.length) return map;
+	const next = { ...map };
+	for (const tag of tags) next[tag] = (next[tag] ?? 0) + 1;
+	return capTop(next, (n) => n);
 }
 
 export function addTick(stats: Stats, tick: Tick): Stats {
@@ -121,7 +135,8 @@ export function addRead(stats: Stats, post: Post): Stats {
 		postsRead: stats.postsRead + 1,
 		recentPosts: [...stats.recentPosts, postKey(post)].slice(-RECENT_LIMIT),
 		authorsRead: bump(stats.authorsRead, post.author, post.sourceId),
-		subsitesRead: post.subsite ? bump(stats.subsitesRead, post.subsite, post.sourceId) : stats.subsitesRead
+		subsitesRead: post.subsite ? bump(stats.subsitesRead, post.subsite, post.sourceId) : stats.subsitesRead,
+		tagsRead: bumpTags(stats.tagsRead, postHashtags(post))
 	};
 }
 
