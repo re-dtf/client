@@ -30,6 +30,7 @@
 | `redtf:data:bio-cleanup` | data | отложенная очистка «О себе» после проверки владения аккаунтом | `storage/sources.svelte.ts` |
 | `redtf:data:feedNotice` | data | когда начали пользоваться, отложена ли и отключена ли плашка поддержки в ленте | `feedNotice.svelte.ts` |
 | `redtf:data:hidden-posts` | data | журнал постов, скрытых через «Скрыть пост»: у DTF списка скрытых постов нет | `storage/hiddenPosts.svelte.ts` |
+| `redtf:data:remarks` | data | личные заметки о пользователях (текст, цвет, имя на момент записи) по id пользователя; видит только владелец | `storage/remarks.svelte.ts` |
 | `redtf:data:seen-posts` | data | журнал прочитанных постов: по нему ленты главной скрывают прочитанное; ведётся, только пока включено скрытие | `storage/seen.svelte.ts` |
 | `redtf:data:stats` | data | локальная статистика: время, прочитанные посты, реакции, топы авторов | `storage/stats.svelte.ts` |
 | `redtf:cache:current-user` | cache | вошедший пользователь, чтобы аватар в шапке был сразу | `api/currentUser.svelte.ts` |

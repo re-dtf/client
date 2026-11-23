@@ -5,6 +5,8 @@
 	import MobileBar from '../dtf2022/MobileBar.svelte';
 	import { sidebar } from '../dtf2022/sidebar.svelte';
 	import Toasts from '../dtf2022/ui/Toasts.svelte';
+	import RemarkEditor from '../dtf2022/ui/RemarkEditor.svelte';
+	import { remarkEditor } from '../dtf2022/actions.svelte';
 
 	let { children }: { children?: Snippet } = $props();
 
@@ -46,6 +48,12 @@
 <MobileBar />
 
 <Toasts />
+
+{#if remarkEditor.target}
+	{#key remarkEditor.target}
+		<RemarkEditor user={remarkEditor.target} />
+	{/key}
+{/if}
 
 <style>
 	/*

@@ -18,6 +18,7 @@
 	import Popover from './ui/Popover.svelte';
 	import Preloader from './ui/Preloader.svelte';
 	import PlusBadge from './ui/PlusBadge.svelte';
+	import Remark from './ui/Remark.svelte';
 	import { notify } from './ui/notify.svelte';
 	import { fromAction } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
@@ -405,6 +406,9 @@
 					</span>
 				{/if}
 			</h1>
+			{#if !isMe}
+				<div class="profile-title__remark"><Remark user={profile} /></div>
+			{/if}
 		</div>
 
 		{#if profile.description || isMe}
@@ -781,6 +785,14 @@
 
 	.profile-title__name:not(:last-child) {
 		margin-right: 9px;
+	}
+
+	/* Заметка под именем: обычный размер текста, а не размер заголовка */
+	.profile-title__remark {
+		display: flex;
+		margin-top: 2px;
+		font-size: 14px;
+		line-height: 20px;
 	}
 
 	.profile-title__badge {

@@ -15,6 +15,7 @@ export type MobileBadgesPosition = 'author' | 'date';
 export type PlusBadgesMode = 'classic' | 'custom';
 export type AnimatedAvatarsMode = 'all' | 'hover' | 'off';
 export type RestoreScope = 'all' | 'moderator';
+export type RemarkView = 'text' | 'plain' | 'dot' | 'off';
 
 export interface ProxyItem {
 	id: string;
@@ -66,6 +67,8 @@ export interface AppSettings {
 	plusBadges: PlusBadgesMode;
 	/** Режим воспроизведения анимированных аватарок: 'all' (везде), 'hover' (профиль и наведение), 'off' (выкл) */
 	animatedAvatars: AnimatedAvatarsMode;
+	/** Заметки о пользователях рядом с именем: 'text' (точка и текст), 'plain' (только текст), 'dot' (только точка), 'off' (не показывать) */
+	remarkView: RemarkView;
 	/** Выбранная иконка приложения и вкладки браузера: 'default' | 'bluer' | 'white' | 'custom' */
 	appIcon: AppIconId;
 	/** Пользовательская иконка в формате data URI (image/png или image/svg+xml) */
@@ -173,6 +176,7 @@ export const settings = persistedState<AppSettings>(
 		mobileBadgesPosition: 'author',
 		plusBadges: 'classic',
 		animatedAvatars: 'all',
+		remarkView: 'text',
 		autoUpvoteComments: false,
 		restoreScope: 'all',
 		restoreExpanded: false,

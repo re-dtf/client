@@ -53,6 +53,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			mobileBadgesPosition: 'author',
 			plusBadges: 'classic',
 			animatedAvatars: 'all',
+			remarkView: 'text',
 			autoUpvoteComments: false,
 			restoreScope: 'all',
 			restoreExpanded: false,

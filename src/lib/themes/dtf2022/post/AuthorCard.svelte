@@ -8,6 +8,7 @@
 	import { formatRating } from '../format';
 	import Button from '../ui/Button.svelte';
 	import PlusBadge from '../ui/PlusBadge.svelte';
+	import Remark from '../ui/Remark.svelte';
 	import { animatedAvatar } from '$lib/actions/animatedAvatar.svelte';
 
 	let { author }: { author: User } = $props();
@@ -65,6 +66,7 @@
 						<PlusBadge {author} size={20} />
 					</div>
 				{/if}
+				<Remark user={author} />
 				{#await profilePromise then { rating }}
 					{#if rating}
 						<div class={['author-card__item author-card__karma', { 'author-card__karma--positive': rating > 0 }]}>
@@ -129,6 +131,7 @@
 	}
 
 	.author-card__title {
+		--remark-offset: 6px;
 		display: flex;
 		align-items: center;
 		min-width: 0;

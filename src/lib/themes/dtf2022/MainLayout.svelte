@@ -5,6 +5,8 @@
 	import MobileBar from './MobileBar.svelte';
 	import { sidebar } from './sidebar.svelte';
 	import Toasts from './ui/Toasts.svelte';
+	import RemarkEditor from './ui/RemarkEditor.svelte';
+	import { remarkEditor } from './actions.svelte';
 	import { page } from '$app/state';
 	import { pageTransition } from '$lib/pageTransition.svelte';
 	import { themeSettings } from './themeSettings.svelte';
@@ -44,6 +46,12 @@
 <MobileBar />
 
 <Toasts />
+
+{#if remarkEditor.target}
+	{#key remarkEditor.target}
+		<RemarkEditor user={remarkEditor.target} />
+	{/key}
+{/if}
 
 <style>
 	/* Контент в пространстве между сайдбарами */

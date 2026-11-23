@@ -18,7 +18,8 @@ vi.mock('./ui/notify.svelte', () => ({ notify: { success: vi.fn(), error: vi.fn(
 import { currentUser } from '$lib/api/currentUser.svelte';
 import { hiddenPostsLog } from '$lib/storage/hiddenPosts.svelte';
 import { notify } from './ui/notify.svelte';
-import { authorMenuItems, hidePost, isPostHidden, isSubsiteMuted, runAuthorAction, setSubsiteMuted } from './actions.svelte';
+import { removeRemark, setRemark } from '$lib/storage/remarks.svelte';
+import { authorMenuItems, hidePost, remarkEditor, isPostHidden, isSubsiteMuted, runAuthorAction, setSubsiteMuted } from './actions.svelte';
 
 const post = (id: number, authorId = 1) => ({ id, sourceId: 'dtf', author: { id: authorId, name: 'Автор' } }) as any;
 const flush = () => new Promise((resolve) => setTimeout(resolve));
@@ -94,7 +95,7 @@ describe('скрытие через меню «⋯»', () => {
 
 	it('скрыть автора работает без входа и не трогает чёрный список DTF; блокировка есть только после входа', () => {
 		const author = { id: 70, name: 'Имя' };
-		const values = () => authorMenuItems(author).map((item) => item.value);
+		const values = () => authorMenuItems(author).map((item) => item.value).filter((value) => value !== 'remark_author');
 
 		(currentUser as any).value = undefined;
 		expect(values()).toEqual(['hide_author']);
@@ -105,11 +106,23 @@ describe('скрытие через меню «⋯»', () => {
 
 		(currentUser as any).value = { id: 1 };
 		expect(values()).toEqual(['unhide_author', 'block_author']);
-		expect(authorMenuItems(author, { blocked: true }).map((item) => item.value)).toEqual(['unhide_author', 'unblock_author']);
+		expect(authorMenuItems(author, { blocked: true }).map((item) => item.value)).toEqual(['remark_author', 'unhide_author', 'unblock_author']);
 
 		runAuthorAction('unhide_author', author);
 		expect(values()).toEqual(['hide_author', 'block_author']);
 		(currentUser as any).value = undefined;
+	});
+
+	it('пункт заметки открывает окно заметки, а у автора с заметкой предлагает её изменить', () => {
+		const author = { id: 71, name: 'Имя' };
+		expect(authorMenuItems(author)[0]).toMatchObject({ value: 'remark_author', label: 'Добавить заметку' });
+		runAuthorAction('remark_author', author);
+		expect(remarkEditor.target).toEqual(author);
+		remarkEditor.close();
+
+		setRemark(author, 'тролль');
+		expect(authorMenuItems(author)[0].label).toBe('Изменить заметку');
+		removeRemark(author.id);
 	});
 
 	it('без входа открывает окно входа и ничего не скрывает', () => {

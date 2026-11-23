@@ -13,6 +13,7 @@
 	import ConfirmPopup from '../ui/ConfirmPopup.svelte';
 	import Popover from '../ui/Popover.svelte';
 	import PlusBadge from '../ui/PlusBadge.svelte';
+	import Remark from '../ui/Remark.svelte';
 	import { notify } from '../ui/notify.svelte';
 	import { formatFullDate, formatTime } from '../format';
 	import { animatedAvatar } from '$lib/actions/animatedAvatar.svelte';
@@ -178,6 +179,7 @@
 						<PlusBadge author={post.author} size={20} />
 					</div>
 				{/if}
+				<Remark user={post.author} />
 			</div>
 		{/if}
 
@@ -372,6 +374,7 @@
 
 	/* Автор */
 	.post-header-author {
+		--remark-offset: 6px;
 		display: flex;
 		align-items: center;
 	}

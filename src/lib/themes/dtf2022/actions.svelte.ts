@@ -9,6 +9,7 @@ import { currentUser } from '$lib/api/currentUser.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { addIgnoredTag, filterSettings, hideUser, isUserHidden, normalizeTag, removeIgnoredTag, unhideUser } from '$lib/storage/filter.svelte';
 import { logHiddenPost, unlogHiddenPost } from '$lib/storage/hiddenPosts.svelte';
+import { getRemark } from '$lib/storage/remarks.svelte';
 import { pinSubsite, unpinSubsite, type PinnedSubsite } from '$lib/storage/pinnedSubsites.svelte';
 import { ruleOf } from '$lib/storage/reactions.svelte';
 import { applyReaction, nextReactionId, nextVoteReactionId } from '$lib/reactions';
@@ -137,7 +138,7 @@ export function setSubsiteMuted(subsite: { id: number; name: string }, muted: bo
 	const was = mutedSubsites.get(subsite.id);
 	mutedSubsites.set(subsite.id, muted);
 	api.setSubsiteIgnored(subsite.id, muted)
-		.then(() => notify.success(muted ? `${subsite.name} заблокирован` : `${subsite.name} разблокирован`))
+		.then(() => notify.success(muted ? `${subsite.name} заблокирован` : `${subsite.name} разблокирован`, muted ? remarkOffer(subsite) : undefined))
 		.catch((e) => {
 			if (was === undefined) mutedSubsites.delete(subsite.id);
 			else mutedSubsites.set(subsite.id, was);
@@ -150,7 +151,21 @@ export function setSubsiteMuted(subsite: { id: number; name: string }, muted: bo
  * а он ничего не замечает. «Заблокировать» — чёрный список DTF: человек не может комментировать наши записи,
  * это видят все наши устройства.
  */
-export type AuthorAction = 'hide_author' | 'unhide_author' | 'block_author' | 'unblock_author';
+export type AuthorAction = 'hide_author' | 'unhide_author' | 'block_author' | 'unblock_author' | 'remark_author';
+
+/** Окно заметки о пользователе: открывается отовсюду (меню, чип, тост), рисует его один раз `RemarkEditor` в макете темы */
+let remarkTarget = $state.raw<{ id: number; name: string } | null>(null);
+export const remarkEditor = {
+	get target() {
+		return remarkTarget;
+	},
+	open: (user: { id: number; name: string }) => (remarkTarget = { id: user.id, name: user.name }),
+	close: () => (remarkTarget = null)
+};
+
+/** Тост «скрыт / заблокирован» предлагает записать, почему: пока причина свежа. Если заметка уже есть, предлагать нечего */
+const remarkOffer = (user: { id: number; name: string }) =>
+	getRemark(user.id) ? undefined : { label: 'Добавить заметку', onclick: () => remarkEditor.open(user) };
 
 /**
  * Пункты меню «⋯» для автора записи, комментария или профиля. `noun` — как назвать человека в подписи пункта
@@ -161,6 +176,12 @@ export function authorMenuItems(author: { id: number }, { noun = ' автора'
 	const muted = isSubsiteMuted(author.id, blocked);
 	const loggedIn = !!currentUser.value;
 	return [
+		{
+			value: 'remark_author' as const,
+			label: getRemark(author.id) ? 'Изменить заметку' : 'Добавить заметку',
+			icon: 'v_pen',
+			hint: 'Личная пометка рядом с именем: видите только вы'
+		},
 		hidden
 			? { value: 'unhide_author' as const, label: `Показывать${noun}`, icon: 'v_eye', hint: 'Снова показывать его записи, комментарии и уведомления' }
 			: { value: 'hide_author' as const, label: `Скрыть${noun}`, icon: 'v_eye', hint: 'Только у вас: его записи, комментарии и уведомления не будут показываться. Он об этом не узнает' },
@@ -175,7 +196,8 @@ export function authorMenuItems(author: { id: number }, { noun = ' автора'
 }
 
 export function runAuthorAction(action: AuthorAction, author: { id: number; name: string }) {
-	if (action === 'hide_author' && hideUser(author.id, author.name)) notify.success(`${author.name} скрыт`);
+	if (action === 'remark_author') remarkEditor.open(author);
+	else if (action === 'hide_author' && hideUser(author.id, author.name)) notify.success(`${author.name} скрыт`, remarkOffer(author));
 	else if (action === 'unhide_author') {
 		unhideUser(author.id);
 		notify.success(`${author.name} снова виден`);
@@ -348,6 +370,18 @@ export function profileMenu(subsite: { id: number; name: string }, extra: Contex
 			}
 		}
 	});
+
+	if (subsite.id !== currentUser.value?.id) {
+		items.push({
+			id: 'remark',
+			label: getRemark(subsite.id) ? 'Изменить заметку' : 'Добавить заметку',
+			icon: 'v_pen',
+			separatorBefore: true,
+			action() {
+				remarkEditor.open(subsite);
+			}
+		});
+	}
 
 	return {
 		title: subsite.name,

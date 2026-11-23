@@ -7,6 +7,7 @@ import {
 	DEFAULT_THEME,
 	settings,
 	type AnimatedAvatarsMode,
+	type RemarkView,
 	type ClientBadgesMode,
 	type CommentVirtualization,
 	type MobileBadgesPosition,
@@ -434,6 +435,20 @@ const animatedAvatarsField: ChoiceField = {
 	]
 };
 
+const remarkViewField: ChoiceField = {
+	key: 'remarkView',
+	type: 'radio',
+	title: 'Заметки о пользователях',
+	description: 'Личные пометки рядом с именем. Видите их только вы, они хранятся на этом устройстве. Добавить заметку можно в меню пользователя.',
+	default: 'text',
+	options: [
+		{ value: 'text', title: 'Точка и текст (по умолчанию)', description: 'Короткая заметка рядом с именем' },
+		{ value: 'plain', title: 'Только текст', description: 'Короткая заметка без точки, цвет остаётся в оттенке плашки' },
+		{ value: 'dot', title: 'Только точка', description: 'Текст плавно выезжает при наведении, на телефоне — по нажатию. Изменить заметку: нажатие мышью или долгое нажатие' },
+		{ value: 'off', title: 'Не показывать', description: 'Заметки хранятся, но нигде не видны' }
+	]
+};
+
 const smartTypographyField: ToggleField = {
 	key: 'smartTypography',
 	type: 'toggle',
@@ -601,6 +616,11 @@ export function buildDeclarativePages(
 					field: animatedAvatarsField,
 					getValue: () => settings.value.animatedAvatars,
 					setValue: (value) => settings.patch({ animatedAvatars: value as AnimatedAvatarsMode })
+				},
+				{
+					field: remarkViewField,
+					getValue: () => settings.value.remarkView,
+					setValue: (value) => settings.patch({ remarkView: value as RemarkView })
 				},
 				...themeEntries(otherFields, themeValues)
 			],

@@ -21,6 +21,7 @@
 	import { formatFullDate, formatTime, plural } from '../format';
 	import Popover from '../ui/Popover.svelte';
 	import PlusBadge from '../ui/PlusBadge.svelte';
+	import Remark from '../ui/Remark.svelte';
 	import { notify } from '../ui/notify.svelte';
 	import PostButton from '../post/PostButton.svelte';
 	import Rating from '../post/Rating.svelte';
@@ -407,6 +408,9 @@
 					{/if}
 					<span>{clientBadge.label}</span>
 				</button>
+			{/if}
+			{#if !restoredAuthor}
+				<Remark user={shownAuthor} />
 			{/if}
 
 			{#if row.parent}
@@ -859,6 +863,7 @@
 	@media (min-width: 860px) {
 		.comment-item__avatar,
 		.comment-item__author,
+		.comment-item__content :global(.remark),
 		.comment-item__icon-action:not(.comment-item__action) {
 			order: -2;
 		}
@@ -904,6 +909,7 @@
 		.comment-item__avatar,
 		.comment-item__badge,
 		.comment-item__plus,
+		.comment-item__content :global(.remark),
 		.comment-item__icon-action {
 			order: -2;
 		}
