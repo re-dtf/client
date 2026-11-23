@@ -13,7 +13,7 @@
 	import Button from './ui/Button.svelte';
 	import Input from './ui/Input.svelte';
 
-	const COVER_IMAGE = 'https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/-/format/webp/';
+	const COVER_IMAGE = 'https://leonardo.osnova.io/356f8b87-e803-86ab-2875-f11915f78a7e/';
 
 	type Mode = 'selector' | 'email' | 'token' | 'proxy';
 	type ProxyStep = 'choice' | 'custom_input';
