@@ -16,15 +16,20 @@
  */
 export const REDTF_WATERMARK = '\u2060\u200D\u200C\u200D\u2060';
 
+/** Марка вместе с пробелом перед ней (его ставит `addWatermark`, при чтении убирается вместе с маркой) */
+const WATERMARK_PATTERN = new RegExp(` ?${REDTF_WATERMARK}`, 'g');
+
 /**
  * Добавляет марку в самый конец текста.
  * Если марка уже присутствовала в тексте (например, после частичного редактирования на сайте DTF),
  * она удаляется из середины и перемещается строго в конец.
+ * От текста марка отделена пробелом: иначе, если комментарий кончается ссылкой, DTF втягивает невидимые
+ * символы в адрес, и ссылка ведёт на 404.
  */
 export function addWatermark(text: string): string {
 	if (!text) return text;
-	const stripped = text.replaceAll(REDTF_WATERMARK, '');
-	return stripped.trimEnd() + REDTF_WATERMARK;
+	const stripped = text.replace(WATERMARK_PATTERN, '');
+	return `${stripped.trimEnd()} ${REDTF_WATERMARK}`;
 }
 
 /**
@@ -35,7 +40,7 @@ export function extractWatermark(text: string): { text: string; isRedtf: boolean
 		return { text: text ?? '', isRedtf: false };
 	}
 	return {
-		text: text.replaceAll(REDTF_WATERMARK, ''),
+		text: text.replace(WATERMARK_PATTERN, ''),
 		isRedtf: true
 	};
 }

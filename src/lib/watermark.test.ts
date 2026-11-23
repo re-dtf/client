@@ -5,21 +5,27 @@ describe('watermark', () => {
 	it('addWatermark добавляет сигнатуру в конец текста', () => {
 		const text = 'Привет мир';
 		const marked = addWatermark(text);
-		expect(marked).toBe(text + REDTF_WATERMARK);
+		expect(marked).toBe(`${text} ${REDTF_WATERMARK}`);
 		expect(marked.endsWith(REDTF_WATERMARK)).toBe(true);
 	});
 
 	it('addWatermark обрезает хвостовые пробелы перед добавлением', () => {
 		const text = 'Привет мир   \n';
 		const marked = addWatermark(text);
-		expect(marked).toBe('Привет мир' + REDTF_WATERMARK);
+		expect(marked).toBe(`Привет мир ${REDTF_WATERMARK}`);
 	});
 
 	it('addWatermark перемещает существующий знак из середины в конец без дублирования', () => {
 		const text = `Часть 1${REDTF_WATERMARK} Часть 2`;
 		const marked = addWatermark(text);
-		expect(marked).toBe('Часть 1 Часть 2' + REDTF_WATERMARK);
+		expect(marked).toBe(`Часть 1 Часть 2 ${REDTF_WATERMARK}`);
 		expect(marked.split(REDTF_WATERMARK).length - 1).toBe(1);
+	});
+
+	it('addWatermark отделяет марку пробелом, чтобы она не попала в адрес ссылки в конце текста', () => {
+		const marked = addWatermark('Смотрите https://example.com/page');
+		expect(marked).toBe(`Смотрите https://example.com/page ${REDTF_WATERMARK}`);
+		expect(extractWatermark(marked)).toEqual({ text: 'Смотрите https://example.com/page', isRedtf: true });
 	});
 
 	it('extractWatermark распознаёт водяной знак и очищает текст', () => {
