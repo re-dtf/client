@@ -126,6 +126,7 @@ export const INTERFACE_SUBNAV: SubNavGroup[] = [
 			{ id: 'interface-top-bar', title: 'Верхняя панель', icon: 'top-bar' },
 			{ id: 'interface-mobile-bar', title: 'Мобильная панель', icon: 'mobile-bar', device: 'mobile' },
 			{ id: 'interface-content', title: 'Лента и контент', icon: 'content' },
+			{ id: 'interface-users', title: 'Пользователи', icon: 'profile' },
 			{ id: 'interface-votes', title: 'Оценки', icon: 'votes' },
 			{ id: 'interface-comments', title: 'Комментарии', icon: 'comments' },
 			{ id: 'interface-editor', title: 'Редактор', icon: 'editor' },
@@ -158,6 +159,8 @@ const PAGE_ALIASES: Record<string, { folderId: string | null; pageId: string; se
 	'mobile-bar': { folderId: 'interface', pageId: 'interface-mobile-bar' },
 	'interface-content': { folderId: 'interface', pageId: 'interface-content' },
 	content: { folderId: 'interface', pageId: 'interface-content' },
+	'interface-users': { folderId: 'interface', pageId: 'interface-users' },
+	users: { folderId: 'interface', pageId: 'interface-users' },
 	'appearance-general': { folderId: 'interface', pageId: 'interface-content' },
 	'interface-votes': { folderId: 'interface', pageId: 'interface-votes' },
 	votes: { folderId: 'interface', pageId: 'interface-votes' },
@@ -607,6 +610,25 @@ export function buildDeclarativePages(
 					getValue: () => settings.value.recommendations,
 					setValue: (value) => settings.patch({ recommendations: value as RecommendationsMode })
 				},
+				...themeEntries(otherFields, themeValues)
+			],
+			soloLink: {
+				groupTitle: 'Фильтрация контента',
+				title: 'Фильтрация и стоп-слова',
+				subtitle: 'Скрытие постов, новостей и комментариев по тегам (#политика, #аниме) и ключевым словам',
+				buttonLabel: 'Настроить',
+				targetPageId: 'filters',
+				targetFolderId: null,
+				backTarget: { folderId: 'interface', pageId: 'interface-content', title: 'Лента и контент' }
+			}
+		},
+		{
+			pageId: 'interface-users',
+			folderId: 'interface',
+			icon: 'profile',
+			searchPath: 'Интерфейс › Пользователи',
+			cardsLayout: true,
+			entries: [
 				{
 					field: plusBadgesField,
 					getValue: () => settings.value.plusBadges,
@@ -621,18 +643,8 @@ export function buildDeclarativePages(
 					field: remarkViewField,
 					getValue: () => settings.value.remarkView,
 					setValue: (value) => settings.patch({ remarkView: value as RemarkView })
-				},
-				...themeEntries(otherFields, themeValues)
-			],
-			soloLink: {
-				groupTitle: 'Фильтрация контента',
-				title: 'Фильтрация и стоп-слова',
-				subtitle: 'Скрытие постов, новостей и комментариев по тегам (#политика, #аниме) и ключевым словам',
-				buttonLabel: 'Настроить',
-				targetPageId: 'filters',
-				targetFolderId: null,
-				backTarget: { folderId: 'interface', pageId: 'interface-content', title: 'Лента и контент' }
-			}
+				}
+			]
 		},
 		{
 			pageId: 'interface-votes',
