@@ -12,7 +12,7 @@
 	import { getLeonardoUrl, isAnimatedMedia, isGifMedia } from '$lib/api/utils';
 	import { getPostPath, getPostShareUrl, getProfilePath, openDtfLink, openLightbox, openPost, openProfile, preloadLightbox } from '$lib/navigation';
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
-	import { ensureLogin } from './actions.svelte';
+	import { authorZoneMenu, ensureLogin, profileContextMenu } from './actions.svelte';
 	import { parseCommentText } from './comments/commentText';
 	import { toggleCommentFavorite } from './comments/votes.svelte';
 	import ComplaintDialog from './ComplaintDialog.svelte';
@@ -103,8 +103,8 @@
 		<a class="profile-comment__title" href={postPath} onclick={(e) => openPost(e, post)} use:preloadIntent={post}>{comment.postTitle}</a>
 	{/if}
 
-	<div class="profile-comment__header">
-		<a class="profile-comment__user" href={resolve(getProfilePath(comment.author.id) as any)} onclick={(e) => openProfile(e, comment.author.id)}>
+	<div class="profile-comment__header" {@attach authorZoneMenu(() => comment.author)}>
+		<a class="profile-comment__user" href={resolve(getProfilePath(comment.author.id) as any)} onclick={(e) => openProfile(e, comment.author.id)} {@attach profileContextMenu(comment.author)}>
 			{#if comment.author.avatarUrl}
 				<img class="profile-comment__avatar" src={comment.author.avatarUrl} alt="" {@attach animatedAvatar(comment.author.avatarUrl)} />
 			{/if}

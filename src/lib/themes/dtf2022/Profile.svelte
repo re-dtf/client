@@ -8,7 +8,7 @@
 	import { pinnedSubsites, pinSubsite, unpinSubsite } from '$lib/storage/pinnedSubsites.svelte';
 	import { resolve } from '$app/paths';
 	import { getProfilePath, isNewTabClick, openLightbox, openOverlay, openProfile, preloadLightbox } from '$lib/navigation';
-	import { authorMenuItems, isPostHidden, runAuthorAction, subscriptions } from './actions.svelte';
+	import { authorMenuItems, isPostHidden, profileContextMenu, runAuthorAction, subscriptions } from './actions.svelte';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatDate, formatNumber, formatRating, plural } from './format';
 	import PostCard from './post/PostCard.svelte';
@@ -309,6 +309,7 @@
 							class="profile-sidebar-list__item"
 							title={grid ? item.name : undefined}
 							onclick={(e) => openProfile(e, item.id)}
+							{@attach profileContextMenu(item)}
 						>
 							<img src={item.avatarUrl} class="profile-sidebar-list__image" loading="lazy" alt={grid ? item.name : ''} {@attach animatedAvatar(item.avatarUrl)} />
 							{#if !grid}

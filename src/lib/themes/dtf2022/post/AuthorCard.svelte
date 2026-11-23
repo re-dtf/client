@@ -4,7 +4,7 @@
 	import { api } from '$lib/api/index.svelte';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { getProfilePath, openProfile } from '$lib/navigation';
-	import { subscriptions } from '../actions.svelte';
+	import { authorZoneMenu, profileContextMenu, subscriptions } from '../actions.svelte';
 	import { formatRating } from '../format';
 	import Button from '../ui/Button.svelte';
 	import PlusBadge from '../ui/PlusBadge.svelte';
@@ -45,7 +45,7 @@
 {/snippet}
 
 <div class="author-card">
-	<div class="author-card__info">
+	<div class="author-card__info" {@attach authorZoneMenu(() => author)}>
 		<a
 			href={profilePath}
 			class="author-card__avatar"
@@ -53,10 +53,11 @@
 			aria-label={author.name}
 			onclick={(e) => openProfile(e, author.id)}
 			{@attach animatedAvatar(author.avatarUrl)}
+			{@attach profileContextMenu(author)}
 		></a>
 		<div class="author-card__main">
 			<div class="author-card__title">
-				<a href={profilePath} class="author-card__item author-card__name" onclick={(e) => openProfile(e, author.id)}>
+				<a href={profilePath} class="author-card__item author-card__name" onclick={(e) => openProfile(e, author.id)} {@attach profileContextMenu(author)}>
 					{author.name}
 				</a>
 				{#if author.isPlus}

@@ -8,7 +8,7 @@
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
 	import { api } from '$lib/api/index.svelte';
-	import { type AuthorAction, authorMenuItems, ensureLogin, hidePost, isAnotherDtfUser, markPostDeleted, runAuthorAction, subscriptions } from '../actions.svelte';
+	import { type AuthorAction, authorMenuItems, authorZoneMenu, ensureLogin, hidePost, isAnotherDtfUser, markPostDeleted, profileContextMenu, runAuthorAction, subscriptions } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import ConfirmPopup from '../ui/ConfirmPopup.svelte';
 	import Popover from '../ui/Popover.svelte';
@@ -148,11 +148,11 @@
 {/if}
 
 <div class={['post-header', { 'post-header--card': variant === 'card' }]}>
-	<div class="post-header__info">
+	<div class="post-header__info" {@attach authorZoneMenu(() => post.subsite ?? post.author)}>
 		{#if post.subsite}
 			{@const subsite = post.subsite}
 			<div class="post-header__item post-header-subsite">
-				<a href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)}>
+				<a href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)} {@attach profileContextMenu(subsite)}>
 					<div class="post-header-subsite__avatar" {@attach animatedAvatar(subsite.avatarUrl)}>
 						{#if subsite.avatarUrl}
 							<img src={subsite.avatarUrl} alt="" />
@@ -169,6 +169,7 @@
 					class="post-header-author__name"
 					href={resolve(getProfilePath(post.author.id) as any)}
 					onclick={(e) => openProfile(e, post.author.id)}
+					{@attach profileContextMenu(post.author)}
 				>
 					{post.author.name}
 				</a>

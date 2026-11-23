@@ -5,6 +5,7 @@
 	import { animatedAvatar } from '$lib/actions/animatedAvatar.svelte';
 	import { reducedMotion } from '$lib/motion';
 	import { getProfilePath, openProfile } from '$lib/navigation';
+	import { profileContextMenu } from './actions.svelte';
 	import NetworkErrorState from '$lib/components/NetworkErrorState.svelte';
 	import CommentCard from './comments/CommentCard.svelte';
 	import { formatNumber, plural } from './format';
@@ -186,7 +187,7 @@
 						{/each}
 					{:else}
 						{#each subsites as subsite (subsite.id)}
-							<a class="search-subsite" href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)}>
+							<a class="search-subsite" href={resolve(getProfilePath(subsite.id) as any)} onclick={(e) => openProfile(e, subsite.id)} {@attach profileContextMenu(subsite)}>
 								<span class="search-subsite__avatar" style:background-image={subsite.avatarUrl ? `url('${subsite.avatarUrl}')` : undefined} {@attach animatedAvatar(subsite.avatarUrl)}></span>
 								<span class="search-subsite__info">
 									<span class="search-subsite__name">{subsite.name}</span>

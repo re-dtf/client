@@ -4,7 +4,7 @@ import type { Post } from '$lib/api/types';
 import { api } from '$lib/api/index.svelte';
 import { getPostPath, getPostShareUrl, getProfilePath, openOverlay } from '$lib/navigation';
 import { isNative } from '$lib/capacitor';
-import type { ContextMenuItem, ContextMenuPayload } from '$lib/contextMenu.svelte';
+import { contextMenu, type ContextMenuItem, type ContextMenuPayload } from '$lib/contextMenu.svelte';
 import { currentUser } from '$lib/api/currentUser.svelte';
 import { authStorage } from '$lib/storage/auth.svelte';
 import { addIgnoredTag, filterSettings, hideUser, isUserHidden, normalizeTag, removeIgnoredTag, unhideUser } from '$lib/storage/filter.svelte';
@@ -309,12 +309,22 @@ export const subscriptions = {
 	}
 };
 
-/** Контекстное меню закреплённого подсайта в боковой панели */
-export function pinnedSubsiteMenu(subsite: PinnedSubsite): ContextMenuPayload {
+/**
+ * Контекстное меню (ПКМ, удержание) пользователя или подсайта: везде, где показано его имя или аватар.
+ * Базовые пункты общие, `extra` дописывает пункты места (например, «Открепить» в боковой панели).
+ */
+export function profileMenu(subsite: { id: number; name: string }, extra: ContextMenuItem[] = []): ContextMenuPayload {
 	const href = resolve(getProfilePath(subsite.id) as any);
 	const fullUrl = typeof location !== 'undefined' ? new URL(href, location.href).href : href;
 
-	const items: ContextMenuItem[] = [];
+	const items: ContextMenuItem[] = [
+		{
+			id: 'open',
+			label: 'Открыть профиль',
+			icon: 'v_person',
+			action: () => openOverlay({ type: 'profile', data: { profileId: subsite.id } })
+		}
+	];
 	if (!isNative()) {
 		items.push({
 			id: 'open-tab',
@@ -325,21 +335,53 @@ export function pinnedSubsiteMenu(subsite: PinnedSubsite): ContextMenuPayload {
 			rel: 'noopener noreferrer'
 		});
 	}
-
-	items.push(
-		{
-			id: 'copy-link',
-			label: 'Копировать ссылку',
-			icon: 'v_link',
-			async action() {
-				try {
-					await navigator.clipboard.writeText(fullUrl);
-					notify.success('Ссылка скопирована');
-				} catch {
-					notify.error('Не удалось скопировать ссылку');
-				}
+	items.push({
+		id: 'copy-link',
+		label: 'Копировать ссылку',
+		icon: 'v_link',
+		async action() {
+			try {
+				await navigator.clipboard.writeText(fullUrl);
+				notify.success('Ссылка скопирована');
+			} catch {
+				notify.error('Не удалось скопировать ссылку');
 			}
-		},
+		}
+	});
+
+	return {
+		title: subsite.name,
+		label: `Действия с ${subsite.name}`,
+		items: [...items, ...extra]
+	};
+}
+
+/** `{@attach profileContextMenu(user)}` на ссылке или блоке с пользователем */
+export const profileContextMenu = (subsite: { id: number; name: string }) => contextMenu(() => profileMenu(subsite));
+
+/**
+ * Меню пользователя на всей «шапке автора»: аватар, имя, бейджи, время и пустые промежутки между ними.
+ * Вешается на контейнер шапки. Если шапка — часть блока с текстом, `lastRow` — селектор последнего её элемента:
+ * всё ниже его нижней границы (текст, медиа, кнопки) остаётся с обычным меню браузера.
+ * `user` вернёт пусто, когда автора нет (удалённый комментарий): меню не откроется.
+ */
+export function authorZoneMenu(user: () => { id: number; name: string } | undefined, lastRow?: string) {
+	return (node: HTMLElement) =>
+		contextMenu((e) => {
+			const author = user();
+			if (!author) return null;
+			if (lastRow) {
+				const y = (e as MouseEvent | undefined)?.clientY;
+				const last = node.querySelector(lastRow)?.getBoundingClientRect().bottom;
+				if (y === undefined || last === undefined || y < node.getBoundingClientRect().top || y > last) return null;
+			}
+			return profileMenu(author);
+		})(node);
+}
+
+/** Контекстное меню закреплённого подсайта в боковой панели */
+export const pinnedSubsiteMenu = (subsite: PinnedSubsite) =>
+	profileMenu(subsite, [
 		{
 			id: 'unpin',
 			label: 'Открепить',
@@ -357,11 +399,4 @@ export function pinnedSubsiteMenu(subsite: PinnedSubsite): ContextMenuPayload {
 				});
 			}
 		}
-	);
-
-	return {
-		title: subsite.name,
-		label: `Действия с подсайтом ${subsite.name}`,
-		items
-	};
-}
+	]);

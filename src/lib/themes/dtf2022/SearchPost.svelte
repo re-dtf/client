@@ -7,7 +7,7 @@
 	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
 	import { votesOf } from '$lib/reactions';
 	import { sanitizeHtml } from '$lib/sanitize';
-	import { reactToPost, votePost, withActions } from './actions.svelte';
+	import { authorZoneMenu, profileContextMenu, reactToPost, votePost, withActions } from './actions.svelte';
 	import { formatFullDate, formatTime } from './format';
 	import PostButton from './post/PostButton.svelte';
 	import Rating from './post/Rating.svelte';
@@ -65,8 +65,8 @@
 		use:preloadIntent={post}
 	></a>
 	<div class="search-simple__body">
-		<div class="search-simple__meta">
-			<a class="search-simple__owner" href={resolve(getProfilePath(owner.id) as any)} onclick={(e) => openProfile(e, owner.id)}>
+		<div class="search-simple__meta" {@attach authorZoneMenu(() => owner)}>
+			<a class="search-simple__owner" href={resolve(getProfilePath(owner.id) as any)} onclick={(e) => openProfile(e, owner.id)} {@attach profileContextMenu(owner)}>
 				{#if owner.avatarUrl}
 					<img class="search-simple__avatar" src={owner.avatarUrl} alt="" loading="lazy" {@attach animatedAvatar(owner.avatarUrl)} />
 				{/if}

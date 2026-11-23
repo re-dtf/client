@@ -16,7 +16,7 @@
 	import { votesOf } from '$lib/reactions';
 	import { filterSettings, matchCommentFilter } from '$lib/storage/filter.svelte';
 	import { settings } from '$lib/storage/settings.svelte';
-	import { ensureLogin } from '../actions.svelte';
+	import { authorZoneMenu, ensureLogin, profileContextMenu } from '../actions.svelte';
 	import BadgeInfoModal from '../BadgeInfoModal.svelte';
 	import { parseCommentText, type TextSegment } from './commentText';
 	import { toggleCommentFavorite, toggleCommentReaction, voteComment } from './votes.svelte';
@@ -127,8 +127,8 @@
 			<a class="comment-card__post-title" href={postPath} onclick={(e) => openPost(e, post)} use:preloadIntent={post}>{item.postTitle}</a>
 		{/if}
 
-		<div class="comment-card__meta">
-			<a class="comment-card__owner" href={resolve(getProfilePath(item.author.id) as any)} onclick={(e) => openProfile(e, item.author.id)}>
+		<div class="comment-card__meta" {@attach authorZoneMenu(() => item.author)}>
+			<a class="comment-card__owner" href={resolve(getProfilePath(item.author.id) as any)} onclick={(e) => openProfile(e, item.author.id)} {@attach profileContextMenu(item.author)}>
 				{#if item.author.avatarUrl}
 					<img class="comment-card__avatar" src={item.author.avatarUrl} alt="" loading="lazy" {@attach animatedAvatar(item.author.avatarUrl)} />
 				{/if}

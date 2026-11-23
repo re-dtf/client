@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { getPostPath, getProfilePath, openPost, openProfile } from '$lib/navigation';
+	import { authorZoneMenu, profileContextMenu } from '../actions.svelte';
 	import { formatDonation } from '../comments/donation';
 	import { formatFullDate, formatTime } from '../format';
 	import { shorten, uniqueByType, type LiveItem } from './liveModel';
@@ -48,8 +49,8 @@
 	</a>
 {:else}
 	<div class={['live-item', { 'live-item--donate': !!item.donate, 'live-item--first': first }]}>
-		<div class="header">
-			<a class="user" href={profileHref} onclick={(e) => openProfile(e, item.user.id)}>
+		<div class="header" {@attach authorZoneMenu(() => item.user)}>
+			<a class="user" href={profileHref} onclick={(e) => openProfile(e, item.user.id)} {@attach profileContextMenu(item.user)}>
 				<div class="avatar" style:background-image={item.user.avatarUrl ? `url("${item.user.avatarUrl}")` : undefined} {@attach animatedAvatar(item.user.avatarUrl)}></div>
 				<div class="name"><span>{item.user.name}</span></div>
 				{#if item.user.isVerified}

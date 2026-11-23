@@ -14,7 +14,7 @@
 	import { parseDtfUrl, dtfTargetToPath } from '$lib/dtfLinks';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { authStorage } from '$lib/storage/auth.svelte';
-	import { type AuthorAction, authorMenuItems, ensureLogin, isAnotherDtfUser, isSubsiteMuted, runAuthorAction } from '../actions.svelte';
+	import { type AuthorAction, authorMenuItems, ensureLogin, authorZoneMenu, isAnotherDtfUser, isSubsiteMuted, profileContextMenu, runAuthorAction } from '../actions.svelte';
 	import ComplaintDialog from '../ComplaintDialog.svelte';
 	import { votesOf } from '$lib/reactions';
 	import { themeSettings } from '../themeSettings.svelte';
@@ -280,7 +280,7 @@
 		{/each}
 	</div>
 
-	<div class="comment-item__content">
+	<div class="comment-item__content" {@attach authorZoneMenu(() => (comment.isRemoved && !isRestoredShown ? undefined : shownAuthor), '.comment-item__time')}>
 		{#if comment.isRemoved && !isRestoredShown}
 			<div class="comment-item__avatar">
 				<div class="comment-item__avatar-image">
@@ -308,7 +308,7 @@
 				</div>
 			</div>
 
-			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)} style="opacity: 0.7;">{comment.author.name}</a>
+			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, comment.author.id)} style="opacity: 0.7;" {@attach profileContextMenu(comment.author)}>{comment.author.name}</a>
 			{#if showAuthorBadge && clientBadge}
 				<button
 					type="button"
@@ -371,7 +371,7 @@
 			<div class="comment-item__break"></div>
 			{@render repliesAction()}
 		{:else}
-			<a class="comment-item__avatar" class:comment-item__avatar--restored={restoredAuthor} href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, shownAuthor.id)}>
+			<a class="comment-item__avatar" class:comment-item__avatar--restored={restoredAuthor} href={profilePath} tabindex="-1" aria-hidden="true" onclick={(e) => openProfile(e, shownAuthor.id)} {@attach profileContextMenu(shownAuthor)}>
 				<div class="comment-item__avatar-image" {@attach animatedAvatar(shownAuthor.avatarUrl)}>
 					{#if shownAuthor.avatarUrl}
 						<img src={shownAuthor.avatarUrl} alt="" />
@@ -381,7 +381,7 @@
 				</div>
 			</a>
 
-			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, shownAuthor.id)}>{shownAuthor.name}</a>
+			<a class="comment-item__author" href={profilePath} onclick={(e) => openProfile(e, shownAuthor.id)} {@attach profileContextMenu(shownAuthor)}>{shownAuthor.name}</a>
 			<!-- У автора из архива статуса Плюса нет -->
 			{#if !restoredAuthor && comment.author.isPlus}
 				<span class="comment-item__plus"><PlusBadge author={comment.author} /></span>
@@ -459,7 +459,7 @@
 								{#if l > 0}<br />{/if}
 								{#each line as part}
 									{#if part.type === 'mention'}
-										<a href={resolve(getProfilePath(part.id) as any)} onclick={(e) => openProfile(e, part.id)}>{part.name}</a>
+										<a href={resolve(getProfilePath(part.id) as any)} onclick={(e) => openProfile(e, part.id)} {@attach profileContextMenu({ id: part.id, name: part.name })}>{part.name}</a>
 									{:else if part.type === 'link'}
 										{@const dtfTarget = parseDtfUrl(part.url)}
 										{#if dtfTarget}

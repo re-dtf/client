@@ -9,7 +9,7 @@
 	import { resolve } from '$app/paths';
 	import { currentUser } from '$lib/api/currentUser.svelte';
 	import { getProfilePath, openProfile } from '$lib/navigation';
-	import { subscriptions } from './actions.svelte';
+	import { profileContextMenu, subscriptions } from './actions.svelte';
 	import { loadOnVisible } from './loadOnVisible';
 	import { formatNumber } from './format';
 	import Preloader from './ui/Preloader.svelte';
@@ -82,7 +82,7 @@
 
 {#snippet personRow(person: ProfileListItem, isMySubscription = false)}
 	<div class="subsite-item">
-		<a href={resolve(getProfilePath(person.id) as any)} class="subsite-item__main" onclick={(e) => openProfile(e, person.id)}>
+		<a href={resolve(getProfilePath(person.id) as any)} class="subsite-item__main" onclick={(e) => openProfile(e, person.id)} {@attach profileContextMenu(person)}>
 			<div class="subsite-item__image" style:background-image={person.avatarUrl ? `url(${person.avatarUrl})` : undefined} {@attach animatedAvatar(person.avatarUrl)}></div>
 			<div class="subsite-item__label-container">
 				<span class="subsite-item__label" title={person.name}>{person.name}</span>
