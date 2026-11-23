@@ -3,6 +3,7 @@
 	import type { Reactions } from '$lib/api/types';
 	import { FREE_REACTION_IDS, PLUS_REACTION_IDS, REACTIONS } from '$lib/config/reactions';
 	import { formatNumber } from '../format';
+	import { on } from 'svelte/events';
 	import { fade } from 'svelte/transition';
 	import { reducedMotion } from '$lib/motion';
 	import { haptics } from '$lib/haptics';
@@ -173,7 +174,7 @@
 		bind:this={anchor}
 		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
-		oncontextmenu={onContextMenu}
+		{@attach (node) => on(node, 'contextmenu', onContextMenu)}
 		onclick={handleClick}
 	>
 		{@render children()}

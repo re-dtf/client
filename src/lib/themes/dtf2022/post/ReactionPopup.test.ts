@@ -15,7 +15,7 @@ describe('ReactionPopup interactions', () => {
 	});
 
 	it('обрабатывает ПКМ (contextmenu) для открытия и закрытия меню', () => {
-		expect(content).toContain('oncontextmenu={onContextMenu}');
+		expect(content).toContain("on(node, 'contextmenu', onContextMenu)");
 		expect(content).toContain('function onContextMenu');
 		expect(content).toContain('e.preventDefault()');
 	});
