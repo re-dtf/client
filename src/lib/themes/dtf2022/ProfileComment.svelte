@@ -95,7 +95,9 @@
 	{#if (filterMatch?.mode ?? filterSettings.value.mode) === 'soft'}
 		<article class="profile-comment profile-comment--filtered">
 			<span class="profile-comment__filtered-text">Комментарий скрыт фильтром ({filterMatch?.rule})</span>
-			<button type="button" class="profile-comment__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
+			<button type="button" class="profile-comment__reveal-btn" onclick={() => (revealed = true)}>
+				{filterMatch?.kind === 'user' ? 'Показать один раз' : 'Показать'}
+			</button>
 		</article>
 	{/if}
 {:else}
@@ -257,11 +259,13 @@
 	}
 
 	.profile-comment__filtered-text {
+		overflow-wrap: anywhere;
 		color: var(--text-muted, #777);
 		font-size: 14px;
 	}
 
 	.profile-comment__reveal-btn {
+		flex-shrink: 0;
 		background: none;
 		border: none;
 		padding: 0;

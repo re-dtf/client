@@ -366,7 +366,9 @@
 				</span>
 				<!-- У комментария заблокированного с сервера текста нет, показывать нечего -->
 				{#if muted ? !!comment.content : (filterMatch?.mode ?? filterSettings.value.mode) === 'soft'}
-					<button type="button" class="comment-item__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
+					<button type="button" class="comment-item__reveal-btn" onclick={() => (revealed = true)}>
+						{!muted && filterMatch?.kind === 'user' ? 'Показать один раз' : 'Показать'}
+					</button>
 				{/if}
 			</div>
 
@@ -1075,6 +1077,7 @@
 		align-items: center;
 		gap: 8px;
 		flex-wrap: wrap;
+		overflow-wrap: anywhere;
 		color: var(--text-muted);
 		font-size: 14px;
 	}

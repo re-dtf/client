@@ -44,7 +44,7 @@
 		</div>
 
 		<button type="button" class="filtered-card__action" onclick={onreveal}>
-			Показать
+			{match.kind === 'user' ? 'Показать один раз' : 'Показать'}
 		</button>
 	</div>
 </article>
@@ -64,6 +64,7 @@
 		background: var(--bg-card, #fff);
 		border-radius: 8px;
 		box-sizing: border-box;
+		overflow-wrap: anywhere;
 	}
 
 	.filtered-card__icon {
@@ -145,6 +146,7 @@
 
 	@media (max-width: 639px) {
 		.filtered-card {
+			gap: 8px;
 			padding: 14px var(--island-offset-x, 16px);
 			border-radius: 0;
 		}

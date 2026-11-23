@@ -119,7 +119,9 @@
 	{#if (filterMatch?.mode ?? filterSettings.value.mode) === 'soft'}
 		<article class="comment-card comment-card--filtered">
 			<span class="comment-card__filtered-text">Комментарий скрыт фильтром ({filterMatch?.rule})</span>
-			<button type="button" class="comment-card__reveal-btn" onclick={() => (revealed = true)}>Показать</button>
+			<button type="button" class="comment-card__reveal-btn" onclick={() => (revealed = true)}>
+				{filterMatch?.kind === 'user' ? 'Показать один раз' : 'Показать'}
+			</button>
 		</article>
 	{/if}
 {:else}
@@ -333,11 +335,13 @@
 	}
 
 	.comment-card__filtered-text {
+		overflow-wrap: anywhere;
 		color: var(--text-muted);
 		font-size: 14px;
 	}
 
 	.comment-card__reveal-btn {
+		flex-shrink: 0;
 		padding: 0;
 		border: none;
 		background: none;

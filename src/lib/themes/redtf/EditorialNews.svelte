@@ -24,7 +24,9 @@
 					<span class="news-item__filtered-text">
 						{match.kind === 'user' ? 'Новость скрыта: вы скрыли автора' : `Новость скрыта фильтром (${match.rule})`}
 					</span>
-					<button type="button" class="news-item__reveal" onclick={() => revealed.add(key)}>Показать</button>
+					<button type="button" class="news-item__reveal" onclick={() => revealed.add(key)}>
+						{match.kind === 'user' ? 'Показать один раз' : 'Показать'}
+					</button>
 				{:else}
 					{@const href = resolve(getPostPath(item) as any)}
 					{@const commentsHref = resolve(getPostPath(item, 'comments') as any)}
