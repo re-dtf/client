@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { openExternalUrl } from '$lib/capacitor';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
+	import MediaGate from '$lib/components/MediaGate.svelte';
 	import { animatedAvatar } from '$lib/actions/animatedAvatar.svelte';
 	import { mediaContextMenu } from '$lib/actions/mediaContextMenu';
 	import { preloadIntent } from '$lib/actions/preloadIntent';
@@ -167,7 +168,11 @@
 		<div class="profile-comment__media">
 			{#each comment.media as media}
 				{#if isAnimatedMedia(media)}
-					<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)} {@attach mediaContextMenu({ ...media.data, isGif: isGifMedia(media) })}></video>
+					{@const gif = isGifMedia(media)}
+					{@const menu = mediaContextMenu({ ...media.data, isGif: gif })}
+					<MediaGate media={media.data} kind={gif ? 'gif' : 'video'} {menu}>
+						<video src={getLeonardoUrl(media.data.uuid, { format: 'mp4' })} muted loop playsinline controls={!!media.data.has_audio} {@attach fromAction(lazyVideo)} {@attach menu}></video>
+					</MediaGate>
 				{:else if media.type === 'image'}
 					<button
 						type="button"

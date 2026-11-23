@@ -55,6 +55,8 @@ describe('auth & proxy failover', () => {
 			mobileBadgesPosition: 'author',
 			plusBadges: 'classic',
 			animatedAvatars: 'all',
+			videoAutoplay: 'auto',
+			gifAutoplay: 'auto',
 			remarkView: 'text',
 			autoUpvoteComments: false,
 			restoreScope: 'all',

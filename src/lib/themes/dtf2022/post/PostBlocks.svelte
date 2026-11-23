@@ -7,6 +7,7 @@
 	import { fromAction, type Attachment } from 'svelte/attachments';
 	import { lazyVideo } from '$lib/actions/lazyVideo';
 	import { mediaContextMenu } from '$lib/actions/mediaContextMenu';
+	import MediaGate from '$lib/components/MediaGate.svelte';
 	import { getLeonardoUrl, isAnimatedMedia, isGifMedia } from '$lib/api/utils';
 	import { resolve } from '$app/paths';
 	import { openDtfLink, openLightbox, preloadLightbox } from '$lib/navigation';
@@ -143,17 +144,19 @@
 				{#if !evictMedia}
 					{@const gif = isGifMedia(image)}
 					{@const menu = mediaContextMenu({ ...image.data, isGif: gif })}
-					<video
-						src={getLeonardoUrl(image.data.uuid, { format: 'mp4' })}
-						muted
-						loop
-						playsinline
-						preload="metadata"
-						controls={!!image.data.has_audio}
-						{@attach fromAction(lazyVideo)}
-						{@attach gif && gifLink ? undefined : menu}
-					></video>
-					{#if gif && gifLink}{@render gifLink(menu)}{/if}
+					<MediaGate media={image.data} kind={gif ? 'gif' : 'video'} fill {menu}>
+						<video
+							src={getLeonardoUrl(image.data.uuid, { format: 'mp4' })}
+							muted
+							loop
+							playsinline
+							preload="metadata"
+							controls={!!image.data.has_audio}
+							{@attach fromAction(lazyVideo)}
+							{@attach gif && gifLink ? undefined : menu}
+						></video>
+						{#if gif && gifLink}{@render gifLink(menu)}{/if}
+					</MediaGate>
 				{/if}
 			{:else}
 				{#if !evictMedia}

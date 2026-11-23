@@ -7,6 +7,7 @@ import {
 	DEFAULT_THEME,
 	settings,
 	type AnimatedAvatarsMode,
+	type MediaAutoplay,
 	type RemarkView,
 	type ClientBadgesMode,
 	type CommentVirtualization,
@@ -438,6 +439,30 @@ const animatedAvatarsField: ChoiceField = {
 	]
 };
 
+const autoplayOptions = [
+	{ value: 'auto', title: 'Авто (по умолчанию)', description: 'Сразу, а если в системе включена экономия трафика, то по нажатию. Работает не во всех браузерах' },
+	{ value: 'always', title: 'Всегда', description: 'Ролик загружается и играет, как только появился на экране' },
+	{ value: 'off', title: 'По нажатию', description: 'Ролик не загружается, пока не нажмёте на превью' }
+];
+
+const videoAutoplayField: ChoiceField = {
+	key: 'videoAutoplay',
+	type: 'radio',
+	title: 'Автозапуск видео',
+	description: 'Загружать ли видео в постах и комментариях сразу. Ролики без звука считаются GIF.',
+	default: 'auto',
+	options: autoplayOptions
+};
+
+const gifAutoplayField: ChoiceField = {
+	key: 'gifAutoplay',
+	type: 'radio',
+	title: 'Автозапуск GIF',
+	description: 'Загружать ли GIF в постах и комментариях сразу. Вместо неё показывается кадр с кнопкой «GIF».',
+	default: 'auto',
+	options: autoplayOptions
+};
+
 const remarkViewField: ChoiceField = {
 	key: 'remarkView',
 	type: 'radio',
@@ -609,6 +634,16 @@ export function buildDeclarativePages(
 					field: recommendationsField,
 					getValue: () => settings.value.recommendations,
 					setValue: (value) => settings.patch({ recommendations: value as RecommendationsMode })
+				},
+				{
+					field: videoAutoplayField,
+					getValue: () => settings.value.videoAutoplay,
+					setValue: (value) => settings.patch({ videoAutoplay: value as MediaAutoplay })
+				},
+				{
+					field: gifAutoplayField,
+					getValue: () => settings.value.gifAutoplay,
+					setValue: (value) => settings.patch({ gifAutoplay: value as MediaAutoplay })
 				},
 				...themeEntries(otherFields, themeValues)
 			],

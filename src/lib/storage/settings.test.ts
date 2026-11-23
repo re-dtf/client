@@ -54,6 +54,8 @@ describe('settings & shouldVirtualizeComments', () => {
 			mobileBadgesPosition: 'date',
 			plusBadges: 'classic',
 			animatedAvatars: 'all',
+			videoAutoplay: 'auto',
+			gifAutoplay: 'auto',
 			remarkView: 'text',
 			autoUpvoteComments: false,
 			restoreScope: 'all',

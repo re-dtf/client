@@ -16,6 +16,7 @@ export type PlusBadgesMode = 'classic' | 'custom';
 export type AnimatedAvatarsMode = 'all' | 'hover' | 'off';
 export type RestoreScope = 'all' | 'moderator';
 export type RemarkView = 'text' | 'plain' | 'dot' | 'off';
+export type MediaAutoplay = 'always' | 'auto' | 'off';
 
 export interface ProxyItem {
 	id: string;
@@ -67,6 +68,10 @@ export interface AppSettings {
 	plusBadges: PlusBadgesMode;
 	/** Режим воспроизведения анимированных аватарок: 'all' (везде), 'hover' (профиль и наведение), 'off' (выкл) */
 	animatedAvatars: AnimatedAvatarsMode;
+	/** Видео (ролики со звуком) в постах и комментариях: грузить сразу или по нажатию на превью */
+	videoAutoplay: MediaAutoplay;
+	/** GIF (ролики без звука) в постах и комментариях: грузить сразу или по нажатию на превью */
+	gifAutoplay: MediaAutoplay;
 	/** Заметки о пользователях рядом с именем: 'text' (точка и текст), 'plain' (только текст), 'dot' (только точка), 'off' (не показывать) */
 	remarkView: RemarkView;
 	/** Выбранная иконка приложения и вкладки браузера: 'default' | 'bluer' | 'white' | 'custom' */
@@ -176,6 +181,8 @@ export const settings = persistedState<AppSettings>(
 		mobileBadgesPosition: 'date',
 		plusBadges: 'classic',
 		animatedAvatars: 'all',
+		videoAutoplay: 'auto',
+		gifAutoplay: 'auto',
 		remarkView: 'text',
 		autoUpvoteComments: false,
 		restoreScope: 'all',

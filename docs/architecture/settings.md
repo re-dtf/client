@@ -55,6 +55,8 @@ interface AppSettings {
 	mobileBadgesPosition: 'author' | 'date';     // позиция бейджей клиентов
 	plusBadges: 'classic' | 'custom';
 	animatedAvatars: 'all' | 'hover' | 'off';
+	videoAutoplay: 'always' | 'auto' | 'off'; // видео в постах и комментариях: сразу, сразу без экономии трафика в системе, по нажатию на превью
+	gifAutoplay: 'always' | 'auto' | 'off';   // то же для GIF (роликов без звука)
 	autoUpvoteComments: boolean;    // голос за себя при публикации комментария (как на Reddit)
 	appIcon: AppIconId;             // иконка приложения и вкладки
 	customIconData?: string | null; // пользовательская иконка
