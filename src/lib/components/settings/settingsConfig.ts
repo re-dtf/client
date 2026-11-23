@@ -403,10 +403,10 @@ const mobileBadgesPositionField: ChoiceField = {
 	type: 'radio',
 	title: 'Расположение бейджей ОС',
 	description: 'Где показывать значки официальных приложений Android и iOS. Метка re: всегда остаётся у имени автора.',
-	default: 'author',
+	default: 'date',
 	options: [
-		{ value: 'author', title: 'Возле ника (по умолчанию)', description: 'В строке автора рядом с именем' },
-		{ value: 'date', title: 'Возле времени отправления', description: 'Компактная мини-иконка рядом со временем комментария' }
+		{ value: 'date', title: 'Возле времени отправления (по умолчанию)', description: 'Компактная мини-иконка рядом со временем комментария' },
+		{ value: 'author', title: 'Возле ника', description: 'В строке автора рядом с именем' }
 	]
 };
 

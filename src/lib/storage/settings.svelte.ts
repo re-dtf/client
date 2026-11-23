@@ -173,7 +173,7 @@ export const settings = persistedState<AppSettings>(
 		useSharePreview: true,
 		watermark: true,
 		clientBadges: 'redtf_only',
-		mobileBadgesPosition: 'author',
+		mobileBadgesPosition: 'date',
 		plusBadges: 'classic',
 		animatedAvatars: 'all',
 		remarkView: 'text',

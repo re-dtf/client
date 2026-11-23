@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { SETTINGS_VERSION } from './defaults';
 
 vi.hoisted(() => {
 	const data: Record<string, string> = {};
@@ -50,7 +51,7 @@ describe('settings & shouldVirtualizeComments', () => {
 			haptics: true,
 			watermark: true,
 			clientBadges: 'redtf_only',
-			mobileBadgesPosition: 'author',
+			mobileBadgesPosition: 'date',
 			plusBadges: 'classic',
 			animatedAvatars: 'all',
 			remarkView: 'text',
@@ -116,16 +117,25 @@ describe('settings & shouldVirtualizeComments', () => {
 		expect(saved.d.clientBadges).toBe('all');
 	});
 
-	it('mobileBadgesPosition по умолчанию "author"', () => {
-		expect(settings.value.mobileBadgesPosition).toBe('author');
+	it.each([
+		{ profile: 'без сохранённых настроек', saved: null, expected: 'date' },
+		{ profile: 'с частичными настройками', saved: { haptics: false }, expected: 'date' },
+		{ profile: 'с сохранённым вариантом «Возле ника»', saved: { mobileBadgesPosition: 'author' }, expected: 'author' }
+	])('mobileBadgesPosition при загрузке профиля ($profile)', async ({ saved, expected }) => {
+		localStorage.clear();
+		if (saved) localStorage.setItem('redtf:settings', JSON.stringify({ v: SETTINGS_VERSION, d: saved }));
+
+		vi.resetModules();
+		const loaded = await import('./settings.svelte');
+		expect(loaded.settings.value.mobileBadgesPosition).toBe(expected);
 	});
 
 	it('patch обновляет значение mobileBadgesPosition', () => {
-		settings.patch({ mobileBadgesPosition: 'date' });
-		expect(settings.value.mobileBadgesPosition).toBe('date');
+		settings.patch({ mobileBadgesPosition: 'author' });
+		expect(settings.value.mobileBadgesPosition).toBe('author');
 
 		const saved = JSON.parse(localStorage.getItem('redtf:settings')!);
-		expect(saved.d.mobileBadgesPosition).toBe('date');
+		expect(saved.d.mobileBadgesPosition).toBe('author');
 	});
 
 	it('autoUpvoteComments по умолчанию выключен (false)', () => {
