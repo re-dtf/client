@@ -70,13 +70,13 @@
 		notifyOverlay();
 	};
 	let menuItems = $derived([
-		...(post.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
-		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
+		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link', group: 'content' },
+		...(post.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external', group: 'content' }] : []),
+		...(isOwnDtf && controls?.editEntry ? [{ value: 'copy_to_draft' as const, label: copyingToDraft ? 'Копирование…' : 'Скопировать в черновики', icon: 'v_pen', group: 'content' }] : []),
 		...(others && currentUser.value ? [{ value: 'hide_post' as const, label: 'Скрыть пост', icon: 'v_eye', hint: 'Пост пропадёт из всех ваших лент на DTF' }] : []),
 		...(others ? authorMenuItems(post.author) : []),
-		...(others ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : []),
-		...(isOwnDtf && controls?.editEntry ? [{ value: 'copy_to_draft' as const, label: copyingToDraft ? 'Копирование…' : 'Скопировать в черновики', icon: 'v_pen' }] : []),
-		...(isOwnDtf && controls?.remove ? [{ value: 'delete_post' as const, label: 'Удалить', icon: 'v_delete' }] : [])
+		...(others ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag', group: 'moderation' }] : []),
+		...(isOwnDtf && controls?.remove ? [{ value: 'delete_post' as const, label: 'Удалить', icon: 'v_delete', group: 'moderation' }] : [])
 	]);
 	let showMenu = $derived(menuItems.length > 0);
 

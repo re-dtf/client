@@ -59,9 +59,9 @@
 	let complaining = $state(false);
 	let showBadgeModal = $state(false);
 	let menuItems = $derived([
-		...(comment.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
-		...(comment.sourceId === 'dtf' && comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : [])
+		...(comment.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
+		...(comment.sourceId === 'dtf' && comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag', group: 'moderation' }] : [])
 	]);
 
 	async function selectMenuItem(item: 'open_dtf' | 'copy' | 'complain') {

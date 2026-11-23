@@ -138,18 +138,18 @@
 	let menuOpen = $state(false);
 	let pickerOpen = $state(false);
 	let canEdit = $state(false);
-	// Порядок — как в определениях пунктов меню у DTF: правка, ссылка, жалоба, закладка
 	let menuItems = $derived([
-		...(canEdit ? [{ value: 'edit' as const, label: 'Редактировать', icon: 'v_pen' }] : []),
-		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' },
-		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
-		...(comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }] : []),
-		...(isAnotherDtfUser(comment.sourceId, comment.author.id) ? authorMenuItems(comment.author, { blocked: !!comment.isIgnored }) : []),
+		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link', group: 'content' },
+		{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external', group: 'content' },
 		{
 			value: 'favorite' as const,
 			label: comment.isFavorited ? 'Убрать из закладок' : 'Добавить в закладки',
-			icon: comment.isFavorited ? 'v_bookmark_solid' : 'v_bookmark'
-		}
+			icon: comment.isFavorited ? 'v_bookmark_solid' : 'v_bookmark',
+			group: 'content'
+		},
+		...(canEdit ? [{ value: 'edit' as const, label: 'Редактировать', icon: 'v_pen', group: 'content' }] : []),
+		...(isAnotherDtfUser(comment.sourceId, comment.author.id) ? authorMenuItems(comment.author, { blocked: !!comment.isIgnored }) : []),
+		...(comment.author.id !== currentUser.value?.id ? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag', group: 'moderation' }] : [])
 	]);
 	let complaining = $state(false);
 	let showBadgeModal = $state(false);

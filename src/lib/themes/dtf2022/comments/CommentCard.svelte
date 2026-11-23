@@ -77,10 +77,10 @@
 	const onopenchange = (open: boolean) => (pickerOpen = open);
 
 	let menuItems = $derived([
-		...(item.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
 		{ value: 'copy' as const, label: 'Копировать ссылку', icon: 'v_link' },
+		...(item.sourceId === 'dtf' ? [{ value: 'open_dtf' as const, label: 'Открыть на DTF', icon: 'v_external' }] : []),
 		...(item.sourceId === 'dtf' && item.author.id !== currentUser.value?.id
-			? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag' }]
+			? [{ value: 'complain' as const, label: 'Пожаловаться', icon: 'v_flag', group: 'moderation' }]
 			: [])
 	]);
 

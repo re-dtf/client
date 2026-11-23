@@ -21,7 +21,7 @@
 	}: {
 		open?: boolean;
 		/** `hint` — подсказка при наведении: что пункт делает на самом деле; `image` и `details` — аватар и вторая строка */
-		items: { value: T; label: string; icon?: string; hint?: string; image?: string; details?: string }[];
+		items: { value: T; label: string; group?: string; icon?: string; hint?: string; image?: string; details?: string }[];
 		selected?: T;
 		onselect: (value: T, event: MouseEvent | KeyboardEvent) => void;
 		/** Для `center` нужна числовая ширина: окно центруется по кнопке отрицательным отступом, transform занят анимацией */
@@ -97,7 +97,10 @@
 				/>
 			{/if}
 			<div class="popover__content">
-				{#each visible as item (item.value)}
+				{#each visible as item, i (item.value)}
+					{#if i > 0 && item.group !== visible[i - 1].group}
+						<div class="popover__divider" aria-hidden="true"></div>
+					{/if}
 					<div
 						class={['popover-item', { 'popover-item--selected': item.value === selected }]}
 						role="option"
@@ -202,6 +205,11 @@
 	.popover__empty {
 		padding: 6px 10px;
 		color: var(--text-subtle);
+	}
+
+	.popover__divider {
+		margin: 4px 6px;
+		border-top: 1px solid var(--border-color);
 	}
 
 	.popover-item {
